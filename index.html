@@ -251,6 +251,63 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px; gap: 10px;
 .lok { color: var(--accent2); }
 .lerr { color: var(--warn); }
 .linf { color: var(--accent); }
+
+/* ── Dive Lock overlay ── */
+#diveLockOverlay {
+  display: none;
+  position: fixed; inset: 0; z-index: 999;
+  background: rgba(0,0,0,0.82);
+  flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 18px;
+  backdrop-filter: blur(2px);
+  -webkit-backdrop-filter: blur(2px);
+}
+#diveLockOverlay.active { display: flex; }
+.lock-icon {
+  font-size: 52px; line-height: 1;
+  filter: drop-shadow(0 0 18px rgba(0,212,255,0.6));
+}
+.lock-label {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 22px; letter-spacing: 6px;
+  color: var(--accent);
+  text-shadow: 0 0 20px rgba(0,212,255,0.5);
+}
+.lock-hint {
+  font-size: 12px; letter-spacing: 2px;
+  color: var(--muted); text-align: center;
+  line-height: 1.9; max-width: 260px;
+}
+.lock-progress-wrap {
+  width: 220px; height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px; overflow: hidden;
+}
+.lock-progress-bar {
+  height: 100%; width: 0%;
+  background: var(--accent);
+  border-radius: 3px;
+  box-shadow: 0 0 8px var(--accent);
+  transition: width 0.05s linear;
+}
+
+/* ── Lock button in header ── */
+#lockBtn {
+  font-family: 'Share Tech Mono', monospace;
+  font-size: 10px; letter-spacing: 1.5px;
+  padding: 6px 12px; border-radius: 6px;
+  border: 1px solid rgba(0,212,255,0.35);
+  background: rgba(0,212,255,0.08);
+  color: var(--accent); cursor: pointer;
+  flex-shrink: 0;
+}
+#lockBtn:active { background: rgba(0,212,255,0.22); }
+#lockBtn.locked {
+  border-color: rgba(255,107,53,0.5);
+  background: rgba(255,107,53,0.1);
+  color: var(--warn);
+}
 </style>
 </head>
 <body>
@@ -263,6 +320,16 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px; gap: 10px;
   <div class="start-note">
     Tap START — Safari will ask for location access.<br><br>
     Waypoints can be set to your current position<br>or entered as coordinates manually.
+  </div>
+</div>
+
+<!-- Dive Lock overlay -->
+<div id="diveLockOverlay">
+  <div class="lock-icon">🔒</div>
+  <div class="lock-label">DIVE LOCK</div>
+  <div class="lock-hint">Screen & touch locked.<br>Hold the screen for 3 sec to unlock.</div>
+  <div class="lock-progress-wrap">
+    <div class="lock-progress-bar" id="lockProgressBar"></div>
   </div>
 </div>
 
@@ -295,6 +362,7 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px; gap: 10px;
     <div class="dot blink" id="dot"></div>
     <span id="gpsLbl">ACQUIRING</span>
   </div>
+  <button id="lockBtn">🔒 LOCK</button>
 </header>
 
 <main id="mainContent">
@@ -307,6 +375,116 @@ main { flex: 1; display: flex; flex-direction: column; padding: 12px; gap: 10px;
 var myPos = null;
 var modalIdx = -1;
 var lastLogTime = 0;
+
+// ── Wake Lock ──
+var wakeLock = null;
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) return;
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', function() { wakeLock = null; });
+  } catch(e) {}
+}
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') requestWakeLock();
+});
+
+// ── Dive Lock ──
+var diveLocked = false;
+var lockHoldTimer = null;
+var lockHoldStart = null;
+var lockProgressAnim = null;
+var HOLD_MS = 3000;
+
+function enterDiveLock() {
+  diveLocked = true;
+  document.getElementById('diveLockOverlay').classList.add('active');
+  document.getElementById('lockBtn').textContent = '🔓 LOCKED';
+  document.getElementById('lockBtn').classList.add('locked');
+  document.getElementById('lockProgressBar').style.width = '0%';
+
+  // Block all touch/click events on the page (but not our overlay handler)
+  document.body.addEventListener('touchstart', absorbEvent, { capture: true, passive: false });
+  document.body.addEventListener('touchmove',  absorbEvent, { capture: true, passive: false });
+  document.body.addEventListener('touchend',   absorbEvent, { capture: true, passive: false });
+  document.body.addEventListener('click',      absorbEvent, { capture: true });
+
+  // Suppress shake-to-undo: intercept devicemotion at capture phase
+  window.addEventListener('devicemotion', absorbEvent, { capture: true });
+
+  // Setup unlock hold gesture on the overlay itself
+  var overlay = document.getElementById('diveLockOverlay');
+  overlay.addEventListener('touchstart', onLockTouchStart, { passive: false });
+  overlay.addEventListener('touchend',   onLockTouchEnd,   { passive: false });
+  overlay.addEventListener('touchcancel',onLockTouchEnd,   { passive: false });
+  overlay.addEventListener('mousedown',  onLockTouchStart);
+  overlay.addEventListener('mouseup',    onLockTouchEnd);
+}
+
+function exitDiveLock() {
+  diveLocked = false;
+  document.getElementById('diveLockOverlay').classList.remove('active');
+  document.getElementById('lockBtn').textContent = '🔒 LOCK';
+  document.getElementById('lockBtn').classList.remove('locked');
+  document.getElementById('lockProgressBar').style.width = '0%';
+  cancelLockHold();
+
+  document.body.removeEventListener('touchstart', absorbEvent, { capture: true });
+  document.body.removeEventListener('touchmove',  absorbEvent, { capture: true });
+  document.body.removeEventListener('touchend',   absorbEvent, { capture: true });
+  document.body.removeEventListener('click',      absorbEvent, { capture: true });
+  window.removeEventListener('devicemotion', absorbEvent, { capture: true });
+
+  var overlay = document.getElementById('diveLockOverlay');
+  overlay.removeEventListener('touchstart', onLockTouchStart);
+  overlay.removeEventListener('touchend',   onLockTouchEnd);
+  overlay.removeEventListener('touchcancel',onLockTouchEnd);
+  overlay.removeEventListener('mousedown',  onLockTouchStart);
+  overlay.removeEventListener('mouseup',    onLockTouchEnd);
+}
+
+function absorbEvent(e) {
+  e.preventDefault();
+  e.stopPropagation();
+  e.stopImmediatePropagation();
+}
+
+function onLockTouchStart(e) {
+  e.stopPropagation();
+  lockHoldStart = Date.now();
+  var bar = document.getElementById('lockProgressBar');
+  bar.style.transition = 'none';
+  bar.style.width = '0%';
+
+  function animFrame() {
+    if (!lockHoldStart) return;
+    var elapsed = Date.now() - lockHoldStart;
+    var pct = Math.min(100, (elapsed / HOLD_MS) * 100);
+    bar.style.width = pct + '%';
+    if (pct < 100) {
+      lockProgressAnim = requestAnimationFrame(animFrame);
+    } else {
+      exitDiveLock();
+    }
+  }
+  lockProgressAnim = requestAnimationFrame(animFrame);
+}
+
+function onLockTouchEnd(e) {
+  e.stopPropagation();
+  cancelLockHold();
+}
+
+function cancelLockHold() {
+  lockHoldStart = null;
+  if (lockProgressAnim) { cancelAnimationFrame(lockProgressAnim); lockProgressAnim = null; }
+  var bar = document.getElementById('lockProgressBar');
+  if (bar) bar.style.width = '0%';
+}
+
+document.getElementById('lockBtn').addEventListener('click', function() {
+  if (diveLocked) exitDiveLock(); else enterDiveLock();
+});
 function loadWPs() {
   try {
     var saved = localStorage.getItem('divenav_wps');
@@ -553,6 +731,7 @@ document.getElementById('startBtn').addEventListener('click', function() {
   wps = loadWPs();
   render();
   startGPS();
+  requestWakeLock();
 });
 </script>
 </body>
