@@ -609,7 +609,7 @@ var PHOTOS={
   bluedevil:{src:'images/bluedevil.jpg',alt:'Eastern blue devil'}
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
-function ART_html(key,h,fill){var ph=PHOTOS[key],hh=(h||artHeight(180));var fit=fill?'cover':'contain';var frame=fill?'border:2px solid #fff;box-sizing:border-box;':'';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;'+frame+'"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:'+fit+';display:block" loading="lazy" onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'"></div>';}
+function ART_html(key,h,fill,frame){var ph=PHOTOS[key],hh=(h||artHeight(180));var fit=fill?'cover':'contain';var fr=frame?'border:2px solid #fff;box-sizing:border-box;':'';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;'+fr+'"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:'+fit+';display:block" loading="lazy" onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'"></div>';}
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
 /* ════════ SITE DATA ════════ */
@@ -677,7 +677,7 @@ function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').t
 function quizRound(){
   qAnswered=false;$('qfact').textContent='';$('qnext').style.display='none';$('qnotice').textContent='';
   var key=qQueue.shift();
-  $('qart').innerHTML=ART_html(key);
+  $('qart').innerHTML=ART_html(key,null,true);
   var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
   $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
   $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
@@ -738,7 +738,7 @@ var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
 function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
-  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:6px">'+ART_html(key,trumpsArtH(),true)+'</div>'+
+  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:6px">'+ART_html(key,trumpsArtH(),true,true)+'</div>'+
     STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
 function initTrumps(){
   tWin=0;tLose=0;tRound=0;
