@@ -10,296 +10,293 @@
   :root{
     --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
     --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
-    --coral:#ef7a52; --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
-    --artH:260px;
+    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
+    --artH:220px;
   }
-  *{box-sizing:border-box}
+  *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow-x:hidden}
-  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #0b3a4d, #06222e 60%);color:var(--text);
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%,#0b3a4d,#06222e 60%);
+    color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh}
-  .wrap{max-width:860px;margin:0 auto;padding:20px 16px calc(28px + env(safe-area-inset-bottom));overflow-x:hidden}
-  h1{font-size:24px;font-weight:600;margin:0 0 4px;letter-spacing:.2px}
-  .sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+    /* Full-screen: fill the entire viewport */
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;
+  }
+
+  /* ── MAIN LAYOUT: fills viewport, scrolls internally ── */
+  .wrap{
+    flex:1;display:flex;flex-direction:column;
+    max-width:860px;width:100%;margin:0 auto;
+    padding:12px 14px calc(10px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+  }
 
   /* ── GAME PROGRESS STRIP ── */
-  .gamesstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:18px}
-  .gstep{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 7px;
-    border-radius:10px;border:1px solid var(--line);background:var(--bg2);
-    font-size:11px;color:var(--muted);text-align:center;line-height:1.2;transition:.2s;user-select:none}
-  .gstep .icon{font-size:18px;line-height:1}
-  .gstep .label{font-size:10px;letter-spacing:.2px}
+  .gamesstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;flex-shrink:0}
+  .gstep{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px 5px;
+    border-radius:8px;border:1px solid var(--line);background:var(--bg2);
+    color:var(--muted);text-align:center;line-height:1.2;transition:.2s;user-select:none}
+  .gstep .icon{font-size:16px;line-height:1}
+  .gstep .label{font-size:9px;letter-spacing:.2px}
   .gstep.done{border-color:var(--good);background:var(--goodd);color:#cdf3df}
   .gstep.active{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
   .gstep.active .label{font-weight:700}
 
-  .panel{display:none;animation:fade .25s ease}
-  .panel.show{display:block}
-  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap}
-  .head p{margin:0;color:var(--muted);font-size:15px}
-  .score{font-size:15px;color:var(--muted)}
+  /* ── POINTS BAR ── */
+  .pointsbar{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:7px 12px;margin-bottom:10px;flex-shrink:0;
+  }
+  .pointsbar .who{font-size:13.5px}
+  .pointsbar .who b{color:var(--text)}
+  .pointsbar .who .grp{display:inline-block;background:var(--accentd);color:var(--accent);
+    font-size:11px;padding:2px 8px;border-radius:6px;margin-left:5px}
+  .pts{font-size:14px;color:var(--muted)}
+  .pts b{color:var(--gold);font-size:17px}
+  .pts .fl{display:inline-block;margin-left:7px;font-size:12px;opacity:0;transition:opacity .2s;font-weight:600}
+  .pts .fl.up{color:var(--good)}
+  .pts .fl.down{color:var(--bad)}
+
+  /* ── GAME SUB-HEADER (replaces removed h1/sub) ── */
+  .game-header{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:10px;margin-bottom:8px;flex-shrink:0;flex-wrap:wrap;
+  }
+  .game-header .game-label{
+    font-size:13px;color:var(--muted);
+  }
+  .game-header .game-tagline{
+    font-size:14px;font-weight:600;color:var(--accent);
+    letter-spacing:.3px;flex:1;text-align:right;
+  }
+  .score{font-size:14px;color:var(--muted)}
   .score b{color:var(--text)}
-  button.opt{display:block;width:100%;text-align:left;margin:7px 0;background:var(--bg2);color:var(--text);
-    border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;cursor:pointer;transition:.12s}
+
+  /* ── PANELS ── */
+  .panel{display:none;animation:fade .22s ease;flex:1;flex-direction:column}
+  .panel.show{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+  /* ── CHOICE BUTTONS — 2-col grid ── */
+  .opts-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin-top:8px;
+  }
+  button.opt{
+    width:100%;text-align:left;
+    background:var(--bg2);color:var(--text);
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:14px;cursor:pointer;transition:.12s;
+    line-height:1.3;
+  }
   button.opt:hover:not(:disabled){border-color:var(--accent)}
   button.opt:disabled{cursor:default;opacity:.95}
   .right{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
   .wrong{background:var(--badd)!important;border-color:var(--bad)!important;color:#f7cfcf!important}
-  .btn{background:var(--accent);color:#04282a;border:none;border-radius:10px;padding:10px 16px;font-size:15px;
-    font-weight:600;cursor:pointer;margin-top:10px}
+
+  .btn{background:var(--accent);color:#04282a;border:none;border-radius:10px;
+    padding:9px 15px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;flex-shrink:0}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
-  .btn.play-again{background:var(--accent);color:#04282a;width:100%;padding:14px;font-size:16px;margin-top:10px}
-  .fact{font-size:14.5px;color:var(--muted);min-height:20px;margin:8px 0 0}
-  .bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:12px;border:1px solid var(--line)}
+  .btn.play-again{background:var(--accent);color:#04282a;width:100%;padding:14px;font-size:15px;margin-top:10px}
+  .fact{font-size:13.5px;color:var(--muted);min-height:18px;margin:6px 0 0;flex-shrink:0}
+
+  /* ── PROGRESS BAR (spotter) ── */
+  .bar{height:8px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:8px;
+    border:1px solid var(--line);flex-shrink:0}
   .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
-  .logsceneimg{width:100%;border-radius:14px;border:1px solid var(--line);display:block;object-fit:cover;max-height:260px}
-  .chip{padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--text);
-    font-size:15px;cursor:pointer;transition:.15s;font-family:inherit}
+
+  .logsceneimg{width:100%;border-radius:12px;border:1px solid var(--line);
+    display:block;object-fit:cover;max-height:200px;flex-shrink:0}
+
+  /* ── CHIPS (spotter) ── */
+  .chips-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+  .chip{padding:9px 12px;border-radius:10px;border:1.5px solid var(--line);
+    background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;
+    transition:.15s;font-family:inherit;text-align:left;line-height:1.3}
   .chip:hover:not(.chip-done):not(.chip-wrong){border-color:var(--accent)}
   .chip-done{background:var(--goodd);border-color:var(--good);color:#cdf3df;cursor:default}
   .chip-wrong{background:var(--badd);border-color:var(--bad);color:#ffd0d0;cursor:default}
-  .tcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .tcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
-  .tcard .tt{text-align:center;font-weight:600;margin:2px 0 6px;font-size:15px}
-  .tcard .cap{text-align:center;font-size:12.5px;color:var(--muted);margin:0 0 6px}
-  .statbtn{display:flex;justify-content:space-between;width:100%;margin:6px 0;background:var(--bg2);color:var(--text);
-    border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13.5px;cursor:pointer}
+
+  /* ── TRUMPS CARDS ── */
+  .tcards{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex-shrink:0}
+  .tcard{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)}
+  .tcard .tt{text-align:center;font-weight:600;margin:2px 0 4px;font-size:14px}
+  .tcard .cap{text-align:center;font-size:11.5px;color:var(--muted);margin:0 0 4px}
+  .statbtn{display:flex;justify-content:space-between;width:100%;margin:4px 0;
+    background:var(--bg2);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-size:12.5px;cursor:pointer}
   .statbtn:hover:not(:disabled){border-color:var(--accent)}
   .statbtn.locked{opacity:.35;cursor:not-allowed}
-  .statbtn .note{font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}
-  .statrow{display:flex;justify-content:space-between;margin:6px 0;background:var(--bg2);border:1px solid var(--line);
-    border-radius:9px;padding:8px 11px;font-size:13.5px}
-  .tres{text-align:center;font-size:16px;font-weight:600;min-height:22px;margin:10px 0 4px}
+  .statbtn .note{font-size:10px;color:var(--muted);margin-left:5px;font-weight:400}
+  .statrow{display:flex;justify-content:space-between;margin:4px 0;background:var(--bg2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12.5px}
+  .tres{text-align:center;font-size:15px;font-weight:600;min-height:20px;margin:8px 0 3px;flex-shrink:0}
+  .trumps-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2px;flex-shrink:0}
   svg{display:block}
-  .auto-notice{font-size:13px;color:var(--muted);text-align:center;margin-top:10px;min-height:18px}
+  .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
 
-  /* ═══════════════════════════════════
-     SPLASH SCREEN
-     ═══════════════════════════════════ */
-  #splash{
-    position:fixed;inset:0;z-index:1000;background:#000;
-    display:flex;align-items:center;justify-content:center;overflow:hidden;
-    cursor:pointer; /* whole splash is tappable after freeze */
+  /* ── HOF: no header clutter ── */
+  .hof-header{
+    text-align:center;margin-bottom:10px;flex-shrink:0;
   }
-  #splashVideo{
-    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;
-    display:block;
+  .hof-header h2{font-size:20px;font-weight:700;margin:0 0 2px}
+  .hof-group{font-size:12px;color:var(--muted)}
+  .encourage{
+    text-align:center;font-size:14px;background:var(--goodd);border:1px solid var(--good);
+    color:#cdf3df;border-radius:10px;padding:10px 14px;margin:0 0 10px;flex-shrink:0
   }
-  /* Frozen poster canvas — sits on top of video when frozen */
-  #splashCanvas{
-    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
-    display:none;
-  }
-
-  /* "TAP TO CONTINUE" overlay — shown after freeze */
-  #splashContinue{
-    position:absolute;inset:0;z-index:5;
-    display:none;flex-direction:column;align-items:center;justify-content:flex-end;
-    padding-bottom:calc(80px + env(safe-area-inset-bottom));
-    background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.65) 100%);
-    pointer-events:none; /* the whole #splash is the tap target */
-  }
-  #splashContinue .tap-hint{
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(11px,3vw,16px);
-    color:#fff;
-    letter-spacing:3px;
-    text-shadow:0 0 14px rgba(54,201,192,0.9),0 0 30px rgba(54,201,192,0.4);
-    animation:tapBlink 1.1s step-end infinite;
-  }
-  @keyframes tapBlink{0%,100%{opacity:1}50%{opacity:0}}
-
-  /* Loading spinner */
-  #splashLoading{
-    position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;
-    transform:translateX(-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:10px;
-    pointer-events:none;
-  }
-  #splashLoading .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
-    border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite}
-  #splashLoading p{margin:0;font-size:13px;color:rgba(255,255,255,.55)}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  /* Tap-to-play (autoplay blocked) */
-  #splashTap{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
-    justify-content:center;text-align:center;cursor:pointer;z-index:3;
-    background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%);
-    pointer-events:all;}
-  #splashTap .play{width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.12);
-    border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;
-    font-size:34px;margin-bottom:14px}
-  #splashTap p{margin:0;font-weight:600;color:#eaf6fb}
-
-  #splashSkip{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:6;
-    background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;
-    padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s;
-    pointer-events:all;}
-  #splashSkip:hover{background:rgba(4,22,30,.8);border-color:var(--accent)}
-
-  .splash-hide{animation:splashOut .5s ease forwards}
-  @keyframes splashOut{to{opacity:0;visibility:hidden}}
-
-  /* ═══════════════════════════════════
-     ARCADE-STYLE WELCOME SCREEN
-     ═══════════════════════════════════ */
-  .welcome{
-    max-width:520px;margin:3vh auto 0;text-align:center;
-  }
-  /* CRT scanline effect on the card */
-  .welcome .wcard{
-    background:var(--surface);border:2px solid var(--accent);border-radius:16px;
-    padding:28px 24px;position:relative;overflow:hidden;
-    box-shadow:0 0 0 1px var(--accentd),0 0 32px rgba(54,201,192,0.15);
-  }
-  .welcome .wcard::before{
-    content:'';position:absolute;inset:0;
-    background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);
-    pointer-events:none;z-index:1;border-radius:14px;
-  }
-  .welcome .wcard>*{position:relative;z-index:2}
-
-  .arcade-title{
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(13px,4vw,22px);
-    color:var(--accent);
-    line-height:1.6;
-    margin:0 0 6px;
-    text-shadow:0 0 12px rgba(54,201,192,0.6);
-    letter-spacing:1px;
-  }
-  .arcade-sub{
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(7px,1.8vw,10px);
-    color:var(--muted);
-    margin:0 0 24px;
-    line-height:1.8;
-    letter-spacing:.5px;
-  }
-  .arcade-label{
-    display:block;
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(8px,2vw,11px);
-    color:var(--gold);
-    letter-spacing:1px;
-    text-align:left;
-    margin:16px 0 8px;
-  }
-  .arcade-input{
-    width:100%;
-    background:#000;
-    border:2px solid var(--accent);
-    border-radius:6px;
-    color:#fff;
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(13px,4vw,20px);
-    padding:14px 16px;
-    letter-spacing:2px;
-    outline:none;
-    caret-color:var(--accent);
-    transition:box-shadow .15s;
-  }
-  .arcade-input:focus{
-    box-shadow:0 0 0 2px var(--accent),0 0 16px rgba(54,201,192,0.3);
-  }
-  .arcade-input::placeholder{
-    color:rgba(255,255,255,0.2);
-    font-size:clamp(10px,2.5vw,14px);
-  }
-  .werr{
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(7px,1.8vw,9px);
-    color:var(--bad);
-    min-height:18px;
-    margin:10px 0 0;
-    letter-spacing:.5px;
-  }
-  .arcade-start{
-    width:100%;margin-top:22px;padding:16px;
-    background:var(--accent);color:#04282a;
-    border:none;border-radius:8px;
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(10px,2.8vw,14px);
-    letter-spacing:2px;
-    cursor:pointer;
-    text-transform:uppercase;
-    box-shadow:0 4px 0 #0d3b3a,0 0 20px rgba(54,201,192,0.3);
-    transition:transform .1s,box-shadow .1s;
-    position:relative;top:0;
-  }
-  .arcade-start:active{transform:translateY(3px);box-shadow:0 1px 0 #0d3b3a;}
-  .arcade-insert{
-    font-family:'Press Start 2P',monospace;
-    font-size:clamp(8px,2vw,11px);
-    color:var(--gold);
-    text-align:center;
-    margin:18px 0 4px;
-    animation:tapBlink 1.4s step-end infinite;
-    letter-spacing:1px;
-  }
-
-  /* rest of UI */
-  .logobar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 0 14px}
-  .logobar .logo{height:60px;width:auto;border-radius:12px;display:block;object-fit:contain}
-  .logobar .logo.circle{width:60px;height:60px;border-radius:50%;object-fit:cover}
-  .logobar .sep{width:1px;height:38px;background:var(--line)}
-  .pointsbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
-    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin-bottom:14px}
-  .pointsbar .who{font-size:14.5px}
-  .pointsbar .who b{color:var(--text)}
-  .pointsbar .who .grp{display:inline-block;background:var(--accentd);color:var(--accent);font-size:12px;
-    padding:3px 9px;border-radius:7px;margin-left:6px}
-  .pts{font-size:15px;color:var(--muted)}
-  .pts b{color:var(--gold);font-size:18px}
-  .pts .fl{display:inline-block;margin-left:8px;font-size:13px;opacity:0;transition:opacity .2s;font-weight:600}
-  .pts .fl.up{color:var(--good)}
-  .pts .fl.down{color:var(--bad)}
-  .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;
-    border:1px solid var(--line);border-radius:11px;margin:6px 0;background:var(--bg2);font-size:15px}
-  .hof .lrow .l{display:flex;align-items:center;gap:12px}
-  .hof .lrow .rank{width:28px;font-weight:700;color:var(--muted);text-align:center}
+  .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin:5px 0;
+    background:var(--bg2);font-size:14px}
+  .hof .lrow .l{display:flex;align-items:center;gap:10px}
+  .hof .lrow .rank{width:24px;font-weight:700;color:var(--muted);text-align:center}
   .hof .lrow .nm{font-weight:500}
   .hof .lrow .sc{font-weight:700;color:var(--gold)}
   .hof .me{background:var(--accentd);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
   .hof .me .nm{color:var(--accent)}
   .hof .me .rank{color:var(--accent)}
-  .hof .medal{font-size:16px;width:20px;text-align:center}
-  .encourage{text-align:center;font-size:16px;background:var(--goodd);border:1px solid var(--good);
-    color:#cdf3df;border-radius:12px;padding:13px 16px;margin:6px 0 14px}
+  .hof .medal{font-size:15px;width:18px;text-align:center}
+  .hof-scroll{overflow-y:auto;flex:1;min-height:0}
 
-  @media(max-width:760px){:root{--artH:230px}}
+  /* ════════════════
+     SPLASH
+     ════════════════ */
+  #splash{
+    position:fixed;inset:0;z-index:1000;background:#000;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
+  }
+  #splashVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block}
+  #splashCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+  #splashContinue{
+    position:absolute;inset:0;z-index:5;display:none;
+    flex-direction:column;align-items:center;justify-content:flex-end;
+    padding-bottom:calc(80px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65) 100%);
+    pointer-events:none;
+  }
+  #splashContinue .tap-hint{
+    font-family:'Press Start 2P',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;
+    text-shadow:0 0 14px rgba(54,201,192,.9),0 0 30px rgba(54,201,192,.4);animation:tapBlink 1.1s step-end infinite;
+  }
+  @keyframes tapBlink{0%,100%{opacity:1}50%{opacity:0}}
+  #splashLoading{
+    position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    z-index:4;display:none;flex-direction:column;align-items:center;gap:10px;pointer-events:none;
+  }
+  #splashLoading .spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.15);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite}
+  #splashLoading p{margin:0;font-size:13px;color:rgba(255,255,255,.55)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #splashTap{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;cursor:pointer;z-index:3;
+    background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%);pointer-events:all}
+  #splashTap .play{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;
+    font-size:32px;margin-bottom:12px}
+  #splashTap p{margin:0;font-weight:600;color:#eaf6fb}
+  #splashFallback{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)}
+  #splashSkip{
+    position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));right:20px;z-index:6;
+    background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);
+    border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    backdrop-filter:blur(4px);transition:.15s;pointer-events:all;
+  }
+  #splashSkip:hover{background:rgba(4,22,30,.8);border-color:var(--accent)}
+  .splash-hide{animation:splashOut .5s ease forwards}
+  @keyframes splashOut{to{opacity:0;visibility:hidden}}
+
+  /* ════════════════
+     ARCADE WELCOME
+     ════════════════ */
+  .welcome{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;
+  }
+  .welcome-inner{width:100%;max-width:480px}
+  .logobar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .logobar .logo{height:52px;width:auto;border-radius:10px;display:block;object-fit:contain}
+  .logobar .logo.circle{width:52px;height:52px;border-radius:50%;object-fit:cover}
+  .logobar .sep{width:1px;height:34px;background:var(--line)}
+  .arcade-insert{
+    font-family:'Press Start 2P',monospace;font-size:clamp(8px,2vw,11px);color:var(--gold);
+    text-align:center;margin:0 0 8px;animation:tapBlink 1.4s step-end infinite;letter-spacing:1px;
+  }
+  .wcard{
+    background:var(--surface);border:2px solid var(--accent);border-radius:14px;
+    padding:22px 20px;position:relative;overflow:hidden;
+    box-shadow:0 0 0 1px var(--accentd),0 0 28px rgba(54,201,192,.15);
+  }
+  .wcard::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);
+    pointer-events:none;z-index:1;border-radius:12px;
+  }
+  .wcard>*{position:relative;z-index:2}
+  .arcade-title{
+    font-family:'Press Start 2P',monospace;font-size:clamp(12px,3.5vw,20px);color:var(--accent);
+    line-height:1.6;margin:0 0 6px;text-shadow:0 0 12px rgba(54,201,192,.6);letter-spacing:1px;text-align:center;
+  }
+  .arcade-sub{
+    font-family:'Press Start 2P',monospace;font-size:clamp(6px,1.6vw,9px);color:var(--muted);
+    margin:0 0 18px;line-height:1.8;letter-spacing:.5px;text-align:center;
+  }
+  .arcade-label{
+    display:block;font-family:'Press Start 2P',monospace;font-size:clamp(8px,2vw,10px);color:var(--gold);
+    letter-spacing:1px;text-align:left;margin:14px 0 7px;
+  }
+  .arcade-input{
+    width:100%;background:#000;border:2px solid var(--accent);border-radius:6px;color:#fff;
+    font-family:'Press Start 2P',monospace;font-size:clamp(13px,4vw,19px);
+    padding:12px 14px;letter-spacing:2px;outline:none;caret-color:var(--accent);transition:box-shadow .15s;
+  }
+  .arcade-input:focus{box-shadow:0 0 0 2px var(--accent),0 0 14px rgba(54,201,192,.3)}
+  .arcade-input::placeholder{color:rgba(255,255,255,.2);font-size:clamp(9px,2.2vw,12px)}
+  .werr{
+    font-family:'Press Start 2P',monospace;font-size:clamp(7px,1.6vw,9px);color:var(--bad);
+    min-height:16px;margin:8px 0 0;letter-spacing:.5px;
+  }
+  .arcade-start{
+    width:100%;margin-top:18px;padding:14px;background:var(--accent);color:#04282a;
+    border:none;border-radius:8px;font-family:'Press Start 2P',monospace;
+    font-size:clamp(10px,2.6vw,13px);letter-spacing:2px;cursor:pointer;
+    box-shadow:0 4px 0 #0d3b3a,0 0 18px rgba(54,201,192,.3);
+    transition:transform .1s,box-shadow .1s;position:relative;top:0;
+  }
+  .arcade-start:active{transform:translateY(3px);box-shadow:0 1px 0 #0d3b3a}
+
+  /* ════════════════
+     RESPONSIVE
+     ════════════════ */
   @media(max-width:560px){
-    :root{--artH:190px}
-    .wrap{padding:14px 13px calc(20px + env(safe-area-inset-bottom))}
-    h1{font-size:21px}
-    .sub{font-size:13.5px;margin-bottom:12px;line-height:1.4}
-    .logobar{gap:12px;margin-bottom:12px}
-    .logobar .logo{height:48px}.logobar .logo.circle{width:48px;height:48px}.logobar .sep{height:30px}
-    .pointsbar{padding:8px 12px;margin-bottom:12px}
-    .pointsbar .who{font-size:13.5px}
-    .pts{font-size:14px}.pts b{font-size:16px}
-    .head{margin-bottom:8px}.head p{font-size:14px}.score{font-size:14px}
-    button.opt{padding:10px 13px;font-size:14.5px;margin:6px 0}
-    .btn{padding:11px 16px}
-    .chip{padding:9px 13px;font-size:14px}
-    .statbtn{padding:7px 10px;font-size:13px}.statrow{padding:7px 10px;font-size:13px}
-    .tcard{padding:8px}.tcards{gap:9px}
-    .encourage{font-size:14.5px;padding:11px 13px}
-    .hof .lrow{padding:9px 12px;font-size:14px}
-    .welcome{margin-top:2vh}.welcome .wcard{padding:20px 16px}
-    .gstep .label{font-size:9px}.gstep{padding:6px 3px 5px}.gstep .icon{font-size:16px}
+    :root{--artH:180px}
+    .wrap{padding:10px 11px calc(8px + env(safe-area-inset-bottom))}
+    .gstep .label{font-size:8px}
+    .gstep .icon{font-size:14px}
+    .gstep{padding:5px 2px 4px}
+    .tcard .tt{font-size:13px}
+    .statbtn{font-size:11.5px;padding:6px 8px}
+    .statrow{font-size:11.5px;padding:6px 8px}
+    .tcards{gap:7px}
   }
   @media(max-width:380px){
-    :root{--artH:165px}
-    h1{font-size:19px}.sub{font-size:12.5px}
-    .logobar .logo{height:42px}.logobar .logo.circle{width:42px;height:42px}
-    button.opt{font-size:14px;padding:9px 12px}
-    .chip{font-size:13px;padding:8px 11px}
-    .gstep .label{display:none}.gstep{padding:7px 3px}
+    :root{--artH:155px}
+    .opts-grid{grid-template-columns:1fr}  /* single col on tiny phones */
+    .chips-grid{grid-template-columns:1fr}
+    .tcards{grid-template-columns:1fr}
+    .gstep .label{display:none}
+    .gstep{padding:6px 2px}
   }
   @media(max-height:560px){
-    :root{--artH:150px}
-    .logobar{display:none}.sub{display:none}.wrap{padding-top:12px}
+    :root{--artH:130px}
+    .logobar{display:none}
+    .arcade-insert{display:none}
+    .wcard{padding:14px}
   }
 </style>
 </head>
@@ -309,10 +306,10 @@
 <div id="splash">
   <video id="splashVideo" muted playsinline webkit-playsinline preload="auto"></video>
   <canvas id="splashCanvas"></canvas>
-  <div id="splashFallback" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)">
-    <div style="font-size:54px;margin-bottom:6px">🌊🤿</div>
-    <h1 style="color:#eaf6fb">Go Diving Show Arcade</h1>
-    <p style="color:var(--muted);margin:2px 0 0">Loading the reef…</p>
+  <div id="splashFallback">
+    <div style="font-size:50px;margin-bottom:8px">🌊🤿</div>
+    <h1 style="color:#eaf6fb;font-size:22px">Go Diving Show Arcade</h1>
+    <p style="color:var(--muted);margin:4px 0 0">Loading the reef…</p>
   </div>
   <div id="splashTap"><div class="play">▶</div><p>Tap to play intro</p></div>
   <div id="splashLoading"><div class="spinner"></div><p>Loading intro video…</p></div>
@@ -324,39 +321,36 @@
 
   <!-- ═══ WELCOME ═══ -->
   <div id="welcome" class="welcome" style="display:none">
-    <div class="logobar">
-      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
-      <span class="sep"></span>
-      <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
-    </div>
-    <div class="arcade-insert">— INSERT DIVER —</div>
-    <div class="wcard">
-      <div class="arcade-title">GO DIVING<br>ARCADE</div>
-      <div class="arcade-sub">4 GAMES · ALL AGES · SYDNEY REEFS</div>
-      <label class="arcade-label" for="wname">▶ YOUR NAME</label>
-      <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
-      <label class="arcade-label" for="wage">▶ YOUR AGE</label>
-      <input class="arcade-input" id="wage" type="number" min="3" max="120" placeholder="00" inputmode="numeric">
-      <p class="werr" id="werr"></p>
-      <button class="arcade-start" id="wstart">DIVE IN →</button>
+    <div class="welcome-inner">
+      <div class="logobar">
+        <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+        <span class="sep"></span>
+        <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
+      </div>
+      <div class="arcade-insert">— INSERT DIVER —</div>
+      <div class="wcard">
+        <div class="arcade-title">GO DIVING<br>ARCADE</div>
+        <div class="arcade-sub">4 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <label class="arcade-label" for="wname">▶ YOUR NAME</label>
+        <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
+        <label class="arcade-label" for="wage">▶ YOUR AGE</label>
+        <input class="arcade-input" id="wage" type="number" min="3" max="120" placeholder="00" inputmode="numeric">
+        <p class="werr" id="werr"></p>
+        <button class="arcade-start" id="wstart">DIVE IN →</button>
+      </div>
     </div>
   </div>
 
   <!-- ═══ MAIN APP ═══ -->
-  <div id="app" style="display:none">
-    <div class="logobar">
-      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
-      <span class="sep"></span>
-      <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
-    </div>
-    <h1>🌊 Go Diving Show Arcade</h1>
-    <p class="sub">Play all four games and climb the Hall of Fame!</p>
+  <div id="app" style="display:none;flex:1;display:none;flex-direction:column">
 
+    <!-- Points bar -->
     <div class="pointsbar">
       <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
       <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
     </div>
 
+    <!-- Game strip -->
     <div class="gamesstrip" id="gamesstrip">
       <div class="gstep active" id="gs-quiz"><div class="icon">🐠</div><div class="label">Guess who</div></div>
       <div class="gstep" id="gs-log"><div class="icon">✅</div><div class="label">Spotter log</div></div>
@@ -365,10 +359,14 @@
     </div>
 
     <!-- QUIZ -->
-    <div class="panel show" id="p-quiz">
-      <div class="head"><p>Name the creature</p><span class="score">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span></div>
-      <div id="qart" style="border-radius:14px;overflow:hidden;"></div>
-      <div id="qopts" style="margin-top:10px"></div>
+    <div class="panel" id="p-quiz">
+      <div class="game-header">
+        <span class="game-label">Name the creature</span>
+        <span class="game-tagline">Dive in — 4 games to conquer!</span>
+        <span class="score" style="flex:none">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span>
+      </div>
+      <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
+      <div class="opts-grid" id="qopts"></div>
       <p class="fact" id="qfact"></p>
       <button class="btn" id="qnext" style="display:none">Next creature →</button>
       <p class="auto-notice" id="qnotice"></p>
@@ -376,29 +374,38 @@
 
     <!-- LOG -->
     <div class="panel" id="p-log">
-      <div class="head"><p>What can you spot in this scene?</p><span class="score"><b id="logn">0</b> / 3 found</span></div>
+      <div class="game-header">
+        <span class="game-label">Spot the species</span>
+        <span class="score"><b id="logn">0</b> / 3 found</span>
+      </div>
       <div class="bar"><i id="logbar"></i></div>
       <div id="logscene"></div>
-      <div id="logchips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
+      <div class="chips-grid" id="logchips"></div>
       <p class="fact" id="logmsg"></p>
       <p class="auto-notice" id="lognotice"></p>
     </div>
 
     <!-- GUESS -->
     <div class="panel" id="p-guess">
-      <div class="head"><p>Which Sydney dive site is this?</p><span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span></div>
-      <div id="gart"></div>
-      <div id="gopts" style="margin-top:10px"></div>
+      <div class="game-header">
+        <span class="game-label">Which Sydney dive site?</span>
+        <span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span>
+      </div>
+      <div id="gart" style="flex-shrink:0"></div>
+      <div class="opts-grid" id="gopts"></div>
       <button class="btn" id="gnext" style="display:none">Next location →</button>
       <p class="auto-notice" id="gnotice"></p>
     </div>
 
     <!-- TRUMPS -->
     <div class="panel" id="p-trumps">
-      <div class="head"><p>Pick a stat — highest value wins</p><span class="score">Round <b id="tround">1</b> / <b id="troundtotal">5</b></span></div>
+      <div class="game-header">
+        <span class="game-label">Pick a stat — highest wins</span>
+        <span class="score">Round <b id="tround">1</b> / <b id="troundtotal">5</b></span>
+      </div>
       <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
       <p class="tres" id="tresult"></p>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+      <div class="trumps-footer">
         <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
         <button class="btn ghost" id="tdeal" style="display:none">Next round →</button>
       </div>
@@ -407,250 +414,188 @@
 
     <!-- HALL OF FAME -->
     <div class="panel" id="p-hof">
-      <div class="head"><p>🏆 Hall of Fame</p><span class="score" id="hofGroupLabel"></span></div>
+      <div class="hof-header">
+        <h2>🏆 Hall of Fame</h2>
+        <div class="hof-group" id="hofGroupLabel"></div>
+      </div>
       <p class="encourage" id="hofEncourage"></p>
-      <div class="hof" id="hofList"></div>
+      <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
       <button class="btn play-again" id="hofPlayAgain">🔄 Play again</button>
     </div>
-  </div>
-</div>
+
+  </div><!-- /app -->
+</div><!-- /wrap -->
 
 <script>
-/* ════════════════════════════════════════════════
-   SPLASH — with freeze-last-frame + tap-to-continue
-   ════════════════════════════════════════════════ */
+/* ════════ SPLASH ════════ */
 (function(){
-  var splash    = document.getElementById('splash');
-  var video     = document.getElementById('splashVideo');
-  var canvas    = document.getElementById('splashCanvas');
-  var fallback  = document.getElementById('splashFallback');
-  var tapPlay   = document.getElementById('splashTap');
-  var loading   = document.getElementById('splashLoading');
-  var cont      = document.getElementById('splashContinue');
-  var skipBtn   = document.getElementById('splashSkip');
+  var splash=document.getElementById('splash'),video=document.getElementById('splashVideo'),
+    canvas=document.getElementById('splashCanvas'),fallback=document.getElementById('splashFallback'),
+    tapPlay=document.getElementById('splashTap'),loading=document.getElementById('splashLoading'),
+    cont=document.getElementById('splashContinue'),skipBtn=document.getElementById('splashSkip');
+  var dismissed=false,playing=false,frozen=false,autoplayBlocked=false,SPEED=2;
 
-  var dismissed = false;
-  var playing   = false;
-  var frozen    = false;           // last frame captured, waiting for tap
-  var autoplayBlocked = false;
-  var SPEED = 2;
+  window.SPLASH_CTRL={replay:replaySplash};
 
-  /* Exposed so Play Again can re-show the splash */
-  window.SPLASH_CTRL = { replay: replaySplash };
+  function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
 
-  function applySpeed(){ try{ video.playbackRate = SPEED; }catch(e){} }
-
-  /* ── After splash: show welcome or go straight to game ── */
   function afterSplash(){
-    if(dismissed) return;
-    dismissed = true;
-    loading.style.display = 'none';
-    tapPlay.style.display = 'none';
-    cont.style.display    = 'none';
-    try{ video.pause(); }catch(e){}
+    if(dismissed)return; dismissed=true;
+    loading.style.display='none'; tapPlay.style.display='none'; cont.style.display='none';
+    try{video.pause();}catch(e){}
     splash.classList.add('splash-hide');
-    setTimeout(function(){ if(splash.parentNode) splash.parentNode.removeChild(splash); }, 520);
-    /* Show welcome or jump straight to game (Play Again path) */
+    setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},520);
     if(window._skipWelcome){
-      window._skipWelcome = false;
-      document.getElementById('app').style.display = 'block';
-      startGame('quiz');
+      window._skipWelcome=false;
+      showApp(); startGame('quiz');
     } else {
-      document.getElementById('welcome').style.display = 'block';
+      document.getElementById('welcome').style.display='flex';
     }
   }
 
-  /* ── Freeze last frame onto canvas ── */
   function freezeLastFrame(){
-    if(frozen) return;
-    frozen = true;
+    if(frozen)return; frozen=true;
     try{
-      canvas.width  = video.videoWidth  || splash.offsetWidth;
-      canvas.height = video.videoHeight || splash.offsetHeight;
-      var ctx = canvas.getContext('2d');
-      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      canvas.style.display = 'block';
+      canvas.width=video.videoWidth||splash.offsetWidth;
+      canvas.height=video.videoHeight||splash.offsetHeight;
+      canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+      canvas.style.display='block';
     }catch(e){}
-    /* Hide video, show frozen frame + tap hint */
-    video.style.display = 'none';
-    loading.style.display = 'none';
-    tapPlay.style.display = 'none';
-    skipBtn.style.display = 'none';
-    cont.style.display    = 'flex';
+    video.style.display='none'; loading.style.display='none';
+    tapPlay.style.display='none'; skipBtn.style.display='none';
+    cont.style.display='flex';
   }
 
-  /* ── Tap anywhere on splash ── */
-  splash.addEventListener('click', function(){
-    if(frozen){ afterSplash(); return; }
-    /* If autoplay blocked, tap = start playing */
+  splash.addEventListener('click',function(){
+    if(frozen){afterSplash();return;}
     if(autoplayBlocked){
-      tapPlay.style.display = 'none';
-      loading.style.display = 'flex';
-      autoplayBlocked = false;
-      applySpeed();
-      var p = video.play && video.play();
-      if(p && p.then) p.then(function(){ applySpeed(); }).catch(afterSplash);
+      tapPlay.style.display='none'; loading.style.display='flex';
+      autoplayBlocked=false; applySpeed();
+      var p=video.play&&video.play();
+      if(p&&p.then)p.then(function(){applySpeed();}).catch(afterSplash);
     }
   });
+  skipBtn.addEventListener('click',function(e){e.stopPropagation();afterSplash();});
 
-  /* Skip button bypasses both video and freeze */
-  skipBtn.addEventListener('click', function(e){
-    e.stopPropagation();
-    afterSplash();
-  });
+  function onLoadStart(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';}
+  function onPlaying(){playing=true;loading.style.display='none';tapPlay.style.display='none';fallback.style.display='none';applySpeed();}
 
-  function onLoadStart(){
-    if(!playing && !dismissed && !autoplayBlocked) loading.style.display = 'flex';
-  }
-  function onPlaying(){
-    playing = true;
-    loading.style.display   = 'none';
-    tapPlay.style.display   = 'none';
-    fallback.style.display  = 'none';
-    applySpeed();
-  }
+  video.addEventListener('ended',freezeLastFrame);
+  video.addEventListener('loadstart',onLoadStart);
+  video.addEventListener('playing',onPlaying);
+  video.addEventListener('timeupdate',function(){if(video.currentTime>0)onPlaying();});
+  video.addEventListener('waiting',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
+  video.addEventListener('stalled',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
 
-  /* When video ends → freeze last frame */
-  video.addEventListener('ended', freezeLastFrame);
-
-  video.addEventListener('loadstart', onLoadStart);
-  video.addEventListener('playing',   onPlaying);
-  video.addEventListener('timeupdate', function(){ if(video.currentTime > 0) onPlaying(); });
-  video.addEventListener('waiting',  function(){ if(!playing && !dismissed && !autoplayBlocked) loading.style.display = 'flex'; });
-  video.addEventListener('stalled',  function(){ if(!playing && !dismissed && !autoplayBlocked) loading.style.display = 'flex'; });
-
-  var retried = false;
-  function setSource(){ video.src = 'images/splash.mp4' + (retried ? ('?r='+Date.now()) : ''); try{ video.load(); }catch(e){} }
-  video.addEventListener('error', function(){
-    if(playing || dismissed) return;
-    if(!retried){ retried = true; setTimeout(setSource, 400); }
-    else { fallback.style.display = 'flex'; setTimeout(afterSplash, 2000); }
+  var retried=false;
+  function setSource(){video.src='images/splash.mp4'+(retried?('?r='+Date.now()):'');try{video.load();}catch(e){}}
+  video.addEventListener('error',function(){
+    if(playing||dismissed)return;
+    if(!retried){retried=true;setTimeout(setSource,400);}
+    else{fallback.style.display='flex';setTimeout(afterSplash,2000);}
   });
 
   function attemptPlay(){
-    if(playing || dismissed) return;
-    applySpeed();
-    var p = video.play && video.play();
-    if(p && p.then)
-      p.then(function(){ applySpeed(); })
-       .catch(function(err){
-         if(!playing && (err.name === 'NotAllowedError' || err.name === 'NotSupportedError')){
-           autoplayBlocked = true;
-           loading.style.display = 'none';
-           tapPlay.style.display = 'flex';
-         }
-       });
+    if(playing||dismissed)return; applySpeed();
+    var p=video.play&&video.play();
+    if(p&&p.then)p.then(function(){applySpeed();}).catch(function(err){
+      if(!playing&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){
+        autoplayBlocked=true; loading.style.display='none'; tapPlay.style.display='flex';
+      }
+    });
   }
-  video.addEventListener('canplay',        attemptPlay);
-  video.addEventListener('canplaythrough', attemptPlay);
-  video.addEventListener('loadeddata',     attemptPlay);
+  video.addEventListener('canplay',attemptPlay);
+  video.addEventListener('canplaythrough',attemptPlay);
+  video.addEventListener('loadeddata',attemptPlay);
 
-  /* Fallback safety net */
-  setTimeout(function(){ if(!dismissed) afterSplash(); }, 35000);
+  setTimeout(function(){if(!dismissed)afterSplash();},35000);
 
-  /* ── Replay splash (for Play Again) ── */
+  /* ── Replay for Play Again ── */
   function replaySplash(){
-    /* Rebuild the splash DOM from scratch */
-    dismissed = false; playing = false; frozen = false; autoplayBlocked = false; retried = false;
-
-    var s = document.createElement('div');
-    s.id = 'splash';
-    s.innerHTML =
-      '<video id="splashVideo" muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block"></video>'+
-      '<canvas id="splashCanvas" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none"></canvas>'+
-      '<div id="splashFallback" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:54px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb">Go Diving Show Arcade</h1><p style="color:var(--muted)">Loading the reef…</p></div>'+
-      '<div id="splashTap" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;z-index:3;background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%)"><div class="play" style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:14px">▶</div><p style="margin:0;font-weight:600;color:#eaf6fb">Tap to play intro</p></div>'+
-      '<div id="splashLoading" style="position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:10px"><div class="spinner" style="width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div><p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Loading intro video…</p></div>'+
-      '<div id="splashContinue" style="position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(80px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.65) 100%);pointer-events:none"><div class="tap-hint" style="font-family:\'Press Start 2P\',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;text-shadow:0 0 14px rgba(54,201,192,0.9);animation:tapBlink 1.1s step-end infinite">▶ TAP TO CONTINUE ◀</div></div>'+
-      '<button id="splashSkip" style="position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:6;background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)">Skip ⏭</button>';
-
-    /* Style the new splash */
-    s.style.cssText = 'position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer';
+    var s=document.createElement('div');
+    s.style.cssText='position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer';
+    s.innerHTML='<video muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block"></video>'+
+      '<canvas style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none"></canvas>'+
+      '<div id="spFb" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:48px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb;font-size:22px">Go Diving Show Arcade</h1></div>'+
+      '<div id="spTap" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;z-index:3;background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%)"><div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px">▶</div><p style="margin:0;font-weight:600;color:#eaf6fb">Tap to play intro</p></div>'+
+      '<div id="spLd" style="position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px"><div style="width:34px;height:34px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div><p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Loading…</p></div>'+
+      '<div id="spCo" style="position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(80px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65) 100%);pointer-events:none"><div style="font-family:\'Press Start 2P\',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;text-shadow:0 0 14px rgba(54,201,192,.9);animation:tapBlink 1.1s step-end infinite">▶ TAP TO CONTINUE ◀</div></div>'+
+      '<button id="spSk" style="position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));right:20px;z-index:6;background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)">Skip ⏭</button>';
     document.body.appendChild(s);
-
-    /* Wire up a new instance */
-    var nv = s.querySelector('#splashVideo');
-    var nc = s.querySelector('#splashCanvas');
-    var nf = s.querySelector('#splashFallback');
-    var nt = s.querySelector('#splashTap');
-    var nl = s.querySelector('#splashLoading');
-    var nco= s.querySelector('#splashContinue');
-    var nsk= s.querySelector('#splashSkip');
-
-    var ndismissed=false,nplaying=false,nfrozen=false,nautoBlocked=false;
-
-    function nAfterSplash(){
-      if(ndismissed)return; ndismissed=true;
+    var nv=s.querySelector('video'),nc=s.querySelector('canvas'),
+      nf=s.querySelector('#spFb'),nt=s.querySelector('#spTap'),
+      nl=s.querySelector('#spLd'),nco=s.querySelector('#spCo'),nsk=s.querySelector('#spSk');
+    var nd=false,np=false,nfr=false,nab=false;
+    function nDone(){
+      if(nd)return; nd=true;
       nl.style.display='none'; nt.style.display='none'; nco.style.display='none';
       try{nv.pause();}catch(e){}
       s.classList.add('splash-hide');
-      document.getElementById('app').style.display='block';
-      startGame('quiz');
+      showApp(); startGame('quiz');
       setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);
     }
-    function nFreeze(){
-      if(nfrozen)return; nfrozen=true;
-      try{
-        nc.width=nv.videoWidth||s.offsetWidth; nc.height=nv.videoHeight||s.offsetHeight;
-        nc.getContext('2d').drawImage(nv,0,0,nc.width,nc.height);
-        nc.style.display='block';
-      }catch(e){}
-      nv.style.display='none'; nl.style.display='none'; nt.style.display='none';
-      nsk.style.display='none'; nco.style.display='flex';
+    function nFrz(){
+      if(nfr)return; nfr=true;
+      try{nc.width=nv.videoWidth||s.offsetWidth;nc.height=nv.videoHeight||s.offsetHeight;nc.getContext('2d').drawImage(nv,0,0,nc.width,nc.height);nc.style.display='block';}catch(e){}
+      nv.style.display='none';nl.style.display='none';nt.style.display='none';nsk.style.display='none';nco.style.display='flex';
     }
-    s.addEventListener('click',function(){ if(nfrozen){nAfterSplash();return;} if(nautoBlocked){nt.style.display='none';nl.style.display='flex';nautoBlocked=false;var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=SPEED;}catch(e){}}).catch(nAfterSplash);} });
-    nsk.addEventListener('click',function(e){e.stopPropagation();nAfterSplash();});
-    nv.addEventListener('ended',nFreeze);
-    nv.addEventListener('playing',function(){nplaying=true;nl.style.display='none';nt.style.display='none';nf.style.display='none';try{nv.playbackRate=SPEED;}catch(e){}});
-    nv.addEventListener('timeupdate',function(){if(nv.currentTime>0&&!nplaying){nplaying=true;nl.style.display='none';}});
-    var nretried=false;
-    nv.addEventListener('error',function(){if(nplaying||ndismissed)return;if(!nretried){nretried=true;setTimeout(function(){nv.src='images/splash.mp4?r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nAfterSplash,2000);}});
-    function nTryPlay(){if(nplaying||ndismissed)return;try{nv.playbackRate=SPEED;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=SPEED;}catch(e){}}).catch(function(err){if(!nplaying&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nautoBlocked=true;nl.style.display='none';nt.style.display='flex';}});}
-    nv.addEventListener('canplay',nTryPlay);nv.addEventListener('canplaythrough',nTryPlay);nv.addEventListener('loadeddata',nTryPlay);
+    s.addEventListener('click',function(){if(nfr){nDone();return;}if(nab){nt.style.display='none';nl.style.display='flex';nab=false;var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(nDone);}});
+    nsk.addEventListener('click',function(e){e.stopPropagation();nDone();});
+    nv.addEventListener('ended',nFrz);
+    nv.addEventListener('playing',function(){np=true;nl.style.display='none';nt.style.display='none';nf.style.display='none';try{nv.playbackRate=2;}catch(e){}});
+    nv.addEventListener('timeupdate',function(){if(nv.currentTime>0&&!np){np=true;nl.style.display='none';}});
+    var nr=false;
+    nv.addEventListener('error',function(){if(np||nd)return;if(!nr){nr=true;setTimeout(function(){nv.src='images/splash.mp4?r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nDone,2000);}});
+    function nTry(){if(np||nd)return;try{nv.playbackRate=2;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(function(err){if(!np&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nab=true;nl.style.display='none';nt.style.display='flex';}});}
+    nv.addEventListener('canplay',nTry);nv.addEventListener('canplaythrough',nTry);nv.addEventListener('loadeddata',nTry);
     nl.style.display='flex';
-    nv.src='images/splash.mp4'; try{nv.load();}catch(e){}
-    setTimeout(function(){if(!ndismissed)nAfterSplash();},35000);
+    nv.src='images/splash.mp4';try{nv.load();}catch(e){}
+    setTimeout(function(){if(!nd)nDone();},35000);
   }
 
-  /* Kick off initial load */
   setSource();
 })();
 
-/* ── LOGO FALLBACKS ── */
+/* ════════ LOGO FALLBACKS ════════ */
 var LOGO_FALLBACK={
-  godiving:'<div style="height:60px;display:flex;align-items:center;gap:8px;padding:0 14px;background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:12px"><span style="font-size:22px">🤿</span><span style="font-weight:800;letter-spacing:.5px;font-size:15px;line-height:1.05;color:#eaf6fb;text-align:left">GO DIVING<br><span style="font-size:11px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
-  viz:'<div style="height:60px;width:60px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);border-radius:50%"><span style="font-weight:900;font-size:22px;color:#f3c64f;text-shadow:0 1px 2px rgba(0,0,0,.5);letter-spacing:1px">VIZ</span></div>'
+  godiving:'<div style="height:52px;display:flex;align-items:center;gap:8px;padding:0 12px;background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:10px"><span style="font-size:20px">🤿</span><span style="font-weight:800;font-size:14px;line-height:1.05;color:#eaf6fb">GO DIVING<br><span style="font-size:10px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
+  viz:'<div style="height:52px;width:52px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);border-radius:50%"><span style="font-weight:900;font-size:20px;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,.5)">VIZ</span></div>'
 };
 
-/* ── POINTS ── */
+/* ════════ POINTS ════════ */
 var POINTS=0,REWARD=10,PENALTY=4;
-function flashPts(delta){var fl=document.getElementById('ptsFloat');if(!fl)return;fl.textContent=(delta>0?'+':'')+delta;fl.className='fl '+(delta>0?'up':'down');fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},900);}
+function flashPts(d){var fl=document.getElementById('ptsFloat');if(!fl)return;fl.textContent=(d>0?'+':'')+d;fl.className='fl '+(d>0?'up':'down');fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},900);}
 function award(){POINTS+=REWARD;syncPoints();flashPts(REWARD);}
 function penalize(){POINTS-=PENALTY;if(POINTS<0)POINTS=0;syncPoints();flashPts(-PENALTY);}
 function syncPoints(){var p=document.getElementById('points');if(p)p.textContent=POINTS;}
 
-/* ── WELCOME ── */
+/* ════════ HELPERS ════════ */
+function showApp(){
+  var a=document.getElementById('app');
+  a.style.display='flex'; a.style.flexDirection='column';
+}
+
+/* ════════ WELCOME ════════ */
 var USER={name:'',age:0,group:''};
 function ageGroup(a){if(a<=12)return 'Young Explorer';if(a<=17)return 'Teen Explorer';return 'Adult Explorer';}
 document.getElementById('wstart').onclick=function(){
   var nm=document.getElementById('wname').value.trim();
-  var ageVal=parseInt(document.getElementById('wage').value,10);
+  var av=parseInt(document.getElementById('wage').value,10);
   var err=document.getElementById('werr');
   if(!nm){err.textContent='ENTER YOUR NAME';return;}
-  if(!ageVal||ageVal<3||ageVal>120){err.textContent='VALID AGE: 3 – 120';return;}
+  if(!av||av<3||av>120){err.textContent='VALID AGE: 3 – 120';return;}
   err.textContent='';
-  USER.name=nm;USER.age=ageVal;USER.group=ageGroup(ageVal);
+  USER.name=nm;USER.age=av;USER.group=ageGroup(av);
   document.getElementById('whoName').textContent=USER.name;
   document.getElementById('whoGroup').textContent=USER.group;
   document.getElementById('welcome').style.display='none';
-  document.getElementById('app').style.display='block';
-  startGame('quiz');
+  showApp(); startGame('quiz');
 };
 ['wname','wage'].forEach(function(id){
   document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('wstart').click();});
 });
 
-/* ── ART ── */
+/* ════════ ART ════════ */
 var PHOTOS={
   seadragon:{src:'images/weedy.png',alt:'Weedy seadragon'},
   pjshark:{src:'images/portjackson.png',alt:'Port Jackson shark'},
@@ -658,11 +603,11 @@ var PHOTOS={
   cuttle:{src:'images/cuttle.png',alt:'Giant cuttlefish'},
   bluedevil:{src:'images/bluedevil.webp',alt:'Eastern blue devil'}
 };
-function artHeight(fallbackPx){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fallbackPx||190):n;}
-function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(190));return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'"></div>';}
+function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
+function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'"></div>';}
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
-/* ── SITE DATA ── */
+/* ════════ SITE DATA ════════ */
 var PHOTO_SCENES=[
   {img:'images/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
   {img:'images/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')}
@@ -673,10 +618,10 @@ function siteSVG(label,top,bottom,feature){
   if(feature==='pier'){feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round"><line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/><line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/><line x1="540" y1="60" x2="540" y2="300"/></g><rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';}
   else{feat='<g fill="#0e5b4f" opacity="0.85"><path d="M120 320 q-24 -120 8 -200 q14 80 -8 200 Z"/><path d="M180 320 q18 -140 -6 -230 q-22 90 6 230 Z"/><path d="M250 320 q-20 -110 6 -190 q16 70 -6 190 Z"/><path d="M470 320 q24 -130 -6 -215 q-20 85 6 215 Z"/><path d="M540 320 q-18 -120 8 -195 q14 75 -8 195 Z"/></g>';}
   var fish='<g fill="#f3c64f" opacity="0.9"><ellipse cx="360" cy="150" rx="22" ry="10"/><path d="M338 150 l-16 -10 l0 20 Z"/></g><g fill="#ef7a52" opacity="0.85"><ellipse cx="430" cy="210" rx="16" ry="8"/><path d="M446 210 l14 -8 l0 16 Z"/></g>';
-  return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:14px"><defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/></linearGradient></defs><rect width="660" height="320" fill="url(#g_'+feature+')"/><g fill="#ffffff" opacity="0.12"><circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/><circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g><rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+feat+fish+'</svg>';
+  return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px"><defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/></linearGradient></defs><rect width="660" height="320" fill="url(#g_'+feature+')"/><g fill="#ffffff" opacity="0.12"><circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/><circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g><rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+feat+fish+'</svg>';
 }
 
-/* ── CREATURE DATA ── */
+/* ════════ CREATURE DATA ════════ */
 var CR={
   seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
   pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
@@ -688,9 +633,10 @@ var KEYS=Object.keys(CR);
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var $=function(id){return document.getElementById(id);};
 
-/* ── GAME FLOW ── */
+/* ════════ GAME FLOW ════════ */
 var GAME_ORDER=['quiz','log','guess','trumps'];
 var currentGame=0;
+
 function updateStrip(active){
   GAME_ORDER.forEach(function(g,i){
     var el=$('gs-'+g);el.classList.remove('active','done');
@@ -698,9 +644,21 @@ function updateStrip(active){
     else if(g===active)el.classList.add('active');
   });
 }
-function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});$(id).classList.add('show');window.scrollTo(0,0);}
-function advanceGame(){currentGame++;if(currentGame>=GAME_ORDER.length){showHallOfFame();return;}startGame(GAME_ORDER[currentGame]);}
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+  $(id).classList.add('show');
+  window.scrollTo(0,0);
+}
+function advanceGame(){
+  currentGame++;
+  if(currentGame>=GAME_ORDER.length){showHallOfFame();return;}
+  startGame(GAME_ORDER[currentGame]);
+}
 function startGame(name){
+  /* Show/hide strip depending on game */
+  var strip=$('gamesstrip');
+  if(name==='hof'){strip.style.display='none';}
+  else{strip.style.display='grid';}
   updateStrip(name);showPanel('p-'+name);
   if(name==='quiz')initQuiz();
   else if(name==='log')initLog();
@@ -708,7 +666,7 @@ function startGame(name){
   else if(name==='trumps')initTrumps();
 }
 
-/* ── QUIZ ── */
+/* ════════ QUIZ ════════ */
 var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
 function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';quizRound();}
 function quizRound(){
@@ -728,7 +686,7 @@ function quizRound(){
 }
 $('qnext').onclick=quizRound;
 
-/* ── LOG ── */
+/* ════════ SPOTTER LOG ════════ */
 var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
 var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin'];
 var logFound={},logDone=false;
@@ -748,7 +706,7 @@ function renderLog(){
   if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Moving to Where am I?…';setTimeout(advanceGame,2200);}
 }
 
-/* ── GUESS ── */
+/* ════════ GUESS ════════ */
 var gScore=0,gTotal=0,gQueue=[],gAnswered=false;
 function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice());$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
 function guessRound(){
@@ -756,7 +714,7 @@ function guessRound(){
   var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
   var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
   var opts=shuffle([correctName].concat(wrong));
-  $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:240px;object-fit:cover;border-radius:14px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
+  $('gart').innerHTML='<div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:200px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
   $('gopts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+n+'">'+n+'</button>';}).join('');
   $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(gAnswered)return;gAnswered=true;gTotal++;
@@ -769,14 +727,14 @@ function guessRound(){
 }
 $('gnext').onclick=guessRound;
 
-/* ── TRUMPS ── */
+/* ════════ TRUMPS ════════ */
 var TRUMPS_ROUNDS=5,tWin=0,tLose=0,tRound=0,tQueue=[];
-var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs / season',''],['camo','Camouflage','/10']];
+var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10']];
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
-function trumpsArtH(){return Math.round(artHeight(190)*0.62);}
+function trumpsArtH(){return Math.round(artHeight(180)*0.55);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
-  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:8px">'+ART_html(key,trumpsArtH())+'</div>'+
-    STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">too lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
+  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:6px">'+ART_html(key,trumpsArtH())+'</div>'+
+    STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
 function initTrumps(){
   tWin=0;tLose=0;tRound=0;
   var allPairs=[];for(var i=0;i<KEYS.length;i++)for(var j=i+1;j<KEYS.length;j++)allPairs.push([KEYS[i],KEYS[j]]);
@@ -802,12 +760,12 @@ function dealRound(){
     else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
     $('twin').textContent=tWin;$('tlose').textContent=tLose;
     if(tRound<TRUMPS_ROUNDS)$('tdeal').style.display='inline-block';
-    else{$('tnotice').textContent='Battle complete! Heading to the Hall of Fame…';setTimeout(advanceGame,2400);}
+    else{$('tnotice').textContent='Battle complete! Heading to Hall of Fame…';setTimeout(advanceGame,2400);}
   };});
 }
 $('tdeal').onclick=dealRound;
 
-/* ── HALL OF FAME ── */
+/* ════════ HALL OF FAME ════════ */
 var MOCK_BOARDS={
   'Young Explorer':[['Coral Kid',210],['Finn',190],['Nemo Jr',175],['Pearl',160],['Shelly',150],['Captain Squid',135],['Bubbles',120],['Sandy',105],['Little Ray',90],['Minnow',75]],
   'Teen Explorer':[['ReefRider',360],['KelpQueen',330],['TidalWave',305],['DeepBlue',280],['SaltSpray',255],['CurrentC',230],['FinFlash',205],['WaveRunner',180],['EbbTide',155],['ShoalScout',130]],
@@ -816,13 +774,18 @@ var MOCK_BOARDS={
 function encourageMsg(rank,total){
   var n=USER.name;
   if(rank===1)return '🥇 Incredible, '+n+'! You\'re top of the reef — a true marine legend!';
-  if(rank<=3)return '🌟 Amazing work, '+n+'! You\'re right up there with the best divers in your group!';
-  if(rank<=total/2)return '🐠 Great diving, '+n+'! You\'re swimming strong in the top half — keep exploring!';
-  return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play another round to climb the ranks!';
+  if(rank<=3)return '🌟 Amazing work, '+n+'! You\'re right up there with the best divers!';
+  if(rank<=total/2)return '🐠 Great diving, '+n+'! Swimming strong in the top half!';
+  return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play again to climb the ranks!';
 }
 function showHallOfFame(){
+  /* Hide strip on HoF */
+  $('gamesstrip').style.display='none';
   GAME_ORDER.forEach(function(g){var el=$('gs-'+g);el.classList.remove('active');el.classList.add('done');});
-  showPanel('p-hof');
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+  $('p-hof').classList.add('show');
+  window.scrollTo(0,0);
+
   var base=(MOCK_BOARDS[USER.group]||MOCK_BOARDS['Adult Explorer']).slice();
   var entries=base.map(function(e){return {name:e[0],score:e[1],me:false};});
   entries.push({name:USER.name+' (you)',score:POINTS,me:true});
@@ -834,21 +797,18 @@ function showHallOfFame(){
   var myRank=entries.findIndex(function(e){return e.me;})+1;
   $('hofEncourage').textContent=encourageMsg(myRank,entries.length);
   var medals=['🥇','🥈','🥉'];
-  $('hofList').innerHTML=entries.map(function(e,i){var rank=i+1,badge=medals[i]||'';return '<div class="lrow'+(e.me?' me':'')+'"><div class="l"><span class="rank">'+rank+'</span><span class="medal">'+badge+'</span><span class="nm">'+e.name+'</span></div><span class="sc">'+e.score+' pts</span></div>';}).join('');
+  $('hofList').innerHTML=entries.map(function(e,i){var r=i+1,b=medals[i]||'';
+    return '<div class="lrow'+(e.me?' me':'')+'"><div class="l"><span class="rank">'+r+'</span><span class="medal">'+b+'</span><span class="nm">'+e.name+'</span></div><span class="sc">'+e.score+' pts</span></div>';
+  }).join('');
 }
 
-/* ── PLAY AGAIN ── */
+/* ════════ PLAY AGAIN ════════ */
 $('hofPlayAgain').onclick=function(){
-  /* Reset state */
   POINTS=0;syncPoints();currentGame=0;
-  /* Hide app */
   document.getElementById('app').style.display='none';
-  /* Flag to skip welcome screen after splash */
   window._skipWelcome=true;
-  /* Update points bar with existing user */
   document.getElementById('whoName').textContent=USER.name;
   document.getElementById('whoGroup').textContent=USER.group;
-  /* Replay splash — it will call startGame('quiz') directly after tap */
   window.SPLASH_CTRL.replay();
 };
 </script>
