@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Go Diving Show Arcade</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
@@ -12,19 +14,25 @@
     --artH:260px;
   }
   *{box-sizing:border-box}
-  html,body{height:100%}
+  html,body{height:100%;overflow-x:hidden}
   body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #0b3a4d, #06222e 60%);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.5; -webkit-font-smoothing:antialiased; min-height:100vh; min-height:100dvh}
-  .wrap{max-width:860px;margin:0 auto;padding:20px 16px calc(28px + env(safe-area-inset-bottom))}
+    line-height:1.5;-webkit-font-smoothing:antialiased;min-height:100vh;min-height:100dvh}
+  .wrap{max-width:860px;margin:0 auto;padding:20px 16px calc(28px + env(safe-area-inset-bottom));overflow-x:hidden}
   h1{font-size:24px;font-weight:600;margin:0 0 4px;letter-spacing:.2px}
   .sub{color:var(--muted);margin:0 0 18px;font-size:15px}
-  .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
-  .nav button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;
-    padding:9px 14px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s;
-    white-space:nowrap}
-  .nav button:hover{border-color:var(--accent)}
-  .nav button.on{background:var(--accent);color:#04282a;border-color:var(--accent);font-weight:600}
+
+  /* ── GAME PROGRESS STRIP ── */
+  .gamesstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:18px}
+  .gstep{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px 7px;
+    border-radius:10px;border:1px solid var(--line);background:var(--bg2);
+    font-size:11px;color:var(--muted);text-align:center;line-height:1.2;transition:.2s;user-select:none}
+  .gstep .icon{font-size:18px;line-height:1}
+  .gstep .label{font-size:10px;letter-spacing:.2px}
+  .gstep.done{border-color:var(--good);background:var(--goodd);color:#cdf3df}
+  .gstep.active{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
+  .gstep.active .label{font-weight:700}
+
   .panel{display:none;animation:fade .25s ease}
   .panel.show{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
@@ -32,8 +40,6 @@
   .head p{margin:0;color:var(--muted);font-size:15px}
   .score{font-size:15px;color:var(--muted)}
   .score b{color:var(--text)}
-  .sea{background:linear-gradient(#bfe3ef,#8ec6dc);border-radius:14px;padding:10px;border:1px solid var(--line)}
-  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
   button.opt{display:block;width:100%;text-align:left;margin:7px 0;background:var(--bg2);color:var(--text);
     border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;cursor:pointer;transition:.12s}
   button.opt:hover:not(:disabled){border-color:var(--accent)}
@@ -43,30 +49,16 @@
   .btn{background:var(--accent);color:#04282a;border:none;border-radius:10px;padding:10px 16px;font-size:15px;
     font-weight:600;cursor:pointer;margin-top:10px}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
-  .btn.done{background:var(--gold);color:#3a2c00}
+  .btn.play-again{background:var(--accent);color:#04282a;width:100%;padding:14px;font-size:16px;margin-top:10px}
   .fact{font-size:14.5px;color:var(--muted);min-height:20px;margin:8px 0 0}
-  .grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
-  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
-  .tag{display:inline-block;background:var(--accentd);color:var(--accent);font-size:12.5px;padding:4px 10px;
-    border-radius:8px;margin:0 5px 5px 0}
   .bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:12px;border:1px solid var(--line)}
   .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
-  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);
-    border-radius:10px;margin:7px 0;background:var(--bg2)}
-  .row .nm{display:flex;align-items:center;gap:11px;font-size:15px}
-  .row .thumb{width:46px;flex:0 0 46px}
-  .row button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;
-    padding:7px 12px;font-size:13.5px;cursor:pointer;min-width:118px}
-  .spotted{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
   .logsceneimg{width:100%;border-radius:14px;border:1px solid var(--line);display:block;object-fit:cover;max-height:260px}
-  .chip{padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--text);font-size:15px;cursor:pointer;transition:.15s;font-family:inherit}
+  .chip{padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--text);
+    font-size:15px;cursor:pointer;transition:.15s;font-family:inherit}
   .chip:hover:not(.chip-done):not(.chip-wrong){border-color:var(--accent)}
   .chip-done{background:var(--goodd);border-color:var(--good);color:#cdf3df;cursor:default}
   .chip-wrong{background:var(--badd);border-color:var(--bad);color:#ffd0d0;cursor:default}
-  .live{display:inline-flex;align-items:center;gap:6px;background:var(--badd);color:#ffb4b4;font-size:12.5px;
-    padding:4px 11px;border-radius:8px}
-  .live .dot{width:8px;height:8px;border-radius:50%;background:var(--bad);animation:blink 1.2s infinite}
-  @keyframes blink{50%{opacity:.3}}
   .tcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .tcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
   .tcard .tt{text-align:center;font-weight:600;margin:2px 0 6px;font-size:15px}
@@ -80,57 +72,177 @@
     border-radius:9px;padding:8px 11px;font-size:13.5px}
   .tres{text-align:center;font-size:16px;font-weight:600;min-height:22px;margin:10px 0 4px}
   svg{display:block}
+  .auto-notice{font-size:13px;color:var(--muted);text-align:center;margin-top:10px;min-height:18px}
 
-  /* Splash screen */
-  #splash{position:fixed;inset:0;z-index:1000;background:#04161e;display:flex;align-items:center;
-    justify-content:center;overflow:hidden}
-  #splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#04161e}
-  #splashFallback{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
-    justify-content:center;text-align:center;
-    background:radial-gradient(1000px 500px at 50% 20%, #0b3a4d, #04161e 70%)}
-  #splashFallback .big{font-size:54px;margin-bottom:6px}
-  #splashFallback h1{font-size:30px}
-  #splashFallback p{color:var(--muted);margin:2px 0 0}
+  /* ═══════════════════════════════════
+     SPLASH SCREEN
+     ═══════════════════════════════════ */
+  #splash{
+    position:fixed;inset:0;z-index:1000;background:#000;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;
+    cursor:pointer; /* whole splash is tappable after freeze */
+  }
+  #splashVideo{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;
+    display:block;
+  }
+  /* Frozen poster canvas — sits on top of video when frozen */
+  #splashCanvas{
+    position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    display:none;
+  }
+
+  /* "TAP TO CONTINUE" overlay — shown after freeze */
+  #splashContinue{
+    position:absolute;inset:0;z-index:5;
+    display:none;flex-direction:column;align-items:center;justify-content:flex-end;
+    padding-bottom:calc(80px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.65) 100%);
+    pointer-events:none; /* the whole #splash is the tap target */
+  }
+  #splashContinue .tap-hint{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(11px,3vw,16px);
+    color:#fff;
+    letter-spacing:3px;
+    text-shadow:0 0 14px rgba(54,201,192,0.9),0 0 30px rgba(54,201,192,0.4);
+    animation:tapBlink 1.1s step-end infinite;
+  }
+  @keyframes tapBlink{0%,100%{opacity:1}50%{opacity:0}}
+
+  /* Loading spinner */
+  #splashLoading{
+    position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;
+    transform:translateX(-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:10px;
+    pointer-events:none;
+  }
+  #splashLoading .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite}
+  #splashLoading p{margin:0;font-size:13px;color:rgba(255,255,255,.55)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* Tap-to-play (autoplay blocked) */
   #splashTap{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
     justify-content:center;text-align:center;cursor:pointer;z-index:3;
-    background:radial-gradient(1000px 500px at 50% 30%, rgba(11,58,77,.35), rgba(4,22,30,.65) 70%)}
+    background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%);
+    pointer-events:all;}
   #splashTap .play{width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.12);
     border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;
     font-size:34px;margin-bottom:14px}
   #splashTap p{margin:0;font-weight:600;color:#eaf6fb}
 
-  /* Loading indicator shown while video is buffering */
-  #splashLoading{position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;
-    transform:translateX(-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:10px}
-  #splashLoading .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
-    border-top-color:var(--accent);border-radius:50%;animation:spin 0.9s linear infinite}
-  #splashLoading p{margin:0;font-size:13px;color:rgba(255,255,255,.55)}
-  @keyframes spin{to{transform:rotate(360deg)}}
-
-  #splashSkip{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:4;
+  #splashSkip{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:6;
     background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;
-    padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s}
+    padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s;
+    pointer-events:all;}
   #splashSkip:hover{background:rgba(4,22,30,.8);border-color:var(--accent)}
+
   .splash-hide{animation:splashOut .5s ease forwards}
   @keyframes splashOut{to{opacity:0;visibility:hidden}}
 
-  /* Logo bar */
+  /* ═══════════════════════════════════
+     ARCADE-STYLE WELCOME SCREEN
+     ═══════════════════════════════════ */
+  .welcome{
+    max-width:520px;margin:3vh auto 0;text-align:center;
+  }
+  /* CRT scanline effect on the card */
+  .welcome .wcard{
+    background:var(--surface);border:2px solid var(--accent);border-radius:16px;
+    padding:28px 24px;position:relative;overflow:hidden;
+    box-shadow:0 0 0 1px var(--accentd),0 0 32px rgba(54,201,192,0.15);
+  }
+  .welcome .wcard::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,0.12) 3px,rgba(0,0,0,0.12) 4px);
+    pointer-events:none;z-index:1;border-radius:14px;
+  }
+  .welcome .wcard>*{position:relative;z-index:2}
+
+  .arcade-title{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(13px,4vw,22px);
+    color:var(--accent);
+    line-height:1.6;
+    margin:0 0 6px;
+    text-shadow:0 0 12px rgba(54,201,192,0.6);
+    letter-spacing:1px;
+  }
+  .arcade-sub{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(7px,1.8vw,10px);
+    color:var(--muted);
+    margin:0 0 24px;
+    line-height:1.8;
+    letter-spacing:.5px;
+  }
+  .arcade-label{
+    display:block;
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(8px,2vw,11px);
+    color:var(--gold);
+    letter-spacing:1px;
+    text-align:left;
+    margin:16px 0 8px;
+  }
+  .arcade-input{
+    width:100%;
+    background:#000;
+    border:2px solid var(--accent);
+    border-radius:6px;
+    color:#fff;
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(13px,4vw,20px);
+    padding:14px 16px;
+    letter-spacing:2px;
+    outline:none;
+    caret-color:var(--accent);
+    transition:box-shadow .15s;
+  }
+  .arcade-input:focus{
+    box-shadow:0 0 0 2px var(--accent),0 0 16px rgba(54,201,192,0.3);
+  }
+  .arcade-input::placeholder{
+    color:rgba(255,255,255,0.2);
+    font-size:clamp(10px,2.5vw,14px);
+  }
+  .werr{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(7px,1.8vw,9px);
+    color:var(--bad);
+    min-height:18px;
+    margin:10px 0 0;
+    letter-spacing:.5px;
+  }
+  .arcade-start{
+    width:100%;margin-top:22px;padding:16px;
+    background:var(--accent);color:#04282a;
+    border:none;border-radius:8px;
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(10px,2.8vw,14px);
+    letter-spacing:2px;
+    cursor:pointer;
+    text-transform:uppercase;
+    box-shadow:0 4px 0 #0d3b3a,0 0 20px rgba(54,201,192,0.3);
+    transition:transform .1s,box-shadow .1s;
+    position:relative;top:0;
+  }
+  .arcade-start:active{transform:translateY(3px);box-shadow:0 1px 0 #0d3b3a;}
+  .arcade-insert{
+    font-family:'Press Start 2P',monospace;
+    font-size:clamp(8px,2vw,11px);
+    color:var(--gold);
+    text-align:center;
+    margin:18px 0 4px;
+    animation:tapBlink 1.4s step-end infinite;
+    letter-spacing:1px;
+  }
+
+  /* rest of UI */
   .logobar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 0 14px}
   .logobar .logo{height:60px;width:auto;border-radius:12px;display:block;object-fit:contain}
   .logobar .logo.circle{width:60px;height:60px;border-radius:50%;object-fit:cover}
   .logobar .sep{width:1px;height:38px;background:var(--line)}
-
-  /* Welcome page */
-  .welcome{max-width:460px;margin:4vh auto 0;text-align:center}
-  .welcome .wcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 20px}
-  .welcome label{display:block;text-align:left;font-size:13.5px;color:var(--muted);margin:12px 0 6px}
-  .welcome input{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);
-    font-size:16px;padding:12px 14px;font-family:inherit}
-  .welcome input:focus{outline:none;border-color:var(--accent)}
-  .werr{color:var(--bad);font-size:13.5px;min-height:18px;margin:10px 0 0}
-  .welcome .btn{width:100%;margin-top:16px;padding:13px}
-
-  /* Points pill */
   .pointsbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
     background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin-bottom:14px}
   .pointsbar .who{font-size:14.5px}
@@ -142,9 +254,6 @@
   .pts .fl{display:inline-block;margin-left:8px;font-size:13px;opacity:0;transition:opacity .2s;font-weight:600}
   .pts .fl.up{color:var(--good)}
   .pts .fl.down{color:var(--bad)}
-  .donewrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
-
-  /* Hall of fame */
   .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;
     border:1px solid var(--line);border-radius:11px;margin:6px 0;background:var(--bg2);font-size:15px}
   .hof .lrow .l{display:flex;align-items:center;gap:12px}
@@ -164,120 +273,95 @@
     .wrap{padding:14px 13px calc(20px + env(safe-area-inset-bottom))}
     h1{font-size:21px}
     .sub{font-size:13.5px;margin-bottom:12px;line-height:1.4}
-    .nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
-      margin:0 -13px 14px;padding:0 13px 2px;scrollbar-width:none}
-    .nav::-webkit-scrollbar{display:none}
-    .nav button{flex:0 0 auto;padding:8px 12px;font-size:13.5px}
     .logobar{gap:12px;margin-bottom:12px}
-    .logobar .logo{height:48px}
-    .logobar .logo.circle{width:48px;height:48px}
-    .logobar .sep{height:30px}
+    .logobar .logo{height:48px}.logobar .logo.circle{width:48px;height:48px}.logobar .sep{height:30px}
     .pointsbar{padding:8px 12px;margin-bottom:12px}
     .pointsbar .who{font-size:13.5px}
     .pts{font-size:14px}.pts b{font-size:16px}
-    .head{margin-bottom:8px}
-    .head p{font-size:14px}
-    .score{font-size:14px}
+    .head{margin-bottom:8px}.head p{font-size:14px}.score{font-size:14px}
     button.opt{padding:10px 13px;font-size:14.5px;margin:6px 0}
     .btn{padding:11px 16px}
     .chip{padding:9px 13px;font-size:14px}
-    .statbtn{padding:7px 10px;font-size:13px}
-    .statrow{padding:7px 10px;font-size:13px}
-    .tcard{padding:8px}
-    .tcards{gap:9px}
-    .donewrap{margin-top:12px;padding-top:10px}
+    .statbtn{padding:7px 10px;font-size:13px}.statrow{padding:7px 10px;font-size:13px}
+    .tcard{padding:8px}.tcards{gap:9px}
     .encourage{font-size:14.5px;padding:11px 13px}
     .hof .lrow{padding:9px 12px;font-size:14px}
-    .welcome{margin-top:2vh}
-    .welcome .wcard{padding:18px 16px}
+    .welcome{margin-top:2vh}.welcome .wcard{padding:20px 16px}
+    .gstep .label{font-size:9px}.gstep{padding:6px 3px 5px}.gstep .icon{font-size:16px}
   }
   @media(max-width:380px){
     :root{--artH:165px}
-    h1{font-size:19px}
-    .sub{font-size:12.5px}
-    .logobar .logo{height:42px}
-    .logobar .logo.circle{width:42px;height:42px}
+    h1{font-size:19px}.sub{font-size:12.5px}
+    .logobar .logo{height:42px}.logobar .logo.circle{width:42px;height:42px}
     button.opt{font-size:14px;padding:9px 12px}
     .chip{font-size:13px;padding:8px 11px}
-    .nav button{font-size:13px;padding:7px 11px}
-    .tcard .tt{font-size:14px}
+    .gstep .label{display:none}.gstep{padding:7px 3px}
   }
   @media(max-height:560px){
     :root{--artH:150px}
-    .logobar{display:none}
-    .sub{display:none}
-    .wrap{padding-top:12px}
+    .logobar{display:none}.sub{display:none}.wrap{padding-top:12px}
   }
 </style>
 </head>
 <body>
 
-<!-- SPLASH SCREEN -->
+<!-- ═══ SPLASH ═══ -->
 <div id="splash">
   <video id="splashVideo" muted playsinline webkit-playsinline preload="auto"></video>
-  <div id="splashFallback">
-    <div class="big">🌊🤿</div>
-    <h1>Go Diving Show Arcade</h1>
-    <p>Loading the reef…</p>
+  <canvas id="splashCanvas"></canvas>
+  <div id="splashFallback" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)">
+    <div style="font-size:54px;margin-bottom:6px">🌊🤿</div>
+    <h1 style="color:#eaf6fb">Go Diving Show Arcade</h1>
+    <p style="color:var(--muted);margin:2px 0 0">Loading the reef…</p>
   </div>
-  <div id="splashTap">
-    <div class="play">▶</div>
-    <p>Tap to play intro</p>
-  </div>
-  <div id="splashLoading">
-    <div class="spinner"></div>
-    <p>Loading intro video…</p>
-  </div>
+  <div id="splashTap"><div class="play">▶</div><p>Tap to play intro</p></div>
+  <div id="splashLoading"><div class="spinner"></div><p>Loading intro video…</p></div>
+  <div id="splashContinue"><div class="tap-hint">▶ TAP TO CONTINUE ◀</div></div>
   <button id="splashSkip">Skip ⏭</button>
 </div>
 
 <div class="wrap">
 
-  <!-- WELCOME -->
+  <!-- ═══ WELCOME ═══ -->
   <div id="welcome" class="welcome" style="display:none">
     <div class="logobar">
-      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo"
-           onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
       <span class="sep"></span>
-      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo circle"
-           onerror="this.outerHTML=LOGO_FALLBACK.viz">
+      <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
     </div>
-    <h1 style="margin-bottom:2px">Go Diving Show Arcade</h1>
-    <p class="sub" style="margin-bottom:14px">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
+    <div class="arcade-insert">— INSERT DIVER —</div>
     <div class="wcard">
-      <p style="margin:0 0 4px;font-weight:600">Welcome, marine enthusiast! 🐙</p>
-      <p style="margin:0;color:var(--muted);font-size:14px">Tell us who's exploring today.</p>
-      <label for="wname">Your name</label>
-      <input id="wname" type="text" placeholder="e.g. Marlee" maxlength="20" autocomplete="off">
-      <label for="wage">Your age</label>
-      <input id="wage" type="number" min="3" max="120" placeholder="e.g. 11" inputmode="numeric">
+      <div class="arcade-title">GO DIVING<br>ARCADE</div>
+      <div class="arcade-sub">4 GAMES · ALL AGES · SYDNEY REEFS</div>
+      <label class="arcade-label" for="wname">▶ YOUR NAME</label>
+      <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
+      <label class="arcade-label" for="wage">▶ YOUR AGE</label>
+      <input class="arcade-input" id="wage" type="number" min="3" max="120" placeholder="00" inputmode="numeric">
       <p class="werr" id="werr"></p>
-      <button class="btn" id="wstart">Dive in →</button>
+      <button class="arcade-start" id="wstart">DIVE IN →</button>
     </div>
   </div>
 
-  <!-- MAIN APP -->
+  <!-- ═══ MAIN APP ═══ -->
   <div id="app" style="display:none">
     <div class="logobar">
-      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo"
-           onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
       <span class="sep"></span>
-      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo circle"
-           onerror="this.outerHTML=LOGO_FALLBACK.viz">
+      <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
     </div>
     <h1>🌊 Go Diving Show Arcade</h1>
-    <p class="sub">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
+    <p class="sub">Play all four games and climb the Hall of Fame!</p>
 
     <div class="pointsbar">
       <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
       <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
     </div>
 
-    <div class="nav" id="nav">
-      <button data-p="quiz" class="on">🐠 Guess who</button>
-      <button data-p="log">✅ Spotter log</button>
-      <button data-p="guess">🔎 Where am I?</button>
-      <button data-p="trumps">🃏 Stat battle</button>
+    <div class="gamesstrip" id="gamesstrip">
+      <div class="gstep active" id="gs-quiz"><div class="icon">🐠</div><div class="label">Guess who</div></div>
+      <div class="gstep" id="gs-log"><div class="icon">✅</div><div class="label">Spotter log</div></div>
+      <div class="gstep" id="gs-guess"><div class="icon">🔎</div><div class="label">Where am I?</div></div>
+      <div class="gstep" id="gs-trumps"><div class="icon">🃏</div><div class="label">Stat battle</div></div>
     </div>
 
     <!-- QUIZ -->
@@ -287,7 +371,7 @@
       <div id="qopts" style="margin-top:10px"></div>
       <p class="fact" id="qfact"></p>
       <button class="btn" id="qnext" style="display:none">Next creature →</button>
-      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+      <p class="auto-notice" id="qnotice"></p>
     </div>
 
     <!-- LOG -->
@@ -297,7 +381,7 @@
       <div id="logscene"></div>
       <div id="logchips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
       <p class="fact" id="logmsg"></p>
-      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+      <p class="auto-notice" id="lognotice"></p>
     </div>
 
     <!-- GUESS -->
@@ -306,19 +390,19 @@
       <div id="gart"></div>
       <div id="gopts" style="margin-top:10px"></div>
       <button class="btn" id="gnext" style="display:none">Next location →</button>
-      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+      <p class="auto-notice" id="gnotice"></p>
     </div>
 
     <!-- TRUMPS -->
     <div class="panel" id="p-trumps">
-      <div class="head"><p>Pick a stat — highest value wins the round</p></div>
+      <div class="head"><p>Pick a stat — highest value wins</p><span class="score">Round <b id="tround">1</b> / <b id="troundtotal">5</b></span></div>
       <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
       <p class="tres" id="tresult"></p>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
         <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
-        <button class="btn ghost" id="tdeal" style="display:none">Deal again</button>
+        <button class="btn ghost" id="tdeal" style="display:none">Next round →</button>
       </div>
-      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+      <p class="auto-notice" id="tnotice"></p>
     </div>
 
     <!-- HALL OF FAME -->
@@ -326,517 +410,446 @@
       <div class="head"><p>🏆 Hall of Fame</p><span class="score" id="hofGroupLabel"></span></div>
       <p class="encourage" id="hofEncourage"></p>
       <div class="hof" id="hofList"></div>
-      <button class="btn ghost" id="hofBack" style="margin-top:14px">← Back to the games</button>
+      <button class="btn play-again" id="hofPlayAgain">🔄 Play again</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ---------- SPLASH SCREEN ----------
-   Strategy:
-   1. Set src and start loading immediately (no autoplay attr — we call play() ourselves).
-   2. Show a spinner while buffering so the user knows something is happening.
-   3. Only offer "Tap to play" when autoplay is blocked by the browser — not on slow load.
-   4. Only fall back to the static screen if the video genuinely fails (network error
-      after a retry) AND the video has never started playing.
-   5. The fallback never appears just because loading is slow. */
+/* ════════════════════════════════════════════════
+   SPLASH — with freeze-last-frame + tap-to-continue
+   ════════════════════════════════════════════════ */
 (function(){
   var splash    = document.getElementById('splash');
   var video     = document.getElementById('splashVideo');
+  var canvas    = document.getElementById('splashCanvas');
   var fallback  = document.getElementById('splashFallback');
-  var tap       = document.getElementById('splashTap');
+  var tapPlay   = document.getElementById('splashTap');
   var loading   = document.getElementById('splashLoading');
-  var skip      = document.getElementById('splashSkip');
+  var cont      = document.getElementById('splashContinue');
+  var skipBtn   = document.getElementById('splashSkip');
 
   var dismissed = false;
-  var playing   = false;   // video has actually produced frames
+  var playing   = false;
+  var frozen    = false;           // last frame captured, waiting for tap
   var autoplayBlocked = false;
-
   var SPEED = 2;
+
+  /* Exposed so Play Again can re-show the splash */
+  window.SPLASH_CTRL = { replay: replaySplash };
+
   function applySpeed(){ try{ video.playbackRate = SPEED; }catch(e){} }
 
-  function showWelcome(){ document.getElementById('welcome').style.display = 'block'; }
-
-  function dismiss(){
+  /* ── After splash: show welcome or go straight to game ── */
+  function afterSplash(){
     if(dismissed) return;
     dismissed = true;
     loading.style.display = 'none';
-    tap.style.display     = 'none';
+    tapPlay.style.display = 'none';
+    cont.style.display    = 'none';
     try{ video.pause(); }catch(e){}
     splash.classList.add('splash-hide');
-    showWelcome();
-    setTimeout(function(){ if(splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 520);
-  }
-
-  /* Show the static fallback — only called on genuine unrecoverable failure */
-  function showFallback(){
-    if(dismissed || playing) return;
-    loading.style.display  = 'none';
-    tap.style.display      = 'none';
-    fallback.style.display = 'flex';
-    /* Auto-dismiss after a couple of seconds so the user isn't stuck */
-    setTimeout(dismiss, 2000);
-  }
-
-  /* Show the tap-to-play overlay (autoplay was blocked, not a loading failure) */
-  function showTap(){
-    if(dismissed || playing) return;
-    autoplayBlocked = true;
-    loading.style.display = 'none';
-    tap.style.display     = 'flex';
-  }
-
-  /* ---- Loading state: show spinner as soon as we know the src is loading ---- */
-  function onLoadStart(){
-    if(!playing && !dismissed && !autoplayBlocked){
-      loading.style.display = 'flex';
+    setTimeout(function(){ if(splash.parentNode) splash.parentNode.removeChild(splash); }, 520);
+    /* Show welcome or jump straight to game (Play Again path) */
+    if(window._skipWelcome){
+      window._skipWelcome = false;
+      document.getElementById('app').style.display = 'block';
+      startGame('quiz');
+    } else {
+      document.getElementById('welcome').style.display = 'block';
     }
   }
 
-  /* ---- Video is actually playing ---- */
+  /* ── Freeze last frame onto canvas ── */
+  function freezeLastFrame(){
+    if(frozen) return;
+    frozen = true;
+    try{
+      canvas.width  = video.videoWidth  || splash.offsetWidth;
+      canvas.height = video.videoHeight || splash.offsetHeight;
+      var ctx = canvas.getContext('2d');
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'block';
+    }catch(e){}
+    /* Hide video, show frozen frame + tap hint */
+    video.style.display = 'none';
+    loading.style.display = 'none';
+    tapPlay.style.display = 'none';
+    skipBtn.style.display = 'none';
+    cont.style.display    = 'flex';
+  }
+
+  /* ── Tap anywhere on splash ── */
+  splash.addEventListener('click', function(){
+    if(frozen){ afterSplash(); return; }
+    /* If autoplay blocked, tap = start playing */
+    if(autoplayBlocked){
+      tapPlay.style.display = 'none';
+      loading.style.display = 'flex';
+      autoplayBlocked = false;
+      applySpeed();
+      var p = video.play && video.play();
+      if(p && p.then) p.then(function(){ applySpeed(); }).catch(afterSplash);
+    }
+  });
+
+  /* Skip button bypasses both video and freeze */
+  skipBtn.addEventListener('click', function(e){
+    e.stopPropagation();
+    afterSplash();
+  });
+
+  function onLoadStart(){
+    if(!playing && !dismissed && !autoplayBlocked) loading.style.display = 'flex';
+  }
   function onPlaying(){
     playing = true;
-    loading.style.display = 'none';
-    tap.style.display     = 'none';
-    fallback.style.display= 'none';
+    loading.style.display   = 'none';
+    tapPlay.style.display   = 'none';
+    fallback.style.display  = 'none';
     applySpeed();
   }
 
-  /* ---- Video finished ---- */
-  video.addEventListener('ended', dismiss);
+  /* When video ends → freeze last frame */
+  video.addEventListener('ended', freezeLastFrame);
 
-  /* ---- Progress events: hide spinner once we're rolling ---- */
-  video.addEventListener('loadstart',      onLoadStart);
-  video.addEventListener('playing',        onPlaying);
-  video.addEventListener('timeupdate', function(){
-    if(video.currentTime > 0) onPlaying();
-  });
+  video.addEventListener('loadstart', onLoadStart);
+  video.addEventListener('playing',   onPlaying);
+  video.addEventListener('timeupdate', function(){ if(video.currentTime > 0) onPlaying(); });
+  video.addEventListener('waiting',  function(){ if(!playing && !dismissed && !autoplayBlocked) loading.style.display = 'flex'; });
+  video.addEventListener('stalled',  function(){ if(!playing && !dismissed && !autoplayBlocked) loading.style.display = 'flex'; });
 
-  /* ---- Stall / waiting: make sure spinner is visible again ---- */
-  video.addEventListener('waiting', function(){
-    if(!playing && !dismissed && !autoplayBlocked){
-      loading.style.display = 'flex';
-    }
-  });
-  video.addEventListener('stalled', function(){
-    if(!playing && !dismissed && !autoplayBlocked){
-      loading.style.display = 'flex';
-    }
-  });
-
-  /* ---- Error handling: retry once, then fall back ---- */
   var retried = false;
-  function setSource(){
-    video.src = 'images/splash.mp4' + (retried ? ('?r=' + Date.now()) : '');
-    try{ video.load(); }catch(e){}
-  }
-
+  function setSource(){ video.src = 'images/splash.mp4' + (retried ? ('?r='+Date.now()) : ''); try{ video.load(); }catch(e){} }
   video.addEventListener('error', function(){
     if(playing || dismissed) return;
-    if(!retried){
-      retried = true;
-      setTimeout(setSource, 400);
-    } else {
-      /* Genuine failure after retry — show static fallback */
-      showFallback();
-    }
+    if(!retried){ retried = true; setTimeout(setSource, 400); }
+    else { fallback.style.display = 'flex'; setTimeout(afterSplash, 2000); }
   });
 
-  /* ---- Attempt autoplay once enough data is available ---- */
   function attemptPlay(){
     if(playing || dismissed) return;
     applySpeed();
     var p = video.play && video.play();
-    if(p && p.then){
+    if(p && p.then)
       p.then(function(){ applySpeed(); })
        .catch(function(err){
-         /* NotAllowedError = autoplay blocked; everything else = loading issue, wait */
          if(!playing && (err.name === 'NotAllowedError' || err.name === 'NotSupportedError')){
-           showTap();
+           autoplayBlocked = true;
+           loading.style.display = 'none';
+           tapPlay.style.display = 'flex';
          }
-         /* For AbortError or others, just wait — canplaythrough will retry */
        });
-    }
   }
-
   video.addEventListener('canplay',        attemptPlay);
   video.addEventListener('canplaythrough', attemptPlay);
   video.addEventListener('loadeddata',     attemptPlay);
 
-  /* ---- Tap-to-play overlay (user gesture unlocks autoplay) ---- */
-  tap.addEventListener('click', function(){
-    tap.style.display = 'none';
-    loading.style.display = 'flex';
-    autoplayBlocked = false;
-    applySpeed();
-    var p = video.play && video.play();
-    if(p && p.then){
-      p.then(function(){ applySpeed(); }).catch(dismiss);
+  /* Fallback safety net */
+  setTimeout(function(){ if(!dismissed) afterSplash(); }, 35000);
+
+  /* ── Replay splash (for Play Again) ── */
+  function replaySplash(){
+    /* Rebuild the splash DOM from scratch */
+    dismissed = false; playing = false; frozen = false; autoplayBlocked = false; retried = false;
+
+    var s = document.createElement('div');
+    s.id = 'splash';
+    s.innerHTML =
+      '<video id="splashVideo" muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block"></video>'+
+      '<canvas id="splashCanvas" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none"></canvas>'+
+      '<div id="splashFallback" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:54px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb">Go Diving Show Arcade</h1><p style="color:var(--muted)">Loading the reef…</p></div>'+
+      '<div id="splashTap" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;z-index:3;background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%)"><div class="play" style="width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:34px;margin-bottom:14px">▶</div><p style="margin:0;font-weight:600;color:#eaf6fb">Tap to play intro</p></div>'+
+      '<div id="splashLoading" style="position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:10px"><div class="spinner" style="width:36px;height:36px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div><p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Loading intro video…</p></div>'+
+      '<div id="splashContinue" style="position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(80px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,0.65) 100%);pointer-events:none"><div class="tap-hint" style="font-family:\'Press Start 2P\',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;text-shadow:0 0 14px rgba(54,201,192,0.9);animation:tapBlink 1.1s step-end infinite">▶ TAP TO CONTINUE ◀</div></div>'+
+      '<button id="splashSkip" style="position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:6;background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)">Skip ⏭</button>';
+
+    /* Style the new splash */
+    s.style.cssText = 'position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer';
+    document.body.appendChild(s);
+
+    /* Wire up a new instance */
+    var nv = s.querySelector('#splashVideo');
+    var nc = s.querySelector('#splashCanvas');
+    var nf = s.querySelector('#splashFallback');
+    var nt = s.querySelector('#splashTap');
+    var nl = s.querySelector('#splashLoading');
+    var nco= s.querySelector('#splashContinue');
+    var nsk= s.querySelector('#splashSkip');
+
+    var ndismissed=false,nplaying=false,nfrozen=false,nautoBlocked=false;
+
+    function nAfterSplash(){
+      if(ndismissed)return; ndismissed=true;
+      nl.style.display='none'; nt.style.display='none'; nco.style.display='none';
+      try{nv.pause();}catch(e){}
+      s.classList.add('splash-hide');
+      document.getElementById('app').style.display='block';
+      startGame('quiz');
+      setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);
     }
-  });
+    function nFreeze(){
+      if(nfrozen)return; nfrozen=true;
+      try{
+        nc.width=nv.videoWidth||s.offsetWidth; nc.height=nv.videoHeight||s.offsetHeight;
+        nc.getContext('2d').drawImage(nv,0,0,nc.width,nc.height);
+        nc.style.display='block';
+      }catch(e){}
+      nv.style.display='none'; nl.style.display='none'; nt.style.display='none';
+      nsk.style.display='none'; nco.style.display='flex';
+    }
+    s.addEventListener('click',function(){ if(nfrozen){nAfterSplash();return;} if(nautoBlocked){nt.style.display='none';nl.style.display='flex';nautoBlocked=false;var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=SPEED;}catch(e){}}).catch(nAfterSplash);} });
+    nsk.addEventListener('click',function(e){e.stopPropagation();nAfterSplash();});
+    nv.addEventListener('ended',nFreeze);
+    nv.addEventListener('playing',function(){nplaying=true;nl.style.display='none';nt.style.display='none';nf.style.display='none';try{nv.playbackRate=SPEED;}catch(e){}});
+    nv.addEventListener('timeupdate',function(){if(nv.currentTime>0&&!nplaying){nplaying=true;nl.style.display='none';}});
+    var nretried=false;
+    nv.addEventListener('error',function(){if(nplaying||ndismissed)return;if(!nretried){nretried=true;setTimeout(function(){nv.src='images/splash.mp4?r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nAfterSplash,2000);}});
+    function nTryPlay(){if(nplaying||ndismissed)return;try{nv.playbackRate=SPEED;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=SPEED;}catch(e){}}).catch(function(err){if(!nplaying&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nautoBlocked=true;nl.style.display='none';nt.style.display='flex';}});}
+    nv.addEventListener('canplay',nTryPlay);nv.addEventListener('canplaythrough',nTryPlay);nv.addEventListener('loadeddata',nTryPlay);
+    nl.style.display='flex';
+    nv.src='images/splash.mp4'; try{nv.load();}catch(e){}
+    setTimeout(function(){if(!ndismissed)nAfterSplash();},35000);
+  }
 
-  /* ---- Absolute safety net: never trap the user forever ---- */
-  setTimeout(function(){ if(!dismissed) dismiss(); }, 30000);
-
-  skip.addEventListener('click', dismiss);
-
-  /* ---- Kick off ---- */
+  /* Kick off initial load */
   setSource();
-  /* Don't call play() yet — wait for canplay/loadeddata so the browser
-     has something buffered and the promise is more likely to resolve. */
 })();
 
-/* ---------- LOGO FALLBACKS ---------- */
+/* ── LOGO FALLBACKS ── */
 var LOGO_FALLBACK={
- godiving:'<div style="height:60px;display:flex;align-items:center;gap:8px;padding:0 14px;'+
-  'background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:12px">'+
-  '<span style="font-size:22px">🤿</span>'+
-  '<span style="font-weight:800;letter-spacing:.5px;font-size:15px;line-height:1.05;color:#eaf6fb;text-align:left">'+
-  'GO DIVING<br><span style="font-size:11px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
- viz:'<div style="height:60px;width:60px;display:flex;align-items:center;justify-content:center;'+
-  'background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);'+
-  'border-radius:50%"><span style="font-weight:900;font-size:22px;color:#f3c64f;'+
-  'text-shadow:0 1px 2px rgba(0,0,0,.5);letter-spacing:1px">VIZ</span></div>'
+  godiving:'<div style="height:60px;display:flex;align-items:center;gap:8px;padding:0 14px;background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:12px"><span style="font-size:22px">🤿</span><span style="font-weight:800;letter-spacing:.5px;font-size:15px;line-height:1.05;color:#eaf6fb;text-align:left">GO DIVING<br><span style="font-size:11px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
+  viz:'<div style="height:60px;width:60px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);border-radius:50%"><span style="font-weight:900;font-size:22px;color:#f3c64f;text-shadow:0 1px 2px rgba(0,0,0,.5);letter-spacing:1px">VIZ</span></div>'
 };
 
-/* ---------- POINTS ENGINE ---------- */
-var POINTS=0;
-var REWARD=10;
-var PENALTY=4;
-function flashPts(delta){
- var fl=document.getElementById('ptsFloat');
- if(!fl)return;
- fl.textContent=(delta>0?'+':'')+delta;
- fl.className='fl '+(delta>0?'up':'down');
- fl.style.opacity='1';
- setTimeout(function(){fl.style.opacity='0';},900);
-}
+/* ── POINTS ── */
+var POINTS=0,REWARD=10,PENALTY=4;
+function flashPts(delta){var fl=document.getElementById('ptsFloat');if(!fl)return;fl.textContent=(delta>0?'+':'')+delta;fl.className='fl '+(delta>0?'up':'down');fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},900);}
 function award(){POINTS+=REWARD;syncPoints();flashPts(REWARD);}
-function penalize(){POINTS-=PENALTY;syncPoints();flashPts(-PENALTY);}
+function penalize(){POINTS-=PENALTY;if(POINTS<0)POINTS=0;syncPoints();flashPts(-PENALTY);}
 function syncPoints(){var p=document.getElementById('points');if(p)p.textContent=POINTS;}
 
-/* ---------- WELCOME / AGE GROUP ---------- */
+/* ── WELCOME ── */
 var USER={name:'',age:0,group:''};
-function ageGroup(a){
- if(a<=12)return 'Young Explorer';
- if(a<=17)return 'Teen Explorer';
- return 'Adult Explorer';
-}
+function ageGroup(a){if(a<=12)return 'Young Explorer';if(a<=17)return 'Teen Explorer';return 'Adult Explorer';}
 document.getElementById('wstart').onclick=function(){
- var nm=document.getElementById('wname').value.trim();
- var ageVal=parseInt(document.getElementById('wage').value,10);
- var err=document.getElementById('werr');
- if(!nm){err.textContent='Please enter your name.';return;}
- if(!ageVal||ageVal<3||ageVal>120){err.textContent='Please enter a valid age (3–120).';return;}
- err.textContent='';
- USER.name=nm;USER.age=ageVal;USER.group=ageGroup(ageVal);
- document.getElementById('whoName').textContent=USER.name;
- document.getElementById('whoGroup').textContent=USER.group;
- document.getElementById('welcome').style.display='none';
- document.getElementById('app').style.display='block';
+  var nm=document.getElementById('wname').value.trim();
+  var ageVal=parseInt(document.getElementById('wage').value,10);
+  var err=document.getElementById('werr');
+  if(!nm){err.textContent='ENTER YOUR NAME';return;}
+  if(!ageVal||ageVal<3||ageVal>120){err.textContent='VALID AGE: 3 – 120';return;}
+  err.textContent='';
+  USER.name=nm;USER.age=ageVal;USER.group=ageGroup(ageVal);
+  document.getElementById('whoName').textContent=USER.name;
+  document.getElementById('whoGroup').textContent=USER.group;
+  document.getElementById('welcome').style.display='none';
+  document.getElementById('app').style.display='block';
+  startGame('quiz');
 };
 ['wname','wage'].forEach(function(id){
- document.getElementById(id).addEventListener('keydown',function(e){
-  if(e.key==='Enter')document.getElementById('wstart').click();
- });
+  document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('wstart').click();});
 });
 
+/* ── ART ── */
 var PHOTOS={
- seadragon:{src:'images/weedy.png',       alt:'Weedy seadragon'},
- pjshark:  {src:'images/portjackson.png', alt:'Port Jackson shark'},
- groper:   {src:'images/groper.png',      alt:'Eastern blue groper'},
- cuttle:   {src:'images/cuttle.png',      alt:'Giant cuttlefish'},
- bluedevil:{src:'images/bluedevil.webp',  alt:'Eastern blue devil'}
+  seadragon:{src:'images/weedy.png',alt:'Weedy seadragon'},
+  pjshark:{src:'images/portjackson.png',alt:'Port Jackson shark'},
+  groper:{src:'images/groper.png',alt:'Eastern blue groper'},
+  cuttle:{src:'images/cuttle.png',alt:'Giant cuttlefish'},
+  bluedevil:{src:'images/bluedevil.webp',alt:'Eastern blue devil'}
 };
-function artHeight(fallbackPx){
- var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();
- var n=parseInt(v,10);
- return isNaN(n)?(fallbackPx||190):n;
-}
-function ART_html(key,h){
- var ph=PHOTOS[key];
- var hh=(h||artHeight(190));
- return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center">'
-  +'<img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy"'
-  +' onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'">'
-  +'</div>';
-}
-var ART={
- seadragon:function(){return ART_html('seadragon');},
- pjshark:function(){return ART_html('pjshark');},
- groper:function(){return ART_html('groper');},
- cuttle:function(){return ART_html('cuttle');},
- bluedevil:function(){return ART_html('bluedevil');}
-};
+function artHeight(fallbackPx){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fallbackPx||190):n;}
+function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(190));return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'"></div>';}
+var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
+/* ── SITE DATA ── */
 var PHOTO_SCENES=[
- {img:'images/chowder.jpg', name:'Chowder Bay',
-  svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
- {img:'images/ctb.jpg',     name:'Cabbage Tree Bay',
-  svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')}
+  {img:'images/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
+  {img:'images/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')}
 ];
-
-var ALL_SITES=[
- 'Cabbage Tree Bay','Chowder Bay','Gordons Bay',
- 'Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay'
-];
-
+var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay'];
 function siteSVG(label,top,bottom,feature){
- var feat='';
- if(feature==='pier'){
-  feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round">'+
-   '<line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/>'+
-   '<line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/>'+
-   '<line x1="540" y1="60" x2="540" y2="300"/></g>'+
-   '<rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';
- }else{
-  feat='<g fill="#0e5b4f" opacity="0.85">'+
-   '<path d="M120 320 q-24 -120 8 -200 q14 80 -8 200 Z"/>'+
-   '<path d="M180 320 q18 -140 -6 -230 q-22 90 6 230 Z"/>'+
-   '<path d="M250 320 q-20 -110 6 -190 q16 70 -6 190 Z"/>'+
-   '<path d="M470 320 q24 -130 -6 -215 q-20 85 6 215 Z"/>'+
-   '<path d="M540 320 q-18 -120 8 -195 q14 75 -8 195 Z"/></g>';
- }
- var fish='<g fill="#f3c64f" opacity="0.9">'+
-   '<ellipse cx="360" cy="150" rx="22" ry="10"/>'+
-   '<path d="M338 150 l-16 -10 l0 20 Z"/></g>'+
-   '<g fill="#ef7a52" opacity="0.85">'+
-   '<ellipse cx="430" cy="210" rx="16" ry="8"/>'+
-   '<path d="M446 210 l14 -8 l0 16 Z"/></g>';
- return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" '+
-  'style="width:100%;display:block;border-radius:14px">'+
-  '<defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1">'+
-  '<stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/>'+
-  '</linearGradient></defs>'+
-  '<rect width="660" height="320" fill="url(#g_'+feature+')"/>'+
-  '<g fill="#ffffff" opacity="0.12">'+
-  '<circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/>'+
-  '<circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g>'+
-  '<rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+
-  feat+fish+
-  '</svg>';
+  var feat='';
+  if(feature==='pier'){feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round"><line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/><line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/><line x1="540" y1="60" x2="540" y2="300"/></g><rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';}
+  else{feat='<g fill="#0e5b4f" opacity="0.85"><path d="M120 320 q-24 -120 8 -200 q14 80 -8 200 Z"/><path d="M180 320 q18 -140 -6 -230 q-22 90 6 230 Z"/><path d="M250 320 q-20 -110 6 -190 q16 70 -6 190 Z"/><path d="M470 320 q24 -130 -6 -215 q-20 85 6 215 Z"/><path d="M540 320 q-18 -120 8 -195 q14 75 -8 195 Z"/></g>';}
+  var fish='<g fill="#f3c64f" opacity="0.9"><ellipse cx="360" cy="150" rx="22" ry="10"/><path d="M338 150 l-16 -10 l0 20 Z"/></g><g fill="#ef7a52" opacity="0.85"><ellipse cx="430" cy="210" rx="16" ry="8"/><path d="M446 210 l14 -8 l0 16 Z"/></g>';
+  return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:14px"><defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/></linearGradient></defs><rect width="660" height="320" fill="url(#g_'+feature+')"/><g fill="#ffffff" opacity="0.12"><circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/><circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g><rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+feat+fish+'</svg>';
 }
 
+/* ── CREATURE DATA ── */
 var CR={
- seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
- pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
- groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,f:'The NSW state fish. The big blue males all start life as females.'},
- cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world\'s largest cuttlefish and a master colour-changer.'},
- bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,f:'A shy, cave-loving fish found only along the NSW coast.'}
+  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
+  pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
+  groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,f:'The NSW state fish. The big blue males all start life as females.'},
+  cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world\'s largest cuttlefish and a master colour-changer.'},
+  bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,f:'A shy, cave-loving fish found only along the NSW coast.'}
 };
 var KEYS=Object.keys(CR);
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var $=function(id){return document.getElementById(id);};
 
-var nav=$('nav');
-nav.querySelectorAll('button').forEach(function(b){b.onclick=function(){
- nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
- b.classList.add('on');
- document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
- $('p-'+b.dataset.p).classList.add('show');
- window.scrollTo(0,0);
-};});
-
-/* QUIZ */
-var qScore=0,qTotal=0;
-function quizRound(){
- $('qfact').textContent='';$('qnext').style.display='none';
- var key=KEYS[Math.floor(Math.random()*KEYS.length)];
- $('qart').innerHTML=ART_html(key);
- var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
- $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
- $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
-  qTotal++;
-  $('qopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
-  if(btn.dataset.k===key){qScore++;award();}
-  else{btn.classList.add('wrong');penalize();}
-  $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;
-  $('qfact').textContent=CR[key].f;$('qnext').style.display='inline-block';
- };});
+/* ── GAME FLOW ── */
+var GAME_ORDER=['quiz','log','guess','trumps'];
+var currentGame=0;
+function updateStrip(active){
+  GAME_ORDER.forEach(function(g,i){
+    var el=$('gs-'+g);el.classList.remove('active','done');
+    if(i<GAME_ORDER.indexOf(active))el.classList.add('done');
+    else if(g===active)el.classList.add('active');
+  });
 }
-$('qnext').onclick=quizRound;quizRound();
+function showPanel(id){document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});$(id).classList.add('show');window.scrollTo(0,0);}
+function advanceGame(){currentGame++;if(currentGame>=GAME_ORDER.length){showHallOfFame();return;}startGame(GAME_ORDER[currentGame]);}
+function startGame(name){
+  updateStrip(name);showPanel('p-'+name);
+  if(name==='quiz')initQuiz();
+  else if(name==='log')initLog();
+  else if(name==='guess')initGuess();
+  else if(name==='trumps')initTrumps();
+}
 
-/* LOG */
+/* ── QUIZ ── */
+var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
+function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';quizRound();}
+function quizRound(){
+  qAnswered=false;$('qfact').textContent='';$('qnext').style.display='none';$('qnotice').textContent='';
+  var key=qQueue.shift();
+  $('qart').innerHTML=ART_html(key);
+  var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
+  $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
+  $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(qAnswered)return;qAnswered=true;qTotal++;
+    $('qopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
+    if(btn.dataset.k===key){qScore++;award();}else{btn.classList.add('wrong');penalize();}
+    $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=CR[key].f;
+    if(qQueue.length>0)$('qnext').style.display='inline-block';
+    else{$('qnotice').textContent='All creatures done! Moving to Spotter Log…';setTimeout(advanceGame,2200);}
+  };});
+}
+$('qnext').onclick=quizRound;
+
+/* ── LOG ── */
 var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
 var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin'];
-var logFound={};
-var logDone=false;
+var logFound={},logDone=false;
+function initLog(){
+  logFound={};logDone=false;$('logn').textContent=0;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
+  $('logscene').innerHTML='<img src="images/spotter1.png" alt="Underwater scene" class="logsceneimg" loading="lazy">';
+  var opts=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
+  $('logchips').innerHTML=opts.map(function(sp){return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';}).join('');
+  $('logchips').querySelectorAll('.chip').forEach(function(b){b.onclick=function(){
+    if(logDone||b.classList.contains('chip-done')||b.classList.contains('chip-wrong'))return;
+    if(LOG_PRESENT.indexOf(b.dataset.sp)>-1){logFound[b.dataset.sp]=true;b.classList.add('chip-done');b.textContent=b.dataset.sp+' ✓';award();renderLog();}
+    else{b.classList.add('chip-wrong');b.textContent=b.dataset.sp+' ✗';$('logmsg').textContent='Not in this scene — keep looking.';penalize();}
+  };});
+}
 function renderLog(){
- var n=Object.keys(logFound).length;
- $('logn').textContent=n;
- $('logbar').style.width=(n/3*100)+'%';
- if(n===3){$('logmsg').textContent='Nice eye — you spotted all three! 🏆';logDone=true;}
+  var n=Object.keys(logFound).length;$('logn').textContent=n;$('logbar').style.width=(n/3*100)+'%';
+  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Moving to Where am I?…';setTimeout(advanceGame,2200);}
 }
-$('logscene').innerHTML='<img src="images/spotter1.png" alt="Underwater scene — spot the species" class="logsceneimg" loading="lazy">';
-var logOptions=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
-$('logchips').innerHTML=logOptions.map(function(sp){
- return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';
-}).join('');
-$('logchips').querySelectorAll('.chip').forEach(function(b){
- b.onclick=function(){
-  if(logDone||b.classList.contains('chip-done')||b.classList.contains('chip-wrong'))return;
-  if(LOG_PRESENT.indexOf(b.dataset.sp)>-1){
-   logFound[b.dataset.sp]=true;
-   b.classList.add('chip-done');
-   b.textContent=b.dataset.sp+' ✓';
-   award();
-   renderLog();
-  }else{
-   b.classList.add('chip-wrong');
-   b.textContent=b.dataset.sp+' ✗';
-   $('logmsg').textContent='Not in this scene — keep looking.';
-   penalize();
-  }
- };
-});
-renderLog();
 
-/* GUESS */
-var gScore=0,gTotal=0;
-var gUsed=[];
+/* ── GUESS ── */
+var gScore=0,gTotal=0,gQueue=[],gAnswered=false;
+function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice());$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
 function guessRound(){
- $('gnext').style.display='none';
- if(gUsed.length>=PHOTO_SCENES.length) gUsed=[];
- var available=PHOTO_SCENES.filter(function(s,i){return gUsed.indexOf(i)<0;});
- var pick=available[Math.floor(Math.random()*available.length)];
- var pickIdx=PHOTO_SCENES.indexOf(pick);
- gUsed.push(pickIdx);
- var correctName=pick.name;
- var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
- var opts=shuffle([correctName].concat(wrong));
- $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px">'+
-  '<img src="'+pick.img+'" alt="Underwater photo — guess the site" '+
-  'style="width:100%;display:block;max-height:240px;object-fit:cover;border-radius:14px" loading="lazy" '+
-  'onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg">'+
-  '</div>';
- $('gopts').innerHTML=opts.map(function(n){
-  return '<button class="opt" data-n="'+n+'">'+n+'</button>';
- }).join('');
- $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
-  gTotal++;
-  $('gopts').querySelectorAll('.opt').forEach(function(x){
-   x.disabled=true;
-   if(x.dataset.n===correctName)x.classList.add('right');
-  });
-  if(btn.dataset.n===correctName){gScore++;award();}
-  else{btn.classList.add('wrong');penalize();}
-  $('gscore').textContent=gScore;
-  $('gtotal').textContent=gTotal;
-  $('gnext').style.display='inline-block';
- };});
+  gAnswered=false;$('gnext').style.display='none';$('gnotice').textContent='';
+  var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
+  var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
+  var opts=shuffle([correctName].concat(wrong));
+  $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:240px;object-fit:cover;border-radius:14px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
+  $('gopts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+n+'">'+n+'</button>';}).join('');
+  $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(gAnswered)return;gAnswered=true;gTotal++;
+    $('gopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.n===correctName)x.classList.add('right');});
+    if(btn.dataset.n===correctName){gScore++;award();}else{btn.classList.add('wrong');penalize();}
+    $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;
+    if(gQueue.length>0)$('gnext').style.display='inline-block';
+    else{$('gnotice').textContent='All sites guessed! Moving to Stat Battle…';setTimeout(advanceGame,2200);}
+  };});
 }
-$('gnext').onclick=guessRound;guessRound();
+$('gnext').onclick=guessRound;
 
-/* TRUMPS */
-var tWin=0,tLose=0;
-var STATS=[
- ['len','Length','cm'],
- ['depth','Max depth','m'],
- ['speed','Speed','km/h'],
- ['life','Lifespan','yrs'],
- ['eggs','Eggs / season',''],
- ['camo','Camouflage','/10']
-];
-function fmtVal(s,v){
- if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);
- if(s==='speed')return v<1?v.toFixed(2):String(v);
- return String(v);
-}
+/* ── TRUMPS ── */
+var TRUMPS_ROUNDS=5,tWin=0,tLose=0,tRound=0,tQueue=[];
+var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs / season',''],['camo','Camouflage','/10']];
+function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
 function trumpsArtH(){return Math.round(artHeight(190)*0.62);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
- return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p>'+
-  '<div style="margin-bottom:8px">'+ART_html(key,trumpsArtH())+'</div>'+
-  STATS.map(function(s){
-   var lk=(s[0]==='len'&&lenLocked);
-   if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';
-   var lbl=s[1]+(lk?' <span class="note">too lopsided</span>':'');
-   var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');
-   return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'>'+
-    '<span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';
-  }).join('');}
-function deal(){
- $('tresult').textContent='';$('tdeal').style.display='none';
- var two=shuffle(KEYS).slice(0,2);var pk=two[0],ck=two[1];
- var lenLocked=Math.max(CR[pk].len,CR[ck].len)/Math.min(CR[pk].len,CR[ck].len)>2;
- $('pcard').innerHTML=cardHtml(pk,'Your card',false,lenLocked);
- $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',true,lenLocked);
- $('pcard').querySelectorAll('.statbtn:not(:disabled)').forEach(function(b){b.onclick=function(){
-  var s=b.dataset.s;
-  $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',false,lenLocked);
-  $('pcard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;});
-  $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
-  b.style.borderColor='var(--accent)';
-  var pv=CR[pk][s],cv=CR[ck][s];
-  if(pv>cv){tWin++;$('tresult').textContent='You win the round! 🎉';$('tresult').style.color='var(--good)';award();}
-  else if(pv<cv){tLose++;$('tresult').textContent='The reef takes it.';$('tresult').style.color='var(--bad)';penalize();}
-  else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
-  $('twin').textContent=tWin;$('tlose').textContent=tLose;$('tdeal').style.display='inline-block';
- };});
+  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:8px">'+ART_html(key,trumpsArtH())+'</div>'+
+    STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">too lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
+function initTrumps(){
+  tWin=0;tLose=0;tRound=0;
+  var allPairs=[];for(var i=0;i<KEYS.length;i++)for(var j=i+1;j<KEYS.length;j++)allPairs.push([KEYS[i],KEYS[j]]);
+  tQueue=shuffle(allPairs).slice(0,TRUMPS_ROUNDS);
+  $('twin').textContent=0;$('tlose').textContent=0;$('troundtotal').textContent=TRUMPS_ROUNDS;$('tnotice').textContent='';
+  dealRound();
 }
-$('tdeal').onclick=deal;deal();
+function dealRound(){
+  $('tresult').textContent='';$('tdeal').style.display='none';$('tnotice').textContent='';tRound++;$('tround').textContent=tRound;
+  var pair=tQueue[tRound-1],pk=pair[0],ck=pair[1];
+  var lenLocked=Math.max(CR[pk].len,CR[ck].len)/Math.min(CR[pk].len,CR[ck].len)>2;
+  $('pcard').innerHTML=cardHtml(pk,'Your card',false,lenLocked);
+  $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',true,lenLocked);
+  $('pcard').querySelectorAll('.statbtn:not(:disabled)').forEach(function(b){b.onclick=function(){
+    var s=b.dataset.s;
+    $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',false,lenLocked);
+    $('pcard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;});
+    $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
+    b.style.borderColor='var(--accent)';
+    var pv=CR[pk][s],cv=CR[ck][s];
+    if(pv>cv){tWin++;$('tresult').textContent='You win the round! 🎉';$('tresult').style.color='var(--good)';award();}
+    else if(pv<cv){tLose++;$('tresult').textContent='The reef takes it.';$('tresult').style.color='var(--bad)';penalize();}
+    else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
+    $('twin').textContent=tWin;$('tlose').textContent=tLose;
+    if(tRound<TRUMPS_ROUNDS)$('tdeal').style.display='inline-block';
+    else{$('tnotice').textContent='Battle complete! Heading to the Hall of Fame…';setTimeout(advanceGame,2400);}
+  };});
+}
+$('tdeal').onclick=dealRound;
 
-/* ---------- HALL OF FAME ---------- */
+/* ── HALL OF FAME ── */
 var MOCK_BOARDS={
- 'Young Explorer':[
-  ['Coral Kid',210],['Finn',190],['Nemo Jr',175],['Pearl',160],['Shelly',150],
-  ['Captain Squid',135],['Bubbles',120],['Sandy',105],['Little Ray',90],['Minnow',75]
- ],
- 'Teen Explorer':[
-  ['ReefRider',360],['KelpQueen',330],['TidalWave',305],['DeepBlue',280],['SaltSpray',255],
-  ['CurrentC',230],['FinFlash',205],['WaveRunner',180],['EbbTide',155],['ShoalScout',130]
- ],
- 'Adult Explorer':[
-  ['Capt. Marlow',520],['Dr. Reef',480],['BlueWaterBec',445],['SeagrassSam',410],['AbyssAndy',380],
-  ['NudibranchN',350],['TrenchTom',320],['HarbourHana',290],['DriftDan',260],['LagoonLou',230]
- ]
+  'Young Explorer':[['Coral Kid',210],['Finn',190],['Nemo Jr',175],['Pearl',160],['Shelly',150],['Captain Squid',135],['Bubbles',120],['Sandy',105],['Little Ray',90],['Minnow',75]],
+  'Teen Explorer':[['ReefRider',360],['KelpQueen',330],['TidalWave',305],['DeepBlue',280],['SaltSpray',255],['CurrentC',230],['FinFlash',205],['WaveRunner',180],['EbbTide',155],['ShoalScout',130]],
+  'Adult Explorer':[['Capt. Marlow',520],['Dr. Reef',480],['BlueWaterBec',445],['SeagrassSam',410],['AbyssAndy',380],['NudibranchN',350],['TrenchTom',320],['HarbourHana',290],['DriftDan',260],['LagoonLou',230]]
 };
 function encourageMsg(rank,total){
- var n=USER.name;
- if(rank===1)return '🥇 Incredible, '+n+'! You\'re top of the reef — a true marine legend!';
- if(rank<=3)return '🌟 Amazing work, '+n+'! You\'re right up there with the best divers in your group!';
- if(rank<=total/2)return '🐠 Great diving, '+n+'! You\'re swimming strong in the top half — keep exploring!';
- return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play another round to climb the ranks!';
+  var n=USER.name;
+  if(rank===1)return '🥇 Incredible, '+n+'! You\'re top of the reef — a true marine legend!';
+  if(rank<=3)return '🌟 Amazing work, '+n+'! You\'re right up there with the best divers in your group!';
+  if(rank<=total/2)return '🐠 Great diving, '+n+'! You\'re swimming strong in the top half — keep exploring!';
+  return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play another round to climb the ranks!';
 }
 function showHallOfFame(){
- nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
- document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
- $('p-hof').classList.add('show');
- window.scrollTo(0,0);
-
- var base=(MOCK_BOARDS[USER.group]||MOCK_BOARDS['Adult Explorer']).slice();
- var entries=base.map(function(e){return {name:e[0],score:e[1],me:false};});
- entries.push({name:USER.name+' (you)',score:POINTS,me:true});
- entries.sort(function(a,b){return b.score-a.score;});
-
- var meIdx=entries.findIndex(function(e){return e.me;});
- var mid=Math.floor(entries.length/2);
- if(meIdx!==mid){
-  var me=entries.splice(meIdx,1)[0];
-  entries.splice(mid,0,me);
- }
-
- $('hofGroupLabel').textContent=USER.group;
- var myRank=entries.findIndex(function(e){return e.me;})+1;
- $('hofEncourage').textContent=encourageMsg(myRank,entries.length);
-
- var medals=['🥇','🥈','🥉'];
- $('hofList').innerHTML=entries.map(function(e,i){
-  var rank=i+1;
-  var badge=medals[i]||'';
-  return '<div class="lrow'+(e.me?' me':'')+'">'+
-   '<div class="l"><span class="rank">'+rank+'</span>'+
-   '<span class="medal">'+badge+'</span>'+
-   '<span class="nm">'+e.name+'</span></div>'+
-   '<span class="sc">'+e.score+' pts</span></div>';
- }).join('');
+  GAME_ORDER.forEach(function(g){var el=$('gs-'+g);el.classList.remove('active');el.classList.add('done');});
+  showPanel('p-hof');
+  var base=(MOCK_BOARDS[USER.group]||MOCK_BOARDS['Adult Explorer']).slice();
+  var entries=base.map(function(e){return {name:e[0],score:e[1],me:false};});
+  entries.push({name:USER.name+' (you)',score:POINTS,me:true});
+  entries.sort(function(a,b){return b.score-a.score;});
+  var meIdx=entries.findIndex(function(e){return e.me;});
+  var mid=Math.floor(entries.length/2);
+  if(meIdx!==mid){var me=entries.splice(meIdx,1)[0];entries.splice(mid,0,me);}
+  $('hofGroupLabel').textContent=USER.group;
+  var myRank=entries.findIndex(function(e){return e.me;})+1;
+  $('hofEncourage').textContent=encourageMsg(myRank,entries.length);
+  var medals=['🥇','🥈','🥉'];
+  $('hofList').innerHTML=entries.map(function(e,i){var rank=i+1,badge=medals[i]||'';return '<div class="lrow'+(e.me?' me':'')+'"><div class="l"><span class="rank">'+rank+'</span><span class="medal">'+badge+'</span><span class="nm">'+e.name+'</span></div><span class="sc">'+e.score+' pts</span></div>';}).join('');
 }
-document.querySelectorAll('.done-btn').forEach(function(b){b.onclick=showHallOfFame;});
-$('hofBack').onclick=function(){
- document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
- $('p-quiz').classList.add('show');
- nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
- nav.querySelector('[data-p="quiz"]').classList.add('on');
- window.scrollTo(0,0);
+
+/* ── PLAY AGAIN ── */
+$('hofPlayAgain').onclick=function(){
+  /* Reset state */
+  POINTS=0;syncPoints();currentGame=0;
+  /* Hide app */
+  document.getElementById('app').style.display='none';
+  /* Flag to skip welcome screen after splash */
+  window._skipWelcome=true;
+  /* Update points bar with existing user */
+  document.getElementById('whoName').textContent=USER.name;
+  document.getElementById('whoGroup').textContent=USER.group;
+  /* Replay splash — it will call startGame('quiz') directly after tap */
+  window.SPLASH_CTRL.replay();
 };
 </script>
 </body>
