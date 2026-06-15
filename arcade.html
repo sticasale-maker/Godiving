@@ -2,36 +2,39 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <title>Go Diving Show Arcade</title>
 <style>
   :root{
     --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
     --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
     --coral:#ef7a52; --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
+    --artH:260px; /* quiz image height, shrunk on small screens via media queries */
   }
   *{box-sizing:border-box}
+  html,body{height:100%}
   body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #0b3a4d, #06222e 60%);color:var(--text);
     font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    line-height:1.6; -webkit-font-smoothing:antialiased; min-height:100vh}
-  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
-  h1{font-size:26px;font-weight:600;margin:0 0 4px;letter-spacing:.2px}
-  .sub{color:var(--muted);margin:0 0 22px;font-size:15px}
-  .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+    line-height:1.5; -webkit-font-smoothing:antialiased; min-height:100vh; min-height:100dvh}
+  .wrap{max-width:860px;margin:0 auto;padding:20px 16px calc(28px + env(safe-area-inset-bottom))}
+  h1{font-size:24px;font-weight:600;margin:0 0 4px;letter-spacing:.2px}
+  .sub{color:var(--muted);margin:0 0 18px;font-size:15px}
+  .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px}
   .nav button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;
-    padding:9px 14px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+    padding:9px 14px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s;
+    white-space:nowrap}
   .nav button:hover{border-color:var(--accent)}
   .nav button.on{background:var(--accent);color:#04282a;border-color:var(--accent);font-weight:600}
   .panel{display:none;animation:fade .25s ease}
   .panel.show{display:block}
   @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
-  .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap}
   .head p{margin:0;color:var(--muted);font-size:15px}
   .score{font-size:15px;color:var(--muted)}
   .score b{color:var(--text)}
   .sea{background:linear-gradient(#bfe3ef,#8ec6dc);border-radius:14px;padding:10px;border:1px solid var(--line)}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
-  button.opt{display:block;width:100%;text-align:left;margin:8px 0;background:var(--bg2);color:var(--text);
+  button.opt{display:block;width:100%;text-align:left;margin:7px 0;background:var(--bg2);color:var(--text);
     border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;cursor:pointer;transition:.12s}
   button.opt:hover:not(:disabled){border-color:var(--accent)}
   button.opt:disabled{cursor:default;opacity:.95}
@@ -41,12 +44,12 @@
     font-weight:600;cursor:pointer;margin-top:10px}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
   .btn.done{background:var(--gold);color:#3a2c00}
-  .fact{font-size:14.5px;color:var(--muted);min-height:22px;margin:10px 0 0}
+  .fact{font-size:14.5px;color:var(--muted);min-height:20px;margin:8px 0 0}
   .grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
   @media(max-width:640px){.grid2{grid-template-columns:1fr}}
   .tag{display:inline-block;background:var(--accentd);color:var(--accent);font-size:12.5px;padding:4px 10px;
     border-radius:8px;margin:0 5px 5px 0}
-  .bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:14px;border:1px solid var(--line)}
+  .bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:12px;border:1px solid var(--line)}
   .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
   .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);
     border-radius:10px;margin:7px 0;background:var(--bg2)}
@@ -55,7 +58,7 @@
   .row button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;
     padding:7px 12px;font-size:13.5px;cursor:pointer;min-width:118px}
   .spotted{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
-  .logsceneimg{width:100%;border-radius:14px;border:1px solid var(--line);display:block;object-fit:cover;max-height:300px}
+  .logsceneimg{width:100%;border-radius:14px;border:1px solid var(--line);display:block;object-fit:cover;max-height:260px}
   .chip{padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--text);font-size:15px;cursor:pointer;transition:.15s;font-family:inherit}
   .chip:hover:not(.chip-done):not(.chip-wrong){border-color:var(--accent)}
   .chip-done{background:var(--goodd);border-color:var(--good);color:#cdf3df;cursor:default}
@@ -75,45 +78,52 @@
   .statbtn .note{font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}
   .statrow{display:flex;justify-content:space-between;margin:6px 0;background:var(--bg2);border:1px solid var(--line);
     border-radius:9px;padding:8px 11px;font-size:13.5px}
-  .tres{text-align:center;font-size:16px;font-weight:600;min-height:24px;margin:12px 0 4px}
+  .tres{text-align:center;font-size:16px;font-weight:600;min-height:22px;margin:10px 0 4px}
   svg{display:block}
 
   /* Splash screen */
   #splash{position:fixed;inset:0;z-index:1000;background:#04161e;display:flex;align-items:center;
     justify-content:center;overflow:hidden}
-  #splash video{width:100%;height:100%;object-fit:cover}
+  #splash video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#04161e}
   #splashFallback{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
     justify-content:center;text-align:center;
     background:radial-gradient(1000px 500px at 50% 20%, #0b3a4d, #04161e 70%)}
   #splashFallback .big{font-size:54px;margin-bottom:6px}
   #splashFallback h1{font-size:30px}
   #splashFallback p{color:var(--muted);margin:2px 0 0}
-  #splashSkip{position:absolute;bottom:26px;right:24px;z-index:2;background:rgba(4,22,30,.55);
-    color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:9px 18px;
-    font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s}
+  #splashTap{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;cursor:pointer;z-index:3;
+    background:radial-gradient(1000px 500px at 50% 30%, rgba(11,58,77,.35), rgba(4,22,30,.65) 70%)}
+  #splashTap .play{width:84px;height:84px;border-radius:50%;background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;
+    font-size:34px;margin-bottom:14px}
+  #splashTap p{margin:0;font-weight:600;color:#eaf6fb}
+  #splashSkip{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:4;
+    background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;
+    padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s}
   #splashSkip:hover{background:rgba(4,22,30,.8);border-color:var(--accent)}
   .splash-hide{animation:splashOut .5s ease forwards}
   @keyframes splashOut{to{opacity:0;visibility:hidden}}
 
   /* Logo bar */
-  .logobar{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:0 0 16px}
-  .logobar .logo{height:64px;width:auto;border-radius:12px;display:block;object-fit:contain}
-  .logobar .sep{width:1px;height:40px;background:var(--line)}
-  @media(max-width:480px){.logobar .logo{height:54px}}
+  .logobar{display:flex;align-items:center;justify-content:center;gap:16px;flex-wrap:wrap;margin:0 0 14px}
+  .logobar .logo{height:60px;width:auto;border-radius:12px;display:block;object-fit:contain}
+  .logobar .logo.circle{width:60px;height:60px;border-radius:50%;object-fit:cover}
+  .logobar .sep{width:1px;height:38px;background:var(--line)}
 
   /* Welcome page */
-  .welcome{max-width:460px;margin:5vh auto 0;text-align:center}
-  .welcome .wcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 24px}
-  .welcome label{display:block;text-align:left;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
+  .welcome{max-width:460px;margin:4vh auto 0;text-align:center}
+  .welcome .wcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:22px 20px}
+  .welcome label{display:block;text-align:left;font-size:13.5px;color:var(--muted);margin:12px 0 6px}
   .welcome input{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);
     font-size:16px;padding:12px 14px;font-family:inherit}
   .welcome input:focus{outline:none;border-color:var(--accent)}
   .werr{color:var(--bad);font-size:13.5px;min-height:18px;margin:10px 0 0}
-  .welcome .btn{width:100%;margin-top:18px;padding:13px}
+  .welcome .btn{width:100%;margin-top:16px;padding:13px}
 
   /* Points pill */
-  .pointsbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
-    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:18px}
+  .pointsbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:9px 14px;margin-bottom:14px}
   .pointsbar .who{font-size:14.5px}
   .pointsbar .who b{color:var(--text)}
   .pointsbar .who .grp{display:inline-block;background:var(--accentd);color:var(--accent);font-size:12px;
@@ -123,13 +133,13 @@
   .pts .fl{display:inline-block;margin-left:8px;font-size:13px;opacity:0;transition:opacity .2s;font-weight:600}
   .pts .fl.up{color:var(--good)}
   .pts .fl.down{color:var(--bad)}
-  .donewrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+  .donewrap{margin-top:14px;padding-top:12px;border-top:1px solid var(--line)}
 
   /* Hall of fame */
-  .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;
-    border:1px solid var(--line);border-radius:11px;margin:7px 0;background:var(--bg2);font-size:15px}
+  .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 14px;
+    border:1px solid var(--line);border-radius:11px;margin:6px 0;background:var(--bg2);font-size:15px}
   .hof .lrow .l{display:flex;align-items:center;gap:12px}
-  .hof .lrow .rank{width:30px;font-weight:700;color:var(--muted);text-align:center}
+  .hof .lrow .rank{width:28px;font-weight:700;color:var(--muted);text-align:center}
   .hof .lrow .nm{font-weight:500}
   .hof .lrow .sc{font-weight:700;color:var(--gold)}
   .hof .me{background:var(--accentd);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
@@ -137,20 +147,88 @@
   .hof .me .rank{color:var(--accent)}
   .hof .medal{font-size:16px;width:20px;text-align:center}
   .encourage{text-align:center;font-size:16px;background:var(--goodd);border:1px solid var(--good);
-    color:#cdf3df;border-radius:12px;padding:14px 16px;margin:8px 0 18px}
+    color:#cdf3df;border-radius:12px;padding:13px 16px;margin:6px 0 14px}
+
+  /* The quiz/trumps art height is driven by --artH so media queries can shrink it */
+
+  /* ===== TABLET / SMALL LAPTOP ===== */
+  @media(max-width:760px){
+    :root{--artH:230px}
+  }
+
+  /* ===== PHONES (≤560px) — compact the chrome, keep actions above the fold ===== */
+  @media(max-width:560px){
+    :root{--artH:190px}
+    .wrap{padding:14px 13px calc(20px + env(safe-area-inset-bottom))}
+    h1{font-size:21px}
+    .sub{font-size:13.5px;margin-bottom:12px;line-height:1.4}
+    /* horizontal-scroll nav so the four tabs stay on one row */
+    .nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
+      margin:0 -13px 14px;padding:0 13px 2px;scrollbar-width:none}
+    .nav::-webkit-scrollbar{display:none}
+    .nav button{flex:0 0 auto;padding:8px 12px;font-size:13.5px}
+    .logobar{gap:12px;margin-bottom:12px}
+    .logobar .logo{height:48px}
+    .logobar .logo.circle{width:48px;height:48px}
+    .logobar .sep{height:30px}
+    .pointsbar{padding:8px 12px;margin-bottom:12px}
+    .pointsbar .who{font-size:13.5px}
+    .pts{font-size:14px}.pts b{font-size:16px}
+    .head{margin-bottom:8px}
+    .head p{font-size:14px}
+    .score{font-size:14px}
+    button.opt{padding:10px 13px;font-size:14.5px;margin:6px 0}
+    .btn{padding:11px 16px} /* keep a comfy tap target */
+    .chip{padding:9px 13px;font-size:14px}
+    .statbtn{padding:7px 10px;font-size:13px}
+    .statrow{padding:7px 10px;font-size:13px}
+    .tcard{padding:8px}
+    .tcards{gap:9px}
+    .donewrap{margin-top:12px;padding-top:10px}
+    .encourage{font-size:14.5px;padding:11px 13px}
+    .hof .lrow{padding:9px 12px;font-size:14px}
+    /* On the welcome card, tighten so name+age+button fit without scrolling */
+    .welcome{margin-top:2vh}
+    .welcome .wcard{padding:18px 16px}
+  }
+
+  /* ===== SMALL PHONES (≤380px: iPhone SE, mini, older Androids) ===== */
+  @media(max-width:380px){
+    :root{--artH:165px}
+    h1{font-size:19px}
+    .sub{font-size:12.5px}
+    .logobar .logo{height:42px}
+    .logobar .logo.circle{width:42px;height:42px}
+    button.opt{font-size:14px;padding:9px 12px}
+    .chip{font-size:13px;padding:8px 11px}
+    .nav button{font-size:13px;padding:7px 11px}
+    .tcard .tt{font-size:14px}
+  }
+
+  /* ===== SHORT VIEWPORTS (landscape phones / small heights) ===== */
+  @media(max-height:560px){
+    :root{--artH:150px}
+    .logobar{display:none} /* reclaim vertical space when height is tight */
+    .sub{display:none}
+    .wrap{padding-top:12px}
+  }
 </style>
 </head>
 <body>
 
 <!-- SPLASH SCREEN -->
 <div id="splash">
-  <video id="splashVideo" autoplay muted playsinline preload="auto">
+  <video id="splashVideo" autoplay muted playsinline webkit-playsinline preload="auto">
     <source src="images/splash.mp4" type="video/mp4">
   </video>
   <div id="splashFallback">
     <div class="big">🌊🤿</div>
     <h1>Go Diving Show Arcade</h1>
     <p>Loading the reef…</p>
+  </div>
+  <div id="splashTap">
+    <div class="play">▶</div>
+    <p>Tap to start</p>
   </div>
   <button id="splashSkip">Skip ⏭</button>
 </div>
@@ -163,11 +241,11 @@
       <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo"
            onerror="this.outerHTML=LOGO_FALLBACK.godiving">
       <span class="sep"></span>
-      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo"
+      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo circle"
            onerror="this.outerHTML=LOGO_FALLBACK.viz">
     </div>
     <h1 style="margin-bottom:2px">Go Diving Show Arcade</h1>
-    <p class="sub" style="margin-bottom:18px">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
+    <p class="sub" style="margin-bottom:14px">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
     <div class="wcard">
       <p style="margin:0 0 4px;font-weight:600">Welcome, marine enthusiast! 🐙</p>
       <p style="margin:0;color:var(--muted);font-size:14px">Tell us who's exploring today.</p>
@@ -186,7 +264,7 @@
       <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo"
            onerror="this.outerHTML=LOGO_FALLBACK.godiving">
       <span class="sep"></span>
-      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo"
+      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo circle"
            onerror="this.outerHTML=LOGO_FALLBACK.viz">
     </div>
     <h1>🌊 Go Diving Show Arcade</h1>
@@ -208,7 +286,7 @@
     <div class="panel show" id="p-quiz">
       <div class="head"><p>Name the creature</p><span class="score">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span></div>
       <div id="qart" style="border-radius:14px;overflow:hidden;"></div>
-      <div id="qopts" style="margin-top:12px"></div>
+      <div id="qopts" style="margin-top:10px"></div>
       <p class="fact" id="qfact"></p>
       <button class="btn" id="qnext" style="display:none">Next creature →</button>
       <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
@@ -228,7 +306,7 @@
     <div class="panel" id="p-guess">
       <div class="head"><p>Which Sydney dive site is this?</p><span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span></div>
       <div id="gart"></div>
-      <div id="gopts" style="margin-top:12px"></div>
+      <div id="gopts" style="margin-top:10px"></div>
       <button class="btn" id="gnext" style="display:none">Next location →</button>
       <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
     </div>
@@ -261,20 +339,14 @@
  var splash=document.getElementById('splash');
  var video=document.getElementById('splashVideo');
  var fallback=document.getElementById('splashFallback');
+ var tap=document.getElementById('splashTap');
  var skip=document.getElementById('splashSkip');
- var dismissed=false;
+ var dismissed=false, started=false;
 
- /* Play the splash at 2x. playbackRate resets if set before metadata loads,
-    so apply it on loadedmetadata and again on play to be safe. */
  var SPEED=2;
  function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
- video.addEventListener('loadedmetadata',applySpeed);
- video.addEventListener('play',applySpeed);
- applySpeed();
 
- function showWelcome(){
-  document.getElementById('welcome').style.display='block';
- }
+ function showWelcome(){document.getElementById('welcome').style.display='block';}
  function dismiss(){
   if(dismissed)return;
   dismissed=true;
@@ -284,37 +356,52 @@
   setTimeout(function(){if(splash&&splash.parentNode)splash.parentNode.removeChild(splash);},520);
  }
 
- /* End of video → go to welcome */
+ function showFallback(){fallback.style.display='flex';setTimeout(dismiss,1800);}
+ function showTap(){tap.style.display='flex';}
+
+ video.addEventListener('playing',function(){started=true;tap.style.display='none';applySpeed();});
  video.addEventListener('ended',dismiss);
- /* If the video can't load/play, show a brief branded fallback then move on */
- video.addEventListener('error',function(){
-  fallback.style.display='flex';
-  setTimeout(dismiss,1800);
- });
- /* Some browsers block autoplay; if it never starts, the fallback timer covers it */
- var playAttempt=video.play&&video.play();
- if(playAttempt&&playAttempt.then){
-  playAttempt.then(applySpeed).catch(function(){
-   fallback.style.display='flex';
-   setTimeout(dismiss,1800);
-  });
+ video.addEventListener('error',showFallback);
+ video.querySelector('source').addEventListener('error',showFallback);
+
+ function attemptPlay(){
+  applySpeed();
+  var p=video.play&&video.play();
+  if(p&&p.then){
+   p.then(function(){started=true;applySpeed();})
+    .catch(function(){ if(!started) showTap(); });
+  }
  }
- /* Hard safety net: never let the splash hang longer than 12s */
- setTimeout(function(){if(!dismissed)dismiss();},12000);
+ video.addEventListener('loadeddata',attemptPlay);
+ video.addEventListener('canplay',attemptPlay);
+ attemptPlay();
+
+ tap.addEventListener('click',function(){
+  tap.style.display='none';
+  applySpeed();
+  var p=video.play&&video.play();
+  if(p&&p.then){p.then(function(){started=true;applySpeed();}).catch(dismiss);}
+ });
+
+ setTimeout(function(){
+  if(!started&&!dismissed&&tap.style.display!=='flex'&&fallback.style.display!=='flex'){showTap();}
+ },2500);
+
+ setTimeout(function(){if(!dismissed)dismiss();},15000);
 
  skip.addEventListener('click',dismiss);
 })();
 
 /* ---------- LOGO FALLBACKS (shown until real PNGs exist in images/) ---------- */
 var LOGO_FALLBACK={
- godiving:'<div style="height:64px;display:flex;align-items:center;gap:8px;padding:0 16px;'+
+ godiving:'<div style="height:60px;display:flex;align-items:center;gap:8px;padding:0 14px;'+
   'background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:12px">'+
   '<span style="font-size:22px">🤿</span>'+
   '<span style="font-weight:800;letter-spacing:.5px;font-size:15px;line-height:1.05;color:#eaf6fb;text-align:left">'+
   'GO DIVING<br><span style="font-size:11px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
- viz:'<div style="height:64px;width:64px;display:flex;align-items:center;justify-content:center;'+
+ viz:'<div style="height:60px;width:60px;display:flex;align-items:center;justify-content:center;'+
   'background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);'+
-  'border-radius:50%"><span style="font-weight:900;font-size:24px;color:#f3c64f;'+
+  'border-radius:50%"><span style="font-weight:900;font-size:22px;color:#f3c64f;'+
   'text-shadow:0 1px 2px rgba(0,0,0,.5);letter-spacing:1px">VIZ</span></div>'
 };
 
@@ -367,10 +454,16 @@ var PHOTOS={
  cuttle:   {src:'images/cuttle.png',      alt:'Giant cuttlefish'},
  bluedevil:{src:'images/bluedevil.webp',  alt:'Eastern blue devil'}
 };
+/* Heights are resolved from the --artH CSS variable so they shrink on small screens. */
+function artHeight(fallbackPx){
+ var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();
+ var n=parseInt(v,10);
+ return isNaN(n)?(fallbackPx||190):n;
+}
 function ART_html(key,h){
- h=h||190;
  var ph=PHOTOS[key];
- return '<div style="border-radius:10px;overflow:hidden;height:'+h+'px;background:#071e29;display:flex;align-items:center;justify-content:center">'
+ var hh=(h||artHeight(190));
+ return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center">'
   +'<img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy"'
   +' onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'">'
   +'</div>';
@@ -450,6 +543,7 @@ nav.querySelectorAll('button').forEach(function(b){b.onclick=function(){
  b.classList.add('on');
  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
  $('p-'+b.dataset.p).classList.add('show');
+ window.scrollTo(0,0); /* keep the new panel's top in view on phones */
 };});
 
 /* QUIZ */
@@ -457,7 +551,7 @@ var qScore=0,qTotal=0;
 function quizRound(){
  $('qfact').textContent='';$('qnext').style.display='none';
  var key=KEYS[Math.floor(Math.random()*KEYS.length)];
- $('qart').innerHTML=ART_html(key,260);
+ $('qart').innerHTML=ART_html(key);
  var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
  $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
  $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
@@ -521,7 +615,7 @@ function guessRound(){
  var opts=shuffle([correctName].concat(wrong));
  $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px">'+
   '<img src="'+pick.img+'" alt="Underwater photo — guess the site" '+
-  'style="width:100%;display:block;max-height:280px;object-fit:cover;border-radius:14px" loading="lazy" '+
+  'style="width:100%;display:block;max-height:240px;object-fit:cover;border-radius:14px" loading="lazy" '+
   'onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg">'+
   '</div>';
  $('gopts').innerHTML=opts.map(function(n){
@@ -557,9 +651,11 @@ function fmtVal(s,v){
  if(s==='speed')return v<1?v.toFixed(2):String(v);
  return String(v);
 }
+/* Trumps cards use a smaller image than the quiz to keep both cards + stats on one screen */
+function trumpsArtH(){return Math.round(artHeight(190)*0.62);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p>'+
-  '<div style="margin-bottom:8px">'+ART_html(key,160)+'</div>'+
+  '<div style="margin-bottom:8px">'+ART_html(key,trumpsArtH())+'</div>'+
   STATS.map(function(s){
    var lk=(s[0]==='len'&&lenLocked);
    if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';
@@ -615,6 +711,7 @@ function showHallOfFame(){
  nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
  $('p-hof').classList.add('show');
+ window.scrollTo(0,0);
 
  var base=(MOCK_BOARDS[USER.group]||MOCK_BOARDS['Adult Explorer']).slice();
  var entries=base.map(function(e){return {name:e[0],score:e[1],me:false};});
@@ -650,6 +747,7 @@ $('hofBack').onclick=function(){
  $('p-quiz').classList.add('show');
  nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
  nav.querySelector('[data-p="quiz"]').classList.add('on');
+ window.scrollTo(0,0);
 };
 </script>
 </body>
