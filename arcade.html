@@ -170,8 +170,8 @@
     position:fixed;inset:0;z-index:1000;background:#000;
     display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
   }
-  #splashVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block}
-  #splashCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none}
+  #splashVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;max-width:860px;left:50%;transform:translateX(-50%)}
+  #splashCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;max-width:860px;left:50%;transform:translateX(-50%)}
   #splashContinue{
     position:absolute;inset:0;z-index:5;display:none;
     flex-direction:column;align-items:center;justify-content:flex-end;
@@ -224,7 +224,7 @@
   .logobar .logo.circle{width:52px;height:52px;border-radius:50%;object-fit:cover}
   .logobar .sep{width:1px;height:34px;background:var(--line)}
   .arcade-insert{
-    font-family:'Press Start 2P',monospace;font-size:clamp(8px,2vw,11px);color:var(--gold);
+    font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,14px);color:var(--gold);
     text-align:center;margin:0 0 8px;animation:tapBlink 1.4s step-end infinite;letter-spacing:1px;
   }
   .wcard{
@@ -239,32 +239,32 @@
   }
   .wcard>*{position:relative;z-index:2}
   .arcade-title{
-    font-family:'Press Start 2P',monospace;font-size:clamp(12px,3.5vw,20px);color:var(--accent);
+    font-family:'Press Start 2P',monospace;font-size:clamp(15px,3.5vw,23px);color:var(--accent);
     line-height:1.6;margin:0 0 6px;text-shadow:0 0 12px rgba(54,201,192,.6);letter-spacing:1px;text-align:center;
   }
   .arcade-sub{
-    font-family:'Press Start 2P',monospace;font-size:clamp(6px,1.6vw,9px);color:var(--muted);
+    font-family:'Press Start 2P',monospace;font-size:clamp(9px,1.6vw,12px);color:var(--muted);
     margin:0 0 18px;line-height:1.8;letter-spacing:.5px;text-align:center;
   }
   .arcade-label{
-    display:block;font-family:'Press Start 2P',monospace;font-size:clamp(8px,2vw,10px);color:var(--gold);
+    display:block;font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,13px);color:var(--gold);
     letter-spacing:1px;text-align:left;margin:14px 0 7px;
   }
   .arcade-input{
     width:100%;background:#000;border:2px solid var(--accent);border-radius:6px;color:#fff;
-    font-family:'Press Start 2P',monospace;font-size:clamp(13px,4vw,19px);
+    font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,22px);
     padding:12px 14px;letter-spacing:2px;outline:none;caret-color:var(--accent);transition:box-shadow .15s;
   }
   .arcade-input:focus{box-shadow:0 0 0 2px var(--accent),0 0 14px rgba(54,201,192,.3)}
-  .arcade-input::placeholder{color:rgba(255,255,255,.2);font-size:clamp(9px,2.2vw,12px)}
+  .arcade-input::placeholder{color:rgba(255,255,255,.2);font-size:clamp(12px,2.2vw,15px)}
   .werr{
-    font-family:'Press Start 2P',monospace;font-size:clamp(7px,1.6vw,9px);color:var(--bad);
+    font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.6vw,12px);color:var(--bad);
     min-height:16px;margin:8px 0 0;letter-spacing:.5px;
   }
   .arcade-start{
     width:100%;margin-top:18px;padding:14px;background:var(--accent);color:#04282a;
     border:none;border-radius:8px;font-family:'Press Start 2P',monospace;
-    font-size:clamp(10px,2.6vw,13px);letter-spacing:2px;cursor:pointer;
+    font-size:clamp(13px,2.6vw,16px);letter-spacing:2px;cursor:pointer;
     box-shadow:0 4px 0 #0d3b3a,0 0 18px rgba(54,201,192,.3);
     transition:transform .1s,box-shadow .1s;position:relative;top:0;
   }
@@ -519,8 +519,8 @@
   function replaySplash(){
     var s=document.createElement('div');
     s.style.cssText='position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer';
-    s.innerHTML='<video muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;display:block"></video>'+
-      '<canvas style="position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:none"></canvas>'+
+    s.innerHTML='<video muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;max-width:860px;left:50%;transform:translateX(-50%)"></video>'+
+      '<canvas style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;max-width:860px;left:50%;transform:translateX(-50%)"></canvas>'+
       '<div id="spFb" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:48px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb;font-size:22px">Go Diving Show Arcade</h1></div>'+
       '<div id="spTap" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;z-index:3;background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%)"><div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px">▶</div><p style="margin:0;font-weight:600;color:#eaf6fb">Tap to play intro</p></div>'+
       '<div id="spLd" style="position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px"><div style="width:34px;height:34px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div><p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Loading…</p></div>'+
