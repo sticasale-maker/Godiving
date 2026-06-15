@@ -1,0 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sydney Marine Arcade</title>
+<style>
+  :root{
+    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
+    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
+    --coral:#ef7a52; --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:radial-gradient(1200px 600px at 50% -10%, #0b3a4d, #06222e 60%);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.6; -webkit-font-smoothing:antialiased; min-height:100vh}
+  .wrap{max-width:860px;margin:0 auto;padding:28px 18px 60px}
+  h1{font-size:26px;font-weight:600;margin:0 0 4px;letter-spacing:.2px}
+  .sub{color:var(--muted);margin:0 0 22px;font-size:15px}
+  .nav{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:22px}
+  .nav button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:10px;
+    padding:9px 14px;font-size:14px;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:.15s}
+  .nav button:hover{border-color:var(--accent)}
+  .nav button.on{background:var(--accent);color:#04282a;border-color:var(--accent);font-weight:600}
+  .panel{display:none;animation:fade .25s ease}
+  .panel.show{display:block}
+  @keyframes fade{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+  .head{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:12px;flex-wrap:wrap}
+  .head p{margin:0;color:var(--muted);font-size:15px}
+  .score{font-size:15px;color:var(--muted)}
+  .score b{color:var(--text)}
+  .sea{background:linear-gradient(#bfe3ef,#8ec6dc);border-radius:14px;padding:10px;border:1px solid var(--line)}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px 16px}
+  button.opt{display:block;width:100%;text-align:left;margin:8px 0;background:var(--bg2);color:var(--text);
+    border:1px solid var(--line);border-radius:10px;padding:11px 14px;font-size:15px;cursor:pointer;transition:.12s}
+  button.opt:hover:not(:disabled){border-color:var(--accent)}
+  button.opt:disabled{cursor:default;opacity:.95}
+  .right{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
+  .wrong{background:var(--badd)!important;border-color:var(--bad)!important;color:#f7cfcf!important}
+  .btn{background:var(--accent);color:#04282a;border:none;border-radius:10px;padding:10px 16px;font-size:15px;
+    font-weight:600;cursor:pointer;margin-top:10px}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+  .fact{font-size:14.5px;color:var(--muted);min-height:22px;margin:10px 0 0}
+  .grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
+  @media(max-width:640px){.grid2{grid-template-columns:1fr}}
+  .tag{display:inline-block;background:var(--accentd);color:var(--accent);font-size:12.5px;padding:4px 10px;
+    border-radius:8px;margin:0 5px 5px 0}
+  .bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:14px;border:1px solid var(--line)}
+  .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+  .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 12px;border:1px solid var(--line);
+    border-radius:10px;margin:7px 0;background:var(--bg2)}
+  .row .nm{display:flex;align-items:center;gap:11px;font-size:15px}
+  .row .thumb{width:46px;flex:0 0 46px}
+  .row button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;
+    padding:7px 12px;font-size:13.5px;cursor:pointer;min-width:118px}
+  .spotted{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
+  .live{display:inline-flex;align-items:center;gap:6px;background:var(--badd);color:#ffb4b4;font-size:12.5px;
+    padding:4px 11px;border-radius:8px}
+  .live .dot{width:8px;height:8px;border-radius:50%;background:var(--bad);animation:blink 1.2s infinite}
+  @keyframes blink{50%{opacity:.3}}
+  @keyframes swimR{from{transform:translateX(-100px)}to{transform:translateX(900px)}}
+  @keyframes swimL{from{transform:translateX(900px)}to{transform:translateX(-100px)}}
+  .tcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
+  .tcard .tt{text-align:center;font-weight:600;margin:2px 0 6px;font-size:15px}
+  .tcard .cap{text-align:center;font-size:12.5px;color:var(--muted);margin:0 0 6px}
+  .statbtn{display:flex;justify-content:space-between;width:100%;margin:6px 0;background:var(--bg2);color:var(--text);
+    border:1px solid var(--line);border-radius:9px;padding:8px 11px;font-size:13.5px;cursor:pointer}
+  .statbtn:hover:not(:disabled){border-color:var(--accent)}
+  .statbtn.locked{opacity:.35;cursor:not-allowed}
+  .statbtn .note{font-size:11px;color:var(--muted);margin-left:6px;font-weight:400}
+  .statrow{display:flex;justify-content:space-between;margin:6px 0;background:var(--bg2);border:1px solid var(--line);
+    border-radius:9px;padding:8px 11px;font-size:13.5px}
+  .tres{text-align:center;font-size:16px;font-weight:600;min-height:24px;margin:12px 0 4px}
+  svg{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🌊 Sydney Marine Arcade</h1>
+  <p class="sub">Five quick games for all ages — guess the creature, explore dive sites, log your spots, and battle stats. Drop in real underwater photos to make it your own.</p>
+
+  <div class="nav" id="nav">
+    <button data-p="quiz" class="on">🐠 Guess who</button>
+    <button data-p="map">📍 Dive map</button>
+    <button data-p="log">✅ Spotter log</button>
+    <button data-p="guess">🔎 Where am I?</button>
+    <button data-p="trumps">🃏 Stat battle</button>
+  </div>
+
+  <!-- QUIZ -->
+  <div class="panel show" id="p-quiz">
+    <div class="head"><p>Name the creature</p><span class="score">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span></div>
+    <div id="qart" style="border-radius:14px;overflow:hidden;"></div>
+    <div id="qopts" style="margin-top:12px"></div>
+    <p class="fact" id="qfact"></p>
+    <button class="btn" id="qnext" style="display:none">Next creature →</button>
+  </div>
+
+  <!-- MAP -->
+  <div class="panel" id="p-map">
+    <div class="head"><p>Tap a dive site to see what lives there</p></div>
+    <div class="grid2">
+      <div class="sea" id="mapart"></div>
+      <div class="card" id="mapinfo" style="min-height:170px"></div>
+    </div>
+  </div>
+
+  <!-- LOG -->
+  <div class="panel" id="p-log">
+    <div class="head"><p>Spotted it today? Check it off</p><span class="score"><b id="logn">0</b> / 5 found</span></div>
+    <div class="bar"><i id="logbar"></i></div>
+    <div id="loglist"></div>
+    <button class="btn" id="logshare" style="display:none">🎉 See my haul</button>
+    <p class="fact" id="logmsg"></p>
+  </div>
+
+  <!-- GUESS -->
+  <div class="panel" id="p-guess">
+    <div class="head"><p>Which Sydney dive site is this?</p><span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span></div>
+    <div id="gart"></div>
+    <div id="gopts" style="margin-top:12px"></div>
+    <button class="btn" id="gnext" style="display:none">Next location →</button>
+  </div>
+
+  <!-- TRUMPS -->
+  <div class="panel" id="p-trumps">
+    <div class="head"><p>Pick a stat — highest value wins the round</p></div>
+    <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
+    <p class="tres" id="tresult"></p>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+      <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
+      <button class="btn ghost" id="tdeal" style="display:none">Deal again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+var PHOTOS={
+ seadragon:{src:'https://upload.wikimedia.org/wikipedia/commons/7/79/Phyllopteryx_taeniolatus1.jpg',alt:'Weedy seadragon at Cabbage Tree Bay, Sydney'},
+ pjshark:  {src:'https://upload.wikimedia.org/wikipedia/commons/8/83/Hal_-_Heterodontus_portusjacksoni_-_1.jpg',alt:'Port Jackson shark underwater'},
+ groper:   {src:'https://upload.wikimedia.org/wikipedia/commons/2/22/Achoerodus_viridis_1.jpg',alt:'Eastern blue groper'},
+ cuttle:   {src:'https://upload.wikimedia.org/wikipedia/commons/1/14/Sepia_apama2.jpg',alt:'Giant cuttlefish'},
+ bluedevil:{src:'https://upload.wikimedia.org/wikipedia/commons/b/b2/Paraplesiops_bleekeri.jpg',alt:'Eastern blue devil fish'}
+};
+function ART_html(key,h){
+ var p=PHOTOS[key];h=h||150;
+ return '<div style="width:100%;height:'+h+'px;overflow:hidden;border-radius:8px;background:#0a3346">'+
+  '<img src="'+p.src+'" alt="'+p.alt+'" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" loading="lazy" onerror="this.style.display='none'">'+
+  '</div>';
+}
+var ART={
+ seadragon:function(){return ART_html('seadragon');},
+ pjshark:function(){return ART_html('pjshark');},
+ groper:function(){return ART_html('groper');},
+ cuttle:function(){return ART_html('cuttle');},
+ bluedevil:function(){return ART_html('bluedevil');}
+};
+
+function waterScene(label,sig,top,bot){
+ var id='w'+label.replace(/[^a-z]/gi,'');
+ return '<svg viewBox="0 0 240 150" width="100%" role="img" aria-label="'+label+'" preserveAspectRatio="xMidYMid slice">'+
+  '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bot+'"/></linearGradient></defs>'+
+  '<rect width="240" height="150" fill="url(#'+id+')"/>'+
+  '<g opacity="0.5"><line x1="40" y1="0" x2="60" y2="150" stroke="#ffffff" stroke-width="3" opacity="0.12"/><line x1="150" y1="0" x2="170" y2="150" stroke="#ffffff" stroke-width="4" opacity="0.1"/></g>'+
+  sig+'</svg>';
+}
+var SCENES={
+ kelp:{name:'Cabbage Tree Bay (Manly)',art:waterScene('kelp',
+   '<g stroke="#3e6b2f" stroke-width="7" stroke-linecap="round" fill="none"><path d="M30 150 q-6 -60 8 -110"/><path d="M70 150 q8 -70 -2 -120"/><path d="M120 150 q-8 -50 4 -100"/><path d="M180 150 q10 -60 0 -110"/><path d="M215 150 q-6 -40 6 -90"/></g><g fill="#6fa64e" opacity="0.85"><ellipse cx="40" cy="44" rx="9" ry="4"/><ellipse cx="66" cy="34" rx="9" ry="4"/><ellipse cx="124" cy="56" rx="9" ry="4"/><ellipse cx="180" cy="44" rx="9" ry="4"/></g>',
+   '#1b6e8c','#0a3346')},
+ sponge:{name:'Bare Island (La Perouse)',art:waterScene('sponge',
+   '<g><ellipse cx="50" cy="138" rx="40" ry="16" fill="#6b5e7a"/><circle cx="60" cy="120" r="13" fill="#d9534f"/><circle cx="90" cy="128" r="10" fill="#e8943a"/><path d="M150 150 q6 -40 -2 -56 q22 6 18 56 z" fill="#c94f86"/><circle cx="190" cy="124" r="11" fill="#e0c23a"/><circle cx="170" cy="132" r="8" fill="#3aa0e0"/><circle cx="120" cy="118" r="7" fill="#e8943a"/></g>',
+   '#155a72','#08283a')},
+ seagrass:{name:'Gordons Bay',art:waterScene('seagrass',
+   '<rect x="0" y="132" width="240" height="18" fill="#c9b486"/><g stroke="#4f8a3a" stroke-width="5" stroke-linecap="round"><path d="M30 134 q-4 -34 2 -54"/><path d="M55 134 q4 -40 -2 -60"/><path d="M85 134 q-4 -30 4 -50"/><path d="M120 134 q3 -38 -2 -56"/><path d="M155 134 q-4 -34 4 -54"/><path d="M190 134 q4 -40 -2 -58"/><path d="M215 134 q-3 -30 4 -48"/></g>',
+   '#1f7e98','#0c3a4d')},
+ boulder:{name:'Shelly Beach',art:waterScene('boulder',
+   '<g fill="#5e6b6e"><ellipse cx="50" cy="140" rx="46" ry="26"/><ellipse cx="180" cy="142" rx="56" ry="30"/><ellipse cx="120" cy="150" rx="36" ry="20"/></g><path d="M96 150 q24 -36 48 0 z" fill="#0c3a4d"/><g fill="#7fa0a3"><circle cx="40" cy="120" r="4"/><circle cx="190" cy="120" r="4"/></g>',
+   '#2487a0','#0e3e52')}
+};
+
+var CR={
+ seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
+ pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
+ groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,f:'The NSW state fish. The big blue males all start life as females.'},
+ cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world\u2019s largest cuttlefish and a master colour-changer.'},
+ bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,f:'A shy, cave-loving fish found only along the NSW coast.'}
+};
+var KEYS=Object.keys(CR);
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var $=function(id){return document.getElementById(id);};
+
+var nav=$('nav');
+nav.querySelectorAll('button').forEach(function(b){b.onclick=function(){
+ nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+ b.classList.add('on');
+ document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+ $('p-'+b.dataset.p).classList.add('show');
+};});
+
+/* QUIZ */
+var qScore=0,qTotal=0;
+function quizRound(){
+ $('qfact').textContent='';$('qnext').style.display='none';
+ var key=KEYS[Math.floor(Math.random()*KEYS.length)];
+ $('qart').innerHTML=ART_html(key,220);
+ var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
+ $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
+ $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+  qTotal++;
+  $('qopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
+  if(btn.dataset.k===key)qScore++;else btn.classList.add('wrong');
+  $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;
+  $('qfact').textContent=CR[key].f;$('qnext').style.display='inline-block';
+ };});
+}
+$('qnext').onclick=quizRound;quizRound();
+
+/* MAP */
+var sites={
+ manly:{name:'Cabbage Tree Bay, Manly',sp:['Weedy seadragon','Eastern blue groper','Port Jackson shark','Giant cuttlefish'],tip:'A no-take aquatic reserve — the fish are bold and used to snorkellers.'},
+ shelly:{name:'Shelly Beach',sp:['Dusky whaler (passing)','Blue groper','Cuttlefish','Old wives'],tip:'Boulder swim-throughs and one of Sydney\u2019s richest fish counts.'},
+ gordons:{name:'Gordons Bay',sp:['Blue groper','Octopus','Wobbegong','Seahorses'],tip:'An underwater nature trail is laid out along the seabed.'},
+ clovelly:{name:'Clovelly',sp:['Bluey the blue groper','Sea urchins','Damselfish'],tip:'Sheltered, calm water — a classic spot for first-time snorkellers.'},
+ bare:{name:'Bare Island, La Perouse',sp:['Pygmy pipehorse','Anglerfish','Sponge gardens','Nudibranchs'],tip:'A muck-diving favourite famous for tiny, weird critters.'}
+};
+$('mapart').innerHTML='<svg viewBox="0 0 240 150" width="100%" role="img" aria-label="Stylised Sydney coastline with dive sites">'+
+ '<rect width="240" height="150" fill="#bfe3ef"/>'+
+ '<path d="M0 0 L92 0 Q70 30 88 52 Q60 72 84 92 Q66 112 90 132 L78 150 L0 150 Z" fill="#dfe7cf" stroke="#9fb07e" stroke-width="1.5"/>'+
+ '<g class="pin" data-s="manly" style="cursor:pointer"><circle cx="120" cy="22" r="6" fill="#d8543a"/><text x="130" y="26" font-size="11" fill="#0a3346">Manly</text></g>'+
+ '<g class="pin" data-s="shelly" style="cursor:pointer"><circle cx="116" cy="44" r="6" fill="#d8543a"/><text x="126" y="48" font-size="11" fill="#0a3346">Shelly</text></g>'+
+ '<g class="pin" data-s="gordons" style="cursor:pointer"><circle cx="124" cy="78" r="6" fill="#d8543a"/><text x="134" y="82" font-size="11" fill="#0a3346">Gordons</text></g>'+
+ '<g class="pin" data-s="clovelly" style="cursor:pointer"><circle cx="120" cy="100" r="6" fill="#d8543a"/><text x="130" y="104" font-size="11" fill="#0a3346">Clovelly</text></g>'+
+ '<g class="pin" data-s="bare" style="cursor:pointer"><circle cx="128" cy="128" r="6" fill="#d8543a"/><text x="138" y="132" font-size="11" fill="#0a3346">Bare Is.</text></g>'+
+ '</svg>';
+function showSite(s){var d=sites[s];
+ $('mapinfo').innerHTML='<p style="font-weight:600;margin:0 0 4px">'+d.name+'</p>'+
+  '<p style="font-size:14px;color:var(--muted);margin:0 0 10px">'+d.tip+'</p>'+
+  '<p style="font-size:13.5px;font-weight:600;margin:0 0 6px">You might see</p>'+
+  d.sp.map(function(x){return '<span class="tag">'+x+'</span>';}).join('');}
+$('mapart').querySelectorAll('.pin').forEach(function(p){p.onclick=function(){showSite(p.dataset.s);};});
+showSite('manly');
+
+/* LOG */
+var logSp=[['Weedy seadragon','seadragon'],['Eastern blue groper','groper'],['Port Jackson shark','pjshark'],['Giant cuttlefish','cuttle'],['Eastern blue devil','bluedevil']];
+var found={};
+function renderLog(){var n=Object.keys(found).filter(function(k){return found[k];}).length;
+ $('logn').textContent=n;$('logbar').style.width=(n/5*100)+'%';
+ $('logshare').style.display=n>0?'inline-block':'none';
+ if(n===5){$('logmsg').textContent='A clean sweep — you found all five! 🏆';}else{$('logmsg').textContent='';}}
+$('loglist').innerHTML=logSp.map(function(s){
+ return '<div class="row"><span class="nm"><span class="thumb" style="width:52px;height:40px;flex:0 0 52px;border-radius:6px;overflow:hidden;display:inline-block">'+ART_html(s[1],40)+'</span>'+s[0]+'</span><button data-k="'+s[1]+'">Mark spotted</button></div>';
+}).join('');
+$('loglist').querySelectorAll('button').forEach(function(b){b.onclick=function(){
+ found[b.dataset.k]=!found[b.dataset.k];
+ if(found[b.dataset.k]){b.textContent='Spotted ✓';b.classList.add('spotted');}
+ else{b.textContent='Mark spotted';b.classList.remove('spotted');}
+ renderLog();
+};});
+renderLog();
+$('logshare').onclick=function(){
+ var list=logSp.filter(function(s){return found[s[1]];}).map(function(s){return s[0];});
+ $('logmsg').textContent='Today\u2019s sightings: '+list.join(', ')+'.';
+};
+
+/* GUESS */
+var gScore=0,gTotal=0,sceneKeys=Object.keys(SCENES);
+function guessRound(){
+ $('gnext').style.display='none';
+ var key=sceneKeys[Math.floor(Math.random()*sceneKeys.length)];
+ $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);height:220px">'+SCENES[key].art.replace('width="100%"','style="width:100%;height:100%"')+'</div>';
+ var opts=shuffle([key].concat(shuffle(sceneKeys.filter(function(k){return k!==key;})).slice(0,3)));
+ $('gopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+SCENES[k].name+'</button>';}).join('');
+ $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+  gTotal++;
+  $('gopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
+  if(btn.dataset.k===key)gScore++;else btn.classList.add('wrong');
+  $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;$('gnext').style.display='inline-block';
+ };});
+}
+$('gnext').onclick=guessRound;guessRound();
+
+/* TRUMPS */
+var tWin=0,tLose=0;
+var STATS=[
+ ['len','Length','cm'],
+ ['depth','Max depth','m'],
+ ['speed','Speed','km/h'],
+ ['life','Lifespan','yrs'],
+ ['eggs','Eggs / season',''],
+ ['camo','Camouflage','/10']
+];
+function fmtVal(s,v){
+ if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);
+ if(s==='speed')return v<1?v.toFixed(2):String(v);
+ return String(v);
+}
+function cardHtml(key,who,hide,lenLocked){var c=CR[key];
+ return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p>'+
+  '<div style="margin-bottom:8px;border-radius:10px;overflow:hidden">'+ART[key]()+'</div>'+
+  STATS.map(function(s){
+   var lk=(s[0]==='len'&&lenLocked);
+   if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';
+   var lbl=s[1]+(lk?' <span class=\'note\'>too lopsided</span>':'');
+   var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');
+   return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'>'+
+    '<span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';
+  }).join('');}
+function deal(){
+ $('tresult').textContent='';$('tdeal').style.display='none';
+ var two=shuffle(KEYS).slice(0,2);var pk=two[0],ck=two[1];
+ var lenLocked=Math.max(CR[pk].len,CR[ck].len)/Math.min(CR[pk].len,CR[ck].len)>2;
+ $('pcard').innerHTML=cardHtml(pk,'Your card',false,lenLocked);
+ $('ccard').innerHTML=cardHtml(ck,'Reef\u2019s card',true,lenLocked);
+ $('pcard').querySelectorAll('.statbtn:not(:disabled)').forEach(function(b){b.onclick=function(){
+  var s=b.dataset.s;
+  $('ccard').innerHTML=cardHtml(ck,'Reef\u2019s card',false,lenLocked);
+  $('pcard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;});
+  $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
+  b.style.borderColor='var(--accent)';
+  var pv=CR[pk][s],cv=CR[ck][s];
+  if(pv>cv){tWin++;$('tresult').textContent='You win the round! 🎉';$('tresult').style.color='var(--good)';}
+  else if(pv<cv){tLose++;$('tresult').textContent='The reef takes it.';$('tresult').style.color='var(--bad)';}
+  else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
+  $('twin').textContent=tWin;$('tlose').textContent=tLose;$('tdeal').style.display='inline-block';
+ };});
+}
+$('tdeal').onclick=deal;deal();
+</script>
+</body>
+</html>
