@@ -54,21 +54,15 @@
   .row button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:9px;
     padding:7px 12px;font-size:13.5px;cursor:pointer;min-width:118px}
   .spotted{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
-  .logcard{position:relative;border-radius:14px;overflow:hidden;border:1px solid var(--line);margin:10px 0;height:160px}
-  .logcard .scene{position:absolute;inset:0;width:100%;height:100%}
-  .logcard .scene svg{width:100%;height:100%}
-  .logcard .creature{position:absolute;right:0;top:0;bottom:0;width:42%;background:rgba(6,28,38,.45)}
-  .logcard .creature img{width:100%;height:100%;object-fit:contain;display:block}
-  .logcard .footer{position:absolute;bottom:0;left:0;right:0;padding:9px 12px;background:linear-gradient(transparent,rgba(4,18,26,.88));display:flex;align-items:center;justify-content:space-between;gap:8px}
-  .logcard .footer span{font-size:14px;font-weight:500;color:#eaf6fb;text-shadow:0 1px 3px rgba(0,0,0,.6)}
-  .logcard .footer button{background:rgba(54,201,192,.18);color:#36c9c0;border:1px solid #36c9c0;border-radius:9px;padding:6px 12px;font-size:13px;cursor:pointer;white-space:nowrap;flex-shrink:0}
-  .logcard .footer button.spotted{background:var(--goodd);color:#cdf3df;border-color:var(--good)}
+  .logsceneimg{width:100%;border-radius:14px;border:1px solid var(--line);display:block;object-fit:cover;max-height:300px}
+  .chip{padding:10px 16px;border-radius:10px;border:1.5px solid var(--line);background:var(--bg2);color:var(--text);font-size:15px;cursor:pointer;transition:.15s;font-family:inherit}
+  .chip:hover:not(.chip-done):not(.chip-wrong){border-color:var(--accent)}
+  .chip-done{background:var(--goodd);border-color:var(--good);color:#cdf3df;cursor:default}
+  .chip-wrong{background:var(--badd);border-color:var(--bad);color:#ffd0d0;cursor:default}
   .live{display:inline-flex;align-items:center;gap:6px;background:var(--badd);color:#ffb4b4;font-size:12.5px;
     padding:4px 11px;border-radius:8px}
   .live .dot{width:8px;height:8px;border-radius:50%;background:var(--bad);animation:blink 1.2s infinite}
   @keyframes blink{50%{opacity:.3}}
-  @keyframes swimR{from{transform:translateX(-100px)}to{transform:translateX(900px)}}
-  @keyframes swimL{from{transform:translateX(900px)}to{transform:translateX(-100px)}}
   .tcards{display:grid;grid-template-columns:1fr 1fr;gap:12px}
   .tcard{border:1px solid var(--line);border-radius:14px;padding:10px;background:var(--surface)}
   .tcard .tt{text-align:center;font-weight:600;margin:2px 0 6px;font-size:15px}
@@ -87,11 +81,10 @@
 <body>
 <div class="wrap">
   <h1>🌊 Sydney Marine Arcade</h1>
-  <p class="sub">Five quick games for all ages — guess the creature, explore dive sites, log your spots, and battle stats. Drop in real underwater photos to make it your own.</p>
+  <p class="sub">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
 
   <div class="nav" id="nav">
     <button data-p="quiz" class="on">🐠 Guess who</button>
-    <button data-p="map">📍 Dive map</button>
     <button data-p="log">✅ Spotter log</button>
     <button data-p="guess">🔎 Where am I?</button>
     <button data-p="trumps">🃏 Stat battle</button>
@@ -106,21 +99,12 @@
     <button class="btn" id="qnext" style="display:none">Next creature →</button>
   </div>
 
-  <!-- MAP -->
-  <div class="panel" id="p-map">
-    <div class="head"><p>Tap a dive site to see what lives there</p></div>
-    <div class="grid2">
-      <div class="sea" id="mapart"></div>
-      <div class="card" id="mapinfo" style="min-height:170px"></div>
-    </div>
-  </div>
-
   <!-- LOG -->
   <div class="panel" id="p-log">
-    <div class="head"><p>Spotted it today? Check it off</p><span class="score"><b id="logn">0</b> / 5 found</span></div>
+    <div class="head"><p>What can you spot in this scene?</p><span class="score"><b id="logn">0</b> / 3 found</span></div>
     <div class="bar"><i id="logbar"></i></div>
-    <div id="loglist"></div>
-    <button class="btn" id="logshare" style="display:none">🎉 See my haul</button>
+    <div id="logscene"></div>
+    <div id="logchips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
     <p class="fact" id="logmsg"></p>
   </div>
 
@@ -145,300 +129,6 @@
 </div>
 
 <script>
-/* ── Photorealistic SVG species portraits ── */
-var ART={
-seadragon:function(w,h){w=w||400;h=h||240;return `<svg viewBox="0 0 400 240" width="100%" role="img" aria-label="Weedy seadragon" style="display:block;border-radius:10px">
-<defs>
-<radialGradient id="sdbg" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#1e7090"/><stop offset="1" stop-color="#071828"/></radialGradient>
-<linearGradient id="sdbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#d4622a"/><stop offset="0.4" stop-color="#c04820"/><stop offset="1" stop-color="#8a2c10"/></linearGradient>
-<linearGradient id="sdstripe" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#6a3090" stop-opacity="0.7"/><stop offset="1" stop-color="#4a1860" stop-opacity="0.4"/></linearGradient>
-<filter id="sdglow"><feGaussianBlur stdDeviation="2" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-</defs>
-<rect width="400" height="240" fill="url(#sdbg)"/>
-<!-- water caustics -->
-<g opacity="0.08" stroke="#7ff" stroke-width="1" fill="none">
-<ellipse cx="80" cy="30" rx="40" ry="8"/><ellipse cx="200" cy="20" rx="55" ry="10"/><ellipse cx="330" cy="35" rx="35" ry="7"/>
-<ellipse cx="150" cy="60" rx="28" ry="5"/><ellipse cx="280" cy="50" rx="42" ry="8"/>
-</g>
-<!-- kelp background -->
-<g opacity="0.35">
-<path d="M30 240 q-8 -50 4 -110 q8 -40 -2 -90" fill="none" stroke="#2d5a18" stroke-width="8" stroke-linecap="round"/>
-<path d="M370 240 q10 -60 -4 -120 q-8 -40 6 -80" fill="none" stroke="#2d5a18" stroke-width="7" stroke-linecap="round"/>
-<ellipse cx="26" cy="110" rx="12" ry="4" fill="#4a8a28" transform="rotate(-25 26 110)"/>
-<ellipse cx="374" cy="100" rx="10" ry="4" fill="#4a8a28" transform="rotate(20 374 100)"/>
-</g>
-<!-- BODY - main trunk sinuous shape -->
-<path d="M70 145 C100 120,130 155,165 130 S220 105,255 118 S300 130,330 118 S360 108,380 100" fill="none" stroke="url(#sdbody)" stroke-width="18" stroke-linecap="round"/>
-<!-- belly lighter -->
-<path d="M72 148 C102 126,132 158,167 133 S222 108,257 120 S302 133,332 121 S362 110,382 102" fill="none" stroke="#e88050" stroke-width="8" stroke-linecap="round" opacity="0.5"/>
-<!-- purple lateral stripes -->
-<path d="M90 140 C115 118,140 150,170 128 S218 108,250 120" fill="none" stroke="url(#sdstripe)" stroke-width="3"/>
-<path d="M180 122 C210 108,240 125,270 116 S310 108,340 116" fill="none" stroke="url(#sdstripe)" stroke-width="3"/>
-<!-- yellow spots -->
-<g fill="#f0d040" opacity="0.9" filter="url(#sdglow)">
-<circle cx="110" cy="137" r="3.5"/><circle cx="148" cy="128" r="3"/><circle cx="185" cy="122" r="3.5"/>
-<circle cx="222" cy="118" r="3"/><circle cx="258" cy="118" r="3.5"/><circle cx="294" cy="118" r="3"/>
-<circle cx="328" cy="115" r="2.5"/><circle cx="358" cy="108" r="2"/>
-</g>
-<!-- white spots -->
-<g fill="#ffffff" opacity="0.6"><circle cx="128" cy="132" r="2"/><circle cx="165" cy="123" r="2"/><circle cx="205" cy="116" r="2"/><circle cx="244" cy="115" r="2"/></g>
-<!-- leafy appendages - characteristic feature -->
-<g fill="#4a9a28" opacity="0.85">
-<path d="M108 130 q-8 -18 -2 -30 q4 12 8 28z"/>
-<path d="M142 122 q-6 -16 2 -28 q5 10 4 26z"/>
-<path d="M178 116 q10 -18 18 -26 q-2 12 -12 28z"/>
-<path d="M215 112 q-7 -15 -1 -25 q5 9 6 24z"/>
-<path d="M250 112 q8 -16 14 -22 q-1 11 -8 24z"/>
-<path d="M120 144 q-12 10 -18 20 q6 -4 14 -16z"/>
-<path d="M158 136 q-10 12 -14 22 q7 -5 12 -18z"/>
-<path d="M200 128 q12 10 16 20 q-6 -4 -12 -18z"/>
-</g>
-<!-- snout - long tubular -->
-<path d="M65 147 q-20 2 -40 -4 q8 4 38 8" fill="#b03a18" stroke="#8a2808" stroke-width="1.5" stroke-linecap="round"/>
-<path d="M25 143 q-10 1 0 0" fill="none" stroke="#8a2808" stroke-width="2" stroke-linecap="round"/>
-<!-- eye -->
-<circle cx="68" cy="144" r="5.5" fill="#0a1810"/>
-<circle cx="68" cy="144" r="3.5" fill="#1a3020"/>
-<circle cx="70" cy="142" r="1.5" fill="#ffffff"/>
-<!-- dorsal fin ridge -->
-<path d="M100 128 C130 115,165 108,210 104 S280 102,340 100" fill="none" stroke="#c04020" stroke-width="3" stroke-linecap="round" opacity="0.6"/>
-<!-- tail tip -->
-<path d="M380 100 q12 -4 16 2 q-4 6 -14 6z" fill="#9a3018"/>
-</svg>`},
-
-pjshark:function(w,h){return `<svg viewBox="0 0 400 240" width="100%" role="img" aria-label="Port Jackson shark" style="display:block;border-radius:10px">
-<defs>
-<radialGradient id="pjbg" cx="50%" cy="35%" r="70%"><stop offset="0" stop-color="#2a6878"/><stop offset="1" stop-color="#08202c"/></radialGradient>
-<linearGradient id="pjbody" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a7d5a"/><stop offset="0.5" stop-color="#6a5e3a"/><stop offset="1" stop-color="#4a4028"/></linearGradient>
-<linearGradient id="pjbelly" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#c8b888"/><stop offset="1" stop-color="#a89868"/></linearGradient>
-<filter id="pjshadow"><feDropShadow dx="0" dy="4" stdDeviation="6" flood-color="#000" flood-opacity="0.4"/></filter>
-</defs>
-<rect width="400" height="240" fill="url(#pjbg)"/>
-<!-- sandy bottom -->
-<ellipse cx="200" cy="230" rx="220" ry="30" fill="#a09060" opacity="0.4"/>
-<ellipse cx="200" cy="235" rx="200" ry="20" fill="#8a7850" opacity="0.5"/>
-<!-- small rocks -->
-<ellipse cx="60" cy="228" rx="22" ry="8" fill="#5a5038" opacity="0.6"/>
-<ellipse cx="340" cy="226" rx="18" ry="7" fill="#5a5038" opacity="0.6"/>
-<!-- BODY main shape - broad blunt bullhead form -->
-<ellipse cx="195" cy="145" rx="145" ry="52" fill="url(#pjbody)" filter="url(#pjshadow)"/>
-<!-- belly lighter patch -->
-<ellipse cx="185" cy="158" rx="110" ry="28" fill="url(#pjbelly)" opacity="0.7"/>
-<!-- harness marking - PORT JACKSON's signature dark bands -->
-<path d="M130 105 q-15 20 -10 50 q4 22 8 40" fill="none" stroke="#2a2010" stroke-width="10" stroke-linecap="round" opacity="0.75"/>
-<path d="M155 98 q10 -8 30 -8 q-5 60 -5 90" fill="none" stroke="#2a2010" stroke-width="7" stroke-linecap="round" opacity="0.5"/>
-<!-- dorsal fin 1 - with spine -->
-<path d="M175 95 q-5 -30 5 -48 q8 18 10 48z" fill="#7a6e4a" stroke="#5a5030" stroke-width="1.5"/>
-<line x1="178" y1="95" x2="174" y2="50" stroke="#4a3820" stroke-width="3" stroke-linecap="round"/>
-<!-- dorsal fin 2 -->
-<path d="M240 100 q0 -22 8 -32 q6 14 6 32z" fill="#7a6e4a" stroke="#5a5030" stroke-width="1.5"/>
-<line x1="242" y1="100" x2="240" y2="70" stroke="#4a3820" stroke-width="2.5" stroke-linecap="round"/>
-<!-- pectoral fins -->
-<path d="M130 148 q-30 10 -50 30 q10 -5 55 -20z" fill="#8a7a52" stroke="#6a5a38" stroke-width="1.5" opacity="0.9"/>
-<path d="M140 152 q-20 20 -30 38 q12 -10 36 -28z" fill="#9a8a60" opacity="0.6"/>
-<!-- tail -->
-<path d="M338 130 q30 -15 52 -30 q-4 20 -8 28 q16 8 18 24 q-20 -8 -62 -22z" fill="#7a6e4a" stroke="#5a5030" stroke-width="1"/>
-<!-- head - blunt broad -->
-<ellipse cx="75" cy="145" rx="55" ry="38" fill="#8a7d5a"/>
-<ellipse cx="62" cy="148" rx="32" ry="28" fill="#9a8d68"/>
-<!-- forehead ridges - distinctive -->
-<path d="M55 120 q25 -5 40 0" fill="none" stroke="#4a3a20" stroke-width="4" stroke-linecap="round" opacity="0.7"/>
-<path d="M52 128 q28 -4 42 2" fill="none" stroke="#4a3a20" stroke-width="3" stroke-linecap="round" opacity="0.5"/>
-<!-- mouth - small, below snout -->
-<path d="M32 160 q10 4 20 2 q-8 6 -18 2z" fill="#2a1808" opacity="0.8"/>
-<!-- nostrils -->
-<ellipse cx="42" cy="148" rx="5" ry="3" fill="#2a1808" opacity="0.7"/>
-<ellipse cx="52" cy="145" rx="4" ry="2.5" fill="#2a1808" opacity="0.5"/>
-<!-- eye - with supraorbital crest -->
-<ellipse cx="85" cy="125" rx="10" ry="8" fill="#2a1808"/>
-<ellipse cx="85" cy="125" rx="7" ry="5.5" fill="#3a2810"/>
-<ellipse cx="87" cy="123" rx="2.5" ry="2" fill="#ffffff" opacity="0.5"/>
-<!-- gill slits - 5 of them -->
-<g stroke="#3a2808" stroke-width="1.5" fill="none" opacity="0.7">
-<path d="M120 118 q2 16 0 32"/><path d="M128 115 q2 17 0 34"/><path d="M136 114 q1 17 -1 34"/>
-<path d="M144 113 q1 16 -1 33"/><path d="M152 113 q1 15 -1 32"/>
-</g>
-</svg>`},
-
-groper:function(w,h){return `<svg viewBox="0 0 400 240" width="100%" role="img" aria-label="Eastern blue groper" style="display:block;border-radius:10px">
-<defs>
-<radialGradient id="gbg" cx="45%" cy="35%" r="75%"><stop offset="0" stop-color="#1a6888"/><stop offset="1" stop-color="#060e1c"/></radialGradient>
-<radialGradient id="gbody" cx="40%" cy="35%" r="65%"><stop offset="0" stop-color="#2880d0"/><stop offset="0.5" stop-color="#1060a8"/><stop offset="1" stop-color="#082848"/></radialGradient>
-<radialGradient id="ghead" cx="40%" cy="45%" r="60%"><stop offset="0" stop-color="#3898e8"/><stop offset="0.6" stop-color="#1870c0"/><stop offset="1" stop-color="#083860"/></radialGradient>
-<linearGradient id="gfin" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#1878c8"/><stop offset="1" stop-color="#0a4880"/></linearGradient>
-<filter id="gshine"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-</defs>
-<rect width="400" height="240" fill="url(#gbg)"/>
-<!-- reef background -->
-<g opacity="0.25">
-<ellipse cx="50" cy="220" rx="50" ry="20" fill="#4a5a60"/><ellipse cx="360" cy="215" rx="45" ry="18" fill="#4a5a60"/>
-<path d="M80 200 q-5 -30 0 -50" fill="none" stroke="#2a5a28" stroke-width="6" stroke-linecap="round"/>
-<path d="M340 195 q5 -28 2 -45" fill="none" stroke="#2a5a28" stroke-width="5" stroke-linecap="round"/>
-</g>
-<!-- BODY - robust oval wrasse form -->
-<ellipse cx="210" cy="138" rx="155" ry="75" fill="url(#gbody)" filter="url(#gshine)"/>
-<!-- scale pattern - subtle -->
-<g opacity="0.12" stroke="#5ab0ff" stroke-width="0.5" fill="none">
-<path d="M120 105 q15 8 30 0"/><path d="M150 98 q15 8 30 0"/><path d="M180 94 q15 7 30 0"/><path d="M210 92 q15 7 30 0"/><path d="M240 93 q14 7 28 0"/><path d="M270 96 q14 7 28 0"/>
-<path d="M125 120 q15 7 30 0"/><path d="M155 112 q15 7 30 0"/><path d="M185 108 q15 7 30 0"/><path d="M215 106 q15 7 30 0"/><path d="M245 107 q14 7 28 0"/><path d="M275 110 q14 7 28 0"/>
-<path d="M130 136 q15 7 30 0"/><path d="M160 128 q15 7 30 0"/><path d="M190 124 q15 7 30 0"/><path d="M220 122 q14 7 28 0"/><path d="M250 123 q14 7 28 0"/><path d="M280 126 q13 7 26 0"/>
-<path d="M135 152 q15 7 30 0"/><path d="M165 145 q15 7 30 0"/><path d="M195 141 q15 7 30 0"/><path d="M225 140 q14 7 28 0"/><path d="M255 141 q13 6 26 0"/><path d="M285 144 q12 6 24 0"/>
-<path d="M140 168 q14 6 28 0"/><path d="M170 162 q14 6 28 0"/><path d="M200 159 q14 6 28 0"/><path d="M230 158 q13 6 26 0"/><path d="M258 160 q12 5 24 0"/>
-</g>
-<!-- highlights on body -->
-<ellipse cx="180" cy="115" rx="60" ry="28" fill="#60b8ff" opacity="0.15"/>
-<ellipse cx="170" cy="108" rx="30" ry="12" fill="#90d0ff" opacity="0.12"/>
-<!-- dorsal fin - long, spiny -->
-<path d="M105 75 q20 -35 60 -42 q40 -5 80 -2 q30 2 50 8 q-10 20 -10 60z" fill="url(#gfin)" opacity="0.9" stroke="#0a3860" stroke-width="1.5"/>
-<g stroke="#0a4080" stroke-width="1" opacity="0.5">
-<line x1="120" y1="78" x2="115" y2="47"/><line x1="145" y1="70" x2="142" y2="40"/><line x1="172" y1="66" x2="170" y2="37"/><line x1="200" y1="64" x2="198" y2="36"/><line x1="228" y1="65" x2="228" y2="39"/><line x1="255" y1="68" x2="256" y2="44"/><line x1="280" y1="72" x2="282" y2="51"/>
-</g>
-<!-- pectoral fin - large, paddle-like -->
-<path d="M120 148 q-35 5 -55 35 q10 -5 20 -10 q15 15 35 12z" fill="#1060a0" stroke="#0a3860" stroke-width="1.5" opacity="0.85"/>
-<!-- anal fin -->
-<path d="M175 200 q30 20 70 18 q-15 -10 -65 -20z" fill="url(#gfin)" opacity="0.7"/>
-<!-- tail fin - fan-shaped -->
-<path d="M358 95 q28 -18 38 -38 q2 20 -2 30 q14 14 12 32 q-14 -12 -48 -24z" fill="#1060a0" stroke="#0a3860" stroke-width="1.5"/>
-<!-- HEAD - rounded with thick lips, key feature -->
-<ellipse cx="82" cy="140" rx="65" ry="52" fill="url(#ghead)"/>
-<!-- thick fleshy lips - groper's signature -->
-<path d="M24 150 q12 8 24 6 q-4 8 -22 4z" fill="#1060a8"/>
-<path d="M26 154 q10 10 22 8" fill="none" stroke="#0848a0" stroke-width="3" stroke-linecap="round"/>
-<!-- yellow rings around eye - distinctive -->
-<circle cx="90" cy="118" r="16" fill="#e8c030" opacity="0.7"/>
-<circle cx="90" cy="118" r="12" fill="#1060a0"/>
-<circle cx="90" cy="118" r="8" fill="#0838780"/>
-<circle cx="90" cy="118" r="5" fill="#081828"/>
-<circle cx="92" cy="115" r="2" fill="#ffffff" opacity="0.8"/>
-<!-- peg teeth visible -->
-<g fill="#e0d0b0" opacity="0.7">
-<rect x="28" y="148" width="3" height="4" rx="1"/><rect x="33" y="147" width="3" height="5" rx="1"/><rect x="38" y="146" width="3" height="5" rx="1"/>
-</g>
-<!-- gill cover -->
-<path d="M118 104 q8 30 4 70" fill="none" stroke="#0848a0" stroke-width="3" opacity="0.5"/>
-</svg>`},
-
-cuttle:function(w,h){return `<svg viewBox="0 0 400 240" width="100%" role="img" aria-label="Giant cuttlefish" style="display:block;border-radius:10px">
-<defs>
-<radialGradient id="cbg" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#185870"/><stop offset="1" stop-color="#05121c"/></radialGradient>
-<radialGradient id="cmantle" cx="45%" cy="40%" r="60%"><stop offset="0" stop-color="#c89040"/><stop offset="0.5" stop-color="#a06818"/><stop offset="1" stop-color="#603808"/></linearGradient>
-<linearGradient id="ctentacle" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#b87828"/><stop offset="1" stop-color="#804808"/></linearGradient>
-<filter id="cglow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-</defs>
-<rect width="400" height="240" fill="url(#cbg)"/>
-<!-- seafloor suggestion -->
-<ellipse cx="200" cy="225" rx="220" ry="25" fill="#603818" opacity="0.3"/>
-<!-- MANTLE - large broad cuttlefish body -->
-<ellipse cx="230" cy="130" rx="130" ry="72" fill="url(#cmantle)" filter="url(#cglow)"/>
-<!-- lateral fin - the rippling skirt, very characteristic -->
-<path d="M105 100 q-8 30 0 60 q40 15 120 15 q10 0 20 0 q10 -30 8 -62z" fill="#c07828" opacity="0.5" stroke="#a05818" stroke-width="1"/>
-<path d="M355 96 q10 30 4 64 q-10 2 -15 -2 q-8 -32 -6 -64z" fill="#c07828" opacity="0.4"/>
-<!-- chromatophore patterns - colour cells, signature -->
-<g filter="url(#cglow)">
-<ellipse cx="190" cy="110" rx="18" ry="10" fill="#e0a030" opacity="0.7"/>
-<ellipse cx="240" cy="105" rx="20" ry="11" fill="#d89028" opacity="0.7"/>
-<ellipse cx="290" cy="112" rx="15" ry="9" fill="#c87820" opacity="0.7"/>
-<ellipse cx="215" cy="132" rx="16" ry="9" fill="#f0b840" opacity="0.6"/>
-<ellipse cx="265" cy="128" rx="18" ry="10" fill="#e09830" opacity="0.6"/>
-<ellipse cx="310" cy="118" rx="12" ry="7" fill="#d08020" opacity="0.6"/>
-<ellipse cx="175" cy="130" rx="12" ry="7" fill="#b86818" opacity="0.5"/>
-<!-- dark zebra stripes -->
-<path d="M148 92 q5 40 2 78" fill="none" stroke="#301808" stroke-width="8" stroke-linecap="round" opacity="0.4"/>
-<path d="M178 86 q4 42 0 82" fill="none" stroke="#301808" stroke-width="7" stroke-linecap="round" opacity="0.35"/>
-<path d="M210 83 q3 42 -2 84" fill="none" stroke="#301808" stroke-width="7" stroke-linecap="round" opacity="0.35"/>
-<path d="M244 84 q2 40 -4 82" fill="none" stroke="#301808" stroke-width="6" stroke-linecap="round" opacity="0.3"/>
-</g>
-<!-- iridescent blue-green highlights -->
-<ellipse cx="200" cy="108" rx="80" ry="30" fill="#40d0c0" opacity="0.12"/>
-<ellipse cx="220" cy="100" rx="50" ry="18" fill="#80e8e0" opacity="0.10"/>
-<!-- 8 arms - curling from head -->
-<g stroke="url(#ctentacle)" stroke-width="6" fill="none" stroke-linecap="round">
-<path d="M95 130 q-20 10 -35 30 q-5 10 -8 20"/><path d="M90 140 q-18 15 -28 38 q-3 8 -5 18"/>
-<path d="M88 150 q-12 18 -16 40 q-2 8 -2 16"/><path d="M92 160 q-5 20 -4 42 q0 8 2 15"/>
-<path d="M100 165 q5 20 8 40 q1 8 3 14"/><path d="M110 162 q12 18 18 38 q2 8 4 14"/>
-<path d="M120 155 q18 14 28 32 q4 8 7 14"/><path d="M128 145 q22 10 36 24 q5 7 9 13"/>
-</g>
-<!-- suckers on arms -->
-<g fill="#804010" opacity="0.5">
-<circle cx="72" cy="158" r="3"/><circle cx="66" cy="170" r="3"/><circle cx="62" cy="183" r="2.5"/>
-<circle cx="98" cy="185" r="3"/><circle cx="100" cy="198" r="2.5"/>
-</g>
-<!-- 2 feeding tentacles longer -->
-<path d="M92 148 q-40 20 -55 55" fill="none" stroke="#a05818" stroke-width="4" stroke-linecap="round"/>
-<path d="M108 148 q-30 25 -40 62" fill="none" stroke="#a05818" stroke-width="4" stroke-linecap="round"/>
-<!-- tentacle clubs -->
-<ellipse cx="37" cy="203" rx="8" ry="5" fill="#c07028" transform="rotate(-30 37 203)"/>
-<ellipse cx="68" cy="210" rx="8" ry="5" fill="#c07028" transform="rotate(-10 68 210)"/>
-<!-- HEAD with W-shaped pupil eye -->
-<ellipse cx="105" cy="138" rx="42" ry="36" fill="#a06818"/>
-<!-- eye - remarkable W-shaped pupil -->
-<circle cx="98" cy="122" r="16" fill="#c8d8d0"/>
-<circle cx="98" cy="122" r="12" fill="#90a8a0"/>
-<circle cx="98" cy="122" r="8" fill="#203830"/>
-<!-- W pupil approximated -->
-<path d="M90 120 q4 6 8 0 q4 6 8 0" fill="none" stroke="#0a1808" stroke-width="4" stroke-linecap="round"/>
-<circle cx="100" cy="118" r="2.5" fill="#ffffff" opacity="0.7"/>
-</svg>`},
-
-bluedevil:function(w,h){return `<svg viewBox="0 0 400 240" width="100%" role="img" aria-label="Eastern blue devil fish" style="display:block;border-radius:10px">
-<defs>
-<radialGradient id="bdbg" cx="50%" cy="40%" r="70%"><stop offset="0" stop-color="#103048"/><stop offset="1" stop-color="#04101c"/></radialGradient>
-<radialGradient id="bdbody" cx="40%" cy="38%" r="65%"><stop offset="0" stop-color="#2060c8"/><stop offset="0.5" stop-color="#103898"/><stop offset="1" stop-color="#081840"/></radialGradient>
-<linearGradient id="bdband" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e8eef8"/><stop offset="1" stop-color="#c0ccdc"/></linearGradient>
-<linearGradient id="bdyellow" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f8e040"/><stop offset="1" stop-color="#d0a810"/></linearGradient>
-<filter id="bdglow"><feGaussianBlur stdDeviation="3" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
-</defs>
-<rect width="400" height="240" fill="url(#bdbg)"/>
-<!-- cave/ledge background - blue devil habitat -->
-<rect x="0" y="0" width="120" height="130" fill="#1a2a38" opacity="0.7" rx="0"/>
-<rect x="280" y="0" width="120" height="110" fill="#1a2a38" opacity="0.6" rx="0"/>
-<ellipse cx="60" cy="130" rx="80" ry="20" fill="#0e1e2c" opacity="0.6"/>
-<!-- rock texture -->
-<g opacity="0.3" stroke="#2a3a48" stroke-width="1" fill="none">
-<path d="M20 80 q30 -5 50 10"/><path d="M10 100 q40 -8 60 5"/><path d="M300 70 q30 5 60 -5"/><path d="M290 95 q35 3 65 -8"/>
-</g>
-<!-- BODY - elongated oval, deep-bodied plesiopid -->
-<ellipse cx="210" cy="138" rx="140" ry="62" fill="url(#bdbody)" filter="url(#bdglow)"/>
-<!-- 3 broad white bands - THE key field mark -->
-<rect x="128" y="84" width="36" height="108" fill="url(#bdband)" opacity="0.88" rx="4"/>
-<rect x="200" y="80" width="36" height="112" fill="url(#bdband)" opacity="0.85" rx="4"/>
-<rect x="272" y="86" width="34" height="104" fill="url(#bdband)" opacity="0.82" rx="4"/>
-<!-- body sheen over bands -->
-<ellipse cx="210" cy="130" rx="90" ry="40" fill="#3080e8" opacity="0.15"/>
-<!-- blue spots on head -->
-<g fill="#80b8ff" opacity="0.75" filter="url(#bdglow)">
-<circle cx="74" cy="115" r="5"/><circle cx="88" cy="105" r="4.5"/><circle cx="68" cy="128" r="4"/>
-<circle cx="84" cy="138" r="3.5"/><circle cx="96" cy="120" r="4"/><circle cx="78" cy="100" r="3.5"/>
-<circle cx="92" cy="148" r="3"/><circle cx="106" cy="112" r="3.5"/><circle cx="100" cy="130" r="3"/>
-</g>
-<!-- dorsal fin - very long, runs full body length -->
-<path d="M80 88 q10 -30 50 -38 q40 -5 80 -2 q38 2 80 8 q-5 20 -5 70z" fill="#1848a8" stroke="#0a2870" stroke-width="1.5" opacity="0.9"/>
-<!-- dorsal fin rays -->
-<g stroke="#0a2060" stroke-width="1" opacity="0.4">
-<line x1="98" y1="92" x2="93" y2="56"/><line x1="120" y1="84" x2="116" y2="51"/><line x1="144" y1="79" x2="141" y2="48"/><line x1="170" y1="76" x2="168" y2="47"/><line x1="198" y1="74" x2="196" y2="47"/><line x1="226" y1="75" x2="225" y2="49"/><line x1="254" y1="78" x2="254" y2="53"/><line x1="280" y1="82" x2="281" y2="59"/>
-</g>
-<!-- anal fin - elongate rays, characteristic -->
-<path d="M155 192 q30 22 85 20 q20 -1 38 -4 q-5 -15 -10 -20z" fill="#1848a8" stroke="#0a2870" stroke-width="1.5" opacity="0.85"/>
-<g stroke="#0a2060" stroke-width="1" opacity="0.4">
-<line x1="170" y1="198" x2="168" y2="215"/><line x1="192" y1="200" x2="191" y2="218"/><line x1="214" y1="201" x2="214" y2="219"/><line x1="236" y1="200" x2="237" y2="217"/>
-</g>
-<!-- YELLOW tail fin and base - unmistakable -->
-<path d="M342 100 q40 -20 52 -40 q0 24 -4 34 q16 14 14 34 q-18 -14 -62 -28z" fill="url(#bdyellow)" stroke="#b08008" stroke-width="1.5" filter="url(#bdglow)"/>
-<!-- yellow pectoral fin base -->
-<ellipse cx="112" cy="155" rx="22" ry="14" fill="#e8c030" transform="rotate(-15 112 155)" opacity="0.85"/>
-<path d="M100 155 q-30 10 -44 28 q10 -4 18 -8 q12 12 26 10z" fill="url(#bdyellow)" stroke="#b08008" stroke-width="1.5" opacity="0.85"/>
-<!-- HEAD - rounded, relatively large -->
-<ellipse cx="72" cy="136" rx="55" ry="46" fill="url(#bdbody)"/>
-<!-- eye - large, typical for cave fish -->
-<circle cx="75" cy="115" r="17" fill="#0a1428"/>
-<circle cx="75" cy="115" r="13" fill="#0e1e38"/>
-<circle cx="75" cy="115" r="8" fill="#040c1c"/>
-<circle cx="78" cy="111" r="3" fill="#ffffff" opacity="0.6"/>
-<!-- mouth - moderately large -->
-<path d="M28 145 q12 6 22 2 q-2 6 -20 4z" fill="#0a1428"/>
-<path d="M30 148 q10 5 20 2" fill="none" stroke="#1030a0" stroke-width="2.5"/>
-</svg>`}
-};
 var PHOTOS={
  seadragon:{src:'images/weedy.png',       alt:'Weedy seadragon'},
  pjshark:  {src:'images/portjackson.png', alt:'Port Jackson shark'},
@@ -449,40 +139,36 @@ var PHOTOS={
 function ART_html(key,h){
  h=h||190;
  var ph=PHOTOS[key];
- var fallback=ART[key]();
- return '<div style="border-radius:10px;overflow:hidden;height:'+h+'px;background:#071e29;display:flex;align-items:center;justify-content:center">'+
-  '<img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.replaceWith(document.createRange().createContextualFragment(atob(this.dataset.fb)))" data-fb="'+btoa(fallback)+'">'+
-  '</div>';
+ return '<div style="border-radius:10px;overflow:hidden;height:'+h+'px;background:#071e29;display:flex;align-items:center;justify-content:center">'
+  +'<img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy"'
+  +' onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'">'
+  +'</div>';
 }
-
-function waterScene(label,sig,top,bot){
- var id='w'+label.replace(/[^a-z]/gi,'');
- return '<svg viewBox="0 0 240 150" width="100%" role="img" aria-label="'+label+'" preserveAspectRatio="xMidYMid slice">'+
-  '<defs><linearGradient id="'+id+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bot+'"/></linearGradient></defs>'+
-  '<rect width="240" height="150" fill="url(#'+id+')"/>'+
-  '<g opacity="0.5"><line x1="40" y1="0" x2="60" y2="150" stroke="#ffffff" stroke-width="3" opacity="0.12"/><line x1="150" y1="0" x2="170" y2="150" stroke="#ffffff" stroke-width="4" opacity="0.1"/></g>'+
-  sig+'</svg>';
-}
-var SCENES={
- kelp:{name:'Cabbage Tree Bay (Manly)',art:waterScene('kelp',
-   '<g stroke="#3e6b2f" stroke-width="7" stroke-linecap="round" fill="none"><path d="M30 150 q-6 -60 8 -110"/><path d="M70 150 q8 -70 -2 -120"/><path d="M120 150 q-8 -50 4 -100"/><path d="M180 150 q10 -60 0 -110"/><path d="M215 150 q-6 -40 6 -90"/></g><g fill="#6fa64e" opacity="0.85"><ellipse cx="40" cy="44" rx="9" ry="4"/><ellipse cx="66" cy="34" rx="9" ry="4"/><ellipse cx="124" cy="56" rx="9" ry="4"/><ellipse cx="180" cy="44" rx="9" ry="4"/></g>',
-   '#1b6e8c','#0a3346')},
- sponge:{name:'Bare Island (La Perouse)',art:waterScene('sponge',
-   '<g><ellipse cx="50" cy="138" rx="40" ry="16" fill="#6b5e7a"/><circle cx="60" cy="120" r="13" fill="#d9534f"/><circle cx="90" cy="128" r="10" fill="#e8943a"/><path d="M150 150 q6 -40 -2 -56 q22 6 18 56 z" fill="#c94f86"/><circle cx="190" cy="124" r="11" fill="#e0c23a"/><circle cx="170" cy="132" r="8" fill="#3aa0e0"/><circle cx="120" cy="118" r="7" fill="#e8943a"/></g>',
-   '#155a72','#08283a')},
- seagrass:{name:'Gordons Bay',art:waterScene('seagrass',
-   '<rect x="0" y="132" width="240" height="18" fill="#c9b486"/><g stroke="#4f8a3a" stroke-width="5" stroke-linecap="round"><path d="M30 134 q-4 -34 2 -54"/><path d="M55 134 q4 -40 -2 -60"/><path d="M85 134 q-4 -30 4 -50"/><path d="M120 134 q3 -38 -2 -56"/><path d="M155 134 q-4 -34 4 -54"/><path d="M190 134 q4 -40 -2 -58"/><path d="M215 134 q-3 -30 4 -48"/></g>',
-   '#1f7e98','#0c3a4d')},
- boulder:{name:'Shelly Beach',art:waterScene('boulder',
-   '<g fill="#5e6b6e"><ellipse cx="50" cy="140" rx="46" ry="26"/><ellipse cx="180" cy="142" rx="56" ry="30"/><ellipse cx="120" cy="150" rx="36" ry="20"/></g><path d="M96 150 q24 -36 48 0 z" fill="#0c3a4d"/><g fill="#7fa0a3"><circle cx="40" cy="120" r="4"/><circle cx="190" cy="120" r="4"/></g>',
-   '#2487a0','#0e3e52')}
+var ART={
+ seadragon:function(){return ART_html('seadragon');},
+ pjshark:function(){return ART_html('pjshark');},
+ groper:function(){return ART_html('groper');},
+ cuttle:function(){return ART_html('cuttle');},
+ bluedevil:function(){return ART_html('bluedevil');}
 };
+
+/* Photo-based scenes for Where am I? */
+var PHOTO_SCENES=[
+ {img:'images/chowder.jpg', name:'Chowder Bay'},
+ {img:'images/ctb.jpg',     name:'Cabbage Tree Bay'}
+];
+
+/* All possible answer options for Where am I? */
+var ALL_SITES=[
+ 'Cabbage Tree Bay','Chowder Bay','Gordons Bay',
+ 'Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay'
+];
 
 var CR={
  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
  pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
  groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,f:'The NSW state fish. The big blue males all start life as females.'},
- cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world\u2019s largest cuttlefish and a master colour-changer.'},
+ cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world’s largest cuttlefish and a master colour-changer.'},
  bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,f:'A shy, cave-loving fish found only along the NSW coast.'}
 };
 var KEYS=Object.keys(CR);
@@ -515,81 +201,63 @@ function quizRound(){
 }
 $('qnext').onclick=quizRound;quizRound();
 
-/* MAP */
-var sites={
- manly:{name:'Cabbage Tree Bay, Manly',sp:['Weedy seadragon','Eastern blue groper','Port Jackson shark','Giant cuttlefish'],tip:'A no-take aquatic reserve — the fish are bold and used to snorkellers.'},
- shelly:{name:'Shelly Beach',sp:['Dusky whaler (passing)','Blue groper','Cuttlefish','Old wives'],tip:'Boulder swim-throughs and one of Sydney\u2019s richest fish counts.'},
- gordons:{name:'Gordons Bay',sp:['Blue groper','Octopus','Wobbegong','Seahorses'],tip:'An underwater nature trail is laid out along the seabed.'},
- clovelly:{name:'Clovelly',sp:['Bluey the blue groper','Sea urchins','Damselfish'],tip:'Sheltered, calm water — a classic spot for first-time snorkellers.'},
- bare:{name:'Bare Island, La Perouse',sp:['Pygmy pipehorse','Anglerfish','Sponge gardens','Nudibranchs'],tip:'A muck-diving favourite famous for tiny, weird critters.'}
-};
-$('mapart').innerHTML='<svg viewBox="0 0 240 150" width="100%" role="img" aria-label="Stylised Sydney coastline with dive sites">'+
- '<rect width="240" height="150" fill="#bfe3ef"/>'+
- '<path d="M0 0 L92 0 Q70 30 88 52 Q60 72 84 92 Q66 112 90 132 L78 150 L0 150 Z" fill="#dfe7cf" stroke="#9fb07e" stroke-width="1.5"/>'+
- '<g class="pin" data-s="manly" style="cursor:pointer"><circle cx="120" cy="22" r="6" fill="#d8543a"/><text x="130" y="26" font-size="11" fill="#0a3346">Manly</text></g>'+
- '<g class="pin" data-s="shelly" style="cursor:pointer"><circle cx="116" cy="44" r="6" fill="#d8543a"/><text x="126" y="48" font-size="11" fill="#0a3346">Shelly</text></g>'+
- '<g class="pin" data-s="gordons" style="cursor:pointer"><circle cx="124" cy="78" r="6" fill="#d8543a"/><text x="134" y="82" font-size="11" fill="#0a3346">Gordons</text></g>'+
- '<g class="pin" data-s="clovelly" style="cursor:pointer"><circle cx="120" cy="100" r="6" fill="#d8543a"/><text x="130" y="104" font-size="11" fill="#0a3346">Clovelly</text></g>'+
- '<g class="pin" data-s="bare" style="cursor:pointer"><circle cx="128" cy="128" r="6" fill="#d8543a"/><text x="138" y="132" font-size="11" fill="#0a3346">Bare Is.</text></g>'+
- '</svg>';
-function showSite(s){var d=sites[s];
- $('mapinfo').innerHTML='<p style="font-weight:600;margin:0 0 4px">'+d.name+'</p>'+
-  '<p style="font-size:14px;color:var(--muted);margin:0 0 10px">'+d.tip+'</p>'+
-  '<p style="font-size:13.5px;font-weight:600;margin:0 0 6px">You might see</p>'+
-  d.sp.map(function(x){return '<span class="tag">'+x+'</span>';}).join('');}
-$('mapart').querySelectorAll('.pin').forEach(function(p){p.onclick=function(){showSite(p.dataset.s);};});
-showSite('manly');
-
 /* LOG */
-var logSp=[
- ['Weedy seadragon','seadragon','kelp'],
- ['Eastern blue groper','groper','boulder'],
- ['Port Jackson shark','pjshark','boulder'],
- ['Giant cuttlefish','cuttle','seagrass'],
- ['Eastern blue devil','bluedevil','sponge']
-];
-var found={};
-function renderLog(){var n=Object.keys(found).filter(function(k){return found[k];}).length;
- $('logn').textContent=n;$('logbar').style.width=(n/5*100)+'%';
- $('logshare').style.display=n>0?'inline-block':'none';
- if(n===5){$('logmsg').textContent='A clean sweep — you found all five! 🏆';}else{$('logmsg').textContent='';}}
-$('loglist').innerHTML=logSp.map(function(s){
- var sceneArt=SCENES[s[2]].art.replace('width="100%"','style="width:100%;height:100%;position:absolute;inset:0"');
- var ph=PHOTOS[s[1]];
- var fb=ART[s[1]]();
- return '<div class="logcard">'+
-  '<div class="scene">'+sceneArt+'</div>'+
-  '<div class="creature">'+
-   '<img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.replaceWith(document.createRange().createContextualFragment(atob(this.dataset.fb)))" data-fb="'+btoa(fb)+'">'+
-  '</div>'+
-  '<div class="footer"><span>'+s[0]+'</span><button data-k="'+s[1]+'">Mark spotted</button></div>'+
-  '</div>';
+var LOG_ANSWERS=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
+var logFound={};
+function renderLog(){
+ var n=Object.keys(logFound).length;
+ $('logn').textContent=n;
+ $('logbar').style.width=(n/3*100)+'%';
+ if(n===3){$('logmsg').textContent='Nice eye — you spotted all three! 🏆';}
+ else{$('logmsg').textContent='';}
+}
+$('logscene').innerHTML='<img src="images/spotter1.png" alt="Underwater scene — spot the species" class="logsceneimg" loading="lazy">';
+$('logchips').innerHTML=LOG_ANSWERS.map(function(sp){
+ return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';
 }).join('');
-$('loglist').querySelectorAll('button').forEach(function(b){b.onclick=function(){
- found[b.dataset.k]=!found[b.dataset.k];
- if(found[b.dataset.k]){b.textContent='Spotted ✓';b.classList.add('spotted');}
- else{b.textContent='Mark spotted';b.classList.remove('spotted');}
- renderLog();
-};});
+$('logchips').querySelectorAll('.chip').forEach(function(b){
+ b.onclick=function(){
+  if(b.classList.contains('chip-done'))return;
+  logFound[b.dataset.sp]=true;
+  b.classList.add('chip-done');
+  b.textContent=b.dataset.sp+' ✓';
+  renderLog();
+ };
+});
 renderLog();
-$('logshare').onclick=function(){
- var list=logSp.filter(function(s){return found[s[1]];}).map(function(s){return s[0];});
- $('logmsg').textContent='Today\u2019s sightings: '+list.join(', ')+'.';
-};
 
 /* GUESS */
-var gScore=0,gTotal=0,sceneKeys=Object.keys(SCENES);
+var gScore=0,gTotal=0;
+var gUsed=[];
 function guessRound(){
  $('gnext').style.display='none';
- var key=sceneKeys[Math.floor(Math.random()*sceneKeys.length)];
- $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);height:220px">'+SCENES[key].art.replace('width="100%"','style="width:100%;height:100%"')+'</div>';
- var opts=shuffle([key].concat(shuffle(sceneKeys.filter(function(k){return k!==key;})).slice(0,3)));
- $('gopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+SCENES[k].name+'</button>';}).join('');
+ /* Pick a scene not recently used — cycle through photo scenes first, then SVG */
+ if(gUsed.length>=PHOTO_SCENES.length) gUsed=[];
+ var available=PHOTO_SCENES.filter(function(s,i){return gUsed.indexOf(i)<0;});
+ var pick=available[Math.floor(Math.random()*available.length)];
+ var pickIdx=PHOTO_SCENES.indexOf(pick);
+ gUsed.push(pickIdx);
+ var correctName=pick.name;
+ /* Build 4 options: correct + 3 random wrong from ALL_SITES */
+ var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
+ var opts=shuffle([correctName].concat(wrong));
+ $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px">'+
+  '<img src="'+pick.img+'" alt="Underwater photo — guess the site" style="width:100%;display:block;max-height:280px;object-fit:cover;border-radius:14px" loading="lazy">'+
+  '</div>';
+ $('gopts').innerHTML=opts.map(function(n){
+  return '<button class="opt" data-n="'+n+'">'+n+'</button>';
+ }).join('');
  $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
   gTotal++;
-  $('gopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
-  if(btn.dataset.k===key)gScore++;else btn.classList.add('wrong');
-  $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;$('gnext').style.display='inline-block';
+  $('gopts').querySelectorAll('.opt').forEach(function(x){
+   x.disabled=true;
+   if(x.dataset.n===correctName)x.classList.add('right');
+  });
+  if(btn.dataset.n!==correctName)btn.classList.add('wrong');
+  $('gscore').textContent=gScore+(btn.dataset.n===correctName?1:0);
+  if(btn.dataset.n===correctName)gScore++;
+  $('gtotal').textContent=gTotal;
+  $('gnext').style.display='inline-block';
  };});
 }
 $('gnext').onclick=guessRound;guessRound();
@@ -611,11 +279,11 @@ function fmtVal(s,v){
 }
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p>'+
-  '<div style="margin-bottom:8px;border-radius:10px;overflow:hidden">'+ART[key]()+'</div>'+
+  '<div style="margin-bottom:8px">'+ART_html(key,160)+'</div>'+
   STATS.map(function(s){
    var lk=(s[0]==='len'&&lenLocked);
    if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';
-   var lbl=s[1]+(lk?' <span class=\'note\'>too lopsided</span>':'');
+   var lbl=s[1]+(lk?' <span class="note">too lopsided</span>':'');
    var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');
    return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'>'+
     '<span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';
@@ -625,10 +293,10 @@ function deal(){
  var two=shuffle(KEYS).slice(0,2);var pk=two[0],ck=two[1];
  var lenLocked=Math.max(CR[pk].len,CR[ck].len)/Math.min(CR[pk].len,CR[ck].len)>2;
  $('pcard').innerHTML=cardHtml(pk,'Your card',false,lenLocked);
- $('ccard').innerHTML=cardHtml(ck,'Reef\u2019s card',true,lenLocked);
+ $('ccard').innerHTML=cardHtml(ck,'Reef’s card',true,lenLocked);
  $('pcard').querySelectorAll('.statbtn:not(:disabled)').forEach(function(b){b.onclick=function(){
   var s=b.dataset.s;
-  $('ccard').innerHTML=cardHtml(ck,'Reef\u2019s card',false,lenLocked);
+  $('ccard').innerHTML=cardHtml(ck,'Reef’s card',false,lenLocked);
   $('pcard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;});
   $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
   b.style.borderColor='var(--accent)';
