@@ -11,7 +11,7 @@
     --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
     --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
     --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
-    --artH:220px;
+    --artH:374px;
   }
   *{box-sizing:border-box;margin:0;padding:0}
   html,body{height:100%;overflow-x:hidden}
@@ -111,7 +111,7 @@
   .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
 
   .logsceneimg{width:100%;border-radius:12px;border:1px solid var(--line);
-    display:block;object-fit:cover;max-height:200px;flex-shrink:0}
+    display:block;object-fit:cover;max-height:340px;flex-shrink:0}
 
   /* ── CHIPS (spotter) ── */
   .chips-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
@@ -274,7 +274,7 @@
      RESPONSIVE
      ════════════════ */
   @media(max-width:560px){
-    :root{--artH:180px}
+    :root{--artH:306px}
     .wrap{padding:10px 11px calc(8px + env(safe-area-inset-bottom))}
     .gstep .label{font-size:8px}
     .gstep .icon{font-size:14px}
@@ -285,7 +285,7 @@
     .tcards{gap:7px}
   }
   @media(max-width:380px){
-    :root{--artH:155px}
+    :root{--artH:264px}
     .opts-grid{grid-template-columns:1fr}  /* single col on tiny phones */
     .chips-grid{grid-template-columns:1fr}
     .tcards{grid-template-columns:1fr}
@@ -293,7 +293,7 @@
     .gstep{padding:6px 2px}
   }
   @media(max-height:560px){
-    :root{--artH:130px}
+    :root{--artH:221px}
     .logobar{display:none}
     .arcade-insert{display:none}
     .wcard{padding:14px}
@@ -414,6 +414,11 @@
 
     <!-- HALL OF FAME -->
     <div class="panel" id="p-hof">
+      <div class="logobar" style="margin-bottom:10px;display:flex!important">
+        <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+        <span class="sep"></span>
+        <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
+      </div>
       <div class="hof-header">
         <h2>🏆 Hall of Fame</h2>
         <div class="hof-group" id="hofGroupLabel"></div>
@@ -714,7 +719,7 @@ function guessRound(){
   var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
   var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
   var opts=shuffle([correctName].concat(wrong));
-  $('gart').innerHTML='<div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:200px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
+  $('gart').innerHTML='<div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:340px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
   $('gopts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+n+'">'+n+'</button>';}).join('');
   $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(gAnswered)return;gAnswered=true;gTotal++;
@@ -731,7 +736,7 @@ $('gnext').onclick=guessRound;
 var TRUMPS_ROUNDS=5,tWin=0,tLose=0,tRound=0,tQueue=[];
 var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10']];
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
-function trumpsArtH(){return Math.round(artHeight(180)*0.55);}
+function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
   return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:6px">'+ART_html(key,trumpsArtH())+'</div>'+
     STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
