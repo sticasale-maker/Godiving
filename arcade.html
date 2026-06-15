@@ -146,7 +146,7 @@ var PHOTOS={
 function ART_html(key,h){
  var p=PHOTOS[key];h=h||150;
  return '<div style="width:100%;height:'+h+'px;overflow:hidden;border-radius:8px;background:#0a3346">'+
-  '<img src="'+p.src+'" alt="'+p.alt+'" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" loading="lazy" onerror="this.style.display='none'">'+
+  '<img src="'+p.src+'" alt="'+p.alt+'" style="width:100%;height:100%;object-fit:cover;object-position:center;display:block" loading="lazy" onerror="this.style.display=\'none\'">'+
   '</div>';
 }
 var ART={
