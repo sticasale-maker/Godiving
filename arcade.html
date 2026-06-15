@@ -149,20 +149,16 @@
   .encourage{text-align:center;font-size:16px;background:var(--goodd);border:1px solid var(--good);
     color:#cdf3df;border-radius:12px;padding:13px 16px;margin:6px 0 14px}
 
-  /* The quiz/trumps art height is driven by --artH so media queries can shrink it */
-
   /* ===== TABLET / SMALL LAPTOP ===== */
   @media(max-width:760px){
     :root{--artH:230px}
   }
-
-  /* ===== PHONES (≤560px) — compact the chrome, keep actions above the fold ===== */
+  /* ===== PHONES (≤560px) ===== */
   @media(max-width:560px){
     :root{--artH:190px}
     .wrap{padding:14px 13px calc(20px + env(safe-area-inset-bottom))}
     h1{font-size:21px}
     .sub{font-size:13.5px;margin-bottom:12px;line-height:1.4}
-    /* horizontal-scroll nav so the four tabs stay on one row */
     .nav{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;
       margin:0 -13px 14px;padding:0 13px 2px;scrollbar-width:none}
     .nav::-webkit-scrollbar{display:none}
@@ -178,7 +174,7 @@
     .head p{font-size:14px}
     .score{font-size:14px}
     button.opt{padding:10px 13px;font-size:14.5px;margin:6px 0}
-    .btn{padding:11px 16px} /* keep a comfy tap target */
+    .btn{padding:11px 16px}
     .chip{padding:9px 13px;font-size:14px}
     .statbtn{padding:7px 10px;font-size:13px}
     .statrow{padding:7px 10px;font-size:13px}
@@ -187,12 +183,10 @@
     .donewrap{margin-top:12px;padding-top:10px}
     .encourage{font-size:14.5px;padding:11px 13px}
     .hof .lrow{padding:9px 12px;font-size:14px}
-    /* On the welcome card, tighten so name+age+button fit without scrolling */
     .welcome{margin-top:2vh}
     .welcome .wcard{padding:18px 16px}
   }
-
-  /* ===== SMALL PHONES (≤380px: iPhone SE, mini, older Androids) ===== */
+  /* ===== SMALL PHONES (≤380px) ===== */
   @media(max-width:380px){
     :root{--artH:165px}
     h1{font-size:19px}
@@ -204,11 +198,10 @@
     .nav button{font-size:13px;padding:7px 11px}
     .tcard .tt{font-size:14px}
   }
-
-  /* ===== SHORT VIEWPORTS (landscape phones / small heights) ===== */
+  /* ===== SHORT VIEWPORTS ===== */
   @media(max-height:560px){
     :root{--artH:150px}
-    .logobar{display:none} /* reclaim vertical space when height is tight */
+    .logobar{display:none}
     .sub{display:none}
     .wrap{padding-top:12px}
   }
@@ -218,9 +211,7 @@
 
 <!-- SPLASH SCREEN -->
 <div id="splash">
-  <video id="splashVideo" autoplay muted playsinline webkit-playsinline preload="auto">
-    <source src="images/splash.mp4" type="video/mp4">
-  </video>
+  <video id="splashVideo" muted playsinline webkit-playsinline preload="auto" autoplay></video>
   <div id="splashFallback">
     <div class="big">🌊🤿</div>
     <h1>Go Diving Show Arcade</h1>
@@ -334,14 +325,16 @@
 </div>
 
 <script>
-/* ---------- SPLASH SCREEN ---------- */
+/* ---------- SPLASH SCREEN ----------
+   Robust loader: only shows the "Loading the reef…" fallback after a real,
+   final failure — not on a transient early error or a slow first byte. */
 (function(){
  var splash=document.getElementById('splash');
  var video=document.getElementById('splashVideo');
  var fallback=document.getElementById('splashFallback');
  var tap=document.getElementById('splashTap');
  var skip=document.getElementById('splashSkip');
- var dismissed=false, started=false;
+ var dismissed=false, started=false, fellBack=false;
 
  var SPEED=2;
  function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
@@ -355,41 +348,68 @@
   showWelcome();
   setTimeout(function(){if(splash&&splash.parentNode)splash.parentNode.removeChild(splash);},520);
  }
+ function showFallback(){
+  if(fellBack||started||dismissed)return;
+  fellBack=true;
+  fallback.style.display='flex';
+  setTimeout(dismiss,1800);
+ }
+ function showTap(){ if(!started&&!dismissed&&!fellBack) tap.style.display='flex'; }
 
- function showFallback(){fallback.style.display='flex';setTimeout(dismiss,1800);}
- function showTap(){tap.style.display='flex';}
-
- video.addEventListener('playing',function(){started=true;tap.style.display='none';applySpeed();});
+ /* Success markers */
+ video.addEventListener('playing',function(){started=true;tap.style.display='none';fallback.style.display='none';applySpeed();});
+ video.addEventListener('timeupdate',function(){if(video.currentTime>0){started=true;}});
  video.addEventListener('ended',dismiss);
- video.addEventListener('error',showFallback);
- video.querySelector('source').addEventListener('error',showFallback);
+
+ /* Build the source explicitly so we can retry the load once before giving up. */
+ var triedReload=false;
+ function setSource(){
+  /* cache-bust on retry to dodge a half-cached file */
+  video.src='images/splash.mp4'+(triedReload?('?r='+Date.now()):'');
+  try{video.load();}catch(e){}
+ }
+
+ /* Only treat as failure if it's genuinely unrecoverable AND nothing is playing.
+    Retry the load once; if it still fails after a grace period, show fallback. */
+ video.addEventListener('error',function(){
+  if(started||dismissed)return;
+  if(!triedReload){ triedReload=true; setTimeout(setSource,300); }
+  else { setTimeout(function(){ if(!started) showFallback(); }, 1200); }
+ });
 
  function attemptPlay(){
   applySpeed();
   var p=video.play&&video.play();
   if(p&&p.then){
    p.then(function(){started=true;applySpeed();})
-    .catch(function(){ if(!started) showTap(); });
+    .catch(function(){ if(!started) showTap(); });   /* autoplay blocked → tap to start */
   }
  }
  video.addEventListener('loadeddata',attemptPlay);
  video.addEventListener('canplay',attemptPlay);
- attemptPlay();
+ video.addEventListener('canplaythrough',attemptPlay);
 
+ /* Tapping the overlay is a user gesture → always allowed to play */
  tap.addEventListener('click',function(){
-  tap.style.display='none';
+  tap.style.display='none'; fallback.style.display='none';
   applySpeed();
   var p=video.play&&video.play();
   if(p&&p.then){p.then(function(){started=true;applySpeed();}).catch(dismiss);}
  });
 
+ /* If autoplay silently never starts (no error, no play), offer tap after a wait */
  setTimeout(function(){
-  if(!started&&!dismissed&&tap.style.display!=='flex'&&fallback.style.display!=='flex'){showTap();}
- },2500);
+  if(!started&&!dismissed&&!fellBack&&tap.style.display!=='flex'){showTap();}
+ },3500);
 
- setTimeout(function(){if(!dismissed)dismiss();},15000);
+ /* Final safety net so the splash can never trap the user */
+ setTimeout(function(){if(!dismissed)dismiss();},18000);
 
  skip.addEventListener('click',dismiss);
+
+ /* Kick everything off */
+ setSource();
+ attemptPlay();
 })();
 
 /* ---------- LOGO FALLBACKS (shown until real PNGs exist in images/) ---------- */
@@ -454,7 +474,6 @@ var PHOTOS={
  cuttle:   {src:'images/cuttle.png',      alt:'Giant cuttlefish'},
  bluedevil:{src:'images/bluedevil.webp',  alt:'Eastern blue devil'}
 };
-/* Heights are resolved from the --artH CSS variable so they shrink on small screens. */
 function artHeight(fallbackPx){
  var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();
  var n=parseInt(v,10);
@@ -476,8 +495,6 @@ var ART={
  bluedevil:function(){return ART_html('bluedevil');}
 };
 
-/* Photo-based scenes for Where am I? — each has an SVG fallback so the
-   panel always shows something even when the photo file is missing. */
 var PHOTO_SCENES=[
  {img:'images/chowder.jpg', name:'Chowder Bay',
   svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
@@ -543,7 +560,7 @@ nav.querySelectorAll('button').forEach(function(b){b.onclick=function(){
  b.classList.add('on');
  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
  $('p-'+b.dataset.p).classList.add('show');
- window.scrollTo(0,0); /* keep the new panel's top in view on phones */
+ window.scrollTo(0,0);
 };});
 
 /* QUIZ */
@@ -651,7 +668,6 @@ function fmtVal(s,v){
  if(s==='speed')return v<1?v.toFixed(2):String(v);
  return String(v);
 }
-/* Trumps cards use a smaller image than the quiz to keep both cards + stats on one screen */
 function trumpsArtH(){return Math.round(artHeight(190)*0.62);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p>'+
@@ -718,7 +734,6 @@ function showHallOfFame(){
  entries.push({name:USER.name+' (you)',score:POINTS,me:true});
  entries.sort(function(a,b){return b.score-a.score;});
 
- /* Guarantee the player sits in the middle of the displayed board. */
  var meIdx=entries.findIndex(function(e){return e.me;});
  var mid=Math.floor(entries.length/2);
  if(meIdx!==mid){
