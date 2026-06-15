@@ -152,10 +152,13 @@ var ART={
  bluedevil:function(){return ART_html('bluedevil');}
 };
 
-/* Photo-based scenes for Where am I? */
+/* Photo-based scenes for Where am I? — each has an SVG fallback so the
+   panel always shows something even when the photo file is missing. */
 var PHOTO_SCENES=[
- {img:'images/chowder.jpg', name:'Chowder Bay'},
- {img:'images/ctb.jpg',     name:'Cabbage Tree Bay'}
+ {img:'images/chowder.jpg', name:'Chowder Bay',
+  svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
+ {img:'images/ctb.jpg',     name:'Cabbage Tree Bay',
+  svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')}
 ];
 
 /* All possible answer options for Where am I? */
@@ -163,6 +166,43 @@ var ALL_SITES=[
  'Cabbage Tree Bay','Chowder Bay','Gordons Bay',
  'Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay'
 ];
+
+/* Generate a simple illustrated underwater scene as an inline SVG fallback. */
+function siteSVG(label,top,bottom,feature){
+ var feat='';
+ if(feature==='pier'){
+  feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round">'+
+   '<line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/>'+
+   '<line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/>'+
+   '<line x1="540" y1="60" x2="540" y2="300"/></g>'+
+   '<rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';
+ }else{
+  feat='<g fill="#0e5b4f" opacity="0.85">'+
+   '<path d="M120 320 q-24 -120 8 -200 q14 80 -8 200 Z"/>'+
+   '<path d="M180 320 q18 -140 -6 -230 q-22 90 6 230 Z"/>'+
+   '<path d="M250 320 q-20 -110 6 -190 q16 70 -6 190 Z"/>'+
+   '<path d="M470 320 q24 -130 -6 -215 q-20 85 6 215 Z"/>'+
+   '<path d="M540 320 q-18 -120 8 -195 q14 75 -8 195 Z"/></g>';
+ }
+ var fish='<g fill="#f3c64f" opacity="0.9">'+
+   '<ellipse cx="360" cy="150" rx="22" ry="10"/>'+
+   '<path d="M338 150 l-16 -10 l0 20 Z"/></g>'+
+   '<g fill="#ef7a52" opacity="0.85">'+
+   '<ellipse cx="430" cy="210" rx="16" ry="8"/>'+
+   '<path d="M446 210 l14 -8 l0 16 Z"/></g>';
+ return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" '+
+  'style="width:100%;display:block;border-radius:14px">'+
+  '<defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1">'+
+  '<stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/>'+
+  '</linearGradient></defs>'+
+  '<rect width="660" height="320" fill="url(#g_'+feature+')"/>'+
+  '<g fill="#ffffff" opacity="0.12">'+
+  '<circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/>'+
+  '<circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g>'+
+  '<rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+
+  feat+fish+
+  '</svg>';
+}
 
 var CR={
  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
@@ -202,26 +242,36 @@ function quizRound(){
 $('qnext').onclick=quizRound;quizRound();
 
 /* LOG */
-var LOG_ANSWERS=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
+/* Three species are actually in the scene; the rest are decoys that are NOT. */
+var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
+var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin'];
 var logFound={};
+var logDone=false;
 function renderLog(){
  var n=Object.keys(logFound).length;
  $('logn').textContent=n;
  $('logbar').style.width=(n/3*100)+'%';
- if(n===3){$('logmsg').textContent='Nice eye — you spotted all three! 🏆';}
- else{$('logmsg').textContent='';}
+ if(n===3){$('logmsg').textContent='Nice eye — you spotted all three! 🏆';logDone=true;}
 }
 $('logscene').innerHTML='<img src="images/spotter1.png" alt="Underwater scene — spot the species" class="logsceneimg" loading="lazy">';
-$('logchips').innerHTML=LOG_ANSWERS.map(function(sp){
+/* Mix the 3 correct answers with decoys and shuffle them all together. */
+var logOptions=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
+$('logchips').innerHTML=logOptions.map(function(sp){
  return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';
 }).join('');
 $('logchips').querySelectorAll('.chip').forEach(function(b){
  b.onclick=function(){
-  if(b.classList.contains('chip-done'))return;
-  logFound[b.dataset.sp]=true;
-  b.classList.add('chip-done');
-  b.textContent=b.dataset.sp+' ✓';
-  renderLog();
+  if(logDone||b.classList.contains('chip-done')||b.classList.contains('chip-wrong'))return;
+  if(LOG_PRESENT.indexOf(b.dataset.sp)>-1){
+   logFound[b.dataset.sp]=true;
+   b.classList.add('chip-done');
+   b.textContent=b.dataset.sp+' ✓';
+   renderLog();
+  }else{
+   b.classList.add('chip-wrong');
+   b.textContent=b.dataset.sp+' ✗';
+   $('logmsg').textContent='Not in this scene — keep looking.';
+  }
  };
 });
 renderLog();
@@ -231,7 +281,7 @@ var gScore=0,gTotal=0;
 var gUsed=[];
 function guessRound(){
  $('gnext').style.display='none';
- /* Pick a scene not recently used — cycle through photo scenes first, then SVG */
+ /* Pick a scene not recently used */
  if(gUsed.length>=PHOTO_SCENES.length) gUsed=[];
  var available=PHOTO_SCENES.filter(function(s,i){return gUsed.indexOf(i)<0;});
  var pick=available[Math.floor(Math.random()*available.length)];
@@ -241,8 +291,11 @@ function guessRound(){
  /* Build 4 options: correct + 3 random wrong from ALL_SITES */
  var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
  var opts=shuffle([correctName].concat(wrong));
+ /* Photo if it loads, otherwise fall back to the illustrated SVG scene. */
  $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px">'+
-  '<img src="'+pick.img+'" alt="Underwater photo — guess the site" style="width:100%;display:block;max-height:280px;object-fit:cover;border-radius:14px" loading="lazy">'+
+  '<img src="'+pick.img+'" alt="Underwater photo — guess the site" '+
+  'style="width:100%;display:block;max-height:280px;object-fit:cover;border-radius:14px" loading="lazy" '+
+  'onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg">'+
   '</div>';
  $('gopts').innerHTML=opts.map(function(n){
   return '<button class="opt" data-n="'+n+'">'+n+'</button>';
@@ -254,8 +307,8 @@ function guessRound(){
    if(x.dataset.n===correctName)x.classList.add('right');
   });
   if(btn.dataset.n!==correctName)btn.classList.add('wrong');
-  $('gscore').textContent=gScore+(btn.dataset.n===correctName?1:0);
   if(btn.dataset.n===correctName)gScore++;
+  $('gscore').textContent=gScore;
   $('gtotal').textContent=gTotal;
   $('gnext').style.display='inline-block';
  };});
