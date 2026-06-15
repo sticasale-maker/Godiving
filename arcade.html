@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Sydney Marine Arcade</title>
+<title>Go Diving Show Arcade</title>
 <style>
   :root{
     --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
@@ -40,6 +40,7 @@
   .btn{background:var(--accent);color:#04282a;border:none;border-radius:10px;padding:10px 16px;font-size:15px;
     font-weight:600;cursor:pointer;margin-top:10px}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+  .btn.done{background:var(--gold);color:#3a2c00}
   .fact{font-size:14.5px;color:var(--muted);min-height:22px;margin:10px 0 0}
   .grid2{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:14px;align-items:start}
   @media(max-width:640px){.grid2{grid-template-columns:1fr}}
@@ -76,59 +77,289 @@
     border-radius:9px;padding:8px 11px;font-size:13.5px}
   .tres{text-align:center;font-size:16px;font-weight:600;min-height:24px;margin:12px 0 4px}
   svg{display:block}
+
+  /* Splash screen */
+  #splash{position:fixed;inset:0;z-index:1000;background:#04161e;display:flex;align-items:center;
+    justify-content:center;overflow:hidden}
+  #splash video{width:100%;height:100%;object-fit:cover}
+  #splashFallback{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;
+    background:radial-gradient(1000px 500px at 50% 20%, #0b3a4d, #04161e 70%)}
+  #splashFallback .big{font-size:54px;margin-bottom:6px}
+  #splashFallback h1{font-size:30px}
+  #splashFallback p{color:var(--muted);margin:2px 0 0}
+  #splashSkip{position:absolute;bottom:26px;right:24px;z-index:2;background:rgba(4,22,30,.55);
+    color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:9px 18px;
+    font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s}
+  #splashSkip:hover{background:rgba(4,22,30,.8);border-color:var(--accent)}
+  .splash-hide{animation:splashOut .5s ease forwards}
+  @keyframes splashOut{to{opacity:0;visibility:hidden}}
+
+  /* Logo bar */
+  .logobar{display:flex;align-items:center;justify-content:center;gap:18px;flex-wrap:wrap;margin:0 0 16px}
+  .logobar .logo{height:64px;width:auto;border-radius:12px;display:block;object-fit:contain}
+  .logobar .sep{width:1px;height:40px;background:var(--line)}
+  @media(max-width:480px){.logobar .logo{height:54px}}
+
+  /* Welcome page */
+  .welcome{max-width:460px;margin:5vh auto 0;text-align:center}
+  .welcome .wcard{background:var(--surface);border:1px solid var(--line);border-radius:16px;padding:26px 24px}
+  .welcome label{display:block;text-align:left;font-size:13.5px;color:var(--muted);margin:14px 0 6px}
+  .welcome input{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:10px;color:var(--text);
+    font-size:16px;padding:12px 14px;font-family:inherit}
+  .welcome input:focus{outline:none;border-color:var(--accent)}
+  .werr{color:var(--bad);font-size:13.5px;min-height:18px;margin:10px 0 0}
+  .welcome .btn{width:100%;margin-top:18px;padding:13px}
+
+  /* Points pill */
+  .pointsbar{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;
+    background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:10px 14px;margin-bottom:18px}
+  .pointsbar .who{font-size:14.5px}
+  .pointsbar .who b{color:var(--text)}
+  .pointsbar .who .grp{display:inline-block;background:var(--accentd);color:var(--accent);font-size:12px;
+    padding:3px 9px;border-radius:7px;margin-left:6px}
+  .pts{font-size:15px;color:var(--muted)}
+  .pts b{color:var(--gold);font-size:18px}
+  .pts .fl{display:inline-block;margin-left:8px;font-size:13px;opacity:0;transition:opacity .2s;font-weight:600}
+  .pts .fl.up{color:var(--good)}
+  .pts .fl.down{color:var(--bad)}
+  .donewrap{margin-top:16px;padding-top:14px;border-top:1px solid var(--line)}
+
+  /* Hall of fame */
+  .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:11px 14px;
+    border:1px solid var(--line);border-radius:11px;margin:7px 0;background:var(--bg2);font-size:15px}
+  .hof .lrow .l{display:flex;align-items:center;gap:12px}
+  .hof .lrow .rank{width:30px;font-weight:700;color:var(--muted);text-align:center}
+  .hof .lrow .nm{font-weight:500}
+  .hof .lrow .sc{font-weight:700;color:var(--gold)}
+  .hof .me{background:var(--accentd);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .hof .me .nm{color:var(--accent)}
+  .hof .me .rank{color:var(--accent)}
+  .hof .medal{font-size:16px;width:20px;text-align:center}
+  .encourage{text-align:center;font-size:16px;background:var(--goodd);border:1px solid var(--good);
+    color:#cdf3df;border-radius:12px;padding:14px 16px;margin:8px 0 18px}
 </style>
 </head>
 <body>
+
+<!-- SPLASH SCREEN -->
+<div id="splash">
+  <video id="splashVideo" autoplay muted playsinline preload="auto">
+    <source src="images/splash.mp4" type="video/mp4">
+  </video>
+  <div id="splashFallback">
+    <div class="big">🌊🤿</div>
+    <h1>Go Diving Show Arcade</h1>
+    <p>Loading the reef…</p>
+  </div>
+  <button id="splashSkip">Skip ⏭</button>
+</div>
+
 <div class="wrap">
-  <h1>🌊 Sydney Marine Arcade</h1>
-  <p class="sub">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
 
-  <div class="nav" id="nav">
-    <button data-p="quiz" class="on">🐠 Guess who</button>
-    <button data-p="log">✅ Spotter log</button>
-    <button data-p="guess">🔎 Where am I?</button>
-    <button data-p="trumps">🃏 Stat battle</button>
+  <!-- WELCOME -->
+  <div id="welcome" class="welcome" style="display:none">
+    <div class="logobar">
+      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo"
+           onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+      <span class="sep"></span>
+      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo"
+           onerror="this.outerHTML=LOGO_FALLBACK.viz">
+    </div>
+    <h1 style="margin-bottom:2px">Go Diving Show Arcade</h1>
+    <p class="sub" style="margin-bottom:18px">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
+    <div class="wcard">
+      <p style="margin:0 0 4px;font-weight:600">Welcome, marine enthusiast! 🐙</p>
+      <p style="margin:0;color:var(--muted);font-size:14px">Tell us who's exploring today.</p>
+      <label for="wname">Your name</label>
+      <input id="wname" type="text" placeholder="e.g. Marlee" maxlength="20" autocomplete="off">
+      <label for="wage">Your age</label>
+      <input id="wage" type="number" min="3" max="120" placeholder="e.g. 11" inputmode="numeric">
+      <p class="werr" id="werr"></p>
+      <button class="btn" id="wstart">Dive in →</button>
+    </div>
   </div>
 
-  <!-- QUIZ -->
-  <div class="panel show" id="p-quiz">
-    <div class="head"><p>Name the creature</p><span class="score">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span></div>
-    <div id="qart" style="border-radius:14px;overflow:hidden;"></div>
-    <div id="qopts" style="margin-top:12px"></div>
-    <p class="fact" id="qfact"></p>
-    <button class="btn" id="qnext" style="display:none">Next creature →</button>
-  </div>
+  <!-- MAIN APP -->
+  <div id="app" style="display:none">
+    <div class="logobar">
+      <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo"
+           onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+      <span class="sep"></span>
+      <img src="images/vizlogo.png" alt="VIZ — Sydney Diving Visibility Reports" class="logo"
+           onerror="this.outerHTML=LOGO_FALLBACK.viz">
+    </div>
+    <h1>🌊 Go Diving Show Arcade</h1>
+    <p class="sub">Four quick games for all ages — guess the creature, log your spots, and battle stats.</p>
 
-  <!-- LOG -->
-  <div class="panel" id="p-log">
-    <div class="head"><p>What can you spot in this scene?</p><span class="score"><b id="logn">0</b> / 3 found</span></div>
-    <div class="bar"><i id="logbar"></i></div>
-    <div id="logscene"></div>
-    <div id="logchips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
-    <p class="fact" id="logmsg"></p>
-  </div>
+    <div class="pointsbar">
+      <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
+      <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
+    </div>
 
-  <!-- GUESS -->
-  <div class="panel" id="p-guess">
-    <div class="head"><p>Which Sydney dive site is this?</p><span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span></div>
-    <div id="gart"></div>
-    <div id="gopts" style="margin-top:12px"></div>
-    <button class="btn" id="gnext" style="display:none">Next location →</button>
-  </div>
+    <div class="nav" id="nav">
+      <button data-p="quiz" class="on">🐠 Guess who</button>
+      <button data-p="log">✅ Spotter log</button>
+      <button data-p="guess">🔎 Where am I?</button>
+      <button data-p="trumps">🃏 Stat battle</button>
+    </div>
 
-  <!-- TRUMPS -->
-  <div class="panel" id="p-trumps">
-    <div class="head"><p>Pick a stat — highest value wins the round</p></div>
-    <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
-    <p class="tres" id="tresult"></p>
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
-      <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
-      <button class="btn ghost" id="tdeal" style="display:none">Deal again</button>
+    <!-- QUIZ -->
+    <div class="panel show" id="p-quiz">
+      <div class="head"><p>Name the creature</p><span class="score">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span></div>
+      <div id="qart" style="border-radius:14px;overflow:hidden;"></div>
+      <div id="qopts" style="margin-top:12px"></div>
+      <p class="fact" id="qfact"></p>
+      <button class="btn" id="qnext" style="display:none">Next creature →</button>
+      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+    </div>
+
+    <!-- LOG -->
+    <div class="panel" id="p-log">
+      <div class="head"><p>What can you spot in this scene?</p><span class="score"><b id="logn">0</b> / 3 found</span></div>
+      <div class="bar"><i id="logbar"></i></div>
+      <div id="logscene"></div>
+      <div id="logchips" style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px"></div>
+      <p class="fact" id="logmsg"></p>
+      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+    </div>
+
+    <!-- GUESS -->
+    <div class="panel" id="p-guess">
+      <div class="head"><p>Which Sydney dive site is this?</p><span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span></div>
+      <div id="gart"></div>
+      <div id="gopts" style="margin-top:12px"></div>
+      <button class="btn" id="gnext" style="display:none">Next location →</button>
+      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+    </div>
+
+    <!-- TRUMPS -->
+    <div class="panel" id="p-trumps">
+      <div class="head"><p>Pick a stat — highest value wins the round</p></div>
+      <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
+      <p class="tres" id="tresult"></p>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:2px">
+        <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
+        <button class="btn ghost" id="tdeal" style="display:none">Deal again</button>
+      </div>
+      <div class="donewrap"><button class="btn done done-btn">🏁 I'm done — see Hall of Fame</button></div>
+    </div>
+
+    <!-- HALL OF FAME -->
+    <div class="panel" id="p-hof">
+      <div class="head"><p>🏆 Hall of Fame</p><span class="score" id="hofGroupLabel"></span></div>
+      <p class="encourage" id="hofEncourage"></p>
+      <div class="hof" id="hofList"></div>
+      <button class="btn ghost" id="hofBack" style="margin-top:14px">← Back to the games</button>
     </div>
   </div>
 </div>
 
 <script>
+/* ---------- SPLASH SCREEN ---------- */
+(function(){
+ var splash=document.getElementById('splash');
+ var video=document.getElementById('splashVideo');
+ var fallback=document.getElementById('splashFallback');
+ var skip=document.getElementById('splashSkip');
+ var dismissed=false;
+
+ /* Play the splash at 2x. playbackRate resets if set before metadata loads,
+    so apply it on loadedmetadata and again on play to be safe. */
+ var SPEED=2;
+ function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
+ video.addEventListener('loadedmetadata',applySpeed);
+ video.addEventListener('play',applySpeed);
+ applySpeed();
+
+ function showWelcome(){
+  document.getElementById('welcome').style.display='block';
+ }
+ function dismiss(){
+  if(dismissed)return;
+  dismissed=true;
+  try{video.pause();}catch(e){}
+  splash.classList.add('splash-hide');
+  showWelcome();
+  setTimeout(function(){if(splash&&splash.parentNode)splash.parentNode.removeChild(splash);},520);
+ }
+
+ /* End of video → go to welcome */
+ video.addEventListener('ended',dismiss);
+ /* If the video can't load/play, show a brief branded fallback then move on */
+ video.addEventListener('error',function(){
+  fallback.style.display='flex';
+  setTimeout(dismiss,1800);
+ });
+ /* Some browsers block autoplay; if it never starts, the fallback timer covers it */
+ var playAttempt=video.play&&video.play();
+ if(playAttempt&&playAttempt.then){
+  playAttempt.then(applySpeed).catch(function(){
+   fallback.style.display='flex';
+   setTimeout(dismiss,1800);
+  });
+ }
+ /* Hard safety net: never let the splash hang longer than 12s */
+ setTimeout(function(){if(!dismissed)dismiss();},12000);
+
+ skip.addEventListener('click',dismiss);
+})();
+
+/* ---------- LOGO FALLBACKS (shown until real PNGs exist in images/) ---------- */
+var LOGO_FALLBACK={
+ godiving:'<div style="height:64px;display:flex;align-items:center;gap:8px;padding:0 16px;'+
+  'background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:12px">'+
+  '<span style="font-size:22px">🤿</span>'+
+  '<span style="font-weight:800;letter-spacing:.5px;font-size:15px;line-height:1.05;color:#eaf6fb;text-align:left">'+
+  'GO DIVING<br><span style="font-size:11px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
+ viz:'<div style="height:64px;width:64px;display:flex;align-items:center;justify-content:center;'+
+  'background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);'+
+  'border-radius:50%"><span style="font-weight:900;font-size:24px;color:#f3c64f;'+
+  'text-shadow:0 1px 2px rgba(0,0,0,.5);letter-spacing:1px">VIZ</span></div>'
+};
+
+/* ---------- POINTS ENGINE ---------- */
+var POINTS=0;
+var REWARD=10;   /* points for a clean (error-free) action */
+var PENALTY=4;   /* points lost for a mistake */
+function flashPts(delta){
+ var fl=document.getElementById('ptsFloat');
+ if(!fl)return;
+ fl.textContent=(delta>0?'+':'')+delta;
+ fl.className='fl '+(delta>0?'up':'down');
+ fl.style.opacity='1';
+ setTimeout(function(){fl.style.opacity='0';},900);
+}
+function award(){POINTS+=REWARD;syncPoints();flashPts(REWARD);}
+function penalize(){POINTS-=PENALTY;syncPoints();flashPts(-PENALTY);}
+function syncPoints(){var p=document.getElementById('points');if(p)p.textContent=POINTS;}
+
+/* ---------- WELCOME / AGE GROUP ---------- */
+var USER={name:'',age:0,group:''};
+function ageGroup(a){
+ if(a<=12)return 'Young Explorer';
+ if(a<=17)return 'Teen Explorer';
+ return 'Adult Explorer';
+}
+document.getElementById('wstart').onclick=function(){
+ var nm=document.getElementById('wname').value.trim();
+ var ageVal=parseInt(document.getElementById('wage').value,10);
+ var err=document.getElementById('werr');
+ if(!nm){err.textContent='Please enter your name.';return;}
+ if(!ageVal||ageVal<3||ageVal>120){err.textContent='Please enter a valid age (3–120).';return;}
+ err.textContent='';
+ USER.name=nm;USER.age=ageVal;USER.group=ageGroup(ageVal);
+ document.getElementById('whoName').textContent=USER.name;
+ document.getElementById('whoGroup').textContent=USER.group;
+ document.getElementById('welcome').style.display='none';
+ document.getElementById('app').style.display='block';
+};
+['wname','wage'].forEach(function(id){
+ document.getElementById(id).addEventListener('keydown',function(e){
+  if(e.key==='Enter')document.getElementById('wstart').click();
+ });
+});
+
 var PHOTOS={
  seadragon:{src:'images/weedy.png',       alt:'Weedy seadragon'},
  pjshark:  {src:'images/portjackson.png', alt:'Port Jackson shark'},
@@ -161,13 +392,11 @@ var PHOTO_SCENES=[
   svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')}
 ];
 
-/* All possible answer options for Where am I? */
 var ALL_SITES=[
  'Cabbage Tree Bay','Chowder Bay','Gordons Bay',
  'Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay'
 ];
 
-/* Generate a simple illustrated underwater scene as an inline SVG fallback. */
 function siteSVG(label,top,bottom,feature){
  var feat='';
  if(feature==='pier'){
@@ -234,7 +463,8 @@ function quizRound(){
  $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
   qTotal++;
   $('qopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
-  if(btn.dataset.k===key)qScore++;else btn.classList.add('wrong');
+  if(btn.dataset.k===key){qScore++;award();}
+  else{btn.classList.add('wrong');penalize();}
   $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;
   $('qfact').textContent=CR[key].f;$('qnext').style.display='inline-block';
  };});
@@ -242,7 +472,6 @@ function quizRound(){
 $('qnext').onclick=quizRound;quizRound();
 
 /* LOG */
-/* Three species are actually in the scene; the rest are decoys that are NOT. */
 var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
 var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin'];
 var logFound={};
@@ -254,7 +483,6 @@ function renderLog(){
  if(n===3){$('logmsg').textContent='Nice eye — you spotted all three! 🏆';logDone=true;}
 }
 $('logscene').innerHTML='<img src="images/spotter1.png" alt="Underwater scene — spot the species" class="logsceneimg" loading="lazy">';
-/* Mix the 3 correct answers with decoys and shuffle them all together. */
 var logOptions=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
 $('logchips').innerHTML=logOptions.map(function(sp){
  return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';
@@ -266,11 +494,13 @@ $('logchips').querySelectorAll('.chip').forEach(function(b){
    logFound[b.dataset.sp]=true;
    b.classList.add('chip-done');
    b.textContent=b.dataset.sp+' ✓';
+   award();
    renderLog();
   }else{
    b.classList.add('chip-wrong');
    b.textContent=b.dataset.sp+' ✗';
    $('logmsg').textContent='Not in this scene — keep looking.';
+   penalize();
   }
  };
 });
@@ -281,17 +511,14 @@ var gScore=0,gTotal=0;
 var gUsed=[];
 function guessRound(){
  $('gnext').style.display='none';
- /* Pick a scene not recently used */
  if(gUsed.length>=PHOTO_SCENES.length) gUsed=[];
  var available=PHOTO_SCENES.filter(function(s,i){return gUsed.indexOf(i)<0;});
  var pick=available[Math.floor(Math.random()*available.length)];
  var pickIdx=PHOTO_SCENES.indexOf(pick);
  gUsed.push(pickIdx);
  var correctName=pick.name;
- /* Build 4 options: correct + 3 random wrong from ALL_SITES */
  var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
  var opts=shuffle([correctName].concat(wrong));
- /* Photo if it loads, otherwise fall back to the illustrated SVG scene. */
  $('gart').innerHTML='<div style="border-radius:14px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px">'+
   '<img src="'+pick.img+'" alt="Underwater photo — guess the site" '+
   'style="width:100%;display:block;max-height:280px;object-fit:cover;border-radius:14px" loading="lazy" '+
@@ -306,8 +533,8 @@ function guessRound(){
    x.disabled=true;
    if(x.dataset.n===correctName)x.classList.add('right');
   });
-  if(btn.dataset.n!==correctName)btn.classList.add('wrong');
-  if(btn.dataset.n===correctName)gScore++;
+  if(btn.dataset.n===correctName){gScore++;award();}
+  else{btn.classList.add('wrong');penalize();}
   $('gscore').textContent=gScore;
   $('gtotal').textContent=gTotal;
   $('gnext').style.display='inline-block';
@@ -354,13 +581,76 @@ function deal(){
   $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
   b.style.borderColor='var(--accent)';
   var pv=CR[pk][s],cv=CR[ck][s];
-  if(pv>cv){tWin++;$('tresult').textContent='You win the round! 🎉';$('tresult').style.color='var(--good)';}
-  else if(pv<cv){tLose++;$('tresult').textContent='The reef takes it.';$('tresult').style.color='var(--bad)';}
+  if(pv>cv){tWin++;$('tresult').textContent='You win the round! 🎉';$('tresult').style.color='var(--good)';award();}
+  else if(pv<cv){tLose++;$('tresult').textContent='The reef takes it.';$('tresult').style.color='var(--bad)';penalize();}
   else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
   $('twin').textContent=tWin;$('tlose').textContent=tLose;$('tdeal').style.display='inline-block';
  };});
 }
 $('tdeal').onclick=deal;deal();
+
+/* ---------- HALL OF FAME ---------- */
+var MOCK_BOARDS={
+ 'Young Explorer':[
+  ['Coral Kid',210],['Finn',190],['Nemo Jr',175],['Pearl',160],['Shelly',150],
+  ['Captain Squid',135],['Bubbles',120],['Sandy',105],['Little Ray',90],['Minnow',75]
+ ],
+ 'Teen Explorer':[
+  ['ReefRider',360],['KelpQueen',330],['TidalWave',305],['DeepBlue',280],['SaltSpray',255],
+  ['CurrentC',230],['FinFlash',205],['WaveRunner',180],['EbbTide',155],['ShoalScout',130]
+ ],
+ 'Adult Explorer':[
+  ['Capt. Marlow',520],['Dr. Reef',480],['BlueWaterBec',445],['SeagrassSam',410],['AbyssAndy',380],
+  ['NudibranchN',350],['TrenchTom',320],['HarbourHana',290],['DriftDan',260],['LagoonLou',230]
+ ]
+};
+function encourageMsg(rank,total){
+ var n=USER.name;
+ if(rank===1)return '🥇 Incredible, '+n+'! You\'re top of the reef — a true marine legend!';
+ if(rank<=3)return '🌟 Amazing work, '+n+'! You\'re right up there with the best divers in your group!';
+ if(rank<=total/2)return '🐠 Great diving, '+n+'! You\'re swimming strong in the top half — keep exploring!';
+ return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play another round to climb the ranks!';
+}
+function showHallOfFame(){
+ nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+ document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+ $('p-hof').classList.add('show');
+
+ var base=(MOCK_BOARDS[USER.group]||MOCK_BOARDS['Adult Explorer']).slice();
+ var entries=base.map(function(e){return {name:e[0],score:e[1],me:false};});
+ entries.push({name:USER.name+' (you)',score:POINTS,me:true});
+ entries.sort(function(a,b){return b.score-a.score;});
+
+ /* Guarantee the player sits in the middle of the displayed board. */
+ var meIdx=entries.findIndex(function(e){return e.me;});
+ var mid=Math.floor(entries.length/2);
+ if(meIdx!==mid){
+  var me=entries.splice(meIdx,1)[0];
+  entries.splice(mid,0,me);
+ }
+
+ $('hofGroupLabel').textContent=USER.group;
+ var myRank=entries.findIndex(function(e){return e.me;})+1;
+ $('hofEncourage').textContent=encourageMsg(myRank,entries.length);
+
+ var medals=['🥇','🥈','🥉'];
+ $('hofList').innerHTML=entries.map(function(e,i){
+  var rank=i+1;
+  var badge=medals[i]||'';
+  return '<div class="lrow'+(e.me?' me':'')+'">'+
+   '<div class="l"><span class="rank">'+rank+'</span>'+
+   '<span class="medal">'+badge+'</span>'+
+   '<span class="nm">'+e.name+'</span></div>'+
+   '<span class="sc">'+e.score+' pts</span></div>';
+ }).join('');
+}
+document.querySelectorAll('.done-btn').forEach(function(b){b.onclick=showHallOfFame;});
+$('hofBack').onclick=function(){
+ document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+ $('p-quiz').classList.add('show');
+ nav.querySelectorAll('button').forEach(function(x){x.classList.remove('on');});
+ nav.querySelector('[data-p="quiz"]').classList.add('on');
+};
 </script>
 </body>
 </html>
