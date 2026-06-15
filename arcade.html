@@ -9,7 +9,7 @@
     --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
     --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
     --coral:#ef7a52; --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
-    --artH:260px; /* quiz image height, shrunk on small screens via media queries */
+    --artH:260px;
   }
   *{box-sizing:border-box}
   html,body{height:100%}
@@ -98,6 +98,15 @@
     border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;
     font-size:34px;margin-bottom:14px}
   #splashTap p{margin:0;font-weight:600;color:#eaf6fb}
+
+  /* Loading indicator shown while video is buffering */
+  #splashLoading{position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;
+    transform:translateX(-50%);z-index:4;display:none;flex-direction:column;align-items:center;gap:10px}
+  #splashLoading .spinner{width:36px;height:36px;border:3px solid rgba(255,255,255,.15);
+    border-top-color:var(--accent);border-radius:50%;animation:spin 0.9s linear infinite}
+  #splashLoading p{margin:0;font-size:13px;color:rgba(255,255,255,.55)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
   #splashSkip{position:absolute;bottom:calc(26px + env(safe-area-inset-bottom));right:24px;z-index:4;
     background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;
     padding:9px 18px;font-size:14px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px);transition:.15s}
@@ -149,11 +158,7 @@
   .encourage{text-align:center;font-size:16px;background:var(--goodd);border:1px solid var(--good);
     color:#cdf3df;border-radius:12px;padding:13px 16px;margin:6px 0 14px}
 
-  /* ===== TABLET / SMALL LAPTOP ===== */
-  @media(max-width:760px){
-    :root{--artH:230px}
-  }
-  /* ===== PHONES (≤560px) ===== */
+  @media(max-width:760px){:root{--artH:230px}}
   @media(max-width:560px){
     :root{--artH:190px}
     .wrap{padding:14px 13px calc(20px + env(safe-area-inset-bottom))}
@@ -186,7 +191,6 @@
     .welcome{margin-top:2vh}
     .welcome .wcard{padding:18px 16px}
   }
-  /* ===== SMALL PHONES (≤380px) ===== */
   @media(max-width:380px){
     :root{--artH:165px}
     h1{font-size:19px}
@@ -198,7 +202,6 @@
     .nav button{font-size:13px;padding:7px 11px}
     .tcard .tt{font-size:14px}
   }
-  /* ===== SHORT VIEWPORTS ===== */
   @media(max-height:560px){
     :root{--artH:150px}
     .logobar{display:none}
@@ -211,7 +214,7 @@
 
 <!-- SPLASH SCREEN -->
 <div id="splash">
-  <video id="splashVideo" muted playsinline webkit-playsinline preload="auto" autoplay></video>
+  <video id="splashVideo" muted playsinline webkit-playsinline preload="auto"></video>
   <div id="splashFallback">
     <div class="big">🌊🤿</div>
     <h1>Go Diving Show Arcade</h1>
@@ -219,7 +222,11 @@
   </div>
   <div id="splashTap">
     <div class="play">▶</div>
-    <p>Tap to start</p>
+    <p>Tap to play intro</p>
+  </div>
+  <div id="splashLoading">
+    <div class="spinner"></div>
+    <p>Loading intro video…</p>
   </div>
   <button id="splashSkip">Skip ⏭</button>
 </div>
@@ -326,93 +333,160 @@
 
 <script>
 /* ---------- SPLASH SCREEN ----------
-   Robust loader: only shows the "Loading the reef…" fallback after a real,
-   final failure — not on a transient early error or a slow first byte. */
+   Strategy:
+   1. Set src and start loading immediately (no autoplay attr — we call play() ourselves).
+   2. Show a spinner while buffering so the user knows something is happening.
+   3. Only offer "Tap to play" when autoplay is blocked by the browser — not on slow load.
+   4. Only fall back to the static screen if the video genuinely fails (network error
+      after a retry) AND the video has never started playing.
+   5. The fallback never appears just because loading is slow. */
 (function(){
- var splash=document.getElementById('splash');
- var video=document.getElementById('splashVideo');
- var fallback=document.getElementById('splashFallback');
- var tap=document.getElementById('splashTap');
- var skip=document.getElementById('splashSkip');
- var dismissed=false, started=false, fellBack=false;
+  var splash    = document.getElementById('splash');
+  var video     = document.getElementById('splashVideo');
+  var fallback  = document.getElementById('splashFallback');
+  var tap       = document.getElementById('splashTap');
+  var loading   = document.getElementById('splashLoading');
+  var skip      = document.getElementById('splashSkip');
 
- var SPEED=2;
- function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
+  var dismissed = false;
+  var playing   = false;   // video has actually produced frames
+  var autoplayBlocked = false;
 
- function showWelcome(){document.getElementById('welcome').style.display='block';}
- function dismiss(){
-  if(dismissed)return;
-  dismissed=true;
-  try{video.pause();}catch(e){}
-  splash.classList.add('splash-hide');
-  showWelcome();
-  setTimeout(function(){if(splash&&splash.parentNode)splash.parentNode.removeChild(splash);},520);
- }
- function showFallback(){
-  if(fellBack||started||dismissed)return;
-  fellBack=true;
-  fallback.style.display='flex';
-  setTimeout(dismiss,1800);
- }
- function showTap(){ if(!started&&!dismissed&&!fellBack) tap.style.display='flex'; }
+  var SPEED = 2;
+  function applySpeed(){ try{ video.playbackRate = SPEED; }catch(e){} }
 
- /* Success markers */
- video.addEventListener('playing',function(){started=true;tap.style.display='none';fallback.style.display='none';applySpeed();});
- video.addEventListener('timeupdate',function(){if(video.currentTime>0){started=true;}});
- video.addEventListener('ended',dismiss);
+  function showWelcome(){ document.getElementById('welcome').style.display = 'block'; }
 
- /* Build the source explicitly so we can retry the load once before giving up. */
- var triedReload=false;
- function setSource(){
-  /* cache-bust on retry to dodge a half-cached file */
-  video.src='images/splash.mp4'+(triedReload?('?r='+Date.now()):'');
-  try{video.load();}catch(e){}
- }
-
- /* Only treat as failure if it's genuinely unrecoverable AND nothing is playing.
-    Retry the load once; if it still fails after a grace period, show fallback. */
- video.addEventListener('error',function(){
-  if(started||dismissed)return;
-  if(!triedReload){ triedReload=true; setTimeout(setSource,300); }
-  else { setTimeout(function(){ if(!started) showFallback(); }, 1200); }
- });
-
- function attemptPlay(){
-  applySpeed();
-  var p=video.play&&video.play();
-  if(p&&p.then){
-   p.then(function(){started=true;applySpeed();})
-    .catch(function(){ if(!started) showTap(); });   /* autoplay blocked → tap to start */
+  function dismiss(){
+    if(dismissed) return;
+    dismissed = true;
+    loading.style.display = 'none';
+    tap.style.display     = 'none';
+    try{ video.pause(); }catch(e){}
+    splash.classList.add('splash-hide');
+    showWelcome();
+    setTimeout(function(){ if(splash && splash.parentNode) splash.parentNode.removeChild(splash); }, 520);
   }
- }
- video.addEventListener('loadeddata',attemptPlay);
- video.addEventListener('canplay',attemptPlay);
- video.addEventListener('canplaythrough',attemptPlay);
 
- /* Tapping the overlay is a user gesture → always allowed to play */
- tap.addEventListener('click',function(){
-  tap.style.display='none'; fallback.style.display='none';
-  applySpeed();
-  var p=video.play&&video.play();
-  if(p&&p.then){p.then(function(){started=true;applySpeed();}).catch(dismiss);}
- });
+  /* Show the static fallback — only called on genuine unrecoverable failure */
+  function showFallback(){
+    if(dismissed || playing) return;
+    loading.style.display  = 'none';
+    tap.style.display      = 'none';
+    fallback.style.display = 'flex';
+    /* Auto-dismiss after a couple of seconds so the user isn't stuck */
+    setTimeout(dismiss, 2000);
+  }
 
- /* If autoplay silently never starts (no error, no play), offer tap after a wait */
- setTimeout(function(){
-  if(!started&&!dismissed&&!fellBack&&tap.style.display!=='flex'){showTap();}
- },3500);
+  /* Show the tap-to-play overlay (autoplay was blocked, not a loading failure) */
+  function showTap(){
+    if(dismissed || playing) return;
+    autoplayBlocked = true;
+    loading.style.display = 'none';
+    tap.style.display     = 'flex';
+  }
 
- /* Final safety net so the splash can never trap the user */
- setTimeout(function(){if(!dismissed)dismiss();},18000);
+  /* ---- Loading state: show spinner as soon as we know the src is loading ---- */
+  function onLoadStart(){
+    if(!playing && !dismissed && !autoplayBlocked){
+      loading.style.display = 'flex';
+    }
+  }
 
- skip.addEventListener('click',dismiss);
+  /* ---- Video is actually playing ---- */
+  function onPlaying(){
+    playing = true;
+    loading.style.display = 'none';
+    tap.style.display     = 'none';
+    fallback.style.display= 'none';
+    applySpeed();
+  }
 
- /* Kick everything off */
- setSource();
- attemptPlay();
+  /* ---- Video finished ---- */
+  video.addEventListener('ended', dismiss);
+
+  /* ---- Progress events: hide spinner once we're rolling ---- */
+  video.addEventListener('loadstart',      onLoadStart);
+  video.addEventListener('playing',        onPlaying);
+  video.addEventListener('timeupdate', function(){
+    if(video.currentTime > 0) onPlaying();
+  });
+
+  /* ---- Stall / waiting: make sure spinner is visible again ---- */
+  video.addEventListener('waiting', function(){
+    if(!playing && !dismissed && !autoplayBlocked){
+      loading.style.display = 'flex';
+    }
+  });
+  video.addEventListener('stalled', function(){
+    if(!playing && !dismissed && !autoplayBlocked){
+      loading.style.display = 'flex';
+    }
+  });
+
+  /* ---- Error handling: retry once, then fall back ---- */
+  var retried = false;
+  function setSource(){
+    video.src = 'images/splash.mp4' + (retried ? ('?r=' + Date.now()) : '');
+    try{ video.load(); }catch(e){}
+  }
+
+  video.addEventListener('error', function(){
+    if(playing || dismissed) return;
+    if(!retried){
+      retried = true;
+      setTimeout(setSource, 400);
+    } else {
+      /* Genuine failure after retry — show static fallback */
+      showFallback();
+    }
+  });
+
+  /* ---- Attempt autoplay once enough data is available ---- */
+  function attemptPlay(){
+    if(playing || dismissed) return;
+    applySpeed();
+    var p = video.play && video.play();
+    if(p && p.then){
+      p.then(function(){ applySpeed(); })
+       .catch(function(err){
+         /* NotAllowedError = autoplay blocked; everything else = loading issue, wait */
+         if(!playing && (err.name === 'NotAllowedError' || err.name === 'NotSupportedError')){
+           showTap();
+         }
+         /* For AbortError or others, just wait — canplaythrough will retry */
+       });
+    }
+  }
+
+  video.addEventListener('canplay',        attemptPlay);
+  video.addEventListener('canplaythrough', attemptPlay);
+  video.addEventListener('loadeddata',     attemptPlay);
+
+  /* ---- Tap-to-play overlay (user gesture unlocks autoplay) ---- */
+  tap.addEventListener('click', function(){
+    tap.style.display = 'none';
+    loading.style.display = 'flex';
+    autoplayBlocked = false;
+    applySpeed();
+    var p = video.play && video.play();
+    if(p && p.then){
+      p.then(function(){ applySpeed(); }).catch(dismiss);
+    }
+  });
+
+  /* ---- Absolute safety net: never trap the user forever ---- */
+  setTimeout(function(){ if(!dismissed) dismiss(); }, 30000);
+
+  skip.addEventListener('click', dismiss);
+
+  /* ---- Kick off ---- */
+  setSource();
+  /* Don't call play() yet — wait for canplay/loadeddata so the browser
+     has something buffered and the promise is more likely to resolve. */
 })();
 
-/* ---------- LOGO FALLBACKS (shown until real PNGs exist in images/) ---------- */
+/* ---------- LOGO FALLBACKS ---------- */
 var LOGO_FALLBACK={
  godiving:'<div style="height:60px;display:flex;align-items:center;gap:8px;padding:0 14px;'+
   'background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:12px">'+
@@ -427,8 +501,8 @@ var LOGO_FALLBACK={
 
 /* ---------- POINTS ENGINE ---------- */
 var POINTS=0;
-var REWARD=10;   /* points for a clean (error-free) action */
-var PENALTY=4;   /* points lost for a mistake */
+var REWARD=10;
+var PENALTY=4;
 function flashPts(delta){
  var fl=document.getElementById('ptsFloat');
  if(!fl)return;
@@ -547,7 +621,7 @@ var CR={
  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
  pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
  groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,f:'The NSW state fish. The big blue males all start life as females.'},
- cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world’s largest cuttlefish and a master colour-changer.'},
+ cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world\'s largest cuttlefish and a master colour-changer.'},
  bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,f:'A shy, cave-loving fish found only along the NSW coast.'}
 };
 var KEYS=Object.keys(CR);
@@ -685,10 +759,10 @@ function deal(){
  var two=shuffle(KEYS).slice(0,2);var pk=two[0],ck=two[1];
  var lenLocked=Math.max(CR[pk].len,CR[ck].len)/Math.min(CR[pk].len,CR[ck].len)>2;
  $('pcard').innerHTML=cardHtml(pk,'Your card',false,lenLocked);
- $('ccard').innerHTML=cardHtml(ck,'Reef’s card',true,lenLocked);
+ $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',true,lenLocked);
  $('pcard').querySelectorAll('.statbtn:not(:disabled)').forEach(function(b){b.onclick=function(){
   var s=b.dataset.s;
-  $('ccard').innerHTML=cardHtml(ck,'Reef’s card',false,lenLocked);
+  $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',false,lenLocked);
   $('pcard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;});
   $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
   b.style.borderColor='var(--accent)';
