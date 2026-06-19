@@ -590,12 +590,29 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
    DEVICE · CLOUD SYNC · SCREENSAVER · ADMIN
    ──────────────────────────────────────────────────────────
    CROSS-DEVICE FEATURES (real shared leaderboard, live admin
-   view of every device, remote screensaver) need a free
-   Firebase project. Paste its config into FIREBASE_CONFIG below.
-   Leave it null and everything still works LOCALLY on this
-   device (per-device leaderboard + local admin).
+   view of every device, remote screensaver) run on Supabase.
+   Paste your project URL + anon key below. Leave them blank
+   and everything still works LOCALLY on this device
+   (per-device leaderboard + local admin).
+
+   One-time SQL setup (Supabase → SQL editor), run once:
+
+     create table if not exists public.scores (
+       id uuid primary key default gen_random_uuid(),
+       name text, score int, grp text,
+       device text, station text,
+       ts timestamptz default now()
+     );
+     alter table public.scores enable row level security;
+     create policy "anon read"   on public.scores for select using (true);
+     create policy "anon insert" on public.scores for insert with check (true);
+     create policy "anon delete" on public.scores for delete using (true);
+     alter publication supabase_realtime add table public.scores;
+
+   (Presence + screensaver use Realtime channels — no table needed.)
    ════════════════════════════════════════════════════════════ */
-var FIREBASE_CONFIG = null;     /* <-- paste your Firebase config object here */
+var SUPABASE_URL = '';          /* <-- paste your Supabase project URL */
+var SUPABASE_ANON_KEY = '';     /* <-- paste your Supabase anon public key */
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
 var GAME_LABELS = {quiz:'Guess Who',log:'Spotter Log',guess:'Where Am I?',trumps:'Stat Battle',done:'Finished',hof:'Hall of Fame'};
@@ -605,80 +622,101 @@ var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v=
 var STATION=(function(){try{var q=new URLSearchParams(location.search).get('station');if(q){localStorage.setItem('gds_station',q);return q;}return localStorage.getItem('gds_station')||('Phone '+DEVICE_ID.slice(-4));}catch(e){return 'Phone '+DEVICE_ID.slice(-4);}})();
 function setStation(s){STATION=s;try{localStorage.setItem('gds_station',s);}catch(e){}Cloud.updateSession({station:s});}
 
-/* ---------- Cloud: Firebase when configured, else localStorage ---------- */
+/* ---------- Cloud: Supabase when configured, else localStorage ---------- */
 var Cloud=(function(){
-  var mode='local',db=null,readyCbs=[];
-  var lbListeners={};
+  var mode='local',sb=null,readyCbs=[];
+  var lbListeners={};                     /* local-mode leaderboard listeners */
+  var presenceCh=null,hbTimer=null,mySess={};
+  var adminCh=null,adminSessCbs=[],adminCmdCbs=[];
+  var cmdCh=null,cmdSendChs={};
   function fire(cbs,arg){(cbs||[]).forEach(function(c){try{c(arg);}catch(e){}});}
   function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
   function lsScores(){try{return JSON.parse(localStorage.getItem('gds_scores')||'[]');}catch(e){return [];}}
   function lsSave(a){try{localStorage.setItem('gds_scores',JSON.stringify(a));}catch(e){}}
   function boardFor(g){return lsScores().filter(function(e){return e.group===g;}).sort(function(a,b){return b.score-a.score;});}
+  function mapRow(x){return {id:x.id,name:x.name,score:x.score,group:x.grp,device:x.device,station:x.station,ts:x.ts?new Date(x.ts).getTime():Date.now()};}
 
   function init(cb){
     if(cb)readyCbs.push(cb);
-    if(FIREBASE_CONFIG){
+    if(SUPABASE_URL&&SUPABASE_ANON_KEY){
       mode='cloud';
-      loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')
-        .then(function(){return loadScript('https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js');})
-        .then(function(){firebase.initializeApp(FIREBASE_CONFIG);db=firebase.database();fire(readyCbs);readyCbs=[];})
+      loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2')
+        .then(function(){sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);fire(readyCbs);readyCbs=[];})
         .catch(function(){mode='local';fire(readyCbs);readyCbs=[];});
     } else {mode='local';setTimeout(function(){fire(readyCbs);readyCbs=[];},0);}
   }
 
-  /* scores / leaderboard */
+  /* ----- scores / leaderboard (Postgres + realtime changes) ----- */
   function submitScore(group,name,score){
-    var entry={name:name,score:score,group:group,ts:Date.now(),device:DEVICE_ID,station:STATION};
-    if(mode==='cloud'&&db){db.ref('scores').push(entry);}
-    else{entry.id='s'+Date.now()+Math.random().toString(36).slice(2,5);var a=lsScores();a.push(entry);lsSave(a);fire(lbListeners[group],boardFor(group));}
+    if(mode==='cloud'&&sb){sb.from('scores').insert({name:name,score:score,grp:group,device:DEVICE_ID,station:STATION}).then(function(){},function(){});}
+    else{var entry={name:name,score:score,group:group,ts:Date.now(),device:DEVICE_ID,station:STATION,id:'s'+Date.now()+Math.random().toString(36).slice(2,5)};var a=lsScores();a.push(entry);lsSave(a);fire(lbListeners[group],boardFor(group));}
+  }
+  function fetchScores(group,cb){
+    var q=sb.from('scores').select('*').order('score',{ascending:false});
+    if(group)q=q.eq('grp',group);
+    q.then(function(r){cb((r.data||[]).map(mapRow));},function(){cb([]);});
   }
   function onLeaderboard(group,cb){
-    if(mode==='cloud'&&db){
-      db.ref('scores').on('value',function(snap){var all=[];snap.forEach(function(ch){var v=ch.val();v.id=ch.key;all.push(v);});cb(all.filter(function(e){return e.group===group;}).sort(function(a,b){return b.score-a.score;}));});
+    if(mode==='cloud'&&sb){
+      fetchScores(group,cb);
+      sb.channel('lb-'+group).on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(group,cb);}).subscribe();
     } else {(lbListeners[group]=lbListeners[group]||[]).push(cb);cb(boardFor(group));}
   }
   function allScores(cb){
-    if(mode==='cloud'&&db){db.ref('scores').on('value',function(snap){var arr=[];snap.forEach(function(ch){var v=ch.val();v.id=ch.key;arr.push(v);});cb(arr);});}
-    else{cb(lsScores());}
+    if(mode==='cloud'&&sb){
+      fetchScores(null,cb);
+      sb.channel('scores-all').on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(null,cb);}).subscribe();
+    } else {cb(lsScores());}
   }
   function deleteScore(id){
-    if(mode==='cloud'&&db){db.ref('scores/'+id).remove();}
+    if(mode==='cloud'&&sb){sb.from('scores').delete().eq('id',id).then(function(){},function(){});}
     else{lsSave(lsScores().filter(function(e){return e.id!==id;}));Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],boardFor(g));});}
   }
   function resetAll(){
-    if(mode==='cloud'&&db){db.ref('scores').remove();}
+    if(mode==='cloud'&&sb){sb.from('scores').delete().neq('id','00000000-0000-0000-0000-000000000000').then(function(){},function(){});}
     else{lsSave([]);Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],[]);});}
   }
 
-  /* sessions / presence */
-  var myRef=null,hbTimer=null;
+  /* ----- sessions / presence (Realtime Presence) ----- */
   function startSession(data){
-    if(mode==='cloud'&&db){
-      myRef=db.ref('sessions/'+DEVICE_ID);
-      myRef.set(Object.assign({device:DEVICE_ID,station:STATION,ts:Date.now()},data));
-      try{myRef.onDisconnect().remove();}catch(e){}
-      if(hbTimer)clearInterval(hbTimer);
-      hbTimer=setInterval(function(){if(myRef)myRef.update({ts:Date.now()});},10000);
+    if(mode!=='cloud'||!sb)return;
+    mySess=Object.assign({device:DEVICE_ID,station:STATION,ss:false,ts:Date.now()},data);
+    presenceCh=sb.channel('arcade-presence',{config:{presence:{key:DEVICE_ID}}});
+    presenceCh.subscribe(function(status){if(status==='SUBSCRIBED'){presenceCh.track(mySess);}});
+    if(hbTimer)clearInterval(hbTimer);
+    hbTimer=setInterval(function(){if(presenceCh){mySess.ts=Date.now();presenceCh.track(mySess);}},10000);
+  }
+  function updateSession(patch){
+    if(mode!=='cloud'||!sb||!presenceCh)return;
+    Object.assign(mySess,patch,{ts:Date.now()});presenceCh.track(mySess);
+  }
+  function adminPresence(){
+    if(adminCh)return;
+    adminCh=sb.channel('arcade-presence',{config:{presence:{key:'admin-'+DEVICE_ID}}});
+    function emit(){
+      var st=adminCh.presenceState(),arr=[];
+      Object.keys(st).forEach(function(k){if(k.indexOf('admin-')===0)return;var m=st[k]&&st[k][0];if(m)arr.push(m);});
+      fire(adminSessCbs,arr);
+      var map={};arr.forEach(function(s){map[s.device]={screensaver:!!s.ss};});
+      fire(adminCmdCbs,map);
     }
+    adminCh.on('presence',{event:'sync'},emit).on('presence',{event:'join'},emit).on('presence',{event:'leave'},emit).subscribe();
   }
-  function updateSession(patch){if(mode==='cloud'&&db&&myRef){patch.ts=Date.now();myRef.update(patch);}}
-  function onSessions(cb){
-    if(mode==='cloud'&&db){db.ref('sessions').on('value',function(snap){var arr=[];snap.forEach(function(ch){arr.push(ch.val());});cb(arr);});}
-    else{cb(null);}
-  }
+  function onSessions(cb){if(mode==='cloud'&&sb){adminSessCbs.push(cb);adminPresence();}else cb(null);}
+  function onCommands(cb){if(mode==='cloud'&&sb){adminCmdCbs.push(cb);adminPresence();}else cb({});}
 
-  /* commands (screensaver) */
+  /* ----- commands / screensaver (Realtime Broadcast) ----- */
   function onMyCommand(cb){
-    if(mode==='cloud'&&db){db.ref('commands/'+DEVICE_ID).on('value',function(s){cb(s.val()||{});});}
+    if(mode==='cloud'&&sb){cmdCh=sb.channel('cmd-'+DEVICE_ID);cmdCh.on('broadcast',{event:'ss'},function(p){cb(p.payload||{});}).subscribe();}
     else{window.addEventListener('storage',function(e){if(e.key==='gds_cmd_'+DEVICE_ID){try{cb(JSON.parse(e.newValue||'{}'));}catch(x){}}});}
   }
-  function onCommands(cb){
-    if(mode==='cloud'&&db){db.ref('commands').on('value',function(s){cb(s.val()||{});});}
-    else{cb({});}
-  }
   function sendCommand(device,cmd){
-    if(mode==='cloud'&&db){db.ref('commands/'+device).set(Object.assign({ts:Date.now()},cmd));}
-    else{try{localStorage.setItem('gds_cmd_'+device,JSON.stringify(cmd));}catch(e){}}
+    if(mode==='cloud'&&sb){
+      var ch=cmdSendChs[device];
+      if(ch&&ch._ready){ch.send({type:'broadcast',event:'ss',payload:cmd});return;}
+      ch=sb.channel('cmd-'+device);cmdSendChs[device]=ch;
+      ch.subscribe(function(status){if(status==='SUBSCRIBED'){ch._ready=true;ch.send({type:'broadcast',event:'ss',payload:cmd});}});
+    } else {try{localStorage.setItem('gds_cmd_'+device,JSON.stringify(cmd));}catch(e){}}
   }
 
   return {init:init,get mode(){return mode;},submitScore:submitScore,onLeaderboard:onLeaderboard,allScores:allScores,
@@ -699,7 +737,7 @@ function buildScreensaver(){
   document.body.appendChild(ss);
 }
 function showScreensaver(){buildScreensaver();document.getElementById('screensaver').classList.add('on');}
-function hideScreensaver(localWake){var ss=document.getElementById('screensaver');if(ss)ss.classList.remove('on');if(localWake&&ssRemote){Cloud.sendCommand(DEVICE_ID,{screensaver:false});ssRemote=false;}}
+function hideScreensaver(localWake){var ss=document.getElementById('screensaver');if(ss)ss.classList.remove('on');if(localWake){ssRemote=false;Cloud.updateSession({ss:false});}}
 
 /* ---------- ADMIN ---------- */
 var ADM={sessions:[],scores:[],cmds:{},group:'Adult Explorer',open:false,wired:false};
@@ -724,7 +762,7 @@ function renderAdmin(){
   /* ---- LIVE PLAYERS ---- */
   var live='<div class="card"><h3>Live players '+modeBadge+'</h3>';
   if(Cloud.mode!=='cloud'||ADM.sessions===null){
-    live+='<p class="muted">Live cross-device view needs cloud sync (set FIREBASE_CONFIG). Showing this device only.</p>';
+    live+='<p class="muted">Live cross-device view needs cloud sync (set SUPABASE_URL + SUPABASE_ANON_KEY). Showing this device only.</p>';
     live+='<table><tr><th>Station</th><th>Player</th><th>Group</th><th>Game</th><th>Pts</th></tr><tr><td>'+esc(STATION)+'</td><td>'+esc(USER.name||'—')+'</td><td>'+esc(USER.group||'—')+'</td><td>'+(GAME_LABELS[(GAME_ORDER&&GAME_ORDER[currentGame])]||'—')+'</td><td>'+POINTS+'</td></tr></table>';
   } else {
     var sess=(ADM.sessions||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);});
@@ -1094,8 +1132,10 @@ $('hofPlayAgain').onclick=function(){
 /* ════════ STARTUP: cloud + remote screensaver listener ════════ */
 Cloud.init(function(){
   Cloud.onMyCommand(function(c){
-    if(c&&c.screensaver){ssRemote=true;showScreensaver();}
-    else{ssRemote=false;hideScreensaver(false);}
+    var on=!!(c&&c.screensaver);
+    ssRemote=on;
+    if(on)showScreensaver(); else hideScreensaver(false);
+    Cloud.updateSession({ss:on});
   });
 });
 
