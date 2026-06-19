@@ -741,7 +741,7 @@ function showScreensaver(){buildScreensaver();document.getElementById('screensav
 function hideScreensaver(localWake){var ss=document.getElementById('screensaver');if(ss)ss.classList.remove('on');if(localWake){ssRemote=false;Cloud.updateSession({ss:false});}}
 
 /* ---------- ADMIN ---------- */
-var ADM={sessions:[],scores:[],cmds:{},group:'Adult Explorer',open:false,wired:false};
+var ADM={sessions:[],scores:[],cmds:{},group:'All',open:false,wired:false};
 function adminWire(){
   if(ADM.wired)return;ADM.wired=true;
   Cloud.onSessions(function(a){ADM.sessions=a;if(ADM.open)renderAdmin();});
@@ -755,7 +755,7 @@ function buildAdminShell(){
   document.body.appendChild(ov);
   document.getElementById('admClose').onclick=function(){ADM.open=false;ov.classList.remove('on');};
 }
-function openAdmin(){buildAdminShell();adminWire();if(USER&&USER.group)ADM.group=USER.group;ADM.open=true;document.getElementById('adminOv').classList.add('on');adminRefresh();}
+function openAdmin(){buildAdminShell();adminWire();ADM.open=true;document.getElementById('adminOv').classList.add('on');adminRefresh();}
 function adminRefresh(){Cloud.pullScores(function(a){ADM.scores=a;if(ADM.open)renderAdmin();});}
 function ago(ts){if(!ts)return '—';var s=Math.round((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.round(s/60)+'m ago';return Math.round(s/3600)+'h ago';}
 function renderAdmin(){
@@ -781,15 +781,15 @@ function renderAdmin(){
   /* ---- PRIZE HELPER ---- */
   var cutoff=Date.now()-PRIZE_WINDOW_MIN*60000;
   var onlineDevices={};(ADM.sessions||[]).forEach(function(s){if((Date.now()-(s.ts||0))<60000)onlineDevices[s.device]=true;});
-  var elig=(ADM.scores||[]).filter(function(e){return e.group===ADM.group&&e.ts>=cutoff;}).sort(function(a,b){return b.score-a.score;});
-  var prize='<div class="card"><h3>🏆 Prize round — '+esc(ADM.group)+' (last '+PRIZE_WINDOW_MIN+' min)</h3>';
+  var elig=(ADM.scores||[]).filter(function(e){return (ADM.group==='All'||e.group===ADM.group)&&e.ts>=cutoff;}).sort(function(a,b){return b.score-a.score;});
+  var prize='<div class="card"><h3>🏆 Prize round — '+esc(ADM.group==='All'?'All groups':ADM.group)+' (last '+PRIZE_WINDOW_MIN+' min)</h3>';
   prize+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupP','adminSetGroup(this.value)')+'</div>';
   prize+='<table><tr><th>#</th><th>Player</th><th>Score</th><th>When</th><th>Still here?</th></tr>';
   if(!elig.length)prize+='<tr><td colspan="5" class="muted">No scores in this window yet.</td></tr>';
   elig.slice(0,10).forEach(function(e,i){var here=Cloud.mode==='cloud'?(onlineDevices[e.device]?'<span class="on-dot">● online</span>':'<span class="off-dot">○ gone</span>'):'—';prize+='<tr'+(i<3?' style="background:var(--accentd)"':'')+'><td>'+(['🥇','🥈','🥉'][i]||(i+1))+'</td><td>'+esc(e.name)+'</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td>'+here+'</td></tr>';});
   prize+='</table></div>';
   /* ---- LEADERBOARD MANAGEMENT ---- */
-  var board=(ADM.scores||[]).filter(function(e){return e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
+  var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
   var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
   mng+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupM','adminSetGroup(this.value)')+'<button class="warn" onclick="adminResetAll()">🗑 Reset ALL rankings</button></div>';
   mng+='<table><tr><th>Player</th><th>Score</th><th>When</th><th></th></tr>';
@@ -798,10 +798,12 @@ function renderAdmin(){
   mng+='</table></div>';
   /* ---- THIS DEVICE ---- */
   var dev='<div class="card"><h3>This device</h3><div class="row"><span class="muted">Station name:</span><input id="admStation" value="'+esc(STATION)+'"><button class="acc" onclick="adminRename()">Save</button></div><p class="muted" style="margin-top:6px">Device ID: '+esc(DEVICE_ID)+'</p></div>';
-  var bar='<div class="row" style="margin-bottom:10px"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button></div>';
+  var allS=ADM.scores||[];var gc={'Young Explorer':0,'Teen Explorer':0,'Adult Explorer':0};allS.forEach(function(e){if(gc[e.group]!=null)gc[e.group]++;});
+  var diag='<span class="muted" style="font-size:12px">Stored scores: '+allS.length+' (Young '+gc['Young Explorer']+' · Teen '+gc['Teen Explorer']+' · Adult '+gc['Adult Explorer']+') · '+(Cloud.mode==='cloud'?'Cloud':'Local')+'</span>';
+  var bar='<div class="row" style="margin-bottom:10px;align-items:center"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
   b.innerHTML=bar+live+prize+mng+dev;
 }
-function groupSelect(id,onchg){var gs=['Young Explorer','Teen Explorer','Adult Explorer'];return '<select id="'+id+'" onchange="'+onchg+'">'+gs.map(function(g){return '<option'+(g===ADM.group?' selected':'')+'>'+g+'</option>';}).join('')+'</select>';}
+function groupSelect(id,onchg){var gs=['All','Young Explorer','Teen Explorer','Adult Explorer'];return '<select id="'+id+'" onchange="'+onchg+'">'+gs.map(function(g){return '<option'+(g===ADM.group?' selected':'')+' value="'+g+'">'+(g==='All'?'All groups':g)+'</option>';}).join('')+'</select>';}
 function adminSetGroup(g){ADM.group=g;renderAdmin();}
 function adminScreensaver(device,on){Cloud.sendCommand(device,{screensaver:!!on});setTimeout(renderAdmin,150);}
 function adminDelete(id){if(confirm('Delete this entry?')){Cloud.deleteScore(id);setTimeout(renderAdmin,150);}}
