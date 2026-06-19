@@ -668,6 +668,7 @@ var Cloud=(function(){
       sb.channel('scores-all').on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(null,cb);}).subscribe();
     } else {cb(lsScores());}
   }
+  function pullScores(cb){if(mode==='cloud'&&sb){fetchScores(null,cb);}else{cb(lsScores());}}
   function deleteScore(id){
     if(mode==='cloud'&&sb){sb.from('scores').delete().eq('id',id).then(function(){},function(){});}
     else{lsSave(lsScores().filter(function(e){return e.id!==id;}));Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],boardFor(g));});}
@@ -719,7 +720,7 @@ var Cloud=(function(){
     } else {try{localStorage.setItem('gds_cmd_'+device,JSON.stringify(cmd));}catch(e){}}
   }
 
-  return {init:init,get mode(){return mode;},submitScore:submitScore,onLeaderboard:onLeaderboard,allScores:allScores,
+  return {init:init,get mode(){return mode;},submitScore:submitScore,onLeaderboard:onLeaderboard,allScores:allScores,pullScores:pullScores,
     deleteScore:deleteScore,resetAll:resetAll,startSession:startSession,updateSession:updateSession,
     onSessions:onSessions,onMyCommand:onMyCommand,onCommands:onCommands,sendCommand:sendCommand};
 })();
@@ -754,7 +755,8 @@ function buildAdminShell(){
   document.body.appendChild(ov);
   document.getElementById('admClose').onclick=function(){ADM.open=false;ov.classList.remove('on');};
 }
-function openAdmin(){buildAdminShell();adminWire();ADM.open=true;document.getElementById('adminOv').classList.add('on');renderAdmin();}
+function openAdmin(){buildAdminShell();adminWire();if(USER&&USER.group)ADM.group=USER.group;ADM.open=true;document.getElementById('adminOv').classList.add('on');adminRefresh();}
+function adminRefresh(){Cloud.pullScores(function(a){ADM.scores=a;if(ADM.open)renderAdmin();});}
 function ago(ts){if(!ts)return '—';var s=Math.round((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.round(s/60)+'m ago';return Math.round(s/3600)+'h ago';}
 function renderAdmin(){
   var b=document.getElementById('admBody');if(!b)return;
@@ -796,7 +798,8 @@ function renderAdmin(){
   mng+='</table></div>';
   /* ---- THIS DEVICE ---- */
   var dev='<div class="card"><h3>This device</h3><div class="row"><span class="muted">Station name:</span><input id="admStation" value="'+esc(STATION)+'"><button class="acc" onclick="adminRename()">Save</button></div><p class="muted" style="margin-top:6px">Device ID: '+esc(DEVICE_ID)+'</p></div>';
-  b.innerHTML=live+prize+mng+dev;
+  var bar='<div class="row" style="margin-bottom:10px"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button></div>';
+  b.innerHTML=bar+live+prize+mng+dev;
 }
 function groupSelect(id,onchg){var gs=['Young Explorer','Teen Explorer','Adult Explorer'];return '<select id="'+id+'" onchange="'+onchg+'">'+gs.map(function(g){return '<option'+(g===ADM.group?' selected':'')+'>'+g+'</option>';}).join('')+'</select>';}
 function adminSetGroup(g){ADM.group=g;renderAdmin();}
@@ -805,19 +808,8 @@ function adminDelete(id){if(confirm('Delete this entry?')){Cloud.deleteScore(id)
 function adminResetAll(){if(confirm('Wipe ALL rankings for every group? This cannot be undone.')){Cloud.resetAll();setTimeout(renderAdmin,150);}}
 function adminRename(){var v=(document.getElementById('admStation').value||'').trim();if(v){setStation(v);renderAdmin();}}
 
-/* admin access: ?admin / #admin in URL, or tap the top-left corner 5× */
-function promptAdmin(){
-  if(document.getElementById('pinOv')){document.getElementById('pinOv').classList.add('on');document.getElementById('pinInput').focus();return;}
-  var ov=document.createElement('div');ov.id='pinOv';ov.className='on';
-  ov.innerHTML='<div class="pinbox"><h2 style="font-family:\'Press Start 2P\',monospace;font-size:13px;color:var(--accent);margin-bottom:14px">ADMIN PIN</h2><input id="pinInput" type="password" inputmode="numeric" maxlength="8" placeholder="••••"><p id="pinErr" style="color:var(--bad);min-height:16px;margin:8px 0;font-size:12px"></p><button class="acc" id="pinGo" style="padding:10px 16px">Enter</button> <button id="pinCancel" style="padding:10px 16px;background:var(--bg2);border:1px solid var(--line);border-radius:8px;color:var(--text)">Cancel</button></div>';
-  document.body.appendChild(ov);
-  function close(){ov.classList.remove('on');}
-  function go(){if(document.getElementById('pinInput').value===String(ADMIN_PIN)){close();openAdmin();}else{document.getElementById('pinErr').textContent='Wrong PIN';}}
-  document.getElementById('pinGo').onclick=go;
-  document.getElementById('pinCancel').onclick=close;
-  document.getElementById('pinInput').addEventListener('keydown',function(e){if(e.key==='Enter')go();});
-  document.getElementById('pinInput').focus();
-}
+/* admin access: ?admin / #admin in URL, or tap the top-left corner 5× (no PIN) */
+function promptAdmin(){openAdmin();}
 (function(){
   var h=(location.hash||'').toLowerCase(),q=new URLSearchParams(location.search);
   if(h.indexOf('admin')>-1||q.has('admin'))setTimeout(promptAdmin,300);
