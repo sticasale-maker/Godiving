@@ -917,7 +917,8 @@ var PHOTOS={
   bluedevil:{src:'images/bluedevil.jpg',alt:'Eastern blue devil'}
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
-function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=ART[this.dataset.k]()" data-k="'+key+'"></div>';}
+function creaturePlaceholder(key){var nm=(CR[key]&&CR[key].n)||'Sea creature';return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">\uD83D\uDC1F</div><div style="font-size:13px;color:var(--muted)">'+nm+'</div></div>';}
+function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
 /* ════════ SITE DATA ════════ */
@@ -1007,7 +1008,7 @@ var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespo
 var logFound={},logDone=false;
 function initLog(){
   logFound={};logDone=false;$('logn').textContent=0;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
-  $('logscene').innerHTML='<img src="images/spotter1.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy">';
+  $('logscene').innerHTML='<img src="images/spotter1.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy" onerror="this.outerHTML=siteSVG(\'Spotter scene\',\'#1d7d72\',\'#0c4a44\',\'kelp\')">';
   var opts=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
   $('logchips').innerHTML=opts.map(function(sp){return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';}).join('');
   $('logchips').querySelectorAll('.chip').forEach(function(b){b.onclick=function(){
