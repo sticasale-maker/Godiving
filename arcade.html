@@ -34,12 +34,18 @@
   }
 
   /* ── GAME PROGRESS STRIP ── */
-  .gamesstrip{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:10px;flex-shrink:0}
-  .gstep{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px 5px;
+  /* 12 games: horizontal scroll strip; active step auto-scrolls into view */
+  .gamesstrip{display:flex;gap:5px;margin-bottom:10px;flex-shrink:0;
+    overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px}
+  .gamesstrip::-webkit-scrollbar{height:4px}
+  .gamesstrip::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .gstep{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 6px 5px;
     border-radius:8px;border:1px solid var(--line);background:var(--bg2);
-    color:var(--muted);text-align:center;line-height:1.2;transition:.2s;user-select:none}
+    color:var(--muted);text-align:center;line-height:1.2;transition:.2s;user-select:none;
+    flex:0 0 auto;min-width:52px}
   .gstep .icon{font-size:16px;line-height:1}
-  .gstep .label{font-size:9px;letter-spacing:.2px}
+  .gstep .label{font-size:9px;letter-spacing:.2px;white-space:nowrap}
   .gstep.done{border-color:var(--good);background:var(--goodd);color:#cdf3df}
   .gstep.active{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
   .gstep.active .label{font-weight:700}
@@ -271,6 +277,138 @@
   .arcade-start:active{transform:translateY(3px);box-shadow:0 1px 0 #0d3b3a}
 
   /* ════════════════
+     NEW GAMES
+     ════════════════ */
+
+  /* ── 1. BREATH HOLD ── */
+  .breath-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;text-align:center;padding:10px 0;min-height:0}
+  .breath-orb{
+    width:min(58vw,220px);height:min(58vw,220px);border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#1aa7c4,#0c5570 55%,#08394c 100%);
+    border:3px solid var(--accent);box-shadow:0 0 0 6px var(--accentd),0 0 40px rgba(54,201,192,.35);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    cursor:pointer;user-select:none;transition:transform .15s,box-shadow .3s;position:relative;overflow:hidden}
+  .breath-orb:active{transform:scale(.97)}
+  .breath-orb.holding{animation:breathPulse 3.4s ease-in-out infinite;
+    box-shadow:0 0 0 6px var(--accentd),0 0 60px rgba(54,201,192,.6)}
+  @keyframes breathPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .breath-orb .bo-emoji{font-size:40px;line-height:1}
+  .breath-orb .bo-time{font-family:'Press Start 2P',monospace;font-size:clamp(20px,7vw,34px);color:#fff;
+    text-shadow:0 0 12px rgba(0,0,0,.4)}
+  .breath-orb .bo-hint{font-size:12px;color:rgba(255,255,255,.85);max-width:80%}
+  .breath-orb .bo-fill{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.10);
+    height:0;transition:height .2s linear;z-index:0}
+  .breath-orb>*{position:relative;z-index:1}
+  .breath-result{font-size:15px;font-weight:600;min-height:22px;color:var(--accent)}
+  .breath-pb{font-size:13px;color:var(--muted)}
+  .breath-records{width:100%;max-width:420px;margin-top:4px}
+  .breath-records .rrow{display:flex;justify-content:space-between;align-items:center;
+    padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:4px 0;
+    background:var(--bg2);font-size:12.5px}
+  .breath-records .rrow.beat{background:var(--goodd);border-color:var(--good);color:#cdf3df}
+  .breath-records .rrow .rt{font-weight:700;color:var(--gold)}
+
+  /* ── 2. SILHOUETTE MATCH ── */
+  .sil-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#dff1f6;
+    display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
+    height:var(--artH);max-height:46vh}
+  .sil-stage svg{width:100%;height:100%}
+  .sil-bonus{font-size:12px;color:var(--gold);text-align:center;min-height:16px;margin-top:4px;font-weight:600}
+
+  /* ── 3. DEPTH GAUGE ── */
+  .depth-fact{font-size:16px;font-weight:600;text-align:center;margin:4px 0 2px;line-height:1.4}
+  .depth-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;min-height:0;padding:6px 0}
+  .depth-readout{text-align:center;font-family:'Press Start 2P',monospace;
+    font-size:clamp(22px,8vw,40px);color:var(--accent);text-shadow:0 0 14px rgba(54,201,192,.4)}
+  .depth-track{position:relative;height:230px;max-height:34vh;width:100%;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);
+    background:linear-gradient(to bottom,#1aa7c4 0%,#0c5570 40%,#06303f 75%,#021a24 100%)}
+  .depth-needle{position:absolute;left:0;right:0;height:3px;background:var(--gold);
+    box-shadow:0 0 10px rgba(243,198,79,.8);pointer-events:none;z-index:3}
+  .depth-needle::after{content:'';position:absolute;right:8px;top:-7px;border:8px solid transparent;
+    border-right-color:var(--gold)}
+  .depth-marks{position:absolute;inset:0;z-index:1}
+  .depth-marks span{position:absolute;left:8px;font-size:10px;color:rgba(255,255,255,.6);transform:translateY(-50%)}
+  .depth-marks i{position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.12)}
+  .depth-slider{width:100%;-webkit-appearance:none;appearance:none;height:30px;background:transparent;cursor:pointer}
+  .depth-slider::-webkit-slider-runnable-track{height:8px;border-radius:999px;
+    background:linear-gradient(to right,#0c5570,var(--accent))}
+  .depth-slider::-moz-range-track{height:8px;border-radius:999px;background:#0c5570}
+  .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;
+    background:var(--gold);border:3px solid #04282a;margin-top:-11px;box-shadow:0 0 10px rgba(243,198,79,.6)}
+  .depth-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--gold);
+    border:3px solid #04282a;box-shadow:0 0 10px rgba(243,198,79,.6)}
+  .depth-zone{position:absolute;left:0;right:0;background:rgba(79,210,138,.28);
+    border-top:2px solid var(--good);border-bottom:2px solid var(--good);display:none;z-index:2}
+
+  /* ── 5. BUBBLE POP ── */
+  .bubble-field{position:relative;flex:1;min-height:300px;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);
+    background:linear-gradient(to bottom,#0c5570,#06222e 80%);touch-action:manipulation}
+  .bubble{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    text-align:center;cursor:pointer;user-select:none;padding:6px;line-height:1.15;font-weight:600;
+    color:#04282a;border:2px solid rgba(255,255,255,.5);
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.92),rgba(160,225,235,.78));
+    box-shadow:0 0 14px rgba(255,255,255,.25);will-change:transform}
+  .bubble.pop-good{animation:popGood .3s ease forwards}
+  .bubble.pop-bad{animation:popBad .3s ease forwards}
+  @keyframes popGood{to{transform:scale(1.5);opacity:0}}
+  @keyframes popBad{0%{transform:scale(1)}30%{transform:scale(.85)}to{transform:scale(1.2);opacity:0}}
+  .bubble-hud{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px;flex-shrink:0}
+  .bubble-hud b{color:var(--text)}
+
+  /* ── 6 & 10. TRUE/FALSE + SPEED (binary big buttons) ── */
+  .tf-stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;min-height:0;padding:8px 0}
+  .tf-statement{font-size:clamp(18px,5vw,26px);font-weight:700;text-align:center;line-height:1.4;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 18px}
+  .tf-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tf-btn{padding:22px 10px;border-radius:14px;border:2px solid var(--line);font-family:'Press Start 2P',monospace;
+    font-size:clamp(13px,3vw,17px);cursor:pointer;transition:.12s;letter-spacing:1px}
+  .tf-btn.tfyes{background:var(--goodd);color:#cdf3df;border-color:var(--good)}
+  .tf-btn.tfno{background:var(--badd);color:#f7cfcf;border-color:var(--bad)}
+  .tf-btn:active{transform:translateY(2px)}
+  .tf-btn:disabled{opacity:.5;cursor:default}
+  .tf-reveal{font-size:14px;color:var(--muted);text-align:center;min-height:40px;line-height:1.4}
+  .tf-reveal b{color:var(--accent)}
+
+  /* speed round timer + combo */
+  .speed-bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;
+    border:1px solid var(--line);flex-shrink:0;margin-bottom:8px}
+  .speed-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--good),var(--gold));
+    width:100%;transition:width .25s linear}
+  .speed-bar i.low{background:var(--bad)}
+  .speed-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .speed-meta b{color:var(--gold)}
+  .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
+    color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
+
+  /* ── 8. COLOUR THE CREATURE ── */
+  .colour-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
+    display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
+    height:var(--artH);max-height:42vh}
+  .colour-stage svg{width:100%;height:100%}
+  .swatch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+  .swatch{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+    border:1.5px solid var(--line);background:var(--bg2);color:var(--text);cursor:pointer;
+    font-size:13.5px;transition:.15s;text-align:left}
+  .swatch:hover:not(:disabled){border-color:var(--accent)}
+  .swatch:disabled{cursor:default}
+  .swatch .dot{width:24px;height:24px;border-radius:6px;flex-shrink:0;border:1px solid rgba(255,255,255,.25)}
+
+  /* ── 9. ODD ONE OUT ── */
+  .odd-prompt{text-align:center;font-size:14px;color:var(--muted);margin-bottom:8px;flex-shrink:0}
+  .odd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;align-content:center;min-height:0}
+  .odd-card{padding:20px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg2);
+    color:var(--text);font-size:15px;font-weight:600;cursor:pointer;transition:.12s;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:96px}
+  .odd-card .oc-emoji{font-size:30px}
+  .odd-card:hover:not(:disabled){border-color:var(--accent)}
+  .odd-card:disabled{cursor:default}
+  .odd-card.right{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
+  .odd-card.wrong{background:var(--badd)!important;border-color:var(--bad)!important;color:#f7cfcf!important}
+
+  /* ════════════════
      RESPONSIVE
      ════════════════ */
   @media(max-width:560px){
@@ -290,7 +428,8 @@
     .chips-grid{grid-template-columns:1fr}
     .tcards{grid-template-columns:1fr}
     .gstep .label{display:none}
-    .gstep{padding:6px 2px}
+    .gstep{padding:6px 8px;min-width:42px}
+    .swatch-grid{grid-template-columns:1fr}
   }
   @media(max-height:560px){
     :root{--artH:221px}
@@ -330,7 +469,7 @@
       <div class="arcade-insert">— INSERT DIVER —</div>
       <div class="wcard">
         <div class="arcade-title">GO DIVING<br>ARCADE</div>
-        <div class="arcade-sub">4 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <div class="arcade-sub">12 GAMES · ALL AGES · SYDNEY REEFS</div>
         <label class="arcade-label" for="wname">▶ YOUR NAME</label>
         <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
         <label class="arcade-label" for="wage">▶ YOUR AGE</label>
@@ -353,16 +492,24 @@
     <!-- Game strip -->
     <div class="gamesstrip" id="gamesstrip">
       <div class="gstep active" id="gs-quiz"><div class="icon">🐠</div><div class="label">Guess who</div></div>
+      <div class="gstep" id="gs-breath"><div class="icon">🫧</div><div class="label">Breath hold</div></div>
+      <div class="gstep" id="gs-silhouette"><div class="icon">🧩</div><div class="label">Silhouette</div></div>
       <div class="gstep" id="gs-log"><div class="icon">✅</div><div class="label">Spotter log</div></div>
+      <div class="gstep" id="gs-bubble"><div class="icon">🎯</div><div class="label">Bubble pop</div></div>
+      <div class="gstep" id="gs-depth"><div class="icon">🗺️</div><div class="label">Depth gauge</div></div>
       <div class="gstep" id="gs-guess"><div class="icon">🔎</div><div class="label">Where am I?</div></div>
+      <div class="gstep" id="gs-truefalse"><div class="icon">📖</div><div class="label">True/false</div></div>
+      <div class="gstep" id="gs-colour"><div class="icon">🎨</div><div class="label">Colour it</div></div>
       <div class="gstep" id="gs-trumps"><div class="icon">🃏</div><div class="label">Stat battle</div></div>
+      <div class="gstep" id="gs-oddone"><div class="icon">🔍</div><div class="label">Odd one out</div></div>
+      <div class="gstep" id="gs-speed"><div class="icon">⏱️</div><div class="label">Speed round</div></div>
     </div>
 
     <!-- QUIZ -->
     <div class="panel" id="p-quiz">
       <div class="game-header">
         <span class="game-label">Name the creature</span>
-        <span class="game-tagline">Dive in — 4 games to conquer!</span>
+        <span class="game-tagline">Dive in — 12 games to conquer!</span>
         <span class="score" style="flex:none">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span>
       </div>
       <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
@@ -410,6 +557,144 @@
         <button class="btn ghost" id="tdeal" style="display:none">Next round →</button>
       </div>
       <p class="auto-notice" id="tnotice"></p>
+    </div>
+
+    <!-- 1. BREATH HOLD -->
+    <div class="panel" id="p-breath">
+      <div class="game-header">
+        <span class="game-label">Hold your breath like a freediver</span>
+        <span class="score">Best <b id="breathPB">0.0</b>s</span>
+      </div>
+      <div class="breath-stage">
+        <div class="breath-orb" id="breathOrb">
+          <div class="bo-fill" id="breathFill"></div>
+          <div class="bo-emoji" id="breathEmoji">🫧</div>
+          <div class="bo-time" id="breathTime">0.0</div>
+          <div class="bo-hint" id="breathHint">Press &amp; hold to dive</div>
+        </div>
+        <div class="breath-result" id="breathResult"></div>
+        <div class="breath-records" id="breathRecords"></div>
+      </div>
+      <button class="btn" id="breathNext" style="display:none">Surface &amp; continue →</button>
+      <p class="auto-notice" id="breathNotice"></p>
+    </div>
+
+    <!-- 2. SILHOUETTE MATCH -->
+    <div class="panel" id="p-silhouette">
+      <div class="game-header">
+        <span class="game-label">Name the shadow</span>
+        <span class="score">Score <b id="silScore">0</b> / <b id="silTotal">0</b></span>
+      </div>
+      <div class="sil-stage" id="silStage"></div>
+      <p class="sil-bonus" id="silBonus"></p>
+      <div class="opts-grid" id="silOpts"></div>
+      <p class="fact" id="silFact"></p>
+      <button class="btn" id="silNext" style="display:none">Next shadow →</button>
+      <p class="auto-notice" id="silNotice"></p>
+    </div>
+
+    <!-- 5. BUBBLE POP -->
+    <div class="panel" id="p-bubble">
+      <div class="game-header">
+        <span class="game-label">Pop only the real Sydney species!</span>
+        <span class="score">Time <b id="bubbleTime">20</b>s</span>
+      </div>
+      <div class="bubble-hud">
+        <span>Caught <b id="bubbleHit">0</b></span>
+        <span>Misses <b id="bubbleMiss">0</b></span>
+      </div>
+      <div class="bubble-field" id="bubbleField"></div>
+      <p class="fact" id="bubbleMsg"></p>
+      <p class="auto-notice" id="bubbleNotice"></p>
+    </div>
+
+    <!-- 3. DEPTH GAUGE -->
+    <div class="panel" id="p-depth">
+      <div class="game-header">
+        <span class="game-label">Drag to guess the depth</span>
+        <span class="score">Round <b id="depthRound">1</b> / <b id="depthTotal">4</b></span>
+      </div>
+      <p class="depth-fact" id="depthFact"></p>
+      <div class="depth-wrap">
+        <div class="depth-readout"><span id="depthReadout">0</span> m</div>
+        <div class="depth-track" id="depthTrack">
+          <div class="depth-marks" id="depthMarks"></div>
+          <div class="depth-zone" id="depthZone"></div>
+          <div class="depth-needle" id="depthNeedle" style="top:0%"></div>
+        </div>
+        <input type="range" class="depth-slider" id="depthSlider" min="0" max="100" value="0">
+      </div>
+      <button class="btn" id="depthLock">Lock in depth ✓</button>
+      <p class="fact" id="depthMsg"></p>
+      <button class="btn ghost" id="depthNext" style="display:none">Next fact →</button>
+      <p class="auto-notice" id="depthNotice"></p>
+    </div>
+
+    <!-- 6. TRUE OR FALSE -->
+    <div class="panel" id="p-truefalse">
+      <div class="game-header">
+        <span class="game-label">Reef myth busters</span>
+        <span class="score">Score <b id="tfScore">0</b> / <b id="tfTotal">0</b></span>
+      </div>
+      <div class="tf-stage">
+        <div class="tf-statement" id="tfStatement"></div>
+        <div class="tf-buttons">
+          <button class="tf-btn tfyes" id="tfTrue">TRUE</button>
+          <button class="tf-btn tfno" id="tfFalse">FALSE</button>
+        </div>
+        <div class="tf-reveal" id="tfReveal"></div>
+      </div>
+      <button class="btn" id="tfNext" style="display:none">Next myth →</button>
+      <p class="auto-notice" id="tfNotice"></p>
+    </div>
+
+    <!-- 8. COLOUR THE CREATURE -->
+    <div class="panel" id="p-colour">
+      <div class="game-header">
+        <span class="game-label">Pick the real colours</span>
+        <span class="score">Score <b id="colScore">0</b> / <b id="colTotal">0</b></span>
+      </div>
+      <div class="colour-stage" id="colStage"></div>
+      <div class="swatch-grid" id="colSwatches"></div>
+      <p class="fact" id="colFact"></p>
+      <button class="btn" id="colNext" style="display:none">Next creature →</button>
+      <p class="auto-notice" id="colNotice"></p>
+    </div>
+
+    <!-- 9. ODD ONE OUT -->
+    <div class="panel" id="p-oddone">
+      <div class="game-header">
+        <span class="game-label">Spot the impostor</span>
+        <span class="score">Score <b id="oddScore">0</b> / <b id="oddTotal">0</b></span>
+      </div>
+      <p class="odd-prompt">Three live in Sydney waters. One does <b>not</b>. Tap the impostor.</p>
+      <div class="odd-grid" id="oddGrid"></div>
+      <p class="fact" id="oddFact"></p>
+      <button class="btn" id="oddNext" style="display:none">Next round →</button>
+      <p class="auto-notice" id="oddNotice"></p>
+    </div>
+
+    <!-- 10. SPEED ROUND -->
+    <div class="panel" id="p-speed">
+      <div class="game-header">
+        <span class="game-label">Rapid fire — 60 seconds!</span>
+        <span class="score">Correct <b id="speedScore">0</b></span>
+      </div>
+      <div class="speed-bar"><i id="speedFill"></i></div>
+      <div class="speed-meta">
+        <span><b id="speedTime">60</b>s left</span>
+        <span>Streak <b id="speedStreak">0</b> 🔥</span>
+      </div>
+      <div class="tf-stage" id="speedStage">
+        <div class="tf-statement" id="speedStatement">Get ready…</div>
+        <div class="tf-buttons">
+          <button class="tf-btn tfyes" id="speedYes">YES</button>
+          <button class="tf-btn tfno" id="speedNo">NO</button>
+        </div>
+        <div class="tf-reveal" id="speedReveal"></div>
+      </div>
+      <div id="speedCountIn" class="speed-countin" style="display:none">3</div>
+      <p class="auto-notice" id="speedNotice"></p>
     </div>
 
     <!-- HALL OF FAME -->
@@ -611,11 +896,11 @@ function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){retur
 
    (Presence + screensaver use Realtime channels — no table needed.)
    ════════════════════════════════════════════════════════════ */
-var SUPABASE_URL = '';          /* <-- paste your Supabase project URL */
-var SUPABASE_ANON_KEY = '';     /* <-- paste your Supabase anon public key */
+var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',log:'Spotter Log',guess:'Where Am I?',trumps:'Stat Battle',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -636,12 +921,18 @@ var Cloud=(function(){
   function boardFor(g){return lsScores().filter(function(e){return e.group===g;}).sort(function(a,b){return b.score-a.score;});}
   function mapRow(x){return {id:x.id,name:x.name,score:x.score,group:x.grp,device:x.device,station:x.station,ts:x.ts?new Date(x.ts).getTime():Date.now()};}
 
+  /* keep-alive: a cheap query every 6h resets Supabase free-tier 7-day pause clock */
+  function keepAlive(){
+    function ping(){if(sb){sb.from('scores').select('id').limit(1).then(function(){},function(){});}}
+    ping();
+    setInterval(ping,6*60*60*1000);
+  }
   function init(cb){
     if(cb)readyCbs.push(cb);
     if(SUPABASE_URL&&SUPABASE_ANON_KEY){
       mode='cloud';
       loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2')
-        .then(function(){sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);fire(readyCbs);readyCbs=[];})
+        .then(function(){sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);keepAlive();fire(readyCbs);readyCbs=[];})
         .catch(function(){mode='local';fire(readyCbs);readyCbs=[];});
     } else {mode='local';setTimeout(function(){fire(readyCbs);readyCbs=[];},0);}
   }
@@ -942,14 +1233,17 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','log','guess','trumps'];
+var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed'];
 var currentGame=0;
 
 function updateStrip(active){
   GAME_ORDER.forEach(function(g,i){
-    var el=$('gs-'+g);el.classList.remove('active','done');
+    var el=$('gs-'+g);if(!el)return;el.classList.remove('active','done');
     if(i<GAME_ORDER.indexOf(active))el.classList.add('done');
-    else if(g===active)el.classList.add('active');
+    else if(g===active){el.classList.add('active');
+      /* keep the active step visible in the scrollable strip */
+      try{el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}
+    }
   });
 }
 function showPanel(id){
@@ -970,9 +1264,17 @@ function startGame(name){
   updateStrip(name);showPanel('p-'+name);
   Cloud.updateSession({game:name,points:POINTS});
   if(name==='quiz')initQuiz();
+  else if(name==='breath')initBreath();
+  else if(name==='silhouette')initSilhouette();
   else if(name==='log')initLog();
+  else if(name==='bubble')initBubble();
+  else if(name==='depth')initDepth();
   else if(name==='guess')initGuess();
+  else if(name==='truefalse')initTrueFalse();
+  else if(name==='colour')initColour();
   else if(name==='trumps')initTrumps();
+  else if(name==='oddone')initOddOne();
+  else if(name==='speed')initSpeed();
 }
 
 /* ════════ QUIZ ════════ */
@@ -990,7 +1292,7 @@ function quizRound(){
     if(btn.dataset.k===key){qScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=CR[key].f;
     if(qQueue.length>0)$('qnext').style.display='inline-block';
-    else{$('qnotice').textContent='All creatures done! Moving to Spotter Log…';setTimeout(advanceGame,2200);}
+    else{$('qnotice').textContent='All creatures done! Moving to Breath Hold…';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -1015,7 +1317,7 @@ function initLog(){
 }
 function renderLog(){
   var n=Object.keys(logFound).length;$('logn').textContent=n;$('logbar').style.width=(n/3*100)+'%';
-  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Moving to Where am I?…';setTimeout(advanceGame,2200);}
+  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Moving to Bubble Pop…';setTimeout(advanceGame,2200);}
 }
 
 /* ════════ GUESS ════════ */
@@ -1034,7 +1336,7 @@ function guessRound(){
     if(btn.dataset.n===correctName){gScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;
     if(gQueue.length>0)$('gnext').style.display='inline-block';
-    else{$('gnotice').textContent='All sites guessed! Moving to Stat Battle…';setTimeout(advanceGame,2200);}
+    else{$('gnotice').textContent='All sites guessed! Moving to Myth Busters…';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -1073,11 +1375,450 @@ function dealRound(){
     else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
     $('twin').textContent=tWin;$('tlose').textContent=tLose;
     if(tRound<TRUMPS_ROUNDS)$('tdeal').style.display='inline-block';
-    else{$('tnotice').textContent='Battle complete! Heading to Hall of Fame…';setTimeout(advanceGame,2400);}
+    else{$('tnotice').textContent='Battle complete! Heading to Odd One Out…';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
 $('tdeal').onclick=dealRound;
+
+/* ════════════════════════════════════════════════════════
+   NEW GAME DATA + ART
+   ════════════════════════════════════════════════════════ */
+
+/* Simple creature silhouette SVGs (shape only, single fill) */
+function silSVG(shape,fill){
+  fill=fill||'#0a2e3c';
+  var body={
+    seadragon:'<path d="M70 250 q40 -30 90 -28 q20 -50 55 -55 q-8 18 2 30 q35 -6 70 10 q40 18 55 55 q6 16 -4 26 q-30 -18 -58 -16 q14 22 6 46 q-18 -16 -30 -34 q-40 6 -78 -8 q-44 -16 -60 -52 q-10 -22 24 -24 Z"/><circle cx="240" cy="120" r="6" fill="#dff1f6"/>',
+    pjshark:'<path d="M60 230 q60 -70 170 -64 q70 4 130 36 q30 16 50 4 q-8 26 -34 34 q-50 14 -120 12 q-90 -2 -150 -10 q-40 -6 -46 -12 Z"/><path d="M150 168 l24 -56 l30 54 Z"/><path d="M250 172 l20 -44 l24 44 Z"/><path d="M380 206 l46 -16 l-8 34 Z"/>',
+    groper:'<path d="M70 200 q90 -90 230 -70 q70 10 110 50 q24 24 40 14 q-6 30 -40 40 q-60 16 -140 14 q-110 -2 -170 -22 q-44 -16 -30 -40 Z"/><path d="M120 150 l30 -40 l24 44 Z"/>',
+    cuttle:'<ellipse cx="220" cy="170" rx="120" ry="70"/><g>'+
+      '<path d="M340 180 q40 6 70 -6"/><path d="M340 192 q44 14 78 8"/><path d="M340 204 q40 24 74 26"/>'+
+      '</g><circle cx="170" cy="150" r="10" fill="#dff1f6"/>',
+    bluedevil:'<path d="M80 200 q70 -64 180 -58 q60 4 96 34 q26 22 42 12 q-6 28 -38 36 q-54 14 -118 12 q-92 -2 -146 -20 q-38 -14 -16 -16 Z"/><path d="M250 150 q20 -34 50 -30 q-6 18 -8 34 Z"/>',
+    octopus:'<path d="M150 120 q70 -40 140 0 q40 30 30 86 q-2 16 -16 18 q-6 30 -30 30 q-10 26 -34 14 q-18 22 -38 2 q-26 14 -38 -12 q-26 4 -30 -24 q-26 -10 -16 -38 q-14 -44 30 -76 Z"/><circle cx="195" cy="120" r="9" fill="#dff1f6"/><circle cx="250" cy="120" r="9" fill="#dff1f6"/>',
+    ray:'<path d="M70 180 q150 -90 300 0 q-40 30 -150 30 q-110 0 -150 -30 Z"/><path d="M210 210 q4 60 -2 90 q-10 -2 -10 -30 q-2 -40 12 -60 Z"/>',
+    turtle:'<ellipse cx="210" cy="180" rx="110" ry="78"/><path d="M320 150 q40 -16 60 -2 q-10 24 -44 28 Z"/><path d="M120 120 l-34 -28 M300 120 l34 -28 M120 240 l-34 28 M300 240 l34 28" stroke="'+fill+'" stroke-width="20" stroke-linecap="round"/>'
+  };
+  return '<svg viewBox="0 0 460 320" xmlns="http://www.w3.org/2000/svg"><g fill="'+fill+'" stroke="'+fill+'" stroke-width="2" stroke-linejoin="round">'+(body[shape]||body.groper)+'</g></svg>';
+}
+
+/* Line-drawing (outline) for colouring game — same shapes, outline only */
+function lineSVG(shape){
+  var inner=silSVG(shape,'none').replace('fill="none"','fill="#0e3344"');
+  return inner.replace(/stroke-width="2"/,'stroke-width="3"').replace('stroke="none"','stroke="#7fd6e0"').replace('fill="none"','fill="#0e3344"').replace(/stroke="none"/g,'stroke="#7fd6e0"');
+}
+
+/* ════════ 1. BREATH HOLD ════════ */
+var BREATH_RECORDS=[
+  {who:'Reef rookie',t:30},
+  {who:'Keen snorkeller',t:60},
+  {who:'Club freediver',t:120},
+  {who:'Sydney comp diver',t:240},
+  {who:'Elite static apnea',t:360}
+];
+var breathState={holding:false,start:0,timer:null,pb:0,done:false,tries:0};
+function fmtSecs(s){return s.toFixed(1);}
+function initBreath(){
+  breathState.holding=false;breathState.done=false;breathState.tries=0;
+  try{breathState.pb=parseFloat(localStorage.getItem('gds_breath_pb'))||0;}catch(e){breathState.pb=0;}
+  $('breathPB').textContent=fmtSecs(breathState.pb);
+  $('breathTime').textContent='0.0';$('breathEmoji').textContent='🫧';
+  $('breathHint').textContent='Press & hold to dive';
+  $('breathResult').textContent='';$('breathNotice').textContent='';
+  $('breathFill').style.height='0%';
+  $('breathNext').style.display='none';
+  $('breathOrb').classList.remove('holding');
+  renderBreathRecords(0);
+}
+function renderBreathRecords(last){
+  $('breathRecords').innerHTML=BREATH_RECORDS.map(function(r){
+    var beat=last>=r.t;
+    return '<div class="rrow'+(beat?' beat':'')+'"><span>'+(beat?'✓ ':'')+r.who+'</span><span class="rt">'+r.t+'s</span></div>';
+  }).join('');
+}
+function breathTick(){
+  if(!breathState.holding)return;
+  var secs=(Date.now()-breathState.start)/1000;
+  $('breathTime').textContent=fmtSecs(secs);
+  $('breathFill').style.height=Math.min(100,secs/240*100)+'%';
+}
+function breathStart(e){
+  if(breathState.done||breathState.holding)return;
+  if(e&&e.cancelable)e.preventDefault();
+  breathState.holding=true;breathState.start=Date.now();
+  $('breathEmoji').textContent='🤿';$('breathHint').textContent='Hold… release to surface';
+  $('breathResult').textContent='';
+  $('breathOrb').classList.add('holding');
+  breathState.timer=setInterval(breathTick,100);
+}
+function breathEnd(){
+  if(!breathState.holding)return;
+  breathState.holding=false;clearInterval(breathState.timer);
+  $('breathOrb').classList.remove('holding');$('breathEmoji').textContent='🫧';
+  var secs=(Date.now()-breathState.start)/1000;
+  $('breathTime').textContent=fmtSecs(secs);
+  breathState.tries++;
+  renderBreathRecords(secs);
+  /* find which record they beat */
+  var beat=null;for(var i=BREATH_RECORDS.length-1;i>=0;i--){if(secs>=BREATH_RECORDS[i].t){beat=BREATH_RECORDS[i];break;}}
+  var msg=beat?('🏅 You matched a '+beat.who+'!'):'Nice dive — keep training those lungs!';
+  $('breathResult').textContent=msg;
+  if(secs>breathState.pb){breathState.pb=secs;try{localStorage.setItem('gds_breath_pb',String(secs));}catch(e){}$('breathPB').textContent=fmtSecs(secs);$('breathResult').textContent='🎉 New personal best! '+msg;}
+  /* award scaled to time: ~1 pt per 6s, capped */
+  var pts=Math.min(20,Math.max(MIN_REWARD,Math.round(secs/6)+3));
+  award(pts);
+  $('breathHint').textContent='Tap again to retry, or continue';
+  if(!breathState.done){breathState.done=true;$('breathNext').style.display='inline-block';}
+}
+(function wireBreath(){
+  var orb=$('breathOrb');
+  orb.addEventListener('mousedown',breathStart);
+  orb.addEventListener('touchstart',breathStart,{passive:false});
+  window.addEventListener('mouseup',breathEnd);
+  orb.addEventListener('touchend',breathEnd);
+  orb.addEventListener('touchcancel',breathEnd);
+})();
+$('breathNext').onclick=function(){$('breathNotice').textContent='Surfacing — on to Silhouette Match…';setTimeout(advanceGame,1400);};
+
+/* ════════ 2. SILHOUETTE MATCH ════════ */
+var SIL_ROUNDS=[
+  {shape:'seadragon',name:'Weedy seadragon',f:'Those leaf-like flaps are camouflage, not fins.'},
+  {shape:'pjshark',name:'Port Jackson shark',f:'Spot the blunt head and high spiny fins.'},
+  {shape:'cuttle',name:'Giant cuttlefish',f:'A broad mantle plus a fan of arms — unmistakable.'},
+  {shape:'turtle',name:'Green turtle',f:'Flippers and a domed shell give it away.'},
+  {shape:'ray',name:'Bluespotted ray',f:'A flat disc with a long whip tail.'}
+];
+var SIL_NAMES=['Weedy seadragon','Port Jackson shark','Giant cuttlefish','Green turtle','Bluespotted ray','Eastern blue groper','Maori octopus','Eastern blue devil'];
+var silQueue=[],silScore=0,silTotal=0,silAnswered=false;
+function initSilhouette(){
+  silScore=0;silTotal=0;silAnswered=false;silQueue=shuffle(SIL_ROUNDS.slice());
+  $('silScore').textContent=0;$('silTotal').textContent=0;$('silNotice').textContent='';
+  silRound();
+}
+function silRound(){
+  silAnswered=false;$('silFact').textContent='';$('silNext').style.display='none';$('silBonus').textContent='⏱️ Answer fast for bonus points!';
+  var r=silQueue.shift();
+  $('silStage').innerHTML=silSVG(r.shape);
+  var wrong=shuffle(SIL_NAMES.filter(function(n){return n!==r.name;})).slice(0,3);
+  var opts=shuffle([r.name].concat(wrong));
+  $('silOpts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+esc(n)+'">'+n+'</button>';}).join('');
+  $('silOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(silAnswered)return;silAnswered=true;silTotal++;
+    $('silOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.n===r.name)x.classList.add('right');});
+    if(btn.dataset.n===r.name){silScore++;award(timedReward());$('silBonus').textContent='';}
+    else{btn.classList.add('wrong');penalize();$('silBonus').textContent='';}
+    $('silScore').textContent=silScore;$('silTotal').textContent=silTotal;$('silFact').textContent=r.f;
+    if(silQueue.length>0)$('silNext').style.display='inline-block';
+    else{$('silNotice').textContent='Shadows solved! Moving to Spotter Log…';setTimeout(advanceGame,2200);}
+  };});
+  startTimer();
+}
+$('silNext').onclick=silRound;
+
+/* ════════ 5. BUBBLE POP ════════ */
+var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Bluespotted ray','Old wife','Mado','Sea tulip'];
+var BUBBLE_FAKE=['Clownfish','Great white… reef','Piranha','Lionfish','Coral trout','Mandarinfish','Anaconda','Pufferfish','Manatee','Parrotfish'];
+var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:[],raf:null};
+function initBubble(){
+  var f=$('bubbleField');f.innerHTML='';
+  bubbleState={time:20,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
+  $('bubbleTime').textContent='20';$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
+  $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';$('bubbleNotice').textContent='';
+  bubbleState.timer=setInterval(function(){
+    bubbleState.time--;$('bubbleTime').textContent=bubbleState.time;
+    if(bubbleState.time<=0)endBubble();
+  },1000);
+  bubbleState.spawn=setInterval(spawnBubble,820);
+  for(var i=0;i<3;i++)setTimeout(spawnBubble,i*260);
+  animateBubbles();
+}
+function spawnBubble(){
+  if(!bubbleState.active)return;
+  var f=$('bubbleField');var W=f.clientWidth||320;
+  var real=Math.random()<0.55;
+  var name=real?BUBBLE_REAL[Math.floor(Math.random()*BUBBLE_REAL.length)]
+                :BUBBLE_FAKE[Math.floor(Math.random()*BUBBLE_FAKE.length)];
+  var size=Math.round(58+Math.random()*34);
+  var b=document.createElement('div');b.className='bubble';
+  b.style.width=size+'px';b.style.height=size+'px';b.style.fontSize=(size>78?12:11)+'px';
+  var x=Math.random()*(W-size-8)+4;
+  b.style.left=x+'px';
+  b._y=(f.clientHeight||320);b.style.top=b._y+'px';
+  b._speed=0.5+Math.random()*0.7;b._real=real;b.textContent=name;
+  b.addEventListener('click',function(ev){
+    ev.stopPropagation();
+    if(!bubbleState.active||b._popped)return;b._popped=true;
+    if(b._real){bubbleState.hit++;$('bubbleHit').textContent=bubbleState.hit;b.classList.add('pop-good');award(Math.max(MIN_REWARD,6));}
+    else{bubbleState.miss++;$('bubbleMiss').textContent=bubbleState.miss;b.classList.add('pop-bad');penalize();}
+    setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},300);
+    var idx=bubbleState.bubbles.indexOf(b);if(idx>-1)bubbleState.bubbles.splice(idx,1);
+  });
+  f.appendChild(b);bubbleState.bubbles.push(b);
+}
+function animateBubbles(){
+  if(!bubbleState.active)return;
+  var f=$('bubbleField');
+  for(var i=bubbleState.bubbles.length-1;i>=0;i--){
+    var b=bubbleState.bubbles[i];if(b._popped)continue;
+    b._y-=b._speed*2.2;b.style.top=b._y+'px';
+    if(b._y< -100){if(b.parentNode)b.parentNode.removeChild(b);bubbleState.bubbles.splice(i,1);}
+  }
+  bubbleState.raf=requestAnimationFrame(animateBubbles);
+}
+function endBubble(){
+  bubbleState.active=false;
+  clearInterval(bubbleState.timer);clearInterval(bubbleState.spawn);
+  if(bubbleState.raf)cancelAnimationFrame(bubbleState.raf);
+  $('bubbleField').innerHTML='';
+  $('bubbleMsg').textContent='Time! You caught '+bubbleState.hit+' real species ('+bubbleState.miss+' slip-ups).';
+  $('bubbleNotice').textContent='Moving to Depth Gauge…';
+  setTimeout(advanceGame,2200);
+}
+
+/* ════════ 3. DEPTH GAUGE ════════ */
+var DEPTH_MAX=300; /* metres represented by the track */
+var DEPTH_ROUNDS=[
+  {fact:'Wobbegong sharks usually rest at around ___ m',answer:15,tol:12},
+  {fact:'Weedy seadragons are most often seen at about ___ m',answer:8,tol:8},
+  {fact:'Port Jackson sharks can be found down to roughly ___ m',answer:100,tol:40},
+  {fact:'The giant cuttlefish breeds in shallows near ___ m',answer:5,tol:6},
+  {fact:'Blue gropers patrol rocky reefs at about ___ m',answer:20,tol:15}
+];
+var depthQueue=[],depthRoundN=0,depthLocked=false,depthCur=null;
+function initDepth(){
+  depthQueue=shuffle(DEPTH_ROUNDS.slice()).slice(0,4);depthRoundN=0;
+  $('depthTotal').textContent=depthQueue.length;$('depthNotice').textContent='';
+  buildDepthMarks();depthRound();
+}
+function buildDepthMarks(){
+  var marks=[0,50,100,150,200,250,300],html='';
+  marks.forEach(function(m){var pct=m/DEPTH_MAX*100;html+='<i style="top:'+pct+'%"></i><span style="top:'+pct+'%">'+m+'m</span>';});
+  $('depthMarks').innerHTML=html;
+}
+function depthRound(){
+  depthLocked=false;depthCur=depthQueue[depthRoundN];
+  $('depthRound').textContent=depthRoundN+1;
+  $('depthFact').textContent=depthCur.fact.replace('___','?');
+  $('depthMsg').textContent='';$('depthNext').style.display='none';$('depthLock').style.display='inline-block';
+  $('depthZone').style.display='none';
+  var sl=$('depthSlider');sl.value=0;sl.disabled=false;updateDepthNeedle(0);
+  startTimer();
+}
+function sliderToM(v){return Math.round(v/100*DEPTH_MAX);}
+function updateDepthNeedle(v){
+  var m=sliderToM(v);$('depthReadout').textContent=m;
+  $('depthNeedle').style.top=(m/DEPTH_MAX*100)+'%';
+}
+$('depthSlider').addEventListener('input',function(){if(!depthLocked)updateDepthNeedle(this.value);});
+$('depthLock').onclick=function(){
+  if(depthLocked)return;depthLocked=true;
+  $('depthSlider').disabled=true;$('depthLock').style.display='none';
+  var guess=sliderToM($('depthSlider').value);
+  var ans=depthCur.answer,tol=depthCur.tol;
+  var diff=Math.abs(guess-ans);
+  /* show the correct zone */
+  var z=$('depthZone');var topPct=Math.max(0,(ans-tol)/DEPTH_MAX*100);var botPct=Math.min(100,(ans+tol)/DEPTH_MAX*100);
+  z.style.top=topPct+'%';z.style.height=(botPct-topPct)+'%';z.style.display='block';
+  if(diff<=tol){var pts=Math.max(MIN_REWARD,Math.round(REWARD*(1-diff/(tol*2))));award(pts);$('depthMsg').textContent='🎯 Spot on! Actual: ~'+ans+'m (you guessed '+guess+'m).';}
+  else if(diff<=tol*2.2){award(MIN_REWARD);$('depthMsg').textContent='Close! Actual: ~'+ans+'m (you guessed '+guess+'m).';}
+  else{penalize();$('depthMsg').textContent='Actual depth: ~'+ans+'m. You guessed '+guess+'m.';}
+  depthRoundN++;
+  if(depthRoundN<depthQueue.length)$('depthNext').style.display='inline-block';
+  else{$('depthNotice').textContent='Gauge mastered! Moving to Where am I?…';setTimeout(advanceGame,2300);}
+};
+$('depthNext').onclick=depthRound;
+
+/* ════════ 6. TRUE OR FALSE — MYTH BUSTERS ════════ */
+var TF_QUESTIONS=[
+  {s:'Octopuses have three hearts.',a:true,f:'True! Two pump blood to the gills, one to the body.'},
+  {s:'A weedy seadragon is a type of shark.',a:false,f:'False — it\'s a fish related to seahorses.'},
+  {s:'Giant cuttlefish can change colour in an instant.',a:true,f:'True! Special skin cells let them flash patterns.'},
+  {s:'Port Jackson sharks lay spiral, screw-shaped eggs.',a:true,f:'True — the corkscrew case wedges into rock crevices.'},
+  {s:'The eastern blue groper starts life as a male.',a:false,f:'False — they all start as females, then some turn male.'},
+  {s:'Sea stars have brains.',a:false,f:'False — they have a nerve net, no central brain.'},
+  {s:'Wobbegongs are a kind of carpet shark.',a:true,f:'True — their flat, patterned bodies blend into the reef.'}
+];
+var tfQueue=[],tfScore=0,tfTotal=0,tfAnswered=false,tfCur=null;
+function initTrueFalse(){
+  tfQueue=shuffle(TF_QUESTIONS.slice());tfScore=0;tfTotal=0;tfAnswered=false;
+  $('tfScore').textContent=0;$('tfTotal').textContent=0;$('tfNotice').textContent='';
+  tfRound();
+}
+function tfRound(){
+  tfAnswered=false;tfCur=tfQueue.shift();
+  $('tfStatement').textContent=tfCur.s;$('tfReveal').textContent='';$('tfNext').style.display='none';
+  $('tfTrue').disabled=false;$('tfFalse').disabled=false;
+  $('tfTrue').style.opacity='1';$('tfFalse').style.opacity='1';
+  startTimer();
+}
+function tfAnswer(val){
+  if(tfAnswered)return;tfAnswered=true;tfTotal++;
+  $('tfTrue').disabled=true;$('tfFalse').disabled=true;
+  if(val===tfCur.a){tfScore++;award(timedReward());$('tfReveal').innerHTML='✅ <b>Correct!</b> '+esc(tfCur.f);}
+  else{penalize();$('tfReveal').innerHTML='❌ <b>Not quite.</b> '+esc(tfCur.f);}
+  $('tfScore').textContent=tfScore;$('tfTotal').textContent=tfTotal;
+  if(tfQueue.length>0)$('tfNext').style.display='inline-block';
+  else{$('tfNotice').textContent='Myths busted! Moving to Colour the Creature…';setTimeout(advanceGame,2300);}
+}
+$('tfTrue').onclick=function(){tfAnswer(true);};
+$('tfFalse').onclick=function(){tfAnswer(false);};
+$('tfNext').onclick=tfRound;
+
+/* ════════ 8. COLOUR THE CREATURE ════════ */
+var COL_ROUNDS=[
+  {shape:'seadragon',name:'Weedy seadragon',correct:'Reddish-brown with yellow & purple-blue markings',
+   colors:['linear-gradient(135deg,#b14b2a,#f0c040 60%,#5566cc)','#2e7d32','#777777','#e84393'],
+   options:['Reddish-brown with yellow & purple-blue markings','Bright green all over','Plain grey','Hot pink'],f:'Their colours mimic the weed they drift among.'},
+  {shape:'groper',name:'Eastern blue groper (male)',correct:'Deep cobalt blue',
+   colors:['#1f5fd6','#e8b53a','#d33','#444'],options:['Deep cobalt blue','Golden yellow','Bright red','Charcoal black'],f:'Big males are vivid blue; females are reddish-brown.'},
+  {shape:'cuttle',name:'Giant cuttlefish',correct:'Shifting — any colour at all',
+   colors:['linear-gradient(135deg,#c0392b,#8e44ad,#16a085,#f1c40f)','#1f5fd6','#2e7d32','#9b6b3a'],
+   options:['Shifting — any colour at all','Always solid blue','Always green','Always brown'],f:'They flash through colours faster than almost any animal.'},
+  {shape:'bluedevil',name:'Eastern blue devil',correct:'Blue-grey with orange & blue stripes',
+   colors:['linear-gradient(135deg,#3a6ea5,#e67e22 50%,#3a6ea5)','#2e7d32','#000','#e84393'],
+   options:['Blue-grey with orange & blue stripes','Solid green','Jet black','Bubblegum pink'],f:'A shy, strikingly striped cave-dweller of NSW reefs.'}
+];
+var colQueue=[],colScore=0,colTotal=0,colAnswered=false;
+function initColour(){
+  colQueue=shuffle(COL_ROUNDS.slice());colScore=0;colTotal=0;colAnswered=false;
+  $('colScore').textContent=0;$('colTotal').textContent=0;$('colNotice').textContent='';
+  colRound();
+}
+function colRound(){
+  colAnswered=false;var r=colQueue.shift();
+  $('colStage').innerHTML=lineSVG(r.shape);
+  $('colFact').textContent='';$('colNext').style.display='none';
+  var idx=shuffle(r.options.map(function(_,i){return i;}));
+  $('colSwatches').innerHTML=idx.map(function(i){
+    return '<button class="swatch" data-opt="'+esc(r.options[i])+'"><span class="dot" style="background:'+r.colors[i]+'"></span><span>'+r.options[i]+'</span></button>';
+  }).join('');
+  $('colSwatches').querySelectorAll('.swatch').forEach(function(btn){btn.onclick=function(){
+    if(colAnswered)return;colAnswered=true;colTotal++;
+    $('colSwatches').querySelectorAll('.swatch').forEach(function(x){x.disabled=true;
+      if(x.dataset.opt===r.correct){x.style.borderColor='var(--good)';x.style.background='var(--goodd)';}});
+    if(btn.dataset.opt===r.correct){colScore++;award(timedReward());}
+    else{btn.style.borderColor='var(--bad)';btn.style.background='var(--badd)';penalize();}
+    $('colScore').textContent=colScore;$('colTotal').textContent=colTotal;$('colFact').textContent=r.f;
+    if(colQueue.length>0)$('colNext').style.display='inline-block';
+    else{$('colNotice').textContent='Beautifully done! Moving to Stat Battle…';setTimeout(advanceGame,2300);}
+  };});
+  startTimer();
+}
+$('colNext').onclick=colRound;
+
+/* ════════ 9. ODD ONE OUT ════════ */
+var ODD_ROUNDS=[
+  {real:[['Weedy seadragon','🐉'],['Port Jackson shark','🦈'],['Blue groper','🐟']],fake:['Clownfish','🐠'],f:'Clownfish live on tropical coral reefs, not Sydney.'},
+  {real:[['Giant cuttlefish','🦑'],['Maori octopus','🐙'],['Bluespotted ray','🐡']],fake:['Piranha','🐟'],f:'Piranhas are freshwater fish from South America.'},
+  {real:[['Blue devil','🐟'],['Old wife','🐠'],['Mado','🐟']],fake:['Lionfish','🦂'],f:'Lionfish are invasive tropicals, not Sydney natives.'},
+  {real:[['Wobbegong','🦈'],['Sea tulip','🌷'],['Eastern blue groper','🐟']],fake:['Coral trout','🐠'],f:'Coral trout belong on the Great Barrier Reef.'},
+  {real:[['Weedy seadragon','🐉'],['Sea urchin','🦔'],['Cuttlefish','🦑']],fake:['Manatee','🦭'],f:'Manatees live in warm tropical rivers and bays.'}
+];
+var oddQueue=[],oddScore=0,oddTotal=0,oddAnswered=false;
+function initOddOne(){
+  oddQueue=shuffle(ODD_ROUNDS.slice());oddScore=0;oddTotal=0;oddAnswered=false;
+  $('oddScore').textContent=0;$('oddTotal').textContent=0;$('oddNotice').textContent='';
+  oddRound();
+}
+function oddRound(){
+  oddAnswered=false;var r=oddQueue.shift();
+  $('oddFact').textContent='';$('oddNext').style.display='none';
+  var cards=r.real.map(function(x){return {label:x[0],emoji:x[1],fake:false};});
+  cards.push({label:r.fake[0],emoji:r.fake[1],fake:true});
+  cards=shuffle(cards);
+  $('oddGrid').innerHTML=cards.map(function(c){
+    return '<button class="odd-card" data-fake="'+(c.fake?'1':'0')+'"><span class="oc-emoji">'+c.emoji+'</span><span>'+c.label+'</span></button>';
+  }).join('');
+  $('oddGrid').querySelectorAll('.odd-card').forEach(function(btn){btn.onclick=function(){
+    if(oddAnswered)return;oddAnswered=true;oddTotal++;
+    $('oddGrid').querySelectorAll('.odd-card').forEach(function(x){x.disabled=true;if(x.dataset.fake==='1')x.classList.add('right');});
+    if(btn.dataset.fake==='1'){oddScore++;award(timedReward());}
+    else{btn.classList.add('wrong');penalize();}
+    $('oddScore').textContent=oddScore;$('oddTotal').textContent=oddTotal;$('oddFact').textContent=r.f;
+    if(oddQueue.length>0)$('oddNext').style.display='inline-block';
+    else{$('oddNotice').textContent='Impostors caught! Final game — Speed Round…';setTimeout(advanceGame,2300);}
+  };});
+  startTimer();
+}
+$('oddNext').onclick=oddRound;
+
+/* ════════ 10. SPEED ROUND ════════ */
+var SPEED_QUESTIONS=[
+  {s:'Is a dolphin a fish?',a:false},
+  {s:'Can octopuses change colour?',a:true},
+  {s:'Do sharks have bones?',a:false},
+  {s:'Is a weedy seadragon a fish?',a:true},
+  {s:'Can a cuttlefish squirt ink?',a:true},
+  {s:'Do whales breathe air?',a:true},
+  {s:'Is a jellyfish a fish?',a:false},
+  {s:'Does a Port Jackson shark lay eggs?',a:true},
+  {s:'Can a sea star regrow an arm?',a:true},
+  {s:'Is coral a plant?',a:false},
+  {s:'Do octopuses have eight arms?',a:true},
+  {s:'Is the blue groper the NSW state fish?',a:true},
+  {s:'Can seahorses swim fast?',a:false},
+  {s:'Do rays sting with their tail?',a:true},
+  {s:'Is a turtle a mammal?',a:false},
+  {s:'Can a pufferfish inflate?',a:true},
+  {s:'Do crabs walk sideways?',a:true},
+  {s:'Is a whale shark dangerous to people?',a:false},
+  {s:'Can fish drown?',a:true},
+  {s:'Does an octopus have blue blood?',a:true}
+];
+var speedState={time:60,score:0,streak:0,queue:[],cur:null,timer:null,active:false,countTimer:null};
+function initSpeed(){
+  speedState={time:60,score:0,streak:0,queue:shuffle(SPEED_QUESTIONS.slice()),cur:null,timer:null,active:false,countTimer:null};
+  $('speedScore').textContent=0;$('speedTime').textContent=60;$('speedStreak').textContent=0;
+  $('speedFill').style.width='100%';$('speedFill').classList.remove('low');
+  $('speedReveal').textContent='';$('speedNotice').textContent='';
+  $('speedYes').disabled=true;$('speedNo').disabled=true;
+  $('speedStage').style.display='none';
+  var ci=$('speedCountIn');ci.style.display='block';var n=3;ci.textContent=n;
+  speedState.countTimer=setInterval(function(){
+    n--;if(n>0){ci.textContent=n;}else if(n===0){ci.textContent='GO!';}
+    else{clearInterval(speedState.countTimer);ci.style.display='none';$('speedStage').style.display='flex';startSpeed();}
+  },800);
+}
+function startSpeed(){
+  speedState.active=true;
+  $('speedYes').disabled=false;$('speedNo').disabled=false;
+  speedState.timer=setInterval(function(){
+    speedState.time--;$('speedTime').textContent=speedState.time;
+    var pct=speedState.time/60*100;$('speedFill').style.width=pct+'%';
+    if(speedState.time<=10)$('speedFill').classList.add('low');
+    if(speedState.time<=0)endSpeed();
+  },1000);
+  speedNext();
+}
+function speedNext(){
+  if(!speedState.active)return;
+  if(!speedState.queue.length)speedState.queue=shuffle(SPEED_QUESTIONS.slice());
+  speedState.cur=speedState.queue.shift();
+  $('speedStatement').textContent=speedState.cur.s;
+}
+function speedAnswer(val){
+  if(!speedState.active||!speedState.cur)return;
+  var correct=(val===speedState.cur.a);
+  if(correct){speedState.score++;speedState.streak++;
+    var bonus=speedState.streak>=5?2:1;award(Math.max(MIN_REWARD,4+bonus));
+    $('speedScore').textContent=speedState.score;$('speedStreak').textContent=speedState.streak;
+    $('speedReveal').innerHTML='<b style="color:var(--good)">✓</b>';
+  }else{speedState.streak=0;penalize();
+    $('speedStreak').textContent=0;$('speedReveal').innerHTML='<b style="color:var(--bad)">✗</b>';
+  }
+  speedState.cur=null;speedNext();
+}
+$('speedYes').onclick=function(){speedAnswer(true);};
+$('speedNo').onclick=function(){speedAnswer(false);};
+function endSpeed(){
+  speedState.active=false;clearInterval(speedState.timer);
+  $('speedYes').disabled=true;$('speedNo').disabled=true;
+  $('speedStatement').textContent='⏱️ Time! '+speedState.score+' correct.';
+  $('speedReveal').textContent='';
+  $('speedNotice').textContent='That\'s a wrap — to the Hall of Fame!';
+  setTimeout(advanceGame,2400);
+}
 
 /* ════════ HALL OF FAME (real, shared board) ════════ */
 function encourageMsg(rank,total){
