@@ -778,7 +778,13 @@
   video.addEventListener('stalled',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
 
   var retried=false;
-  function setSource(){video.src='images/splash.mp4'+(retried?('?r='+Date.now()):'');try{video.load();}catch(e){}}
+  function splashFile(){
+    var ua=navigator.userAgent||'';
+    var isPhone=/Mobi|iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
+    var smallScreen=Math.min(window.innerWidth,window.innerHeight)<600;
+    return (isPhone||smallScreen)?'images/splash.mp4':'images/Splash_pc_720.mp4';
+  }
+  function setSource(){video.src=splashFile()+(retried?('?r='+Date.now()):'');try{video.load();}catch(e){}}
   video.addEventListener('error',function(){
     if(playing||dismissed)return;
     if(!retried){retried=true;setTimeout(setSource,400);}
@@ -835,11 +841,11 @@
     nv.addEventListener('playing',function(){np=true;nl.style.display='none';nt.style.display='none';nf.style.display='none';try{nv.playbackRate=2;}catch(e){}});
     nv.addEventListener('timeupdate',function(){if(nv.currentTime>0&&!np){np=true;nl.style.display='none';}});
     var nr=false;
-    nv.addEventListener('error',function(){if(np||nd)return;if(!nr){nr=true;setTimeout(function(){nv.src='images/splash.mp4?r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nDone,2000);}});
+    nv.addEventListener('error',function(){if(np||nd)return;if(!nr){nr=true;setTimeout(function(){nv.src=splashFile()+'?r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nDone,2000);}});
     function nTry(){if(np||nd)return;try{nv.playbackRate=2;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(function(err){if(!np&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nab=true;nl.style.display='none';nt.style.display='flex';}});}
     nv.addEventListener('canplay',nTry);nv.addEventListener('canplaythrough',nTry);nv.addEventListener('loadeddata',nTry);
     nl.style.display='flex';
-    nv.src='images/splash.mp4';try{nv.load();}catch(e){}
+    nv.src=splashFile();try{nv.load();}catch(e){}
     setTimeout(function(){if(!nd)nDone();},35000);
   }
 
