@@ -40,10 +40,10 @@
     -webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px}
   .gamesstrip::-webkit-scrollbar{height:4px}
   .gamesstrip::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
-  .gstep{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 6px 5px;
-    border-radius:8px;border:1px solid var(--line);background:var(--bg2);
-    color:var(--muted);text-align:center;line-height:1.2;transition:.2s;user-select:none;
-    flex:0 0 auto;min-width:52px}
+  .gstep{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 5px 4px;
+    border-radius:7px;border:1px solid var(--line);background:var(--bg2);
+    color:var(--muted);text-align:center;line-height:1.15;transition:.2s;user-select:none;
+    flex:0 0 auto;min-width:46px}
   .gstep .icon{font-size:16px;line-height:1}
   .gstep .label{font-size:9px;letter-spacing:.2px;white-space:nowrap}
   .gstep.done{border-color:var(--good);background:var(--goodd);color:#cdf3df}
@@ -503,6 +503,10 @@
       <div class="gstep" id="gs-trumps"><div class="icon">🃏</div><div class="label">Stat battle</div></div>
       <div class="gstep" id="gs-oddone"><div class="icon">🔍</div><div class="label">Odd one out</div></div>
       <div class="gstep" id="gs-speed"><div class="icon">⏱️</div><div class="label">Speed round</div></div>
+      <div class="gstep" id="gs-season"><div class="icon">📅</div><div class="label">When to see</div></div>
+      <div class="gstep" id="gs-wreckid"><div class="icon">🔱</div><div class="label">Wreck detective</div></div>
+      <div class="gstep" id="gs-wave"><div class="icon">🌊</div><div class="label">Wave lab</div></div>
+      <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
     </div>
 
     <!-- QUIZ -->
@@ -695,6 +699,64 @@
       </div>
       <div id="speedCountIn" class="speed-countin" style="display:none">3</div>
       <p class="auto-notice" id="speedNotice"></p>
+    </div>
+
+    <!-- 13. WHEN WILL I SEE IT? — SEASON MATCH -->
+    <div class="panel" id="p-season">
+      <div class="game-header">
+        <span class="game-label">When can you spot this species in Sydney?</span>
+        <span class="score">Score <b id="seasonScore">0</b> / <b id="seasonTotal">0</b></span>
+      </div>
+      <div id="seasonArt" style="margin-bottom:8px"></div>
+      <p class="tt" id="seasonName" style="text-align:center;margin:2px 0 8px"></p>
+      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Pick the time of year you're most likely to see it:</p>
+      <div class="opts-grid" id="seasonOpts"></div>
+      <p class="qfact" id="seasonFact" style="margin-top:10px"></p>
+      <div style="text-align:center"><button class="btn ghost" id="seasonNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="seasonNotice"></p>
+    </div>
+
+    <!-- 14. WRECK DETECTIVE -->
+    <div class="panel" id="p-wreckid">
+      <div class="game-header">
+        <span class="game-label">Identify the Sydney wreck from the clue</span>
+        <span class="score">Score <b id="wreckidScore">0</b> / <b id="wreckidTotal">0</b></span>
+      </div>
+      <div id="wreckidArt" style="margin-bottom:8px"></div>
+      <p class="qfact" id="wreckidClue" style="margin:2px 0 10px;font-size:14px;color:var(--text)"></p>
+      <div class="opts-grid" id="wreckidOpts"></div>
+      <p class="qfact" id="wreckidFact" style="margin-top:10px"></p>
+      <div style="text-align:center"><button class="btn ghost" id="wreckidNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="wreckidNotice"></p>
+    </div>
+
+    <!-- 15. WAVE LAB -->
+    <div class="panel" id="p-wave">
+      <div class="game-header">
+        <span class="game-label">Read the conditions — will the site have good viz?</span>
+        <span class="score">Score <b id="waveScore">0</b> / <b id="waveTotal">0</b></span>
+      </div>
+      <div id="waveArt" style="margin-bottom:8px"></div>
+      <div id="waveCond" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13.5px;line-height:1.7"></div>
+      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Your call for this dive site:</p>
+      <div class="opts-grid" id="waveOpts"></div>
+      <p class="qfact" id="waveFact" style="margin-top:10px"></p>
+      <div style="text-align:center"><button class="btn ghost" id="waveNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="waveNotice"></p>
+    </div>
+
+    <!-- 16. WRECK FINDER (drag wrecks onto the map) -->
+    <div class="panel" id="p-wreckfind">
+      <div class="game-header">
+        <span class="game-label">Drag each wreck to its real spot on the map</span>
+        <span class="score">Placed <b id="wreckfindPlaced">0</b> / <b id="wreckfindTotal">0</b></span>
+      </div>
+      <div id="wreckfindWrap" style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#06222c">
+        <div id="wreckfindMap" style="position:relative;width:100%"></div>
+      </div>
+      <div id="wreckfindTray" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center"></div>
+      <p class="qfact" id="wreckfindMsg" style="margin-top:10px"></p>
+      <p class="auto-notice" id="wreckfindNotice"></p>
     </div>
 
     <!-- HALL OF FAME -->
@@ -906,7 +968,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -1209,15 +1271,21 @@ var PHOTOS={
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
 function creaturePlaceholder(key){var nm=(CR[key]&&CR[key].n)||'Sea creature';return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">\uD83D\uDC1F</div><div style="font-size:13px;color:var(--muted)">'+nm+'</div></div>';}
-function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
+var SIL_SHAPE={seadragon:'seadragon',pjshark:'pjshark',groper:'groper',cuttle:'cuttle',bluedevil:'bluedevil',duskywhaler:'pjshark',greynurse:'pjshark',hammeroct:'octopus',angler:'groper'};
+function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
+  if(!ph){var sh=SIL_SHAPE[key]||'groper';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px">'+silSVG(sh,'#15485a')+'</div>';}
+  return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
 /* ════════ SITE DATA ════════ */
 var PHOTO_SCENES=[
   {img:'images/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
-  {img:'images/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')}
+  {img:'images/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')},
+  {img:'images/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('SS Centennial')},
+  {img:'images/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('TSS Currajong')},
+  {img:'images/bareisland.jpg',name:'Bare Island',svg:siteSVG('Bare Island','#236f7e','#0c3a44','kelp')}
 ];
-var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay'];
+var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
 function siteSVG(label,top,bottom,feature){
   var feat='';
   if(feature==='pier'){feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round"><line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/><line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/><line x1="540" y1="60" x2="540" y2="300"/></g><rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';}
@@ -1225,21 +1293,46 @@ function siteSVG(label,top,bottom,feature){
   var fish='<g fill="#f3c64f" opacity="0.9"><ellipse cx="360" cy="150" rx="22" ry="10"/><path d="M338 150 l-16 -10 l0 20 Z"/></g><g fill="#ef7a52" opacity="0.85"><ellipse cx="430" cy="210" rx="16" ry="8"/><path d="M446 210 l14 -8 l0 16 Z"/></g>';
   return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px"><defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/></linearGradient></defs><rect width="660" height="320" fill="url(#g_'+feature+')"/><g fill="#ffffff" opacity="0.12"><circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/><circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g><rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+feat+fish+'</svg>';
 }
+function wreckSVG(label){
+  return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px">'+
+    '<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#13414f"/><stop offset="1" stop-color="#06222c"/></linearGradient></defs>'+
+    '<rect width="660" height="320" fill="url(#wg)"/>'+
+    '<g fill="#ffffff" opacity="0.08"><circle cx="120" cy="50" r="5"/><circle cx="520" cy="40" r="4"/><circle cx="300" cy="70" r="3"/></g>'+
+    '<rect y="296" width="660" height="24" fill="#04161d" opacity="0.7"/>'+
+    /* hull */
+    '<g fill="#0a2e3a">'+
+    '<path d="M120 250 q40 -40 230 -34 q150 4 200 30 q20 12 -10 22 q-60 18 -210 16 q-160 -2 -210 -18 q-24 -8 10 -16 Z" fill="#0a2e3a"/>'+
+    '</g>'+
+    /* funnel + mast leaning */
+    '<g stroke="#0a2e3a" stroke-width="14" stroke-linecap="round"><line x1="300" y1="232" x2="280" y2="150"/></g>'+
+    '<rect x="360" y="190" width="40" height="50" rx="4" fill="#0a2e3a" transform="rotate(8 380 215)"/>'+
+    /* portholes */
+    '<g fill="#1c5566"><circle cx="250" cy="232" r="7"/><circle cx="300" cy="236" r="7"/><circle cx="350" cy="236" r="7"/><circle cx="400" cy="232" r="7"/></g>'+
+    /* fish + kelp on wreck */
+    '<g fill="#0e5b4f" opacity="0.8"><path d="M180 296 q-14 -70 6 -120 q10 50 -6 120 Z"/><path d="M470 296 q16 -80 -6 -130 q-12 55 6 130 Z"/></g>'+
+    '<g fill="#f3c64f" opacity="0.85"><ellipse cx="430" cy="120" rx="16" ry="7"/><path d="M446 120 l12 -7 l0 14 Z"/></g>'+
+    '<text x="330" y="40" text-anchor="middle" fill="#7fd6e0" font-size="20" font-family="monospace" opacity="0.7">'+esc(label)+'</text>'+
+    '</svg>';
+}
 
 /* ════════ CREATURE DATA ════════ */
 var CR={
-  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,f:'A NSW icon — the male carries the eggs along his tail.'},
-  pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,f:'A harmless bottom-dweller that lays spiral, screw-shaped egg cases.'},
-  groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,f:'The NSW state fish. The big blue males all start life as females.'},
-  cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,f:'The world\'s largest cuttlefish and a master colour-changer.'},
-  bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,f:'A shy, cave-loving fish found only along the NSW coast.'}
+  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,migrate:0,f:'A NSW icon — the male carries the eggs along his tail.'},
+  pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,migrate:600,f:'Swims as far as Tasmania (600 km) and returns to the very same reef a year later.'},
+  groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,migrate:0,f:'The NSW state fish. The big blue males all start life as females.'},
+  cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,migrate:0,f:'The world\'s largest cuttlefish and a master colour-changer; dies after one breeding cycle.'},
+  bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,migrate:0,f:'A shy, cave-loving fish found only along the NSW coast.'},
+  duskywhaler:{n:'Dusky whaler shark',len:360,depth:400,speed:8,life:40,eggs:8,camo:3,migrate:300,f:'Visits Cabbage Tree Bay every summer when the water tops 22°C. Matures only at age 20.'},
+  greynurse:{n:'Grey nurse shark',len:320,depth:200,speed:6,life:25,eggs:2,camo:2,migrate:200,f:'Fearsome-looking but placid — no confirmed human fatalities. Embryos eat their siblings in the womb.'},
+  hammeroct:{n:'Hammer octopus',len:20,depth:30,speed:5,life:1,eggs:200,camo:8,migrate:0,f:'Found only on Australia\'s east coast. The male uses a special modified arm to mate.'},
+  angler:{n:'Anglerfish',len:15,depth:40,speed:0.5,life:5,eggs:50000,camo:10,migrate:0,f:'Gathers near the Chowder Bay jetty to mate; the small male flees fast or risks being eaten.'}
 };
 var KEYS=Object.keys(CR);
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed'];
+var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind'];
 var currentGame=0;
 
 function updateStrip(active){
@@ -1266,7 +1359,7 @@ function startGame(name){
   /* Show/hide strip depending on game */
   var strip=$('gamesstrip');
   if(name==='hof'){strip.style.display='none';}
-  else{strip.style.display='grid';}
+  else{strip.style.display='flex';}
   updateStrip(name);showPanel('p-'+name);
   Cloud.updateSession({game:name,points:POINTS});
   if(name==='quiz')initQuiz();
@@ -1281,6 +1374,10 @@ function startGame(name){
   else if(name==='trumps')initTrumps();
   else if(name==='oddone')initOddOne();
   else if(name==='speed')initSpeed();
+  else if(name==='season')initSeason();
+  else if(name==='wreckid')initWreckId();
+  else if(name==='wave')initWave();
+  else if(name==='wreckfind')initWreckFind();
 }
 
 /* ════════ QUIZ ════════ */
@@ -1350,7 +1447,7 @@ $('gnext').onclick=guessRound;
 
 /* ════════ TRUMPS ════════ */
 var TRUMPS_ROUNDS=5,tWin=0,tLose=0,tRound=0,tQueue=[];
-var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10']];
+var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10'],['migrate','Migration','km']];
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
 function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
@@ -1643,7 +1740,16 @@ var TF_QUESTIONS=[
   {s:'Port Jackson sharks lay spiral, screw-shaped eggs.',a:true,f:'True — the corkscrew case wedges into rock crevices.'},
   {s:'The eastern blue groper starts life as a male.',a:false,f:'False — they all start as females, then some turn male.'},
   {s:'Sea stars have brains.',a:false,f:'False — they have a nerve net, no central brain.'},
-  {s:'Wobbegongs are a kind of carpet shark.',a:true,f:'True — their flat, patterned bodies blend into the reef.'}
+  {s:'Wobbegongs are a kind of carpet shark.',a:true,f:'True — their flat, patterned bodies blend into the reef.'},
+  {s:'Sydney\'s Port Jackson sharks swim all the way to Tasmania and back.',a:true,f:'True — tagged sharks travelled ~600 km south and returned to the very same reef a year later.'},
+  {s:'Grey nurse sharks have killed swimmers in Sydney.',a:false,f:'False — despite their look, there are no confirmed human fatalities.'},
+  {s:'The male anglerfish at Chowder Bay must flee fast after mating or risk being eaten.',a:true,f:'True — the much smaller male departs quickly to avoid the female.'},
+  {s:'Giant cuttlefish live for about 20 years.',a:false,f:'False — they live only 1–2 years and die after one breeding cycle.'},
+  {s:'Dusky whaler sharks visit Cabbage Tree Bay in winter.',a:false,f:'False — they come every summer, when the water tops 22°C.'},
+  {s:'The hammer octopus is found only along Australia\'s east coast.',a:true,f:'True — and the male has a special hammer-shaped arm for mating.'},
+  {s:'Grey nurse shark embryos eat their own siblings before birth.',a:true,f:'True — it\'s called intrauterine cannibalism; the strongest embryo survives.'},
+  {s:'Little penguins breed on Sydney\'s Northern Beaches.',a:true,f:'True — a colony lives around North Head, and they\'re sometimes seen at Cabbage Tree Bay.'},
+  {s:'Eastern gobbleguts males brood over 1,000 eggs in their mouth.',a:true,f:'True — the female hands the eggs over and the male broods them for about two weeks.'}
 ];
 var tfQueue=[],tfScore=0,tfTotal=0,tfAnswered=false,tfCur=null;
 function initTrueFalse(){
@@ -1822,9 +1928,223 @@ function endSpeed(){
   $('speedYes').disabled=true;$('speedNo').disabled=true;
   $('speedStatement').textContent='⏱️ Time! '+speedState.score+' correct.';
   $('speedReveal').textContent='';
-  $('speedNotice').textContent='That\'s a wrap — to the Hall of Fame!';
+  $('speedNotice').textContent='Nice work — next up: When Will I See It?';
   setTimeout(advanceGame,2400);
 }
+
+/* ════════════════════════════════════════════════════════
+   13. WHEN WILL I SEE IT? — SEASON MATCH
+   ════════════════════════════════════════════════════════ */
+var SEASON_OPTS=['Summer (Dec–Feb)','Autumn (Mar–May)','Winter (Jun–Aug)','Spring (Sep–Nov)'];
+var SEASON_ROUNDS=[
+  {key:'pjshark',ans:'Winter (Jun–Aug)',f:'Port Jackson sharks aggregate in Sydney\'s shallows to breed from July to October, then vanish south for the rest of the year.'},
+  {key:'duskywhaler',ans:'Summer (Dec–Feb)',f:'Dusky whalers visit Cabbage Tree Bay every summer, when the water climbs above 22°C.'},
+  {key:'cuttle',ans:'Autumn (Mar–May)',f:'Giant cuttlefish leave deep water at the end of autumn to breed on the coastal reefs — then they die after laying.'},
+  {key:'angler',ans:'Spring (Sep–Nov)',f:'Anglerfish gather in the shallows by the Chowder Bay jetty to mate in spring — up to 5–6 on a single dive.'},
+  {key:'greynurse',ans:'Winter (Jun–Aug)',f:'Grey nurse sharks have shown more residency at Cabbage Tree Bay in the cooler months.'},
+  {key:'pjshark',ans:'Spring (Sep–Nov)',f:'Females linger into spring to lay their eggs after the males have already left — a clever way to reduce egg predation.'}
+];
+var seasonQueue=[],seasonScore=0,seasonTotal=0,seasonAnswered=false,seasonCur=null;
+function initSeason(){
+  seasonQueue=shuffle(SEASON_ROUNDS.slice()).slice(0,5);seasonScore=0;seasonTotal=0;seasonAnswered=false;
+  $('seasonScore').textContent=0;$('seasonTotal').textContent=0;$('seasonNotice').textContent='';
+  seasonRound();
+}
+function seasonRound(){
+  seasonAnswered=false;seasonCur=seasonQueue.shift();
+  $('seasonArt').innerHTML=ART_html(seasonCur.key,Math.round(artHeight(180)*0.7));
+  $('seasonName').textContent=CR[seasonCur.key].n;
+  $('seasonFact').textContent='';$('seasonNext').style.display='none';
+  $('seasonOpts').innerHTML=SEASON_OPTS.map(function(o){return '<button class="opt" data-o="'+o+'">'+o+'</button>';}).join('');
+  $('seasonOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(seasonAnswered)return;seasonAnswered=true;seasonTotal++;
+    $('seasonOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.o===seasonCur.ans)x.classList.add('right');});
+    if(btn.dataset.o===seasonCur.ans){seasonScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
+    $('seasonScore').textContent=seasonScore;$('seasonTotal').textContent=seasonTotal;$('seasonFact').textContent=seasonCur.f;
+    if(seasonQueue.length>0)$('seasonNext').style.display='inline-block';
+    else{$('seasonNotice').textContent='Seasons mastered! Next: Wreck Detective…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('seasonNext').onclick=seasonRound;
+
+/* ════════════════════════════════════════════════════════
+   14. WRECK DETECTIVE
+   ════════════════════════════════════════════════════════ */
+var WRECK_DB=[
+  {name:'TSS Currajong',clue:'A steamer that sank in 1910 after a collision in Sydney Harbour. It now rests upright in deep water off Bradleys Head — a popular technical dive.'},
+  {name:'SS Centennial',clue:'A collier sunk in a collision off the Sydney Heads in 1889. A protected historic shipwreck that divers explore as a shore-accessible site.'},
+  {name:'SS Dunbar',clue:'A clipper wrecked against the cliffs at The Gap in 1857 in one of Sydney\'s worst maritime disasters — only one of 122 aboard survived.'},
+  {name:'HMAS Adelaide',clue:'A decommissioned navy frigate deliberately scuttled off Avoca Beach in 2011 to create an artificial reef and dive attraction.'},
+  {name:'Japanese midget submarine',clue:'One of three that attacked Sydney Harbour in May 1942; the wartime raid is remembered at several harbour sites.'}
+];
+var wreckidQueue=[],wreckidScore=0,wreckidTotal=0,wreckidAnswered=false,wreckidCur=null;
+function initWreckId(){
+  wreckidQueue=shuffle(WRECK_DB.slice()).slice(0,4);wreckidScore=0;wreckidTotal=0;wreckidAnswered=false;
+  $('wreckidScore').textContent=0;$('wreckidTotal').textContent=0;$('wreckidNotice').textContent='';
+  wreckidRound();
+}
+function wreckidRound(){
+  wreckidAnswered=false;wreckidCur=wreckidQueue.shift();
+  $('wreckidArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.7)+'px">'+wreckSVG(wreckidCur.name)+'</div>';
+  $('wreckidClue').textContent=wreckidCur.clue;
+  $('wreckidFact').textContent='';$('wreckidNext').style.display='none';
+  var wrong=shuffle(WRECK_DB.filter(function(w){return w.name!==wreckidCur.name;})).slice(0,3).map(function(w){return w.name;});
+  var opts=shuffle([wreckidCur.name].concat(wrong));
+  $('wreckidOpts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+esc(n)+'">'+esc(n)+'</button>';}).join('');
+  $('wreckidOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(wreckidAnswered)return;wreckidAnswered=true;wreckidTotal++;
+    $('wreckidOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.n===wreckidCur.name)x.classList.add('right');});
+    if(btn.dataset.n===wreckidCur.name){wreckidScore++;award(timedReward());$('wreckidFact').textContent='✅ Correct!';}
+    else{btn.classList.add('wrong');penalize();$('wreckidFact').textContent='The answer was '+wreckidCur.name+'.';}
+    $('wreckidScore').textContent=wreckidScore;$('wreckidTotal').textContent=wreckidTotal;
+    if(wreckidQueue.length>0)$('wreckidNext').style.display='inline-block';
+    else{$('wreckidNotice').textContent='Case closed! Next: Wave Lab…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('wreckidNext').onclick=wreckidRound;
+
+/* ════════════════════════════════════════════════════════
+   15. WAVE LAB — predict the viz
+   ════════════════════════════════════════════════════════ */
+var WAVE_OPTS=['Great viz 🟢','Diveable 🟡','Blown out 🔴'];
+var WAVE_ROUNDS=[
+  {site:'Cabbage Tree Bay',swell:'1.0 m',period:'7 s',dir:'NE',wind:'Light SW',ans:'Great viz 🟢',
+   f:'Small swell from the north-east barely enters this south-facing bay — and an offshore wind keeps it glassy. Classic good-viz day.'},
+  {site:'Bare Island',swell:'3.5 m',period:'13 s',dir:'S',wind:'Strong S',ans:'Blown out 🔴',
+   f:'A big, long-period south swell wraps straight onto Bare Island, and an onshore southerly churns up the sediment. Stay home.'},
+  {site:'Chowder Bay',swell:'2.5 m',period:'11 s',dir:'SE',wind:'Moderate NE',ans:'Great viz 🟢',
+   f:'Tucked deep inside the harbour, Chowder Bay is sheltered from ocean swell — it often stays clear when the coast is firing.'},
+  {site:'Gordons Bay',swell:'1.5 m',period:'9 s',dir:'E',wind:'Moderate NE',ans:'Diveable 🟡',
+   f:'A moderate easterly swell brings some surge to this exposed bay — diveable, but expect a bit of stir near the entry.'},
+  {site:'Kurnell',swell:'2.0 m',period:'10 s',dir:'NE',wind:'Light W',ans:'Great viz 🟢',
+   f:'Kurnell faces into Botany Bay and is protected from NE swell; with a light offshore wind the viz is usually excellent.'},
+  {site:'Shark Point',swell:'3.0 m',period:'12 s',dir:'SE',wind:'Fresh SE',ans:'Blown out 🔴',
+   f:'An exposed point taking a solid SE swell on an onshore wind — too much energy and stir for a safe, clear dive.'}
+];
+var waveQueue=[],waveScore=0,waveTotal=0,waveAnswered=false,waveCur=null;
+function initWave(){
+  waveQueue=shuffle(WAVE_ROUNDS.slice()).slice(0,5);waveScore=0;waveTotal=0;waveAnswered=false;
+  $('waveScore').textContent=0;$('waveTotal').textContent=0;$('waveNotice').textContent='';
+  waveRound();
+}
+function waveRound(){
+  waveAnswered=false;waveCur=waveQueue.shift();
+  $('waveArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.55)+'px">'+waveSVG(waveCur)+'</div>';
+  $('waveCond').innerHTML='<b>'+esc(waveCur.site)+'</b><br>🌊 Swell: '+esc(waveCur.swell)+' @ '+esc(waveCur.period)+', from '+esc(waveCur.dir)+'<br>💨 Wind: '+esc(waveCur.wind);
+  $('waveFact').textContent='';$('waveNext').style.display='none';
+  $('waveOpts').innerHTML=WAVE_OPTS.map(function(o){return '<button class="opt" data-o="'+esc(o)+'">'+o+'</button>';}).join('');
+  $('waveOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(waveAnswered)return;waveAnswered=true;waveTotal++;
+    $('waveOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.o===waveCur.ans)x.classList.add('right');});
+    if(btn.dataset.o===waveCur.ans){waveScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
+    $('waveScore').textContent=waveScore;$('waveTotal').textContent=waveTotal;$('waveFact').textContent=waveCur.f;
+    if(waveQueue.length>0)$('waveNext').style.display='inline-block';
+    else{$('waveNotice').textContent='Forecast nailed! Last game: Wreck Finder…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('waveNext').onclick=waveRound;
+function waveSVG(r){
+  var amp=Math.min(26,parseFloat(r.swell)*8+4);
+  return '<svg viewBox="0 0 660 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
+    '<defs><linearGradient id="wv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f6f86"/><stop offset="1" stop-color="#0c4257"/></linearGradient></defs>'+
+    '<rect width="660" height="180" fill="url(#wv)"/>'+
+    '<path d="M0 90 '+[0,1,2,3,4,5,6].map(function(i){var x=i*110;return 'Q '+(x+27)+' '+(90-amp)+' '+(x+55)+' 90 Q '+(x+82)+' '+(90+amp)+' '+(x+110)+' 90';}).join(' ')+'" fill="none" stroke="#bfe9f2" stroke-width="3" opacity="0.8"/>'+
+    '<g fill="#dff1f6" opacity="0.5" font-family="monospace" font-size="13"><text x="12" y="24">'+esc(r.dir)+' swell</text></g>'+
+    '</svg>';
+}
+
+/* ════════════════════════════════════════════════════════
+   16. WRECK FINDER — drag wrecks onto the Sydney map
+   ════════════════════════════════════════════════════════ */
+/* Positions are % coordinates on a stylised Sydney coast map (x:left, y:top) */
+var WRECK_SPOTS=[
+  {name:'TSS Currajong',x:46,y:40,hint:'Off Bradleys Head, inner harbour'},
+  {name:'SS Dunbar',x:62,y:34,hint:'The Gap, South Head'},
+  {name:'SS Centennial',x:66,y:28,hint:'Off the Sydney Heads'},
+  {name:'HMAS Adelaide',x:40,y:8,hint:'Avoca Beach, Central Coast'}
+];
+var wreckfindState=null;
+function initWreckFind(){
+  var spots=shuffle(WRECK_SPOTS.slice()).slice(0,4);
+  wreckfindState={spots:spots,placed:0,total:spots.length};
+  $('wreckfindPlaced').textContent=0;$('wreckfindTotal').textContent=spots.length;
+  $('wreckfindMsg').textContent='';$('wreckfindNotice').textContent='';
+  $('wreckfindMap').innerHTML=wreckMapSVG()+spots.map(function(s){
+    return '<div class="wf-target" data-name="'+esc(s.name)+'" style="position:absolute;left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%);width:34px;height:34px;border:2px dashed rgba(127,214,224,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(127,214,224,.7);font-size:12px">?</div>';
+  }).join('');
+  $('wreckfindTray').innerHTML=shuffle(spots.slice()).map(function(s){
+    return '<div class="wf-token" draggable="true" data-name="'+esc(s.name)+'" style="cursor:grab;background:var(--surface);border:1px solid var(--accent);color:var(--text);border-radius:8px;padding:7px 10px;font-size:12px;touch-action:none">🔱 '+esc(s.name)+'</div>';
+  }).join('');
+  wireWreckFind();
+  startTimer();
+}
+function wreckMapSVG(){
+  return '<svg viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
+    '<rect width="660" height="420" fill="#0b3340"/>'+
+    /* ocean right side */
+    '<rect x="380" width="280" height="420" fill="#0e4256"/>'+
+    /* simplified land mass (Sydney) */
+    '<path d="M0 0 H420 Q400 40 430 70 Q470 100 430 130 L470 150 Q430 175 470 200 L420 230 Q470 260 430 300 Q470 340 420 360 L440 420 H0 Z" fill="#10463a"/>'+
+    /* harbour inlet */
+    '<path d="M300 150 Q360 160 440 150 L440 200 Q360 210 300 200 Z" fill="#0e4256"/>'+
+    '<g fill="#7fd6e0" opacity="0.5" font-family="monospace" font-size="14"><text x="20" y="30">SYDNEY</text><text x="500" y="40">TASMAN SEA</text></g>'+
+    '</svg>';
+}
+function wireWreckFind(){
+  var tokens=$('wreckfindTray').querySelectorAll('.wf-token');
+  var targets=$('wreckfindMap').querySelectorAll('.wf-target');
+  var dragName=null,ghost=null;
+  function place(name,target){
+    if(target.dataset.name===name){
+      target.style.borderStyle='solid';target.style.borderColor='var(--good)';
+      target.style.color='var(--good)';target.textContent='🔱';
+      target.dataset.filled='1';
+      var tok=$('wreckfindTray').querySelector('.wf-token[data-name="'+cssEsc(name)+'"]');
+      if(tok)tok.remove();
+      wreckfindState.placed++;$('wreckfindPlaced').textContent=wreckfindState.placed;
+      award(Math.max(MIN_REWARD,8));
+      if(wreckfindState.placed>=wreckfindState.total){
+        $('wreckfindMsg').textContent='🏆 All wrecks charted!';
+        $('wreckfindNotice').textContent='That completes the challenge — to the Hall of Fame!';
+        setTimeout(advanceGame,2400);
+      }
+      return true;
+    }else{
+      penalize();$('wreckfindMsg').textContent='Not quite — try another spot.';
+      return false;
+    }
+  }
+  /* Desktop drag-and-drop */
+  tokens.forEach(function(tok){
+    tok.addEventListener('dragstart',function(e){dragName=tok.dataset.name;try{e.dataTransfer.setData('text/plain',dragName);}catch(_){}});
+  });
+  targets.forEach(function(t){
+    t.addEventListener('dragover',function(e){if(!t.dataset.filled)e.preventDefault();});
+    t.addEventListener('drop',function(e){e.preventDefault();if(t.dataset.filled||!dragName)return;place(dragName,t);dragName=null;});
+  });
+  /* Touch drag (phones/tablets) */
+  tokens.forEach(function(tok){
+    tok.addEventListener('touchstart',function(e){
+      dragName=tok.dataset.name;
+      ghost=tok.cloneNode(true);ghost.style.position='fixed';ghost.style.zIndex='9999';ghost.style.opacity='0.85';ghost.style.pointerEvents='none';
+      document.body.appendChild(ghost);moveGhost(e.touches[0]);
+    },{passive:true});
+    tok.addEventListener('touchmove',function(e){if(ghost){moveGhost(e.touches[0]);}},{passive:true});
+    tok.addEventListener('touchend',function(e){
+      if(ghost){ghost.remove();ghost=null;}
+      if(!dragName)return;
+      var t=e.changedTouches[0];var el=document.elementFromPoint(t.clientX,t.clientY);
+      var target=el&&el.closest?el.closest('.wf-target'):null;
+      if(target&&!target.dataset.filled)place(dragName,target);
+      dragName=null;
+    });
+  });
+  function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
+}
+function cssEsc(s){return String(s).replace(/["\\]/g,'\\$&');}
 
 /* ════════ HALL OF FAME (real, shared board) ════════ */
 function encourageMsg(rank,total){
