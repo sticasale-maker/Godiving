@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-<title>Go Diving Show Arcade</title>
+<title>Sydney Dive Challenge</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
@@ -28,13 +28,17 @@
   /* ── MAIN LAYOUT: fills viewport, scrolls internally ── */
   .wrap{
     flex:1;display:flex;flex-direction:column;
-    max-width:860px;width:100%;margin:0 auto;
+    max-width:1100px;width:100%;margin:0 auto;
     padding:12px 14px calc(10px + env(safe-area-inset-bottom));
     overflow-x:hidden;
   }
+  /* On large tablet/desktop, use more of the screen */
+  @media(min-width:900px){
+    .wrap{max-width:1400px;padding:18px 36px calc(14px + env(safe-area-inset-bottom));}
+  }
 
   /* ── GAME PROGRESS STRIP ── */
-  /* 12 games: horizontal scroll strip; active step auto-scrolls into view */
+  /* horizontal scroll strip; active step auto-scrolls into view */
   .gamesstrip{display:flex;gap:5px;margin-bottom:10px;flex-shrink:0;
     overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;
     -webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px}
@@ -176,8 +180,8 @@
     position:fixed;inset:0;z-index:1000;background:#000;
     display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
   }
-  #splashVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;max-width:860px;left:50%;transform:translateX(-50%)}
-  #splashCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;max-width:860px;left:50%;transform:translateX(-50%)}
+  #splashVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;}
+  #splashCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;}
   #splashContinue{
     position:absolute;inset:0;z-index:5;display:none;
     flex-direction:column;align-items:center;justify-content:flex-end;
@@ -250,7 +254,35 @@
   }
   .arcade-sub{
     font-family:'Press Start 2P',monospace;font-size:clamp(9px,1.6vw,12px);color:var(--muted);
-    margin:0 0 18px;line-height:1.8;letter-spacing:.5px;text-align:center;
+    margin:0 0 8px;line-height:1.8;letter-spacing:.5px;text-align:center;
+  }
+  .arcade-event{
+    font-family:'Press Start 2P',monospace;font-size:clamp(7px,1.3vw,9px);color:var(--accent);
+    margin:0 0 18px;letter-spacing:.5px;text-align:center;opacity:.9;
+  }
+  /* ── MENU HUB ── */
+  .menu-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    margin-bottom:14px;flex-wrap:wrap}
+  .menu-title{font-size:clamp(18px,3vw,26px);font-weight:700;color:var(--text)}
+  .menu-title b{color:var(--accent)}
+  .menu-sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-content:start}
+  @media(min-width:600px){.menu-grid{grid-template-columns:repeat(3,1fr);gap:12px}}
+  @media(min-width:900px){.menu-grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+  @media(min-width:1300px){.menu-grid{grid-template-columns:repeat(4,1fr);gap:20px}}
+  .menu-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;text-align:center;cursor:pointer;border:1px solid var(--line);background:var(--bg2);
+    border-radius:14px;padding:18px 12px;color:var(--text);transition:.15s;min-height:128px}
+  .menu-card:hover{border-color:var(--accent);background:var(--accentd);transform:translateY(-2px)}
+  .menu-card:active{transform:translateY(0)}
+  .mc-icon{font-size:34px;line-height:1}
+  .mc-name{font-size:clamp(13px,1.6vw,16px);font-weight:700;line-height:1.2}
+  .mc-desc{font-size:clamp(10px,1.2vw,12px);color:var(--muted);line-height:1.3}
+  .mc-done{position:absolute;top:8px;right:8px;font-size:10px;color:var(--good);
+    background:var(--goodd);border-radius:6px;padding:2px 6px}
+  @media(min-width:900px){
+    .menu-card{min-height:160px;padding:24px 16px}
+    .mc-icon{font-size:44px}
   }
   .arcade-label{
     display:block;font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,13px);color:var(--gold);
@@ -447,7 +479,7 @@
   <canvas id="splashCanvas"></canvas>
   <div id="splashFallback">
     <div style="font-size:50px;margin-bottom:8px">🌊🤿</div>
-    <h1 style="color:#eaf6fb;font-size:22px">Go Diving Show Arcade</h1>
+    <h1 style="color:#eaf6fb;font-size:22px">Sydney Dive Challenge</h1>
     <p style="color:var(--muted);margin:4px 0 0">Loading the reef…</p>
   </div>
   <div id="splashTap"><div class="play">▶</div><p>Tap to play intro</p></div>
@@ -468,8 +500,9 @@
       </div>
       <div class="arcade-insert">— INSERT DIVER —</div>
       <div class="wcard">
-        <div class="arcade-title">GO DIVING<br>ARCADE</div>
-        <div class="arcade-sub">12 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <div class="arcade-title">SYDNEY DIVE<br>CHALLENGE</div>
+        <div class="arcade-sub">16 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <div class="arcade-event">Go Diving Show · 5–6 Sept 2026</div>
         <label class="arcade-label" for="wname">▶ YOUR NAME</label>
         <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
         <label class="arcade-label" for="wage">▶ YOUR AGE</label>
@@ -509,11 +542,23 @@
       <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
     </div>
 
+    <!-- ═══ MENU HUB: pick any game ═══ -->
+    <div class="panel" id="p-menu">
+      <div class="menu-head">
+        <div>
+          <div class="menu-title">Pick a game, <b id="menuName">diver</b> 🤿</div>
+          <div class="menu-sub" id="menuProgress">0 of 16 games played</div>
+        </div>
+        <button class="btn acc" id="menuFinish">🏆 Scores &amp; prizes</button>
+      </div>
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+
     <!-- QUIZ -->
     <div class="panel" id="p-quiz">
       <div class="game-header">
         <span class="game-label">Name the creature</span>
-        <span class="game-tagline">Dive in — 12 games to conquer!</span>
+        <span class="game-tagline">Sydney Dive Challenge</span>
         <span class="score" style="flex:none">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span>
       </div>
       <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
@@ -772,7 +817,8 @@
       </div>
       <p class="encourage" id="hofEncourage"></p>
       <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
-      <button class="btn play-again" id="hofPlayAgain">🔄 Play again</button>
+      <button class="btn play-again" id="hofBackMenu" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">← Back to games</button>
+      <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
     </div>
 
   </div><!-- /app -->
@@ -799,7 +845,7 @@
     setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},520);
     if(window._skipWelcome){
       window._skipWelcome=false;
-      showApp(); startGame('quiz');
+      showApp(); showMenu();
     } else {
       document.getElementById('welcome').style.display='flex';
     }
@@ -872,9 +918,9 @@
   function replaySplash(){
     var s=document.createElement('div');
     s.style.cssText='position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer';
-    s.innerHTML='<video muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;max-width:860px;left:50%;transform:translateX(-50%)"></video>'+
-      '<canvas style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;max-width:860px;left:50%;transform:translateX(-50%)"></canvas>'+
-      '<div id="spFb" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:48px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb;font-size:22px">Go Diving Show Arcade</h1></div>'+
+    s.innerHTML='<video muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;"></video>'+
+      '<canvas style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;"></canvas>'+
+      '<div id="spFb" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:48px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb;font-size:22px">Sydney Dive Challenge</h1></div>'+
       '<div id="spTap" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;z-index:3;background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%)"><div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px">▶</div><p style="margin:0;font-weight:600;color:#eaf6fb">Tap to play intro</p></div>'+
       '<div id="spLd" style="position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px"><div style="width:34px;height:34px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div><p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Loading…</p></div>'+
       '<div id="spCo" style="position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(80px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65) 100%);pointer-events:none"><div style="font-family:\'Press Start 2P\',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;text-shadow:0 0 14px rgba(54,201,192,.9);animation:tapBlink 1.1s step-end infinite">▶ TAP TO CONTINUE ◀</div></div>'+
@@ -889,7 +935,7 @@
       nl.style.display='none'; nt.style.display='none'; nco.style.display='none';
       try{nv.pause();}catch(e){}
       s.classList.add('splash-hide');
-      showApp(); startGame('quiz');
+      showApp(); showMenu();
       setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);
     }
     function nFrz(){
@@ -1252,10 +1298,11 @@ document.getElementById('wstart').onclick=function(){
   USER.name=nm;USER.age=av;USER.group=ageGroup(av);
   window._hofSubmitted=false;
   document.getElementById('whoName').textContent=USER.name;
+  var _mn=document.getElementById('menuName');if(_mn)_mn.textContent=USER.name;
   document.getElementById('whoGroup').textContent=USER.group;
   document.getElementById('welcome').style.display='none';
   Cloud.startSession({name:USER.name,group:USER.group,age:USER.age,game:'quiz',points:0,started:Date.now()});
-  showApp(); startGame('quiz');
+  showApp(); showMenu();
 };
 ['wname','wage'].forEach(function(id){
   document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('wstart').click();});
@@ -1334,31 +1381,33 @@ var $=function(id){return document.getElementById(id);};
 /* ════════ GAME FLOW ════════ */
 var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind'];
 var currentGame=0;
+var playedGames={};      /* games the diver has completed at least once */
+var activeGame=null;
 
 function updateStrip(active){
-  GAME_ORDER.forEach(function(g,i){
+  GAME_ORDER.forEach(function(g){
     var el=$('gs-'+g);if(!el)return;el.classList.remove('active','done');
-    if(i<GAME_ORDER.indexOf(active))el.classList.add('done');
-    else if(g===active){el.classList.add('active');
-      /* keep the active step visible in the scrollable strip */
+    if(playedGames[g])el.classList.add('done');
+    if(g===active){el.classList.add('active');
       try{el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}
     }
   });
 }
 function showPanel(id){
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
-  $(id).classList.add('show');
+  if($(id))$(id).classList.add('show');
   window.scrollTo(0,0);
 }
+/* Called at the end of every mini-game. Now returns the diver to the menu hub
+   (and remembers the game as played) instead of forcing the next game. */
 function advanceGame(){
-  currentGame++;
-  if(currentGame>=GAME_ORDER.length){showHallOfFame();return;}
-  startGame(GAME_ORDER[currentGame]);
+  if(activeGame)playedGames[activeGame]=true;
+  showMenu();
 }
 function startGame(name){
-  /* Show/hide strip depending on game */
+  activeGame=(name==='hof'||name==='menu')?null:name;
   var strip=$('gamesstrip');
-  if(name==='hof'){strip.style.display='none';}
+  if(name==='hof'||name==='menu'){strip.style.display='none';}
   else{strip.style.display='flex';}
   updateStrip(name);showPanel('p-'+name);
   Cloud.updateSession({game:name,points:POINTS});
@@ -1380,7 +1429,58 @@ function startGame(name){
   else if(name==='wreckfind')initWreckFind();
 }
 
-/* ════════ QUIZ ════════ */
+/* ════════ MENU HUB (pick any game) ════════ */
+var GAME_META={
+  quiz:{icon:'🐠',name:'Guess Who',desc:'Name the creature from a photo'},
+  breath:{icon:'🫧',name:'Breath Hold',desc:'Hold on like a freediver'},
+  silhouette:{icon:'🧩',name:'Silhouette Match',desc:'Spot the shape'},
+  log:{icon:'✅',name:'Spotter Log',desc:'Tick off what\'s in the scene'},
+  bubble:{icon:'🎯',name:'Bubble Pop',desc:'Pop the right targets'},
+  depth:{icon:'📏',name:'Depth Gauge',desc:'Guess how deep'},
+  guess:{icon:'🔎',name:'Where Am I?',desc:'Name the Sydney dive site'},
+  truefalse:{icon:'📖',name:'Myth Busters',desc:'True or false?'},
+  colour:{icon:'🎨',name:'Colour the Creature',desc:'Pick the real colours'},
+  trumps:{icon:'🃏',name:'Stat Battle',desc:'Top-trumps with sea life'},
+  oddone:{icon:'🔍',name:'Odd One Out',desc:'Find the one that doesn\'t fit'},
+  speed:{icon:'⏱️',name:'Speed Round',desc:'60-second quick-fire'},
+  season:{icon:'📅',name:'When Will I See It?',desc:'Match species to season'},
+  wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
+  wave:{icon:'🌊',name:'Wave Lab',desc:'Predict the visibility'},
+  wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'}
+};
+function showMenu(){
+  activeGame=null;
+  $('gamesstrip').style.display='flex';
+  updateStrip(null);
+  buildMenu();
+  showPanel('p-menu');
+  Cloud.updateSession({game:'menu',points:POINTS});
+}
+function buildMenu(){
+  var played=Object.keys(playedGames).length,total=GAME_ORDER.length;
+  $('menuProgress').textContent=played+' of '+total+' games played';
+  var html=GAME_ORDER.map(function(g){
+    var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
+    var done=playedGames[g]?'<span class="mc-done">✓ played</span>':'';
+    return '<button class="menu-card" data-g="'+g+'">'+
+      '<span class="mc-icon">'+m.icon+'</span>'+
+      '<span class="mc-name">'+esc(m.name)+'</span>'+
+      '<span class="mc-desc">'+esc(m.desc)+'</span>'+done+
+      '</button>';
+  }).join('');
+  $('menuGrid').innerHTML=html;
+  $('menuGrid').querySelectorAll('.menu-card').forEach(function(b){
+    b.onclick=function(){startGame(b.dataset.g);};
+  });
+}
+/* Strip tiles jump straight to a game during play */
+GAME_ORDER.forEach(function(g){
+  var el=$('gs-'+g);if(el){el.style.cursor='pointer';el.onclick=function(){startGame(g);};}
+});
+/* Menu → Hall of Fame */
+(function(){var mf=$('menuFinish');if(mf)mf.onclick=function(){showHallOfFame();};})();
+
+
 var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
 function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';quizRound();}
 function quizRound(){
@@ -1395,7 +1495,7 @@ function quizRound(){
     if(btn.dataset.k===key){qScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=CR[key].f;
     if(qQueue.length>0)$('qnext').style.display='inline-block';
-    else{$('qnotice').textContent='All creatures done! Moving to Breath Hold…';setTimeout(advanceGame,2200);}
+    else{$('qnotice').textContent='All creatures done! 🐠 Back to the menu…';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -1420,7 +1520,7 @@ function initLog(){
 }
 function renderLog(){
   var n=Object.keys(logFound).length;$('logn').textContent=n;$('logbar').style.width=(n/3*100)+'%';
-  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Moving to Bubble Pop…';setTimeout(advanceGame,2200);}
+  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Back to the menu…';setTimeout(advanceGame,2200);}
 }
 
 /* ════════ GUESS ════════ */
@@ -1439,7 +1539,7 @@ function guessRound(){
     if(btn.dataset.n===correctName){gScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;
     if(gQueue.length>0)$('gnext').style.display='inline-block';
-    else{$('gnotice').textContent='All sites guessed! Moving to Myth Busters…';setTimeout(advanceGame,2200);}
+    else{$('gnotice').textContent='All sites guessed! 🗺️ Back to the menu…';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -1478,7 +1578,7 @@ function dealRound(){
     else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
     $('twin').textContent=tWin;$('tlose').textContent=tLose;
     if(tRound<TRUMPS_ROUNDS)$('tdeal').style.display='inline-block';
-    else{$('tnotice').textContent='Battle complete! Heading to Odd One Out…';setTimeout(advanceGame,2400);}
+    else{$('tnotice').textContent='Battle complete! 🃏 Back to the menu…';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -1613,7 +1713,7 @@ function silRound(){
     else{btn.classList.add('wrong');penalize();$('silBonus').textContent='';}
     $('silScore').textContent=silScore;$('silTotal').textContent=silTotal;$('silFact').textContent=r.f;
     if(silQueue.length>0)$('silNext').style.display='inline-block';
-    else{$('silNotice').textContent='Shadows solved! Moving to Spotter Log…';setTimeout(advanceGame,2200);}
+    else{$('silNotice').textContent='Shadows solved! 🧩 Back to the menu…';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -1675,7 +1775,7 @@ function endBubble(){
   if(bubbleState.raf)cancelAnimationFrame(bubbleState.raf);
   $('bubbleField').innerHTML='';
   $('bubbleMsg').textContent='Time! You caught '+bubbleState.hit+' real species ('+bubbleState.miss+' slip-ups).';
-  $('bubbleNotice').textContent='Moving to Depth Gauge…';
+  $('bubbleNotice').textContent='Back to the menu…';
   setTimeout(advanceGame,2200);
 }
 
@@ -1728,7 +1828,7 @@ $('depthLock').onclick=function(){
   else{penalize();$('depthMsg').textContent='Actual depth: ~'+ans+'m. You guessed '+guess+'m.';}
   depthRoundN++;
   if(depthRoundN<depthQueue.length)$('depthNext').style.display='inline-block';
-  else{$('depthNotice').textContent='Gauge mastered! Moving to Where am I?…';setTimeout(advanceGame,2300);}
+  else{$('depthNotice').textContent='Gauge mastered! 📏 Back to the menu…';setTimeout(advanceGame,2300);}
 };
 $('depthNext').onclick=depthRound;
 
@@ -1771,7 +1871,7 @@ function tfAnswer(val){
   else{penalize();$('tfReveal').innerHTML='❌ <b>Not quite.</b> '+esc(tfCur.f);}
   $('tfScore').textContent=tfScore;$('tfTotal').textContent=tfTotal;
   if(tfQueue.length>0)$('tfNext').style.display='inline-block';
-  else{$('tfNotice').textContent='Myths busted! Moving to Colour the Creature…';setTimeout(advanceGame,2300);}
+  else{$('tfNotice').textContent='Myths busted! 📖 Back to the menu…';setTimeout(advanceGame,2300);}
 }
 $('tfTrue').onclick=function(){tfAnswer(true);};
 $('tfFalse').onclick=function(){tfAnswer(false);};
@@ -1813,7 +1913,7 @@ function colRound(){
     else{btn.style.borderColor='var(--bad)';btn.style.background='var(--badd)';penalize();}
     $('colScore').textContent=colScore;$('colTotal').textContent=colTotal;$('colFact').textContent=r.f;
     if(colQueue.length>0)$('colNext').style.display='inline-block';
-    else{$('colNotice').textContent='Beautifully done! Moving to Stat Battle…';setTimeout(advanceGame,2300);}
+    else{$('colNotice').textContent='Beautifully done! 🎨 Back to the menu…';setTimeout(advanceGame,2300);}
   };});
   startTimer();
 }
@@ -1849,7 +1949,7 @@ function oddRound(){
     else{btn.classList.add('wrong');penalize();}
     $('oddScore').textContent=oddScore;$('oddTotal').textContent=oddTotal;$('oddFact').textContent=r.f;
     if(oddQueue.length>0)$('oddNext').style.display='inline-block';
-    else{$('oddNotice').textContent='Impostors caught! Final game — Speed Round…';setTimeout(advanceGame,2300);}
+    else{$('oddNotice').textContent='Impostors caught! 🔍 Back to the menu…';setTimeout(advanceGame,2300);}
   };});
   startTimer();
 }
@@ -1928,7 +2028,7 @@ function endSpeed(){
   $('speedYes').disabled=true;$('speedNo').disabled=true;
   $('speedStatement').textContent='⏱️ Time! '+speedState.score+' correct.';
   $('speedReveal').textContent='';
-  $('speedNotice').textContent='Nice work — next up: When Will I See It?';
+  $('speedNotice').textContent='Nice work — back to the menu…';
   setTimeout(advanceGame,2400);
 }
 
@@ -1962,7 +2062,7 @@ function seasonRound(){
     if(btn.dataset.o===seasonCur.ans){seasonScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('seasonScore').textContent=seasonScore;$('seasonTotal').textContent=seasonTotal;$('seasonFact').textContent=seasonCur.f;
     if(seasonQueue.length>0)$('seasonNext').style.display='inline-block';
-    else{$('seasonNotice').textContent='Seasons mastered! Next: Wreck Detective…';setTimeout(advanceGame,2400);}
+    else{$('seasonNotice').textContent='Seasons mastered! 📅 Back to the menu…';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -1999,7 +2099,7 @@ function wreckidRound(){
     else{btn.classList.add('wrong');penalize();$('wreckidFact').textContent='The answer was '+wreckidCur.name+'.';}
     $('wreckidScore').textContent=wreckidScore;$('wreckidTotal').textContent=wreckidTotal;
     if(wreckidQueue.length>0)$('wreckidNext').style.display='inline-block';
-    else{$('wreckidNotice').textContent='Case closed! Next: Wave Lab…';setTimeout(advanceGame,2400);}
+    else{$('wreckidNotice').textContent='Case closed! 🔱 Back to the menu…';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -2041,7 +2141,7 @@ function waveRound(){
     if(btn.dataset.o===waveCur.ans){waveScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('waveScore').textContent=waveScore;$('waveTotal').textContent=waveTotal;$('waveFact').textContent=waveCur.f;
     if(waveQueue.length>0)$('waveNext').style.display='inline-block';
-    else{$('waveNotice').textContent='Forecast nailed! Last game: Wreck Finder…';setTimeout(advanceGame,2400);}
+    else{$('waveNotice').textContent='Forecast nailed! 🌊 Back to the menu…';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -2108,7 +2208,7 @@ function wireWreckFind(){
       award(Math.max(MIN_REWARD,8));
       if(wreckfindState.placed>=wreckfindState.total){
         $('wreckfindMsg').textContent='🏆 All wrecks charted!';
-        $('wreckfindNotice').textContent='That completes the challenge — to the Hall of Fame!';
+        $('wreckfindNotice').textContent='All wrecks charted! 🗺️ Back to the menu…';
         setTimeout(advanceGame,2400);
       }
       return true;
@@ -2181,6 +2281,7 @@ function renderHof(board){
 }
 
 /* ════════ PLAY AGAIN ════════ */
+(function(){var bm=$('hofBackMenu');if(bm)bm.onclick=function(){showApp();showMenu();};})();
 $('hofPlayAgain').onclick=function(){
   POINTS=0;syncPoints();currentGame=0;window._hofSubmitted=false;qStartTime=0;
   Cloud.updateSession({game:'quiz',points:0});
