@@ -1,0 +1,2309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Sydney Dive Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
+    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
+    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
+    --artH:374px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;overflow-x:hidden}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%,#0b3a4d,#06222e 60%);
+    color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;
+    /* Full-screen: fill the entire viewport */
+    min-height:100vh;min-height:100dvh;
+    display:flex;flex-direction:column;
+  }
+
+  /* ── MAIN LAYOUT: fills viewport, scrolls internally ── */
+  .wrap{
+    flex:1;display:flex;flex-direction:column;
+    max-width:1100px;width:100%;margin:0 auto;
+    padding:12px 14px calc(10px + env(safe-area-inset-bottom));
+    overflow-x:hidden;
+  }
+  /* On large tablet/desktop, use more of the screen */
+  @media(min-width:900px){
+    .wrap{max-width:1400px;padding:18px 36px calc(14px + env(safe-area-inset-bottom));}
+  }
+
+  /* ── GAME PROGRESS STRIP ── */
+  /* horizontal scroll strip; active step auto-scrolls into view */
+  .gamesstrip{display:flex;gap:5px;margin-bottom:10px;flex-shrink:0;
+    overflow-x:auto;overflow-y:hidden;scroll-behavior:smooth;
+    -webkit-overflow-scrolling:touch;scrollbar-width:thin;padding-bottom:2px}
+  .gamesstrip::-webkit-scrollbar{height:4px}
+  .gamesstrip::-webkit-scrollbar-thumb{background:var(--line);border-radius:999px}
+  .gstep{display:flex;flex-direction:column;align-items:center;gap:2px;padding:4px 5px 4px;
+    border-radius:7px;border:1px solid var(--line);background:var(--bg2);
+    color:var(--muted);text-align:center;line-height:1.15;transition:.2s;user-select:none;
+    flex:0 0 auto;min-width:46px}
+  .gstep .icon{font-size:16px;line-height:1}
+  .gstep .label{font-size:9px;letter-spacing:.2px;white-space:nowrap}
+  .gstep.done{border-color:var(--good);background:var(--goodd);color:#cdf3df}
+  .gstep.active{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
+  .gstep.active .label{font-weight:700}
+
+  /* ── POINTS BAR ── */
+  .pointsbar{
+    display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
+    background:var(--surface);border:1px solid var(--line);border-radius:10px;
+    padding:7px 12px;margin-bottom:10px;flex-shrink:0;
+  }
+  .pointsbar .who{font-size:13.5px}
+  .pointsbar .who b{color:var(--text)}
+  .pointsbar .who .grp{display:inline-block;background:var(--accentd);color:var(--accent);
+    font-size:11px;padding:2px 8px;border-radius:6px;margin-left:5px}
+  .pts{font-size:14px;color:var(--muted)}
+  .pts b{color:var(--gold);font-size:17px}
+  .pts .fl{display:inline-block;margin-left:7px;font-size:12px;opacity:0;transition:opacity .2s;font-weight:600}
+  .pts .fl.up{color:var(--good)}
+  .pts .fl.down{color:var(--bad)}
+
+  /* ── GAME SUB-HEADER (replaces removed h1/sub) ── */
+  .game-header{
+    display:flex;justify-content:space-between;align-items:center;
+    gap:10px;margin-bottom:8px;flex-shrink:0;flex-wrap:wrap;
+  }
+  .game-header .game-label{
+    font-size:13px;color:var(--muted);
+  }
+  .game-header .game-tagline{
+    font-size:14px;font-weight:600;color:var(--accent);
+    letter-spacing:.3px;flex:1;text-align:right;
+  }
+  .score{font-size:14px;color:var(--muted)}
+  .score b{color:var(--text)}
+
+  /* ── PANELS ── */
+  .panel{display:none;animation:fade .22s ease;flex:1;flex-direction:column}
+  .panel.show{display:flex}
+  @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+
+  /* ── CHOICE BUTTONS — 2-col grid ── */
+  .opts-grid{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:7px;
+    margin-top:8px;
+  }
+  button.opt{
+    width:100%;text-align:left;
+    background:var(--bg2);color:var(--text);
+    border:1px solid var(--line);border-radius:10px;
+    padding:10px 12px;font-size:14px;cursor:pointer;transition:.12s;
+    line-height:1.3;
+  }
+  button.opt:hover:not(:disabled){border-color:var(--accent)}
+  button.opt:disabled{cursor:default;opacity:.95}
+  .right{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
+  .wrong{background:var(--badd)!important;border-color:var(--bad)!important;color:#f7cfcf!important}
+
+  .btn{background:var(--accent);color:#04282a;border:none;border-radius:10px;
+    padding:9px 15px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;flex-shrink:0}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
+  .btn.play-again{background:var(--accent);color:#04282a;width:100%;padding:14px;font-size:15px;margin-top:10px}
+  .fact{font-size:13.5px;color:var(--muted);min-height:18px;margin:6px 0 0;flex-shrink:0}
+
+  /* ── PROGRESS BAR (spotter) ── */
+  .bar{height:8px;border-radius:999px;background:var(--bg2);overflow:hidden;margin-bottom:8px;
+    border:1px solid var(--line);flex-shrink:0}
+  .bar i{display:block;height:100%;background:var(--accent);width:0;transition:width .3s}
+
+  .logsceneimg{width:100%;border-radius:12px;border:1px solid var(--line);
+    display:block;object-fit:cover;max-height:340px;flex-shrink:0}
+
+  /* ── CHIPS (spotter) ── */
+  .chips-grid{display:grid;grid-template-columns:1fr 1fr;gap:7px;margin-top:8px}
+  .chip{padding:9px 12px;border-radius:10px;border:1.5px solid var(--line);
+    background:var(--bg2);color:var(--text);font-size:14px;cursor:pointer;
+    transition:.15s;font-family:inherit;text-align:left;line-height:1.3}
+  .chip:hover:not(.chip-done):not(.chip-wrong){border-color:var(--accent)}
+  .chip-done{background:var(--goodd);border-color:var(--good);color:#cdf3df;cursor:default}
+  .chip-wrong{background:var(--badd);border-color:var(--bad);color:#ffd0d0;cursor:default}
+
+  /* ── TRUMPS CARDS ── */
+  .tcards{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex-shrink:0}
+  .tcard{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)}
+  .tcard .tt{text-align:center;font-weight:600;margin:2px 0 4px;font-size:14px}
+  .tcard .cap{text-align:center;font-size:11.5px;color:var(--muted);margin:0 0 4px}
+  .statbtn{display:flex;justify-content:space-between;width:100%;margin:4px 0;
+    background:var(--bg2);color:var(--text);border:1px solid var(--line);
+    border-radius:8px;padding:7px 9px;font-size:12.5px;cursor:pointer}
+  .statbtn:hover:not(:disabled){border-color:var(--accent)}
+  .statbtn.locked{opacity:.35;cursor:not-allowed}
+  .statbtn .note{font-size:10px;color:var(--muted);margin-left:5px;font-weight:400}
+  .statrow{display:flex;justify-content:space-between;margin:4px 0;background:var(--bg2);
+    border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12.5px}
+  .tres{text-align:center;font-size:15px;font-weight:600;min-height:20px;margin:8px 0 3px;flex-shrink:0}
+  .trumps-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2px;flex-shrink:0}
+  svg{display:block}
+  .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
+
+  /* ── HOF: no header clutter ── */
+  .hof-header{
+    text-align:center;margin-bottom:10px;flex-shrink:0;
+  }
+  .hof-header h2{font-size:20px;font-weight:700;margin:0 0 2px}
+  .hof-group{font-size:12px;color:var(--muted)}
+  .encourage{
+    text-align:center;font-size:14px;background:var(--goodd);border:1px solid var(--good);
+    color:#cdf3df;border-radius:10px;padding:10px 14px;margin:0 0 10px;flex-shrink:0
+  }
+  .hof .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:9px 12px;border:1px solid var(--line);border-radius:10px;margin:5px 0;
+    background:var(--bg2);font-size:14px}
+  .hof .lrow .l{display:flex;align-items:center;gap:10px}
+  .hof .lrow .rank{width:24px;font-weight:700;color:var(--muted);text-align:center}
+  .hof .lrow .nm{font-weight:500}
+  .hof .lrow .sc{font-weight:700;color:var(--gold)}
+  .hof .me{background:var(--accentd);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .hof .me .nm{color:var(--accent)}
+  .hof .me .rank{color:var(--accent)}
+  .hof .medal{font-size:15px;width:18px;text-align:center}
+  .hof-scroll{overflow-y:auto;flex:1;min-height:0}
+
+  /* ════════════════
+     SPLASH
+     ════════════════ */
+  #splash{
+    position:fixed;inset:0;z-index:1000;background:#000;
+    display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
+  }
+  #splashVideo{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;}
+  #splashCanvas{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;}
+  #splashContinue{
+    position:absolute;inset:0;z-index:5;display:none;
+    flex-direction:column;align-items:center;justify-content:flex-end;
+    padding-bottom:calc(80px + env(safe-area-inset-bottom));
+    background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65) 100%);
+    pointer-events:none;
+  }
+  #splashContinue .tap-hint{
+    font-family:'Press Start 2P',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;
+    text-shadow:0 0 14px rgba(54,201,192,.9),0 0 30px rgba(54,201,192,.4);animation:tapBlink 1.1s step-end infinite;
+  }
+  @keyframes tapBlink{0%,100%{opacity:1}50%{opacity:0}}
+  #splashLoading{
+    position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);
+    z-index:4;display:none;flex-direction:column;align-items:center;gap:10px;pointer-events:none;
+  }
+  #splashLoading .spinner{width:34px;height:34px;border:3px solid rgba(255,255,255,.15);
+    border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite}
+  #splashLoading p{margin:0;font-size:13px;color:rgba(255,255,255,.55)}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  #splashTap{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;cursor:pointer;z-index:3;
+    background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%);pointer-events:all}
+  #splashTap .play{width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.12);
+    border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;
+    font-size:32px;margin-bottom:12px}
+  #splashTap p{margin:0;font-weight:600;color:#eaf6fb}
+  #splashFallback{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;
+    justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)}
+  #splashSkip{
+    position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));right:20px;z-index:6;
+    background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);
+    border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;
+    backdrop-filter:blur(4px);transition:.15s;pointer-events:all;
+  }
+  #splashSkip:hover{background:rgba(4,22,30,.8);border-color:var(--accent)}
+  .splash-hide{animation:splashOut .5s ease forwards}
+  @keyframes splashOut{to{opacity:0;visibility:hidden}}
+
+  /* ════════════════
+     ARCADE WELCOME
+     ════════════════ */
+  .welcome{
+    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:16px;
+  }
+  .welcome-inner{width:100%;max-width:480px}
+  .logobar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
+  .logobar .logo{height:52px;width:auto;border-radius:10px;display:block;object-fit:contain}
+  .logobar .logo.circle{width:52px;height:52px;border-radius:50%;object-fit:cover}
+  .logobar .sep{width:1px;height:34px;background:var(--line)}
+  .arcade-insert{
+    font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,14px);color:var(--gold);
+    text-align:center;margin:0 0 8px;animation:tapBlink 1.4s step-end infinite;letter-spacing:1px;
+  }
+  .wcard{
+    background:var(--surface);border:2px solid var(--accent);border-radius:14px;
+    padding:22px 20px;position:relative;overflow:hidden;
+    box-shadow:0 0 0 1px var(--accentd),0 0 28px rgba(54,201,192,.15);
+  }
+  .wcard::before{
+    content:'';position:absolute;inset:0;
+    background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,0,.12) 3px,rgba(0,0,0,.12) 4px);
+    pointer-events:none;z-index:1;border-radius:12px;
+  }
+  .wcard>*{position:relative;z-index:2}
+  .arcade-title{
+    font-family:'Press Start 2P',monospace;font-size:clamp(15px,3.5vw,23px);color:var(--accent);
+    line-height:1.6;margin:0 0 6px;text-shadow:0 0 12px rgba(54,201,192,.6);letter-spacing:1px;text-align:center;
+  }
+  .arcade-sub{
+    font-family:'Press Start 2P',monospace;font-size:clamp(9px,1.6vw,12px);color:var(--muted);
+    margin:0 0 8px;line-height:1.8;letter-spacing:.5px;text-align:center;
+  }
+  .arcade-event{
+    font-family:'Press Start 2P',monospace;font-size:clamp(7px,1.3vw,9px);color:var(--accent);
+    margin:0 0 18px;letter-spacing:.5px;text-align:center;opacity:.9;
+  }
+  /* ── MENU HUB ── */
+  .menu-head{display:flex;justify-content:space-between;align-items:center;gap:10px;
+    margin-bottom:14px;flex-wrap:wrap}
+  .menu-title{font-size:clamp(18px,3vw,26px);font-weight:700;color:var(--text)}
+  .menu-title b{color:var(--accent)}
+  .menu-sub{font-size:13px;color:var(--muted);margin-top:2px}
+  .menu-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;align-content:start}
+  @media(min-width:600px){.menu-grid{grid-template-columns:repeat(3,1fr);gap:12px}}
+  @media(min-width:900px){.menu-grid{grid-template-columns:repeat(4,1fr);gap:16px}}
+  @media(min-width:1300px){.menu-grid{grid-template-columns:repeat(4,1fr);gap:20px}}
+  .menu-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:6px;text-align:center;cursor:pointer;border:1px solid var(--line);background:var(--bg2);
+    border-radius:14px;padding:18px 12px;color:var(--text);transition:.15s;min-height:128px}
+  .menu-card:hover{border-color:var(--accent);background:var(--accentd);transform:translateY(-2px)}
+  .menu-card:active{transform:translateY(0)}
+  .mc-icon{font-size:34px;line-height:1}
+  .mc-name{font-size:clamp(13px,1.6vw,16px);font-weight:700;line-height:1.2}
+  .mc-desc{font-size:clamp(10px,1.2vw,12px);color:var(--muted);line-height:1.3}
+  .mc-done{position:absolute;top:8px;right:8px;font-size:10px;color:var(--good);
+    background:var(--goodd);border-radius:6px;padding:2px 6px}
+  @media(min-width:900px){
+    .menu-card{min-height:160px;padding:24px 16px}
+    .mc-icon{font-size:44px}
+  }
+  .arcade-label{
+    display:block;font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,13px);color:var(--gold);
+    letter-spacing:1px;text-align:left;margin:14px 0 7px;
+  }
+  .arcade-input{
+    width:100%;background:#000;border:2px solid var(--accent);border-radius:6px;color:#fff;
+    font-family:'Press Start 2P',monospace;font-size:clamp(16px,4vw,22px);
+    padding:12px 14px;letter-spacing:2px;outline:none;caret-color:var(--accent);transition:box-shadow .15s;
+  }
+  .arcade-input:focus{box-shadow:0 0 0 2px var(--accent),0 0 14px rgba(54,201,192,.3)}
+  .arcade-input::placeholder{color:rgba(255,255,255,.2);font-size:clamp(12px,2.2vw,15px)}
+  .werr{
+    font-family:'Press Start 2P',monospace;font-size:clamp(10px,1.6vw,12px);color:var(--bad);
+    min-height:16px;margin:8px 0 0;letter-spacing:.5px;
+  }
+  .arcade-start{
+    width:100%;margin-top:18px;padding:14px;background:var(--accent);color:#04282a;
+    border:none;border-radius:8px;font-family:'Press Start 2P',monospace;
+    font-size:clamp(13px,2.6vw,16px);letter-spacing:2px;cursor:pointer;
+    box-shadow:0 4px 0 #0d3b3a,0 0 18px rgba(54,201,192,.3);
+    transition:transform .1s,box-shadow .1s;position:relative;top:0;
+  }
+  .arcade-start:active{transform:translateY(3px);box-shadow:0 1px 0 #0d3b3a}
+
+  /* ════════════════
+     NEW GAMES
+     ════════════════ */
+
+  /* ── 1. BREATH HOLD ── */
+  .breath-stage{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:14px;text-align:center;padding:10px 0;min-height:0}
+  .breath-orb{
+    width:min(58vw,220px);height:min(58vw,220px);border-radius:50%;
+    background:radial-gradient(circle at 38% 32%,#1aa7c4,#0c5570 55%,#08394c 100%);
+    border:3px solid var(--accent);box-shadow:0 0 0 6px var(--accentd),0 0 40px rgba(54,201,192,.35);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;
+    cursor:pointer;user-select:none;transition:transform .15s,box-shadow .3s;position:relative;overflow:hidden}
+  .breath-orb:active{transform:scale(.97)}
+  .breath-orb.holding{animation:breathPulse 3.4s ease-in-out infinite;
+    box-shadow:0 0 0 6px var(--accentd),0 0 60px rgba(54,201,192,.6)}
+  @keyframes breathPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+  .breath-orb .bo-emoji{font-size:40px;line-height:1}
+  .breath-orb .bo-time{font-family:'Press Start 2P',monospace;font-size:clamp(20px,7vw,34px);color:#fff;
+    text-shadow:0 0 12px rgba(0,0,0,.4)}
+  .breath-orb .bo-hint{font-size:12px;color:rgba(255,255,255,.85);max-width:80%}
+  .breath-orb .bo-fill{position:absolute;left:0;right:0;bottom:0;background:rgba(255,255,255,.10);
+    height:0;transition:height .2s linear;z-index:0}
+  .breath-orb>*{position:relative;z-index:1}
+  .breath-result{font-size:15px;font-weight:600;min-height:22px;color:var(--accent)}
+  .breath-pb{font-size:13px;color:var(--muted)}
+  .breath-records{width:100%;max-width:420px;margin-top:4px}
+  .breath-records .rrow{display:flex;justify-content:space-between;align-items:center;
+    padding:6px 10px;border:1px solid var(--line);border-radius:8px;margin:4px 0;
+    background:var(--bg2);font-size:12.5px}
+  .breath-records .rrow.beat{background:var(--goodd);border-color:var(--good);color:#cdf3df}
+  .breath-records .rrow .rt{font-weight:700;color:var(--gold)}
+
+  /* ── 2. SILHOUETTE MATCH ── */
+  .sil-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#dff1f6;
+    display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
+    height:var(--artH);max-height:46vh}
+  .sil-stage svg{width:100%;height:100%}
+  .sil-bonus{font-size:12px;color:var(--gold);text-align:center;min-height:16px;margin-top:4px;font-weight:600}
+
+  /* ── 3. DEPTH GAUGE ── */
+  .depth-fact{font-size:16px;font-weight:600;text-align:center;margin:4px 0 2px;line-height:1.4}
+  .depth-wrap{flex:1;display:flex;flex-direction:column;justify-content:center;gap:10px;min-height:0;padding:6px 0}
+  .depth-readout{text-align:center;font-family:'Press Start 2P',monospace;
+    font-size:clamp(22px,8vw,40px);color:var(--accent);text-shadow:0 0 14px rgba(54,201,192,.4)}
+  .depth-track{position:relative;height:230px;max-height:34vh;width:100%;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);
+    background:linear-gradient(to bottom,#1aa7c4 0%,#0c5570 40%,#06303f 75%,#021a24 100%)}
+  .depth-needle{position:absolute;left:0;right:0;height:3px;background:var(--gold);
+    box-shadow:0 0 10px rgba(243,198,79,.8);pointer-events:none;z-index:3}
+  .depth-needle::after{content:'';position:absolute;right:8px;top:-7px;border:8px solid transparent;
+    border-right-color:var(--gold)}
+  .depth-marks{position:absolute;inset:0;z-index:1}
+  .depth-marks span{position:absolute;left:8px;font-size:10px;color:rgba(255,255,255,.6);transform:translateY(-50%)}
+  .depth-marks i{position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.12)}
+  .depth-slider{width:100%;-webkit-appearance:none;appearance:none;height:30px;background:transparent;cursor:pointer}
+  .depth-slider::-webkit-slider-runnable-track{height:8px;border-radius:999px;
+    background:linear-gradient(to right,#0c5570,var(--accent))}
+  .depth-slider::-moz-range-track{height:8px;border-radius:999px;background:#0c5570}
+  .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;
+    background:var(--gold);border:3px solid #04282a;margin-top:-11px;box-shadow:0 0 10px rgba(243,198,79,.6)}
+  .depth-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--gold);
+    border:3px solid #04282a;box-shadow:0 0 10px rgba(243,198,79,.6)}
+  .depth-zone{position:absolute;left:0;right:0;background:rgba(79,210,138,.28);
+    border-top:2px solid var(--good);border-bottom:2px solid var(--good);display:none;z-index:2}
+
+  /* ── 5. BUBBLE POP ── */
+  .bubble-field{position:relative;flex:1;min-height:300px;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);
+    background:linear-gradient(to bottom,#0c5570,#06222e 80%);touch-action:manipulation}
+  .bubble{position:absolute;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    text-align:center;cursor:pointer;user-select:none;padding:6px;line-height:1.15;font-weight:600;
+    color:#04282a;border:2px solid rgba(255,255,255,.5);
+    background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.92),rgba(160,225,235,.78));
+    box-shadow:0 0 14px rgba(255,255,255,.25);will-change:transform}
+  .bubble.pop-good{animation:popGood .3s ease forwards}
+  .bubble.pop-bad{animation:popBad .3s ease forwards}
+  @keyframes popGood{to{transform:scale(1.5);opacity:0}}
+  @keyframes popBad{0%{transform:scale(1)}30%{transform:scale(.85)}to{transform:scale(1.2);opacity:0}}
+  .bubble-hud{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px;flex-shrink:0}
+  .bubble-hud b{color:var(--text)}
+
+  /* ── 6 & 10. TRUE/FALSE + SPEED (binary big buttons) ── */
+  .tf-stage{flex:1;display:flex;flex-direction:column;justify-content:center;gap:14px;min-height:0;padding:8px 0}
+  .tf-statement{font-size:clamp(18px,5vw,26px);font-weight:700;text-align:center;line-height:1.4;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:22px 18px}
+  .tf-buttons{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .tf-btn{padding:22px 10px;border-radius:14px;border:2px solid var(--line);font-family:'Press Start 2P',monospace;
+    font-size:clamp(13px,3vw,17px);cursor:pointer;transition:.12s;letter-spacing:1px}
+  .tf-btn.tfyes{background:var(--goodd);color:#cdf3df;border-color:var(--good)}
+  .tf-btn.tfno{background:var(--badd);color:#f7cfcf;border-color:var(--bad)}
+  .tf-btn:active{transform:translateY(2px)}
+  .tf-btn:disabled{opacity:.5;cursor:default}
+  .tf-reveal{font-size:14px;color:var(--muted);text-align:center;min-height:40px;line-height:1.4}
+  .tf-reveal b{color:var(--accent)}
+
+  /* speed round timer + combo */
+  .speed-bar{height:10px;border-radius:999px;background:var(--bg2);overflow:hidden;
+    border:1px solid var(--line);flex-shrink:0;margin-bottom:8px}
+  .speed-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--good),var(--gold));
+    width:100%;transition:width .25s linear}
+  .speed-bar i.low{background:var(--bad)}
+  .speed-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
+  .speed-meta b{color:var(--gold)}
+  .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
+    color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
+
+  /* ── 8. COLOUR THE CREATURE ── */
+  .colour-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
+    display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
+    height:var(--artH);max-height:42vh}
+  .colour-stage svg{width:100%;height:100%}
+  .swatch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
+  .swatch{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
+    border:1.5px solid var(--line);background:var(--bg2);color:var(--text);cursor:pointer;
+    font-size:13.5px;transition:.15s;text-align:left}
+  .swatch:hover:not(:disabled){border-color:var(--accent)}
+  .swatch:disabled{cursor:default}
+  .swatch .dot{width:24px;height:24px;border-radius:6px;flex-shrink:0;border:1px solid rgba(255,255,255,.25)}
+
+  /* ── 9. ODD ONE OUT ── */
+  .odd-prompt{text-align:center;font-size:14px;color:var(--muted);margin-bottom:8px;flex-shrink:0}
+  .odd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;align-content:center;min-height:0}
+  .odd-card{padding:20px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg2);
+    color:var(--text);font-size:15px;font-weight:600;cursor:pointer;transition:.12s;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:96px}
+  .odd-card .oc-emoji{font-size:30px}
+  .odd-card:hover:not(:disabled){border-color:var(--accent)}
+  .odd-card:disabled{cursor:default}
+  .odd-card.right{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
+  .odd-card.wrong{background:var(--badd)!important;border-color:var(--bad)!important;color:#f7cfcf!important}
+
+  /* ════════════════
+     RESPONSIVE
+     ════════════════ */
+  @media(max-width:560px){
+    :root{--artH:306px}
+    .wrap{padding:10px 11px calc(8px + env(safe-area-inset-bottom))}
+    .gstep .label{font-size:8px}
+    .gstep .icon{font-size:14px}
+    .gstep{padding:5px 2px 4px}
+    .tcard .tt{font-size:13px}
+    .statbtn{font-size:11.5px;padding:6px 8px}
+    .statrow{font-size:11.5px;padding:6px 8px}
+    .tcards{gap:7px}
+  }
+  @media(max-width:380px){
+    :root{--artH:264px}
+    .opts-grid{grid-template-columns:1fr}  /* single col on tiny phones */
+    .chips-grid{grid-template-columns:1fr}
+    .tcards{grid-template-columns:1fr}
+    .gstep .label{display:none}
+    .gstep{padding:6px 8px;min-width:42px}
+    .swatch-grid{grid-template-columns:1fr}
+  }
+  @media(max-height:560px){
+    :root{--artH:221px}
+    .logobar{display:none}
+    .arcade-insert{display:none}
+    .wcard{padding:14px}
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ SPLASH ═══ -->
+<div id="splash">
+  <video id="splashVideo" muted playsinline webkit-playsinline preload="auto"></video>
+  <canvas id="splashCanvas"></canvas>
+  <div id="splashFallback">
+    <div style="font-size:50px;margin-bottom:8px">🌊🤿</div>
+    <h1 style="color:#eaf6fb;font-size:22px">Sydney Dive Challenge</h1>
+    <p style="color:var(--muted);margin:4px 0 0">Loading the reef…</p>
+  </div>
+  <div id="splashTap"><div class="play">▶</div><p>Tap to play intro</p></div>
+  <div id="splashLoading"><div class="spinner"></div><p>Loading intro video…</p></div>
+  <div id="splashContinue"><div class="tap-hint">▶ TAP TO CONTINUE ◀</div></div>
+  <button id="splashSkip">Skip ⏭</button>
+</div>
+
+<div class="wrap">
+
+  <!-- ═══ WELCOME ═══ -->
+  <div id="welcome" class="welcome" style="display:none">
+    <div class="welcome-inner">
+      <div class="logobar">
+        <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+        <span class="sep"></span>
+        <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
+      </div>
+      <div class="arcade-insert">— INSERT DIVER —</div>
+      <div class="wcard">
+        <div class="arcade-title">SYDNEY DIVE<br>CHALLENGE</div>
+        <div class="arcade-sub">16 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <div class="arcade-event">Go Diving Show · 5–6 Sept 2026</div>
+        <label class="arcade-label" for="wname">▶ YOUR NAME</label>
+        <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
+        <label class="arcade-label" for="wage">▶ YOUR AGE</label>
+        <input class="arcade-input" id="wage" type="number" min="3" max="120" placeholder="00" inputmode="numeric">
+        <p class="werr" id="werr"></p>
+        <button class="arcade-start" id="wstart">DIVE IN →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ MAIN APP ═══ -->
+  <div id="app" style="display:none;flex:1;display:none;flex-direction:column">
+
+    <!-- Points bar -->
+    <div class="pointsbar">
+      <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
+      <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
+    </div>
+
+    <!-- Game strip -->
+    <div class="gamesstrip" id="gamesstrip">
+      <div class="gstep active" id="gs-quiz"><div class="icon">🐠</div><div class="label">Guess who</div></div>
+      <div class="gstep" id="gs-breath"><div class="icon">🫧</div><div class="label">Breath hold</div></div>
+      <div class="gstep" id="gs-silhouette"><div class="icon">🧩</div><div class="label">Silhouette</div></div>
+      <div class="gstep" id="gs-log"><div class="icon">✅</div><div class="label">Spotter log</div></div>
+      <div class="gstep" id="gs-bubble"><div class="icon">🎯</div><div class="label">Bubble pop</div></div>
+      <div class="gstep" id="gs-depth"><div class="icon">🗺️</div><div class="label">Depth gauge</div></div>
+      <div class="gstep" id="gs-guess"><div class="icon">🔎</div><div class="label">Where am I?</div></div>
+      <div class="gstep" id="gs-truefalse"><div class="icon">📖</div><div class="label">True/false</div></div>
+      <div class="gstep" id="gs-colour"><div class="icon">🎨</div><div class="label">Colour it</div></div>
+      <div class="gstep" id="gs-trumps"><div class="icon">🃏</div><div class="label">Stat battle</div></div>
+      <div class="gstep" id="gs-oddone"><div class="icon">🔍</div><div class="label">Odd one out</div></div>
+      <div class="gstep" id="gs-speed"><div class="icon">⏱️</div><div class="label">Speed round</div></div>
+      <div class="gstep" id="gs-season"><div class="icon">📅</div><div class="label">When to see</div></div>
+      <div class="gstep" id="gs-wreckid"><div class="icon">🔱</div><div class="label">Wreck detective</div></div>
+      <div class="gstep" id="gs-wave"><div class="icon">🌊</div><div class="label">Wave lab</div></div>
+      <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
+    </div>
+
+    <!-- ═══ MENU HUB: pick any game ═══ -->
+    <div class="panel" id="p-menu">
+      <div class="menu-head">
+        <div>
+          <div class="menu-title">Pick a game, <b id="menuName">diver</b> 🤿</div>
+          <div class="menu-sub" id="menuProgress">0 of 16 games played</div>
+        </div>
+        <button class="btn acc" id="menuFinish">🏆 Scores &amp; prizes</button>
+      </div>
+      <div class="menu-grid" id="menuGrid"></div>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="panel" id="p-quiz">
+      <div class="game-header">
+        <span class="game-label">Name the creature</span>
+        <span class="game-tagline">Sydney Dive Challenge</span>
+        <span class="score" style="flex:none">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span>
+      </div>
+      <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
+      <div class="opts-grid" id="qopts"></div>
+      <p class="fact" id="qfact"></p>
+      <button class="btn" id="qnext" style="display:none">Next creature →</button>
+      <p class="auto-notice" id="qnotice"></p>
+    </div>
+
+    <!-- LOG -->
+    <div class="panel" id="p-log">
+      <div class="game-header">
+        <span class="game-label">Spot the species</span>
+        <span class="score"><b id="logn">0</b> / 3 found</span>
+      </div>
+      <div class="bar"><i id="logbar"></i></div>
+      <div id="logscene"></div>
+      <div class="chips-grid" id="logchips"></div>
+      <p class="fact" id="logmsg"></p>
+      <p class="auto-notice" id="lognotice"></p>
+    </div>
+
+    <!-- GUESS -->
+    <div class="panel" id="p-guess">
+      <div class="game-header">
+        <span class="game-label">Which Sydney dive site?</span>
+        <span class="score">Score <b id="gscore">0</b> / <b id="gtotal">0</b></span>
+      </div>
+      <div id="gart" style="flex-shrink:0"></div>
+      <div class="opts-grid" id="gopts"></div>
+      <button class="btn" id="gnext" style="display:none">Next location →</button>
+      <p class="auto-notice" id="gnotice"></p>
+    </div>
+
+    <!-- TRUMPS -->
+    <div class="panel" id="p-trumps">
+      <div class="game-header">
+        <span class="game-label">Pick a stat — highest wins</span>
+        <span class="score">Round <b id="tround">1</b> / <b id="troundtotal">5</b></span>
+      </div>
+      <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
+      <p class="tres" id="tresult"></p>
+      <div class="trumps-footer">
+        <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
+        <button class="btn ghost" id="tdeal" style="display:none">Next round →</button>
+      </div>
+      <p class="auto-notice" id="tnotice"></p>
+    </div>
+
+    <!-- 1. BREATH HOLD -->
+    <div class="panel" id="p-breath">
+      <div class="game-header">
+        <span class="game-label">Hold your breath like a freediver</span>
+        <span class="score">Best <b id="breathPB">0.0</b>s</span>
+      </div>
+      <div class="breath-stage">
+        <div class="breath-orb" id="breathOrb">
+          <div class="bo-fill" id="breathFill"></div>
+          <div class="bo-emoji" id="breathEmoji">🫧</div>
+          <div class="bo-time" id="breathTime">0.0</div>
+          <div class="bo-hint" id="breathHint">Press &amp; hold to dive</div>
+        </div>
+        <div class="breath-result" id="breathResult"></div>
+        <div class="breath-records" id="breathRecords"></div>
+      </div>
+      <button class="btn" id="breathNext" style="display:none">Surface &amp; continue →</button>
+      <p class="auto-notice" id="breathNotice"></p>
+    </div>
+
+    <!-- 2. SILHOUETTE MATCH -->
+    <div class="panel" id="p-silhouette">
+      <div class="game-header">
+        <span class="game-label">Name the shadow</span>
+        <span class="score">Score <b id="silScore">0</b> / <b id="silTotal">0</b></span>
+      </div>
+      <div class="sil-stage" id="silStage"></div>
+      <p class="sil-bonus" id="silBonus"></p>
+      <div class="opts-grid" id="silOpts"></div>
+      <p class="fact" id="silFact"></p>
+      <button class="btn" id="silNext" style="display:none">Next shadow →</button>
+      <p class="auto-notice" id="silNotice"></p>
+    </div>
+
+    <!-- 5. BUBBLE POP -->
+    <div class="panel" id="p-bubble">
+      <div class="game-header">
+        <span class="game-label">Pop only the real Sydney species!</span>
+        <span class="score">Time <b id="bubbleTime">20</b>s</span>
+      </div>
+      <div class="bubble-hud">
+        <span>Caught <b id="bubbleHit">0</b></span>
+        <span>Misses <b id="bubbleMiss">0</b></span>
+      </div>
+      <div class="bubble-field" id="bubbleField"></div>
+      <p class="fact" id="bubbleMsg"></p>
+      <p class="auto-notice" id="bubbleNotice"></p>
+    </div>
+
+    <!-- 3. DEPTH GAUGE -->
+    <div class="panel" id="p-depth">
+      <div class="game-header">
+        <span class="game-label">Drag to guess the depth</span>
+        <span class="score">Round <b id="depthRound">1</b> / <b id="depthTotal">4</b></span>
+      </div>
+      <p class="depth-fact" id="depthFact"></p>
+      <div class="depth-wrap">
+        <div class="depth-readout"><span id="depthReadout">0</span> m</div>
+        <div class="depth-track" id="depthTrack">
+          <div class="depth-marks" id="depthMarks"></div>
+          <div class="depth-zone" id="depthZone"></div>
+          <div class="depth-needle" id="depthNeedle" style="top:0%"></div>
+        </div>
+        <input type="range" class="depth-slider" id="depthSlider" min="0" max="100" value="0">
+      </div>
+      <button class="btn" id="depthLock">Lock in depth ✓</button>
+      <p class="fact" id="depthMsg"></p>
+      <button class="btn ghost" id="depthNext" style="display:none">Next fact →</button>
+      <p class="auto-notice" id="depthNotice"></p>
+    </div>
+
+    <!-- 6. TRUE OR FALSE -->
+    <div class="panel" id="p-truefalse">
+      <div class="game-header">
+        <span class="game-label">Reef myth busters</span>
+        <span class="score">Score <b id="tfScore">0</b> / <b id="tfTotal">0</b></span>
+      </div>
+      <div class="tf-stage">
+        <div class="tf-statement" id="tfStatement"></div>
+        <div class="tf-buttons">
+          <button class="tf-btn tfyes" id="tfTrue">TRUE</button>
+          <button class="tf-btn tfno" id="tfFalse">FALSE</button>
+        </div>
+        <div class="tf-reveal" id="tfReveal"></div>
+      </div>
+      <button class="btn" id="tfNext" style="display:none">Next myth →</button>
+      <p class="auto-notice" id="tfNotice"></p>
+    </div>
+
+    <!-- 8. COLOUR THE CREATURE -->
+    <div class="panel" id="p-colour">
+      <div class="game-header">
+        <span class="game-label">Pick the real colours</span>
+        <span class="score">Score <b id="colScore">0</b> / <b id="colTotal">0</b></span>
+      </div>
+      <div class="colour-stage" id="colStage"></div>
+      <div class="swatch-grid" id="colSwatches"></div>
+      <p class="fact" id="colFact"></p>
+      <button class="btn" id="colNext" style="display:none">Next creature →</button>
+      <p class="auto-notice" id="colNotice"></p>
+    </div>
+
+    <!-- 9. ODD ONE OUT -->
+    <div class="panel" id="p-oddone">
+      <div class="game-header">
+        <span class="game-label">Spot the impostor</span>
+        <span class="score">Score <b id="oddScore">0</b> / <b id="oddTotal">0</b></span>
+      </div>
+      <p class="odd-prompt">Three live in Sydney waters. One does <b>not</b>. Tap the impostor.</p>
+      <div class="odd-grid" id="oddGrid"></div>
+      <p class="fact" id="oddFact"></p>
+      <button class="btn" id="oddNext" style="display:none">Next round →</button>
+      <p class="auto-notice" id="oddNotice"></p>
+    </div>
+
+    <!-- 10. SPEED ROUND -->
+    <div class="panel" id="p-speed">
+      <div class="game-header">
+        <span class="game-label">Rapid fire — 60 seconds!</span>
+        <span class="score">Correct <b id="speedScore">0</b></span>
+      </div>
+      <div class="speed-bar"><i id="speedFill"></i></div>
+      <div class="speed-meta">
+        <span><b id="speedTime">60</b>s left</span>
+        <span>Streak <b id="speedStreak">0</b> 🔥</span>
+      </div>
+      <div class="tf-stage" id="speedStage">
+        <div class="tf-statement" id="speedStatement">Get ready…</div>
+        <div class="tf-buttons">
+          <button class="tf-btn tfyes" id="speedYes">YES</button>
+          <button class="tf-btn tfno" id="speedNo">NO</button>
+        </div>
+        <div class="tf-reveal" id="speedReveal"></div>
+      </div>
+      <div id="speedCountIn" class="speed-countin" style="display:none">3</div>
+      <p class="auto-notice" id="speedNotice"></p>
+    </div>
+
+    <!-- 13. WHEN WILL I SEE IT? — SEASON MATCH -->
+    <div class="panel" id="p-season">
+      <div class="game-header">
+        <span class="game-label">When can you spot this species in Sydney?</span>
+        <span class="score">Score <b id="seasonScore">0</b> / <b id="seasonTotal">0</b></span>
+      </div>
+      <div id="seasonArt" style="margin-bottom:8px"></div>
+      <p class="tt" id="seasonName" style="text-align:center;margin:2px 0 8px"></p>
+      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Pick the time of year you're most likely to see it:</p>
+      <div class="opts-grid" id="seasonOpts"></div>
+      <p class="qfact" id="seasonFact" style="margin-top:10px"></p>
+      <div style="text-align:center"><button class="btn ghost" id="seasonNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="seasonNotice"></p>
+    </div>
+
+    <!-- 14. WRECK DETECTIVE -->
+    <div class="panel" id="p-wreckid">
+      <div class="game-header">
+        <span class="game-label">Identify the Sydney wreck from the clue</span>
+        <span class="score">Score <b id="wreckidScore">0</b> / <b id="wreckidTotal">0</b></span>
+      </div>
+      <div id="wreckidArt" style="margin-bottom:8px"></div>
+      <p class="qfact" id="wreckidClue" style="margin:2px 0 10px;font-size:14px;color:var(--text)"></p>
+      <div class="opts-grid" id="wreckidOpts"></div>
+      <p class="qfact" id="wreckidFact" style="margin-top:10px"></p>
+      <div style="text-align:center"><button class="btn ghost" id="wreckidNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="wreckidNotice"></p>
+    </div>
+
+    <!-- 15. WAVE LAB -->
+    <div class="panel" id="p-wave">
+      <div class="game-header">
+        <span class="game-label">Read the conditions — will the site have good viz?</span>
+        <span class="score">Score <b id="waveScore">0</b> / <b id="waveTotal">0</b></span>
+      </div>
+      <div id="waveArt" style="margin-bottom:8px"></div>
+      <div id="waveCond" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13.5px;line-height:1.7"></div>
+      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Your call for this dive site:</p>
+      <div class="opts-grid" id="waveOpts"></div>
+      <p class="qfact" id="waveFact" style="margin-top:10px"></p>
+      <div style="text-align:center"><button class="btn ghost" id="waveNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="waveNotice"></p>
+    </div>
+
+    <!-- 16. WRECK FINDER (drag wrecks onto the map) -->
+    <div class="panel" id="p-wreckfind">
+      <div class="game-header">
+        <span class="game-label">Drag each wreck to its real spot on the map</span>
+        <span class="score">Placed <b id="wreckfindPlaced">0</b> / <b id="wreckfindTotal">0</b></span>
+      </div>
+      <div id="wreckfindWrap" style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#06222c">
+        <div id="wreckfindMap" style="position:relative;width:100%"></div>
+      </div>
+      <div id="wreckfindTray" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center"></div>
+      <p class="qfact" id="wreckfindMsg" style="margin-top:10px"></p>
+      <p class="auto-notice" id="wreckfindNotice"></p>
+    </div>
+
+    <!-- HALL OF FAME -->
+    <div class="panel" id="p-hof">
+      <div class="logobar" style="margin-bottom:10px;display:flex!important">
+        <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+        <span class="sep"></span>
+        <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
+      </div>
+      <div class="hof-header">
+        <h2>🏆 Hall of Fame</h2>
+        <div class="hof-group" id="hofGroupLabel"></div>
+      </div>
+      <p class="encourage" id="hofEncourage"></p>
+      <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
+      <button class="btn play-again" id="hofBackMenu" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">← Back to games</button>
+      <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
+    </div>
+
+  </div><!-- /app -->
+</div><!-- /wrap -->
+
+<script>
+/* ════════ SPLASH ════════ */
+(function(){
+  var splash=document.getElementById('splash'),video=document.getElementById('splashVideo'),
+    canvas=document.getElementById('splashCanvas'),fallback=document.getElementById('splashFallback'),
+    tapPlay=document.getElementById('splashTap'),loading=document.getElementById('splashLoading'),
+    cont=document.getElementById('splashContinue'),skipBtn=document.getElementById('splashSkip');
+  var dismissed=false,playing=false,frozen=false,autoplayBlocked=false,SPEED=2;
+
+  window.SPLASH_CTRL={replay:replaySplash};
+
+  function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
+
+  function afterSplash(){
+    if(dismissed)return; dismissed=true;
+    loading.style.display='none'; tapPlay.style.display='none'; cont.style.display='none';
+    try{video.pause();}catch(e){}
+    splash.classList.add('splash-hide');
+    setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},520);
+    if(window._skipWelcome){
+      window._skipWelcome=false;
+      showApp(); showMenu();
+    } else {
+      document.getElementById('welcome').style.display='flex';
+    }
+  }
+
+  function freezeLastFrame(){
+    if(frozen)return; frozen=true;
+    try{
+      canvas.width=video.videoWidth||splash.offsetWidth;
+      canvas.height=video.videoHeight||splash.offsetHeight;
+      canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
+      canvas.style.display='block';
+    }catch(e){}
+    video.style.display='none'; loading.style.display='none';
+    tapPlay.style.display='none'; skipBtn.style.display='none';
+    cont.style.display='flex';
+  }
+
+  splash.addEventListener('click',function(){
+    if(frozen){afterSplash();return;}
+    if(autoplayBlocked){
+      tapPlay.style.display='none'; loading.style.display='flex';
+      autoplayBlocked=false; applySpeed();
+      var p=video.play&&video.play();
+      if(p&&p.then)p.then(function(){applySpeed();}).catch(afterSplash);
+    }
+  });
+  skipBtn.addEventListener('click',function(e){e.stopPropagation();afterSplash();});
+
+  function onLoadStart(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';}
+  function onPlaying(){playing=true;loading.style.display='none';tapPlay.style.display='none';fallback.style.display='none';applySpeed();}
+
+  video.addEventListener('ended',freezeLastFrame);
+  video.addEventListener('loadstart',onLoadStart);
+  video.addEventListener('playing',onPlaying);
+  video.addEventListener('timeupdate',function(){if(video.currentTime>0)onPlaying();});
+  video.addEventListener('waiting',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
+  video.addEventListener('stalled',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
+
+  var retried=false;
+  var SPLASH_VER='2';
+  function splashFile(){
+    var ua=navigator.userAgent||'';
+    var isPhone=/Mobi|iPhone|iPod|Android.*Mobile|Windows Phone/i.test(ua);
+    var smallScreen=Math.min(window.innerWidth,window.innerHeight)<600;
+    var f=(isPhone||smallScreen)?'images/splash.mp4':'images/Splash_pc_720.mp4';
+    return f+'?v='+SPLASH_VER;
+  }
+  function setSource(){video.src=splashFile()+(retried?('&r='+Date.now()):'');try{video.load();}catch(e){}}
+  video.addEventListener('error',function(){
+    if(playing||dismissed)return;
+    if(!retried){retried=true;setTimeout(setSource,400);}
+    else{fallback.style.display='flex';setTimeout(afterSplash,2000);}
+  });
+
+  function attemptPlay(){
+    if(playing||dismissed)return; applySpeed();
+    var p=video.play&&video.play();
+    if(p&&p.then)p.then(function(){applySpeed();}).catch(function(err){
+      if(!playing&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){
+        autoplayBlocked=true; loading.style.display='none'; tapPlay.style.display='flex';
+      }
+    });
+  }
+  video.addEventListener('canplay',attemptPlay);
+  video.addEventListener('canplaythrough',attemptPlay);
+  video.addEventListener('loadeddata',attemptPlay);
+
+  setTimeout(function(){if(!dismissed)afterSplash();},35000);
+
+  /* ── Replay for Play Again ── */
+  function replaySplash(){
+    var s=document.createElement('div');
+    s.style.cssText='position:fixed;inset:0;z-index:1000;background:#000;display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer';
+    s.innerHTML='<video muted playsinline webkit-playsinline preload="auto" style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:#000;display:block;"></video>'+
+      '<canvas style="position:absolute;inset:0;width:100%;height:100%;object-fit:contain;display:none;"></canvas>'+
+      '<div id="spFb" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(1000px 500px at 50% 20%,#0b3a4d,#04161e 70%)"><div style="font-size:48px;margin-bottom:6px">🌊🤿</div><h1 style="color:#eaf6fb;font-size:22px">Sydney Dive Challenge</h1></div>'+
+      '<div id="spTap" style="position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;text-align:center;cursor:pointer;z-index:3;background:radial-gradient(1000px 500px at 50% 30%,rgba(11,58,77,.35),rgba(4,22,30,.65) 70%)"><div style="width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.12);border:2px solid rgba(255,255,255,.6);display:flex;align-items:center;justify-content:center;font-size:32px;margin-bottom:12px">▶</div><p style="margin:0;font-weight:600;color:#eaf6fb">Tap to play intro</p></div>'+
+      '<div id="spLd" style="position:absolute;bottom:calc(80px + env(safe-area-inset-bottom));left:50%;transform:translateX(-50%);z-index:4;display:flex;flex-direction:column;align-items:center;gap:10px"><div style="width:34px;height:34px;border:3px solid rgba(255,255,255,.15);border-top-color:var(--accent);border-radius:50%;animation:spin .9s linear infinite"></div><p style="margin:0;font-size:13px;color:rgba(255,255,255,.55)">Loading…</p></div>'+
+      '<div id="spCo" style="position:absolute;inset:0;z-index:5;display:none;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:calc(80px + env(safe-area-inset-bottom));background:linear-gradient(to bottom,transparent 40%,rgba(0,0,0,.65) 100%);pointer-events:none"><div style="font-family:\'Press Start 2P\',monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;text-shadow:0 0 14px rgba(54,201,192,.9);animation:tapBlink 1.1s step-end infinite">▶ TAP TO CONTINUE ◀</div></div>'+
+      '<button id="spSk" style="position:absolute;bottom:calc(22px + env(safe-area-inset-bottom));right:20px;z-index:6;background:rgba(4,22,30,.55);color:#eaf6fb;border:1px solid rgba(255,255,255,.3);border-radius:999px;padding:8px 16px;font-size:13px;font-weight:600;cursor:pointer;backdrop-filter:blur(4px)">Skip ⏭</button>';
+    document.body.appendChild(s);
+    var nv=s.querySelector('video'),nc=s.querySelector('canvas'),
+      nf=s.querySelector('#spFb'),nt=s.querySelector('#spTap'),
+      nl=s.querySelector('#spLd'),nco=s.querySelector('#spCo'),nsk=s.querySelector('#spSk');
+    var nd=false,np=false,nfr=false,nab=false;
+    function nDone(){
+      if(nd)return; nd=true;
+      nl.style.display='none'; nt.style.display='none'; nco.style.display='none';
+      try{nv.pause();}catch(e){}
+      s.classList.add('splash-hide');
+      showApp(); showMenu();
+      setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);
+    }
+    function nFrz(){
+      if(nfr)return; nfr=true;
+      try{nc.width=nv.videoWidth||s.offsetWidth;nc.height=nv.videoHeight||s.offsetHeight;nc.getContext('2d').drawImage(nv,0,0,nc.width,nc.height);nc.style.display='block';}catch(e){}
+      nv.style.display='none';nl.style.display='none';nt.style.display='none';nsk.style.display='none';nco.style.display='flex';
+    }
+    s.addEventListener('click',function(){if(nfr){nDone();return;}if(nab){nt.style.display='none';nl.style.display='flex';nab=false;var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(nDone);}});
+    nsk.addEventListener('click',function(e){e.stopPropagation();nDone();});
+    nv.addEventListener('ended',nFrz);
+    nv.addEventListener('playing',function(){np=true;nl.style.display='none';nt.style.display='none';nf.style.display='none';try{nv.playbackRate=2;}catch(e){}});
+    nv.addEventListener('timeupdate',function(){if(nv.currentTime>0&&!np){np=true;nl.style.display='none';}});
+    var nr=false;
+    nv.addEventListener('error',function(){if(np||nd)return;if(!nr){nr=true;setTimeout(function(){nv.src=splashFile()+'&r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nDone,2000);}});
+    function nTry(){if(np||nd)return;try{nv.playbackRate=2;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(function(err){if(!np&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nab=true;nl.style.display='none';nt.style.display='flex';}});}
+    nv.addEventListener('canplay',nTry);nv.addEventListener('canplaythrough',nTry);nv.addEventListener('loadeddata',nTry);
+    nl.style.display='flex';
+    nv.src=splashFile();try{nv.load();}catch(e){}
+    setTimeout(function(){if(!nd)nDone();},35000);
+  }
+
+  setSource();
+})();
+
+/* ════════ LOGO FALLBACKS ════════ */
+var LOGO_FALLBACK={
+  godiving:'<div style="height:52px;display:flex;align-items:center;gap:8px;padding:0 12px;background:linear-gradient(135deg,#0a3a52,#0e6b7a);border:1px solid var(--line);border-radius:10px"><span style="font-size:20px">🤿</span><span style="font-weight:800;font-size:14px;line-height:1.05;color:#eaf6fb">GO DIVING<br><span style="font-size:10px;font-weight:600;color:#9fc3d2">SHOW</span></span></div>',
+  viz:'<div style="height:52px;width:52px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);border-radius:50%"><span style="font-weight:900;font-size:20px;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,.5)">VIZ</span></div>'
+};
+
+/* ════════ POINTS (speed-rewarded) ════════ */
+var POINTS=0,REWARD=10,PENALTY=4;
+var TIME_PENALTY=1;   /* points lost per second taken to answer */
+var MIN_REWARD=3;     /* a correct answer never earns less than this */
+var qStartTime=0;     /* set when each question/round is shown */
+function startTimer(){qStartTime=(window.performance&&performance.now)?performance.now():Date.now();}
+function timedReward(){
+  if(!qStartTime)return REWARD;
+  var now=(window.performance&&performance.now)?performance.now():Date.now();
+  var secs=Math.max(0,(now-qStartTime)/1000);
+  var amt=REWARD-Math.floor(secs)*TIME_PENALTY;
+  return amt<MIN_REWARD?MIN_REWARD:amt;
+}
+function flashPts(d){var fl=document.getElementById('ptsFloat');if(!fl)return;fl.textContent=(d>0?'+':'')+d;fl.className='fl '+(d>0?'up':'down');fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},900);}
+function award(amount){var a=(amount==null?REWARD:amount);POINTS+=a;syncPoints();flashPts(a);cloudUpdate();}
+function penalize(){POINTS-=PENALTY;if(POINTS<0)POINTS=0;syncPoints();flashPts(-PENALTY);cloudUpdate();}
+function syncPoints(){var p=document.getElementById('points');if(p)p.textContent=POINTS;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
+
+/* ════════════════════════════════════════════════════════════
+   DEVICE · CLOUD SYNC · SCREENSAVER · ADMIN
+   ──────────────────────────────────────────────────────────
+   CROSS-DEVICE FEATURES (real shared leaderboard, live admin
+   view of every device, remote screensaver) run on Supabase.
+   Paste your project URL + anon key below. Leave them blank
+   and everything still works LOCALLY on this device
+   (per-device leaderboard + local admin).
+
+   One-time SQL setup (Supabase → SQL editor), run once:
+
+     create table if not exists public.scores (
+       id uuid primary key default gen_random_uuid(),
+       name text, score int, grp text,
+       device text, station text,
+       ts timestamptz default now()
+     );
+     alter table public.scores enable row level security;
+     create policy "anon read"   on public.scores for select using (true);
+     create policy "anon insert" on public.scores for insert with check (true);
+     create policy "anon delete" on public.scores for delete using (true);
+     alter publication supabase_realtime add table public.scores;
+
+   (Presence + screensaver use Realtime channels — no table needed.)
+   ════════════════════════════════════════════════════════════ */
+var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
+var ADMIN_PIN = '2468';         /* <-- change this */
+var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',done:'Finished',hof:'Hall of Fame'};
+
+/* stable per-browser device id + friendly station label */
+var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
+var STATION=(function(){try{var q=new URLSearchParams(location.search).get('station');if(q){localStorage.setItem('gds_station',q);return q;}return localStorage.getItem('gds_station')||('Phone '+DEVICE_ID.slice(-4));}catch(e){return 'Phone '+DEVICE_ID.slice(-4);}})();
+function setStation(s){STATION=s;try{localStorage.setItem('gds_station',s);}catch(e){}Cloud.updateSession({station:s});}
+
+/* ---------- Cloud: Supabase when configured, else localStorage ---------- */
+var Cloud=(function(){
+  var mode='local',sb=null,readyCbs=[];
+  var lbListeners={};                     /* local-mode leaderboard listeners */
+  var presenceCh=null,hbTimer=null,mySess={};
+  var adminCh=null,adminSessCbs=[],adminCmdCbs=[];
+  var cmdCh=null,cmdSendChs={};
+  function fire(cbs,arg){(cbs||[]).forEach(function(c){try{c(arg);}catch(e){}});}
+  function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
+  function lsScores(){try{return JSON.parse(localStorage.getItem('gds_scores')||'[]');}catch(e){return [];}}
+  function lsSave(a){try{localStorage.setItem('gds_scores',JSON.stringify(a));}catch(e){}}
+  function boardFor(g){return lsScores().filter(function(e){return e.group===g;}).sort(function(a,b){return b.score-a.score;});}
+  function mapRow(x){return {id:x.id,name:x.name,score:x.score,group:x.grp,device:x.device,station:x.station,ts:x.ts?new Date(x.ts).getTime():Date.now()};}
+
+  /* keep-alive: a cheap query every 6h resets Supabase free-tier 7-day pause clock */
+  function keepAlive(){
+    function ping(){if(sb){sb.from('scores').select('id').limit(1).then(function(){},function(){});}}
+    ping();
+    setInterval(ping,6*60*60*1000);
+  }
+  function init(cb){
+    if(cb)readyCbs.push(cb);
+    if(SUPABASE_URL&&SUPABASE_ANON_KEY){
+      mode='cloud';
+      loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2')
+        .then(function(){sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);keepAlive();fire(readyCbs);readyCbs=[];})
+        .catch(function(){mode='local';fire(readyCbs);readyCbs=[];});
+    } else {mode='local';setTimeout(function(){fire(readyCbs);readyCbs=[];},0);}
+  }
+
+  /* ----- scores / leaderboard (Postgres + realtime changes) ----- */
+  function submitScore(group,name,score){
+    if(mode==='cloud'&&sb){sb.from('scores').insert({name:name,score:score,grp:group,device:DEVICE_ID,station:STATION}).then(function(){},function(){});}
+    else{var entry={name:name,score:score,group:group,ts:Date.now(),device:DEVICE_ID,station:STATION,id:'s'+Date.now()+Math.random().toString(36).slice(2,5)};var a=lsScores();a.push(entry);lsSave(a);fire(lbListeners[group],boardFor(group));}
+  }
+  function fetchScores(group,cb){
+    var q=sb.from('scores').select('*').order('score',{ascending:false});
+    if(group)q=q.eq('grp',group);
+    q.then(function(r){cb((r.data||[]).map(mapRow));},function(){cb([]);});
+  }
+  function onLeaderboard(group,cb){
+    if(mode==='cloud'&&sb){
+      fetchScores(group,cb);
+      sb.channel('lb-'+group).on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(group,cb);}).subscribe();
+    } else {(lbListeners[group]=lbListeners[group]||[]).push(cb);cb(boardFor(group));}
+  }
+  function allScores(cb){
+    if(mode==='cloud'&&sb){
+      fetchScores(null,cb);
+      sb.channel('scores-all').on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(null,cb);}).subscribe();
+    } else {cb(lsScores());}
+  }
+  function pullScores(cb){if(mode==='cloud'&&sb){fetchScores(null,cb);}else{cb(lsScores());}}
+  function deleteScore(id){
+    if(mode==='cloud'&&sb){sb.from('scores').delete().eq('id',id).then(function(){},function(){});}
+    else{lsSave(lsScores().filter(function(e){return e.id!==id;}));Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],boardFor(g));});}
+  }
+  function resetAll(){
+    if(mode==='cloud'&&sb){sb.from('scores').delete().neq('id','00000000-0000-0000-0000-000000000000').then(function(){},function(){});}
+    else{lsSave([]);Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],[]);});}
+  }
+
+  /* ----- sessions / presence (Realtime Presence) ----- */
+  function startSession(data){
+    if(mode!=='cloud'||!sb)return;
+    mySess=Object.assign({device:DEVICE_ID,station:STATION,ss:false,ts:Date.now()},data);
+    presenceCh=sb.channel('arcade-presence',{config:{presence:{key:DEVICE_ID}}});
+    presenceCh.subscribe(function(status){if(status==='SUBSCRIBED'){presenceCh.track(mySess);}});
+    if(hbTimer)clearInterval(hbTimer);
+    hbTimer=setInterval(function(){if(presenceCh){mySess.ts=Date.now();presenceCh.track(mySess);}},10000);
+  }
+  function updateSession(patch){
+    if(mode!=='cloud'||!sb||!presenceCh)return;
+    Object.assign(mySess,patch,{ts:Date.now()});presenceCh.track(mySess);
+  }
+  function adminPresence(){
+    if(adminCh)return;
+    adminCh=sb.channel('arcade-presence',{config:{presence:{key:'admin-'+DEVICE_ID}}});
+    function emit(){
+      var st=adminCh.presenceState(),arr=[];
+      Object.keys(st).forEach(function(k){if(k.indexOf('admin-')===0)return;var m=st[k]&&st[k][0];if(m)arr.push(m);});
+      fire(adminSessCbs,arr);
+      var map={};arr.forEach(function(s){map[s.device]={screensaver:!!s.ss};});
+      fire(adminCmdCbs,map);
+    }
+    adminCh.on('presence',{event:'sync'},emit).on('presence',{event:'join'},emit).on('presence',{event:'leave'},emit).subscribe();
+  }
+  function onSessions(cb){if(mode==='cloud'&&sb){adminSessCbs.push(cb);adminPresence();}else cb(null);}
+  function onCommands(cb){if(mode==='cloud'&&sb){adminCmdCbs.push(cb);adminPresence();}else cb({});}
+
+  /* ----- commands / screensaver (Realtime Broadcast) ----- */
+  function onMyCommand(cb){
+    if(mode==='cloud'&&sb){cmdCh=sb.channel('cmd-'+DEVICE_ID);cmdCh.on('broadcast',{event:'ss'},function(p){cb(p.payload||{});}).subscribe();}
+    else{window.addEventListener('storage',function(e){if(e.key==='gds_cmd_'+DEVICE_ID){try{cb(JSON.parse(e.newValue||'{}'));}catch(x){}}});}
+  }
+  function sendCommand(device,cmd){
+    if(mode==='cloud'&&sb){
+      var ch=cmdSendChs[device];
+      if(ch&&ch._ready){ch.send({type:'broadcast',event:'ss',payload:cmd});return;}
+      ch=sb.channel('cmd-'+device);cmdSendChs[device]=ch;
+      ch.subscribe(function(status){if(status==='SUBSCRIBED'){ch._ready=true;ch.send({type:'broadcast',event:'ss',payload:cmd});}});
+    } else {try{localStorage.setItem('gds_cmd_'+device,JSON.stringify(cmd));}catch(e){}}
+  }
+
+  return {init:init,get mode(){return mode;},submitScore:submitScore,onLeaderboard:onLeaderboard,allScores:allScores,pullScores:pullScores,
+    deleteScore:deleteScore,resetAll:resetAll,startSession:startSession,updateSession:updateSession,
+    onSessions:onSessions,onMyCommand:onMyCommand,onCommands:onCommands,sendCommand:sendCommand};
+})();
+
+function cloudUpdate(){Cloud.updateSession({game:(GAME_ORDER&&GAME_ORDER[currentGame])||'hof',points:POINTS});}
+
+/* ---------- SCREENSAVER ---------- */
+var ssRemote=false;
+function buildScreensaver(){
+  if(document.getElementById('screensaver'))return;
+  var ss=document.createElement('div');ss.id='screensaver';
+  var bubbles='';for(var i=0;i<8;i++){var sz=12+Math.round(Math.random()*34),lf=Math.round(Math.random()*100),du=7+Math.round(Math.random()*10),dl=Math.round(Math.random()*8);bubbles+='<span class="ss-bub" style="width:'+sz+'px;height:'+sz+'px;left:'+lf+'%;animation-duration:'+du+'s;animation-delay:'+dl+'s"></span>';}
+  ss.innerHTML=bubbles+'<div class="ss-inner"><div class="ss-logo">🌊🤿</div><div class="ss-title">GO DIVING<br>ARCADE</div><div class="ss-blink">▶ TAP TO PLAY ◀</div><div class="ss-sub">Sydney Reefs · All Ages</div></div>';
+  ss.addEventListener('click',function(){hideScreensaver(true);});
+  document.body.appendChild(ss);
+}
+function showScreensaver(){buildScreensaver();document.getElementById('screensaver').classList.add('on');}
+function hideScreensaver(localWake){var ss=document.getElementById('screensaver');if(ss)ss.classList.remove('on');if(localWake){ssRemote=false;Cloud.updateSession({ss:false});}}
+
+/* ---------- ADMIN ---------- */
+var ADM={sessions:[],scores:[],cmds:{},group:'All',open:false,wired:false};
+function adminWire(){
+  if(ADM.wired)return;ADM.wired=true;
+  Cloud.onSessions(function(a){ADM.sessions=a;if(ADM.open)renderAdmin();});
+  Cloud.allScores(function(a){ADM.scores=a;if(ADM.open)renderAdmin();});
+  Cloud.onCommands(function(m){ADM.cmds=m||{};if(ADM.open)renderAdmin();});
+}
+function buildAdminShell(){
+  if(document.getElementById('adminOv'))return;
+  var ov=document.createElement('div');ov.id='adminOv';
+  ov.innerHTML='<button class="adm-close" id="admClose">✕ Close</button><div class="adm"><h2>🛠 Arcade Admin</h2><div id="admBody"></div></div>';
+  document.body.appendChild(ov);
+  document.getElementById('admClose').onclick=function(){ADM.open=false;ov.classList.remove('on');};
+}
+function openAdmin(){buildAdminShell();adminWire();ADM.open=true;document.getElementById('adminOv').classList.add('on');adminRefresh();}
+function adminRefresh(){Cloud.pullScores(function(a){ADM.scores=a;if(ADM.open)renderAdmin();});}
+function ago(ts){if(!ts)return '—';var s=Math.round((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.round(s/60)+'m ago';return Math.round(s/3600)+'h ago';}
+function renderAdmin(){
+  var b=document.getElementById('admBody');if(!b)return;
+  var modeBadge='<span class="badge">'+(Cloud.mode==='cloud'?'☁ Cloud sync ON':'● Local only')+'</span>';
+  /* ---- LIVE PLAYERS ---- */
+  var live='<div class="card"><h3>Live players '+modeBadge+'</h3>';
+  if(Cloud.mode!=='cloud'||ADM.sessions===null){
+    live+='<p class="muted">Live cross-device view needs cloud sync (set SUPABASE_URL + SUPABASE_ANON_KEY). Showing this device only.</p>';
+    live+='<table><tr><th>Station</th><th>Player</th><th>Group</th><th>Game</th><th>Pts</th></tr><tr><td>'+esc(STATION)+'</td><td>'+esc(USER.name||'—')+'</td><td>'+esc(USER.group||'—')+'</td><td>'+(GAME_LABELS[(GAME_ORDER&&GAME_ORDER[currentGame])]||'—')+'</td><td>'+POINTS+'</td></tr></table>';
+  } else {
+    var sess=(ADM.sessions||[]).slice().sort(function(a,b){return (b.ts||0)-(a.ts||0);});
+    live+='<table><tr><th>Station</th><th>Player</th><th>Group</th><th>Game</th><th>Pts</th><th>Seen</th><th>Screen</th></tr>';
+    if(!sess.length)live+='<tr><td colspan="7" class="muted">No active players right now.</td></tr>';
+    sess.forEach(function(s){
+      var online=(Date.now()-(s.ts||0))<30000;
+      var ssOn=ADM.cmds[s.device]&&ADM.cmds[s.device].screensaver;
+      live+='<tr><td>'+(online?'<span class="on-dot">●</span> ':'<span class="off-dot">○</span> ')+esc(s.station||s.device)+'</td><td>'+esc(s.name||'—')+'</td><td>'+esc(s.group||'—')+'</td><td>'+(GAME_LABELS[s.game]||esc(s.game||'—'))+'</td><td>'+(s.points||0)+'</td><td>'+ago(s.ts)+'</td><td><button class="'+(ssOn?'warn':'acc')+'" onclick="adminScreensaver(\''+s.device+'\','+(ssOn?'false':'true')+')">'+(ssOn?'Wake':'Sleep')+'</button></td></tr>';
+    });
+    live+='</table>';
+  }
+  live+='</div>';
+  /* ---- PRIZE HELPER ---- */
+  var cutoff=Date.now()-PRIZE_WINDOW_MIN*60000;
+  var onlineDevices={};(ADM.sessions||[]).forEach(function(s){if((Date.now()-(s.ts||0))<60000)onlineDevices[s.device]=true;});
+  var elig=(ADM.scores||[]).filter(function(e){return (ADM.group==='All'||e.group===ADM.group)&&e.ts>=cutoff;}).sort(function(a,b){return b.score-a.score;});
+  var prize='<div class="card"><h3>🏆 Prize round — '+esc(ADM.group==='All'?'All groups':ADM.group)+' (last '+PRIZE_WINDOW_MIN+' min)</h3>';
+  prize+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupP','adminSetGroup(this.value)')+'</div>';
+  prize+='<table><tr><th>#</th><th>Player</th><th>Score</th><th>When</th><th>Still here?</th></tr>';
+  if(!elig.length)prize+='<tr><td colspan="5" class="muted">No scores in this window yet.</td></tr>';
+  elig.slice(0,10).forEach(function(e,i){var here=Cloud.mode==='cloud'?(onlineDevices[e.device]?'<span class="on-dot">● online</span>':'<span class="off-dot">○ gone</span>'):'—';prize+='<tr'+(i<3?' style="background:var(--accentd)"':'')+'><td>'+(['🥇','🥈','🥉'][i]||(i+1))+'</td><td>'+esc(e.name)+'</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td>'+here+'</td></tr>';});
+  prize+='</table></div>';
+  /* ---- LEADERBOARD MANAGEMENT ---- */
+  var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
+  var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
+  mng+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupM','adminSetGroup(this.value)')+'<button class="warn" onclick="adminResetAll()">🗑 Reset ALL rankings</button></div>';
+  mng+='<table><tr><th>Player</th><th>Score</th><th>When</th><th></th></tr>';
+  if(!board.length)mng+='<tr><td colspan="4" class="muted">No entries.</td></tr>';
+  board.forEach(function(e){mng+='<tr><td>'+esc(e.name)+'</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td><button class="warn" onclick="adminDelete(\''+e.id+'\')">Delete</button></td></tr>';});
+  mng+='</table></div>';
+  /* ---- THIS DEVICE ---- */
+  var dev='<div class="card"><h3>This device</h3><div class="row"><span class="muted">Station name:</span><input id="admStation" value="'+esc(STATION)+'"><button class="acc" onclick="adminRename()">Save</button></div><p class="muted" style="margin-top:6px">Device ID: '+esc(DEVICE_ID)+'</p></div>';
+  var allS=ADM.scores||[];var gc={'Young Explorer':0,'Teen Explorer':0,'Adult Explorer':0};allS.forEach(function(e){if(gc[e.group]!=null)gc[e.group]++;});
+  var diag='<span class="muted" style="font-size:12px">Stored scores: '+allS.length+' (Young '+gc['Young Explorer']+' · Teen '+gc['Teen Explorer']+' · Adult '+gc['Adult Explorer']+') · '+(Cloud.mode==='cloud'?'Cloud':'Local')+'</span>';
+  var bar='<div class="row" style="margin-bottom:10px;align-items:center"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
+  b.innerHTML=bar+live+prize+mng+dev;
+}
+function groupSelect(id,onchg){var gs=['All','Young Explorer','Teen Explorer','Adult Explorer'];return '<select id="'+id+'" onchange="'+onchg+'">'+gs.map(function(g){return '<option'+(g===ADM.group?' selected':'')+' value="'+g+'">'+(g==='All'?'All groups':g)+'</option>';}).join('')+'</select>';}
+function adminSetGroup(g){ADM.group=g;renderAdmin();}
+function adminScreensaver(device,on){Cloud.sendCommand(device,{screensaver:!!on});setTimeout(renderAdmin,150);}
+function adminDelete(id){if(confirm('Delete this entry?')){Cloud.deleteScore(id);setTimeout(renderAdmin,150);}}
+function adminResetAll(){if(confirm('Wipe ALL rankings for every group? This cannot be undone.')){Cloud.resetAll();setTimeout(renderAdmin,150);}}
+function adminRename(){var v=(document.getElementById('admStation').value||'').trim();if(v){setStation(v);renderAdmin();}}
+
+/* admin access: ?admin / #admin in URL, or tap the top-left corner 5× (no PIN) */
+function promptAdmin(){openAdmin();}
+(function(){
+  var h=(location.hash||'').toLowerCase(),q=new URLSearchParams(location.search);
+  if(h.indexOf('admin')>-1||q.has('admin'))setTimeout(promptAdmin,300);
+  window.addEventListener('hashchange',function(){if((location.hash||'').toLowerCase().indexOf('admin')>-1)promptAdmin();});
+  /* corner-tap fallback for on-site access */
+  var taps=[],corner=80;
+  document.addEventListener('click',function(e){
+    if(e.clientX<corner&&e.clientY<corner){taps.push(Date.now());taps=taps.filter(function(t){return Date.now()-t<3000;});if(taps.length>=5){taps=[];promptAdmin();}}
+  },true);
+})();
+
+/* inject screensaver + admin styles */
+(function(){var st=document.createElement('style');st.textContent=
+'#screensaver{position:fixed;inset:0;z-index:9000;display:none;align-items:center;justify-content:center;cursor:pointer;background:radial-gradient(1200px 700px at 50% 30%,#0b3a4d,#04161e 75%);overflow:hidden}'+
+'#screensaver.on{display:flex}'+
+'#screensaver::after{content:"";position:absolute;inset:0;background:repeating-linear-gradient(to bottom,transparent 0 2px,rgba(0,0,0,.18) 2px 4px);pointer-events:none}'+
+'.ss-inner{position:relative;text-align:center;z-index:2;animation:ssFloat 6s ease-in-out infinite}'+
+'.ss-logo{font-size:clamp(48px,12vw,80px);margin-bottom:8px}'+
+'.ss-title{font-family:"Press Start 2P",monospace;font-size:clamp(20px,6vw,42px);color:var(--accent);line-height:1.5;text-shadow:0 0 18px rgba(54,201,192,.6)}'+
+'.ss-blink{font-family:"Press Start 2P",monospace;font-size:clamp(11px,3vw,16px);color:#fff;letter-spacing:3px;margin-top:20px;animation:tapBlink 1.1s step-end infinite}'+
+'.ss-sub{font-family:"Press Start 2P",monospace;font-size:clamp(8px,1.6vw,11px);color:var(--muted);margin-top:12px;letter-spacing:1px}'+
+'.ss-bub{position:absolute;bottom:-60px;border-radius:50%;background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.18);animation:ssRise linear infinite;z-index:1}'+
+'@keyframes ssFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-14px)}}'+
+'@keyframes ssRise{to{transform:translateY(-115vh);opacity:0}}'+
+'#adminOv{position:fixed;inset:0;z-index:9500;display:none;background:rgba(2,12,18,.94);overflow:auto;padding:16px}'+
+'#adminOv.on{display:block}'+
+'.adm{max-width:820px;margin:0 auto;color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif}'+
+'.adm h2{font-family:"Press Start 2P",monospace;font-size:15px;color:var(--accent);margin:6px 0 14px}'+
+'.adm h3{font-size:13px;color:var(--gold);margin:0 0 8px;text-transform:uppercase;letter-spacing:1px}'+
+'.adm .card{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:12px;margin-bottom:12px}'+
+'.adm table{width:100%;border-collapse:collapse;font-size:13px}'+
+'.adm th,.adm td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);vertical-align:middle}'+
+'.adm th{color:var(--muted);font-weight:600}'+
+'.adm .muted{color:var(--muted);font-size:12.5px}'+
+'.adm .badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;background:var(--accentd);color:var(--accent);margin-left:6px;vertical-align:middle}'+
+'.adm .on-dot{color:var(--good)}.adm .off-dot{color:var(--muted)}'+
+'.adm button{font-family:inherit;cursor:pointer;border-radius:8px;border:1px solid var(--line);background:var(--bg2);color:var(--text);padding:6px 10px;font-size:12px}'+
+'.adm button.warn{background:var(--badd);border-color:var(--bad);color:#ffd0d0}'+
+'.adm button.acc{background:var(--accent);border-color:var(--accent);color:#04282a;font-weight:600}'+
+'.adm .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}'+
+'.adm select,.adm input{font-family:inherit;background:#000;border:1px solid var(--line);color:#fff;border-radius:6px;padding:6px 8px;font-size:13px}'+
+'.adm-close{position:fixed;top:12px;right:14px;z-index:9550;background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer}'+
+'#pinOv{position:fixed;inset:0;z-index:9600;display:none;background:rgba(2,12,18,.92)}'+
+'#pinOv.on{display:block}'+
+'#pinOv .pinbox{max-width:320px;margin:18vh auto 0;background:var(--surface);border:2px solid var(--accent);border-radius:14px;padding:22px;text-align:center}'+
+'#pinOv input{width:100%;text-align:center;font-family:"Press Start 2P",monospace;font-size:20px;letter-spacing:6px;background:#000;border:2px solid var(--accent);color:#fff;border-radius:8px;padding:12px}';
+document.head.appendChild(st);})();
+
+/* ════════ HELPERS ════════ */
+function showApp(){
+  var a=document.getElementById('app');
+  a.style.display='flex'; a.style.flexDirection='column';
+}
+
+/* ════════ WELCOME ════════ */
+var USER={name:'',age:0,group:''};
+function ageGroup(a){if(a<=12)return 'Young Explorer';if(a<=17)return 'Teen Explorer';return 'Adult Explorer';}
+
+/* ---- friendly-name filter (keeps a public, kid-facing board clean) ---- */
+var BADWORDS_SUB=['fuck','shit','cunt','bitch','bastard','whore','slut','pussy','penis','vagina','nigger','nigga','faggot','retard','wanker','bollock','arsehole','asshole','dickhead','motherfuck','wank','tits','rape','nazi','hitler','pedo','paedo','kike','spastic','twat','jizz','dildo'];
+var BADWORDS_EXACT=['ass','sex','fag','cum','tit','nob','gay','xxx','dick','cock','prick','boob','semen'];
+function normName(s){return String(s).toLowerCase().replace(/@/g,'a').replace(/\$/g,'s').replace(/!/g,'i').replace(/\|/g,'i').replace(/0/g,'o').replace(/1/g,'i').replace(/3/g,'e').replace(/4/g,'a').replace(/5/g,'s').replace(/7/g,'t').replace(/[^a-z]/g,'');}
+function isCleanName(nm){
+  var full=normName(nm);
+  for(var i=0;i<BADWORDS_SUB.length;i++){if(full.indexOf(BADWORDS_SUB[i])>-1)return false;}
+  var tokens=String(nm).toLowerCase().split(/[^a-z0-9@$!|]+/).map(normName).filter(Boolean);
+  for(var j=0;j<tokens.length;j++){if(BADWORDS_EXACT.indexOf(tokens[j])>-1)return false;}
+  return true;
+}
+
+document.getElementById('wstart').onclick=function(){
+  var nm=document.getElementById('wname').value.trim();
+  var av=parseInt(document.getElementById('wage').value,10);
+  var err=document.getElementById('werr');
+  if(!nm){err.textContent='ENTER YOUR NAME';return;}
+  if(!isCleanName(nm)){err.textContent='PLEASE PICK A FRIENDLY NAME';return;}
+  if(!av||av<3||av>120){err.textContent='VALID AGE: 3 – 120';return;}
+  err.textContent='';
+  USER.name=nm;USER.age=av;USER.group=ageGroup(av);
+  window._hofSubmitted=false;
+  document.getElementById('whoName').textContent=USER.name;
+  var _mn=document.getElementById('menuName');if(_mn)_mn.textContent=USER.name;
+  document.getElementById('whoGroup').textContent=USER.group;
+  document.getElementById('welcome').style.display='none';
+  Cloud.startSession({name:USER.name,group:USER.group,age:USER.age,game:'quiz',points:0,started:Date.now()});
+  showApp(); showMenu();
+};
+['wname','wage'].forEach(function(id){
+  document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('wstart').click();});
+});
+
+/* ════════ ART ════════ */
+var PHOTOS={
+  seadragon:{src:'images/weedy.jpg',alt:'Weedy seadragon'},
+  pjshark:{src:'images/portjackson.jpg',alt:'Port Jackson shark'},
+  groper:{src:'images/groper.jpg',alt:'Eastern blue groper'},
+  cuttle:{src:'images/cuttle.jpg',alt:'Giant cuttlefish'},
+  bluedevil:{src:'images/bluedevil.jpg',alt:'Eastern blue devil'}
+};
+function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
+function creaturePlaceholder(key){var nm=(CR[key]&&CR[key].n)||'Sea creature';return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">\uD83D\uDC1F</div><div style="font-size:13px;color:var(--muted)">'+nm+'</div></div>';}
+var SIL_SHAPE={seadragon:'seadragon',pjshark:'pjshark',groper:'groper',cuttle:'cuttle',bluedevil:'bluedevil',duskywhaler:'pjshark',greynurse:'pjshark',hammeroct:'octopus',angler:'groper'};
+function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
+  if(!ph){var sh=SIL_SHAPE[key]||'groper';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px">'+silSVG(sh,'#15485a')+'</div>';}
+  return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
+var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
+
+/* ════════ SITE DATA ════════ */
+var PHOTO_SCENES=[
+  {img:'images/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
+  {img:'images/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')},
+  {img:'images/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('SS Centennial')},
+  {img:'images/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('TSS Currajong')},
+  {img:'images/bareisland.jpg',name:'Bare Island',svg:siteSVG('Bare Island','#236f7e','#0c3a44','kelp')}
+];
+var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
+function siteSVG(label,top,bottom,feature){
+  var feat='';
+  if(feature==='pier'){feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round"><line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/><line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/><line x1="540" y1="60" x2="540" y2="300"/></g><rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';}
+  else{feat='<g fill="#0e5b4f" opacity="0.85"><path d="M120 320 q-24 -120 8 -200 q14 80 -8 200 Z"/><path d="M180 320 q18 -140 -6 -230 q-22 90 6 230 Z"/><path d="M250 320 q-20 -110 6 -190 q16 70 -6 190 Z"/><path d="M470 320 q24 -130 -6 -215 q-20 85 6 215 Z"/><path d="M540 320 q-18 -120 8 -195 q14 75 -8 195 Z"/></g>';}
+  var fish='<g fill="#f3c64f" opacity="0.9"><ellipse cx="360" cy="150" rx="22" ry="10"/><path d="M338 150 l-16 -10 l0 20 Z"/></g><g fill="#ef7a52" opacity="0.85"><ellipse cx="430" cy="210" rx="16" ry="8"/><path d="M446 210 l14 -8 l0 16 Z"/></g>';
+  return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px"><defs><linearGradient id="g_'+feature+'" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="'+top+'"/><stop offset="1" stop-color="'+bottom+'"/></linearGradient></defs><rect width="660" height="320" fill="url(#g_'+feature+')"/><g fill="#ffffff" opacity="0.12"><circle cx="90" cy="40" r="6"/><circle cx="150" cy="80" r="4"/><circle cx="500" cy="50" r="5"/><circle cx="600" cy="100" r="4"/></g><rect y="300" width="660" height="20" fill="#063a30" opacity="0.6"/>'+feat+fish+'</svg>';
+}
+function wreckSVG(label){
+  return '<svg viewBox="0 0 660 320" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block;border-radius:12px">'+
+    '<defs><linearGradient id="wg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#13414f"/><stop offset="1" stop-color="#06222c"/></linearGradient></defs>'+
+    '<rect width="660" height="320" fill="url(#wg)"/>'+
+    '<g fill="#ffffff" opacity="0.08"><circle cx="120" cy="50" r="5"/><circle cx="520" cy="40" r="4"/><circle cx="300" cy="70" r="3"/></g>'+
+    '<rect y="296" width="660" height="24" fill="#04161d" opacity="0.7"/>'+
+    /* hull */
+    '<g fill="#0a2e3a">'+
+    '<path d="M120 250 q40 -40 230 -34 q150 4 200 30 q20 12 -10 22 q-60 18 -210 16 q-160 -2 -210 -18 q-24 -8 10 -16 Z" fill="#0a2e3a"/>'+
+    '</g>'+
+    /* funnel + mast leaning */
+    '<g stroke="#0a2e3a" stroke-width="14" stroke-linecap="round"><line x1="300" y1="232" x2="280" y2="150"/></g>'+
+    '<rect x="360" y="190" width="40" height="50" rx="4" fill="#0a2e3a" transform="rotate(8 380 215)"/>'+
+    /* portholes */
+    '<g fill="#1c5566"><circle cx="250" cy="232" r="7"/><circle cx="300" cy="236" r="7"/><circle cx="350" cy="236" r="7"/><circle cx="400" cy="232" r="7"/></g>'+
+    /* fish + kelp on wreck */
+    '<g fill="#0e5b4f" opacity="0.8"><path d="M180 296 q-14 -70 6 -120 q10 50 -6 120 Z"/><path d="M470 296 q16 -80 -6 -130 q-12 55 6 130 Z"/></g>'+
+    '<g fill="#f3c64f" opacity="0.85"><ellipse cx="430" cy="120" rx="16" ry="7"/><path d="M446 120 l12 -7 l0 14 Z"/></g>'+
+    '<text x="330" y="40" text-anchor="middle" fill="#7fd6e0" font-size="20" font-family="monospace" opacity="0.7">'+esc(label)+'</text>'+
+    '</svg>';
+}
+
+/* ════════ CREATURE DATA ════════ */
+var CR={
+  seadragon:{n:'Weedy seadragon',len:45,depth:50,speed:0.15,life:6,eggs:275,camo:9,migrate:0,f:'A NSW icon — the male carries the eggs along his tail.'},
+  pjshark:{n:'Port Jackson shark',len:165,depth:275,speed:1.5,life:30,eggs:13,camo:5,migrate:600,f:'Swims as far as Tasmania (600 km) and returns to the very same reef a year later.'},
+  groper:{n:'Eastern blue groper',len:100,depth:60,speed:4,life:35,eggs:50000,camo:2,migrate:0,f:'The NSW state fish. The big blue males all start life as females.'},
+  cuttle:{n:'Giant cuttlefish',len:100,depth:100,speed:10,life:2,eggs:200,camo:10,migrate:0,f:'The world\'s largest cuttlefish and a master colour-changer; dies after one breeding cycle.'},
+  bluedevil:{n:'Eastern blue devil',len:40,depth:30,speed:2,life:12,eggs:500,camo:4,migrate:0,f:'A shy, cave-loving fish found only along the NSW coast.'},
+  duskywhaler:{n:'Dusky whaler shark',len:360,depth:400,speed:8,life:40,eggs:8,camo:3,migrate:300,f:'Visits Cabbage Tree Bay every summer when the water tops 22°C. Matures only at age 20.'},
+  greynurse:{n:'Grey nurse shark',len:320,depth:200,speed:6,life:25,eggs:2,camo:2,migrate:200,f:'Fearsome-looking but placid — no confirmed human fatalities. Embryos eat their siblings in the womb.'},
+  hammeroct:{n:'Hammer octopus',len:20,depth:30,speed:5,life:1,eggs:200,camo:8,migrate:0,f:'Found only on Australia\'s east coast. The male uses a special modified arm to mate.'},
+  angler:{n:'Anglerfish',len:15,depth:40,speed:0.5,life:5,eggs:50000,camo:10,migrate:0,f:'Gathers near the Chowder Bay jetty to mate; the small male flees fast or risks being eaten.'}
+};
+var KEYS=Object.keys(CR);
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+var $=function(id){return document.getElementById(id);};
+
+/* ════════ GAME FLOW ════════ */
+var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind'];
+var currentGame=0;
+var playedGames={};      /* games the diver has completed at least once */
+var activeGame=null;
+
+function updateStrip(active){
+  GAME_ORDER.forEach(function(g){
+    var el=$('gs-'+g);if(!el)return;el.classList.remove('active','done');
+    if(playedGames[g])el.classList.add('done');
+    if(g===active){el.classList.add('active');
+      try{el.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});}catch(e){}
+    }
+  });
+}
+function showPanel(id){
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+  if($(id))$(id).classList.add('show');
+  window.scrollTo(0,0);
+}
+/* Called at the end of every mini-game. Now returns the diver to the menu hub
+   (and remembers the game as played) instead of forcing the next game. */
+function advanceGame(){
+  if(activeGame)playedGames[activeGame]=true;
+  showMenu();
+}
+function startGame(name){
+  activeGame=(name==='hof'||name==='menu')?null:name;
+  var strip=$('gamesstrip');
+  if(name==='hof'||name==='menu'){strip.style.display='none';}
+  else{strip.style.display='flex';}
+  updateStrip(name);showPanel('p-'+name);
+  Cloud.updateSession({game:name,points:POINTS});
+  if(name==='quiz')initQuiz();
+  else if(name==='breath')initBreath();
+  else if(name==='silhouette')initSilhouette();
+  else if(name==='log')initLog();
+  else if(name==='bubble')initBubble();
+  else if(name==='depth')initDepth();
+  else if(name==='guess')initGuess();
+  else if(name==='truefalse')initTrueFalse();
+  else if(name==='colour')initColour();
+  else if(name==='trumps')initTrumps();
+  else if(name==='oddone')initOddOne();
+  else if(name==='speed')initSpeed();
+  else if(name==='season')initSeason();
+  else if(name==='wreckid')initWreckId();
+  else if(name==='wave')initWave();
+  else if(name==='wreckfind')initWreckFind();
+}
+
+/* ════════ MENU HUB (pick any game) ════════ */
+var GAME_META={
+  quiz:{icon:'🐠',name:'Guess Who',desc:'Name the creature from a photo'},
+  breath:{icon:'🫧',name:'Breath Hold',desc:'Hold on like a freediver'},
+  silhouette:{icon:'🧩',name:'Silhouette Match',desc:'Spot the shape'},
+  log:{icon:'✅',name:'Spotter Log',desc:'Tick off what\'s in the scene'},
+  bubble:{icon:'🎯',name:'Bubble Pop',desc:'Pop the right targets'},
+  depth:{icon:'📏',name:'Depth Gauge',desc:'Guess how deep'},
+  guess:{icon:'🔎',name:'Where Am I?',desc:'Name the Sydney dive site'},
+  truefalse:{icon:'📖',name:'Myth Busters',desc:'True or false?'},
+  colour:{icon:'🎨',name:'Colour the Creature',desc:'Pick the real colours'},
+  trumps:{icon:'🃏',name:'Stat Battle',desc:'Top-trumps with sea life'},
+  oddone:{icon:'🔍',name:'Odd One Out',desc:'Find the one that doesn\'t fit'},
+  speed:{icon:'⏱️',name:'Speed Round',desc:'60-second quick-fire'},
+  season:{icon:'📅',name:'When Will I See It?',desc:'Match species to season'},
+  wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
+  wave:{icon:'🌊',name:'Wave Lab',desc:'Predict the visibility'},
+  wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'}
+};
+function showMenu(){
+  activeGame=null;
+  $('gamesstrip').style.display='flex';
+  updateStrip(null);
+  buildMenu();
+  showPanel('p-menu');
+  Cloud.updateSession({game:'menu',points:POINTS});
+}
+function buildMenu(){
+  var played=Object.keys(playedGames).length,total=GAME_ORDER.length;
+  $('menuProgress').textContent=played+' of '+total+' games played';
+  var html=GAME_ORDER.map(function(g){
+    var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
+    var done=playedGames[g]?'<span class="mc-done">✓ played</span>':'';
+    return '<button class="menu-card" data-g="'+g+'">'+
+      '<span class="mc-icon">'+m.icon+'</span>'+
+      '<span class="mc-name">'+esc(m.name)+'</span>'+
+      '<span class="mc-desc">'+esc(m.desc)+'</span>'+done+
+      '</button>';
+  }).join('');
+  $('menuGrid').innerHTML=html;
+  $('menuGrid').querySelectorAll('.menu-card').forEach(function(b){
+    b.onclick=function(){startGame(b.dataset.g);};
+  });
+}
+/* Strip tiles jump straight to a game during play */
+GAME_ORDER.forEach(function(g){
+  var el=$('gs-'+g);if(el){el.style.cursor='pointer';el.onclick=function(){startGame(g);};}
+});
+/* Menu → Hall of Fame */
+(function(){var mf=$('menuFinish');if(mf)mf.onclick=function(){showHallOfFame();};})();
+
+
+var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
+function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';quizRound();}
+function quizRound(){
+  qAnswered=false;$('qfact').textContent='';$('qnext').style.display='none';$('qnotice').textContent='';
+  var key=qQueue.shift();
+  $('qart').innerHTML=ART_html(key);
+  var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
+  $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
+  $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(qAnswered)return;qAnswered=true;qTotal++;
+    $('qopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
+    if(btn.dataset.k===key){qScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
+    $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=CR[key].f;
+    if(qQueue.length>0)$('qnext').style.display='inline-block';
+    else{$('qnotice').textContent='All creatures done! 🐠 Back to the menu…';setTimeout(advanceGame,2200);}
+  };});
+  startTimer();
+}
+$('qnext').onclick=quizRound;
+
+/* ════════ SPOTTER LOG ════════ */
+var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
+var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin'];
+var logFound={},logDone=false;
+function initLog(){
+  logFound={};logDone=false;$('logn').textContent=0;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
+  $('logscene').innerHTML='<img src="images/spotter1.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy" onerror="this.outerHTML=siteSVG(\'Spotter scene\',\'#1d7d72\',\'#0c4a44\',\'kelp\')">';
+  var opts=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
+  $('logchips').innerHTML=opts.map(function(sp){return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';}).join('');
+  $('logchips').querySelectorAll('.chip').forEach(function(b){b.onclick=function(){
+    if(logDone||b.classList.contains('chip-done')||b.classList.contains('chip-wrong'))return;
+    if(LOG_PRESENT.indexOf(b.dataset.sp)>-1){logFound[b.dataset.sp]=true;b.classList.add('chip-done');b.textContent=b.dataset.sp+' ✓';award(timedReward());renderLog();}
+    else{b.classList.add('chip-wrong');b.textContent=b.dataset.sp+' ✗';$('logmsg').textContent='Not in this scene — keep looking.';penalize();}
+    startTimer();
+  };});
+  startTimer();
+}
+function renderLog(){
+  var n=Object.keys(logFound).length;$('logn').textContent=n;$('logbar').style.width=(n/3*100)+'%';
+  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Back to the menu…';setTimeout(advanceGame,2200);}
+}
+
+/* ════════ GUESS ════════ */
+var gScore=0,gTotal=0,gQueue=[],gAnswered=false;
+function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice());$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
+function guessRound(){
+  gAnswered=false;$('gnext').style.display='none';$('gnotice').textContent='';
+  var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
+  var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
+  var opts=shuffle([correctName].concat(wrong));
+  $('gart').innerHTML='<div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:340px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
+  $('gopts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+n+'">'+n+'</button>';}).join('');
+  $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(gAnswered)return;gAnswered=true;gTotal++;
+    $('gopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.n===correctName)x.classList.add('right');});
+    if(btn.dataset.n===correctName){gScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
+    $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;
+    if(gQueue.length>0)$('gnext').style.display='inline-block';
+    else{$('gnotice').textContent='All sites guessed! 🗺️ Back to the menu…';setTimeout(advanceGame,2200);}
+  };});
+  startTimer();
+}
+$('gnext').onclick=guessRound;
+
+/* ════════ TRUMPS ════════ */
+var TRUMPS_ROUNDS=5,tWin=0,tLose=0,tRound=0,tQueue=[];
+var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10'],['migrate','Migration','km']];
+function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
+function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
+function cardHtml(key,who,hide,lenLocked){var c=CR[key];
+  return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:6px">'+ART_html(key,trumpsArtH())+'</div>'+
+    STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
+function initTrumps(){
+  tWin=0;tLose=0;tRound=0;
+  var allPairs=[];for(var i=0;i<KEYS.length;i++)for(var j=i+1;j<KEYS.length;j++)allPairs.push([KEYS[i],KEYS[j]]);
+  tQueue=shuffle(allPairs).slice(0,TRUMPS_ROUNDS);
+  $('twin').textContent=0;$('tlose').textContent=0;$('troundtotal').textContent=TRUMPS_ROUNDS;$('tnotice').textContent='';
+  dealRound();
+}
+function dealRound(){
+  $('tresult').textContent='';$('tdeal').style.display='none';$('tnotice').textContent='';tRound++;$('tround').textContent=tRound;
+  var pair=tQueue[tRound-1],pk=pair[0],ck=pair[1];
+  var lenLocked=Math.max(CR[pk].len,CR[ck].len)/Math.min(CR[pk].len,CR[ck].len)>2;
+  $('pcard').innerHTML=cardHtml(pk,'Your card',false,lenLocked);
+  $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',true,lenLocked);
+  $('pcard').querySelectorAll('.statbtn:not(:disabled)').forEach(function(b){b.onclick=function(){
+    var s=b.dataset.s;
+    $('ccard').innerHTML=cardHtml(ck,'Reef\'s card',false,lenLocked);
+    $('pcard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;});
+    $('ccard').querySelectorAll('.statbtn').forEach(function(x){x.disabled=true;if(x.dataset.s===s)x.style.borderColor='var(--accent)';});
+    b.style.borderColor='var(--accent)';
+    var pv=CR[pk][s],cv=CR[ck][s];
+    if(pv>cv){tWin++;$('tresult').textContent='You win the round! 🎉';$('tresult').style.color='var(--good)';award(timedReward());}
+    else if(pv<cv){tLose++;$('tresult').textContent='The reef takes it.';$('tresult').style.color='var(--bad)';penalize();}
+    else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
+    $('twin').textContent=tWin;$('tlose').textContent=tLose;
+    if(tRound<TRUMPS_ROUNDS)$('tdeal').style.display='inline-block';
+    else{$('tnotice').textContent='Battle complete! 🃏 Back to the menu…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('tdeal').onclick=dealRound;
+
+/* ════════════════════════════════════════════════════════
+   NEW GAME DATA + ART
+   ════════════════════════════════════════════════════════ */
+
+/* Simple creature silhouette SVGs (shape only, single fill) */
+function silSVG(shape,fill){
+  fill=fill||'#0a2e3c';
+  var body={
+    seadragon:'<path d="M70 250 q40 -30 90 -28 q20 -50 55 -55 q-8 18 2 30 q35 -6 70 10 q40 18 55 55 q6 16 -4 26 q-30 -18 -58 -16 q14 22 6 46 q-18 -16 -30 -34 q-40 6 -78 -8 q-44 -16 -60 -52 q-10 -22 24 -24 Z"/><circle cx="240" cy="120" r="6" fill="#dff1f6"/>',
+    pjshark:'<path d="M60 230 q60 -70 170 -64 q70 4 130 36 q30 16 50 4 q-8 26 -34 34 q-50 14 -120 12 q-90 -2 -150 -10 q-40 -6 -46 -12 Z"/><path d="M150 168 l24 -56 l30 54 Z"/><path d="M250 172 l20 -44 l24 44 Z"/><path d="M380 206 l46 -16 l-8 34 Z"/>',
+    groper:'<path d="M70 200 q90 -90 230 -70 q70 10 110 50 q24 24 40 14 q-6 30 -40 40 q-60 16 -140 14 q-110 -2 -170 -22 q-44 -16 -30 -40 Z"/><path d="M120 150 l30 -40 l24 44 Z"/>',
+    cuttle:'<ellipse cx="220" cy="170" rx="120" ry="70"/><g>'+
+      '<path d="M340 180 q40 6 70 -6"/><path d="M340 192 q44 14 78 8"/><path d="M340 204 q40 24 74 26"/>'+
+      '</g><circle cx="170" cy="150" r="10" fill="#dff1f6"/>',
+    bluedevil:'<path d="M80 200 q70 -64 180 -58 q60 4 96 34 q26 22 42 12 q-6 28 -38 36 q-54 14 -118 12 q-92 -2 -146 -20 q-38 -14 -16 -16 Z"/><path d="M250 150 q20 -34 50 -30 q-6 18 -8 34 Z"/>',
+    octopus:'<path d="M150 120 q70 -40 140 0 q40 30 30 86 q-2 16 -16 18 q-6 30 -30 30 q-10 26 -34 14 q-18 22 -38 2 q-26 14 -38 -12 q-26 4 -30 -24 q-26 -10 -16 -38 q-14 -44 30 -76 Z"/><circle cx="195" cy="120" r="9" fill="#dff1f6"/><circle cx="250" cy="120" r="9" fill="#dff1f6"/>',
+    ray:'<path d="M70 180 q150 -90 300 0 q-40 30 -150 30 q-110 0 -150 -30 Z"/><path d="M210 210 q4 60 -2 90 q-10 -2 -10 -30 q-2 -40 12 -60 Z"/>',
+    turtle:'<ellipse cx="210" cy="180" rx="110" ry="78"/><path d="M320 150 q40 -16 60 -2 q-10 24 -44 28 Z"/><path d="M120 120 l-34 -28 M300 120 l34 -28 M120 240 l-34 28 M300 240 l34 28" stroke="'+fill+'" stroke-width="20" stroke-linecap="round"/>'
+  };
+  return '<svg viewBox="0 0 460 320" xmlns="http://www.w3.org/2000/svg"><g fill="'+fill+'" stroke="'+fill+'" stroke-width="2" stroke-linejoin="round">'+(body[shape]||body.groper)+'</g></svg>';
+}
+
+/* Line-drawing (outline) for colouring game — same shapes, outline only */
+function lineSVG(shape){
+  var inner=silSVG(shape,'none').replace('fill="none"','fill="#0e3344"');
+  return inner.replace(/stroke-width="2"/,'stroke-width="3"').replace('stroke="none"','stroke="#7fd6e0"').replace('fill="none"','fill="#0e3344"').replace(/stroke="none"/g,'stroke="#7fd6e0"');
+}
+
+/* ════════ 1. BREATH HOLD ════════ */
+var BREATH_RECORDS=[
+  {who:'Reef rookie',t:30},
+  {who:'Keen snorkeller',t:60},
+  {who:'Club freediver',t:120},
+  {who:'Sydney comp diver',t:240},
+  {who:'Elite static apnea',t:360}
+];
+var breathState={holding:false,start:0,timer:null,pb:0,done:false,tries:0};
+function fmtSecs(s){return s.toFixed(1);}
+function initBreath(){
+  breathState.holding=false;breathState.done=false;breathState.tries=0;
+  try{breathState.pb=parseFloat(localStorage.getItem('gds_breath_pb'))||0;}catch(e){breathState.pb=0;}
+  $('breathPB').textContent=fmtSecs(breathState.pb);
+  $('breathTime').textContent='0.0';$('breathEmoji').textContent='🫧';
+  $('breathHint').textContent='Press & hold to dive';
+  $('breathResult').textContent='';$('breathNotice').textContent='';
+  $('breathFill').style.height='0%';
+  $('breathNext').style.display='none';
+  $('breathOrb').classList.remove('holding');
+  renderBreathRecords(0);
+}
+function renderBreathRecords(last){
+  $('breathRecords').innerHTML=BREATH_RECORDS.map(function(r){
+    var beat=last>=r.t;
+    return '<div class="rrow'+(beat?' beat':'')+'"><span>'+(beat?'✓ ':'')+r.who+'</span><span class="rt">'+r.t+'s</span></div>';
+  }).join('');
+}
+function breathTick(){
+  if(!breathState.holding)return;
+  var secs=(Date.now()-breathState.start)/1000;
+  $('breathTime').textContent=fmtSecs(secs);
+  $('breathFill').style.height=Math.min(100,secs/240*100)+'%';
+}
+function breathStart(e){
+  if(breathState.done||breathState.holding)return;
+  if(e&&e.cancelable)e.preventDefault();
+  breathState.holding=true;breathState.start=Date.now();
+  $('breathEmoji').textContent='🤿';$('breathHint').textContent='Hold… release to surface';
+  $('breathResult').textContent='';
+  $('breathOrb').classList.add('holding');
+  breathState.timer=setInterval(breathTick,100);
+}
+function breathEnd(){
+  if(!breathState.holding)return;
+  breathState.holding=false;clearInterval(breathState.timer);
+  $('breathOrb').classList.remove('holding');$('breathEmoji').textContent='🫧';
+  var secs=(Date.now()-breathState.start)/1000;
+  $('breathTime').textContent=fmtSecs(secs);
+  breathState.tries++;
+  renderBreathRecords(secs);
+  /* find which record they beat */
+  var beat=null;for(var i=BREATH_RECORDS.length-1;i>=0;i--){if(secs>=BREATH_RECORDS[i].t){beat=BREATH_RECORDS[i];break;}}
+  var msg=beat?('🏅 You matched a '+beat.who+'!'):'Nice dive — keep training those lungs!';
+  $('breathResult').textContent=msg;
+  if(secs>breathState.pb){breathState.pb=secs;try{localStorage.setItem('gds_breath_pb',String(secs));}catch(e){}$('breathPB').textContent=fmtSecs(secs);$('breathResult').textContent='🎉 New personal best! '+msg;}
+  /* award scaled to time: ~1 pt per 6s, capped */
+  var pts=Math.min(20,Math.max(MIN_REWARD,Math.round(secs/6)+3));
+  award(pts);
+  $('breathHint').textContent='Tap again to retry, or continue';
+  if(!breathState.done){breathState.done=true;$('breathNext').style.display='inline-block';}
+}
+(function wireBreath(){
+  var orb=$('breathOrb');
+  orb.addEventListener('mousedown',breathStart);
+  orb.addEventListener('touchstart',breathStart,{passive:false});
+  window.addEventListener('mouseup',breathEnd);
+  orb.addEventListener('touchend',breathEnd);
+  orb.addEventListener('touchcancel',breathEnd);
+})();
+$('breathNext').onclick=function(){$('breathNotice').textContent='Surfacing — on to Silhouette Match…';setTimeout(advanceGame,1400);};
+
+/* ════════ 2. SILHOUETTE MATCH ════════ */
+var SIL_ROUNDS=[
+  {shape:'seadragon',name:'Weedy seadragon',f:'Those leaf-like flaps are camouflage, not fins.'},
+  {shape:'pjshark',name:'Port Jackson shark',f:'Spot the blunt head and high spiny fins.'},
+  {shape:'cuttle',name:'Giant cuttlefish',f:'A broad mantle plus a fan of arms — unmistakable.'},
+  {shape:'turtle',name:'Green turtle',f:'Flippers and a domed shell give it away.'},
+  {shape:'ray',name:'Bluespotted ray',f:'A flat disc with a long whip tail.'}
+];
+var SIL_NAMES=['Weedy seadragon','Port Jackson shark','Giant cuttlefish','Green turtle','Bluespotted ray','Eastern blue groper','Maori octopus','Eastern blue devil'];
+var silQueue=[],silScore=0,silTotal=0,silAnswered=false;
+function initSilhouette(){
+  silScore=0;silTotal=0;silAnswered=false;silQueue=shuffle(SIL_ROUNDS.slice());
+  $('silScore').textContent=0;$('silTotal').textContent=0;$('silNotice').textContent='';
+  silRound();
+}
+function silRound(){
+  silAnswered=false;$('silFact').textContent='';$('silNext').style.display='none';$('silBonus').textContent='⏱️ Answer fast for bonus points!';
+  var r=silQueue.shift();
+  $('silStage').innerHTML=silSVG(r.shape);
+  var wrong=shuffle(SIL_NAMES.filter(function(n){return n!==r.name;})).slice(0,3);
+  var opts=shuffle([r.name].concat(wrong));
+  $('silOpts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+esc(n)+'">'+n+'</button>';}).join('');
+  $('silOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(silAnswered)return;silAnswered=true;silTotal++;
+    $('silOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.n===r.name)x.classList.add('right');});
+    if(btn.dataset.n===r.name){silScore++;award(timedReward());$('silBonus').textContent='';}
+    else{btn.classList.add('wrong');penalize();$('silBonus').textContent='';}
+    $('silScore').textContent=silScore;$('silTotal').textContent=silTotal;$('silFact').textContent=r.f;
+    if(silQueue.length>0)$('silNext').style.display='inline-block';
+    else{$('silNotice').textContent='Shadows solved! 🧩 Back to the menu…';setTimeout(advanceGame,2200);}
+  };});
+  startTimer();
+}
+$('silNext').onclick=silRound;
+
+/* ════════ 5. BUBBLE POP ════════ */
+var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Bluespotted ray','Old wife','Mado','Sea tulip'];
+var BUBBLE_FAKE=['Clownfish','Great white… reef','Piranha','Lionfish','Coral trout','Mandarinfish','Anaconda','Pufferfish','Manatee','Parrotfish'];
+var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:[],raf:null};
+function initBubble(){
+  var f=$('bubbleField');f.innerHTML='';
+  bubbleState={time:20,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
+  $('bubbleTime').textContent='20';$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
+  $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';$('bubbleNotice').textContent='';
+  bubbleState.timer=setInterval(function(){
+    bubbleState.time--;$('bubbleTime').textContent=bubbleState.time;
+    if(bubbleState.time<=0)endBubble();
+  },1000);
+  bubbleState.spawn=setInterval(spawnBubble,820);
+  for(var i=0;i<3;i++)setTimeout(spawnBubble,i*260);
+  animateBubbles();
+}
+function spawnBubble(){
+  if(!bubbleState.active)return;
+  var f=$('bubbleField');var W=f.clientWidth||320;
+  var real=Math.random()<0.55;
+  var name=real?BUBBLE_REAL[Math.floor(Math.random()*BUBBLE_REAL.length)]
+                :BUBBLE_FAKE[Math.floor(Math.random()*BUBBLE_FAKE.length)];
+  var size=Math.round(58+Math.random()*34);
+  var b=document.createElement('div');b.className='bubble';
+  b.style.width=size+'px';b.style.height=size+'px';b.style.fontSize=(size>78?12:11)+'px';
+  var x=Math.random()*(W-size-8)+4;
+  b.style.left=x+'px';
+  b._y=(f.clientHeight||320);b.style.top=b._y+'px';
+  b._speed=0.5+Math.random()*0.7;b._real=real;b.textContent=name;
+  b.addEventListener('click',function(ev){
+    ev.stopPropagation();
+    if(!bubbleState.active||b._popped)return;b._popped=true;
+    if(b._real){bubbleState.hit++;$('bubbleHit').textContent=bubbleState.hit;b.classList.add('pop-good');award(Math.max(MIN_REWARD,6));}
+    else{bubbleState.miss++;$('bubbleMiss').textContent=bubbleState.miss;b.classList.add('pop-bad');penalize();}
+    setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},300);
+    var idx=bubbleState.bubbles.indexOf(b);if(idx>-1)bubbleState.bubbles.splice(idx,1);
+  });
+  f.appendChild(b);bubbleState.bubbles.push(b);
+}
+function animateBubbles(){
+  if(!bubbleState.active)return;
+  var f=$('bubbleField');
+  for(var i=bubbleState.bubbles.length-1;i>=0;i--){
+    var b=bubbleState.bubbles[i];if(b._popped)continue;
+    b._y-=b._speed*2.2;b.style.top=b._y+'px';
+    if(b._y< -100){if(b.parentNode)b.parentNode.removeChild(b);bubbleState.bubbles.splice(i,1);}
+  }
+  bubbleState.raf=requestAnimationFrame(animateBubbles);
+}
+function endBubble(){
+  bubbleState.active=false;
+  clearInterval(bubbleState.timer);clearInterval(bubbleState.spawn);
+  if(bubbleState.raf)cancelAnimationFrame(bubbleState.raf);
+  $('bubbleField').innerHTML='';
+  $('bubbleMsg').textContent='Time! You caught '+bubbleState.hit+' real species ('+bubbleState.miss+' slip-ups).';
+  $('bubbleNotice').textContent='Back to the menu…';
+  setTimeout(advanceGame,2200);
+}
+
+/* ════════ 3. DEPTH GAUGE ════════ */
+var DEPTH_MAX=300; /* metres represented by the track */
+var DEPTH_ROUNDS=[
+  {fact:'Wobbegong sharks usually rest at around ___ m',answer:15,tol:12},
+  {fact:'Weedy seadragons are most often seen at about ___ m',answer:8,tol:8},
+  {fact:'Port Jackson sharks can be found down to roughly ___ m',answer:100,tol:40},
+  {fact:'The giant cuttlefish breeds in shallows near ___ m',answer:5,tol:6},
+  {fact:'Blue gropers patrol rocky reefs at about ___ m',answer:20,tol:15}
+];
+var depthQueue=[],depthRoundN=0,depthLocked=false,depthCur=null;
+function initDepth(){
+  depthQueue=shuffle(DEPTH_ROUNDS.slice()).slice(0,4);depthRoundN=0;
+  $('depthTotal').textContent=depthQueue.length;$('depthNotice').textContent='';
+  buildDepthMarks();depthRound();
+}
+function buildDepthMarks(){
+  var marks=[0,50,100,150,200,250,300],html='';
+  marks.forEach(function(m){var pct=m/DEPTH_MAX*100;html+='<i style="top:'+pct+'%"></i><span style="top:'+pct+'%">'+m+'m</span>';});
+  $('depthMarks').innerHTML=html;
+}
+function depthRound(){
+  depthLocked=false;depthCur=depthQueue[depthRoundN];
+  $('depthRound').textContent=depthRoundN+1;
+  $('depthFact').textContent=depthCur.fact.replace('___','?');
+  $('depthMsg').textContent='';$('depthNext').style.display='none';$('depthLock').style.display='inline-block';
+  $('depthZone').style.display='none';
+  var sl=$('depthSlider');sl.value=0;sl.disabled=false;updateDepthNeedle(0);
+  startTimer();
+}
+function sliderToM(v){return Math.round(v/100*DEPTH_MAX);}
+function updateDepthNeedle(v){
+  var m=sliderToM(v);$('depthReadout').textContent=m;
+  $('depthNeedle').style.top=(m/DEPTH_MAX*100)+'%';
+}
+$('depthSlider').addEventListener('input',function(){if(!depthLocked)updateDepthNeedle(this.value);});
+$('depthLock').onclick=function(){
+  if(depthLocked)return;depthLocked=true;
+  $('depthSlider').disabled=true;$('depthLock').style.display='none';
+  var guess=sliderToM($('depthSlider').value);
+  var ans=depthCur.answer,tol=depthCur.tol;
+  var diff=Math.abs(guess-ans);
+  /* show the correct zone */
+  var z=$('depthZone');var topPct=Math.max(0,(ans-tol)/DEPTH_MAX*100);var botPct=Math.min(100,(ans+tol)/DEPTH_MAX*100);
+  z.style.top=topPct+'%';z.style.height=(botPct-topPct)+'%';z.style.display='block';
+  if(diff<=tol){var pts=Math.max(MIN_REWARD,Math.round(REWARD*(1-diff/(tol*2))));award(pts);$('depthMsg').textContent='🎯 Spot on! Actual: ~'+ans+'m (you guessed '+guess+'m).';}
+  else if(diff<=tol*2.2){award(MIN_REWARD);$('depthMsg').textContent='Close! Actual: ~'+ans+'m (you guessed '+guess+'m).';}
+  else{penalize();$('depthMsg').textContent='Actual depth: ~'+ans+'m. You guessed '+guess+'m.';}
+  depthRoundN++;
+  if(depthRoundN<depthQueue.length)$('depthNext').style.display='inline-block';
+  else{$('depthNotice').textContent='Gauge mastered! 📏 Back to the menu…';setTimeout(advanceGame,2300);}
+};
+$('depthNext').onclick=depthRound;
+
+/* ════════ 6. TRUE OR FALSE — MYTH BUSTERS ════════ */
+var TF_QUESTIONS=[
+  {s:'Octopuses have three hearts.',a:true,f:'True! Two pump blood to the gills, one to the body.'},
+  {s:'A weedy seadragon is a type of shark.',a:false,f:'False — it\'s a fish related to seahorses.'},
+  {s:'Giant cuttlefish can change colour in an instant.',a:true,f:'True! Special skin cells let them flash patterns.'},
+  {s:'Port Jackson sharks lay spiral, screw-shaped eggs.',a:true,f:'True — the corkscrew case wedges into rock crevices.'},
+  {s:'The eastern blue groper starts life as a male.',a:false,f:'False — they all start as females, then some turn male.'},
+  {s:'Sea stars have brains.',a:false,f:'False — they have a nerve net, no central brain.'},
+  {s:'Wobbegongs are a kind of carpet shark.',a:true,f:'True — their flat, patterned bodies blend into the reef.'},
+  {s:'Sydney\'s Port Jackson sharks swim all the way to Tasmania and back.',a:true,f:'True — tagged sharks travelled ~600 km south and returned to the very same reef a year later.'},
+  {s:'Grey nurse sharks have killed swimmers in Sydney.',a:false,f:'False — despite their look, there are no confirmed human fatalities.'},
+  {s:'The male anglerfish at Chowder Bay must flee fast after mating or risk being eaten.',a:true,f:'True — the much smaller male departs quickly to avoid the female.'},
+  {s:'Giant cuttlefish live for about 20 years.',a:false,f:'False — they live only 1–2 years and die after one breeding cycle.'},
+  {s:'Dusky whaler sharks visit Cabbage Tree Bay in winter.',a:false,f:'False — they come every summer, when the water tops 22°C.'},
+  {s:'The hammer octopus is found only along Australia\'s east coast.',a:true,f:'True — and the male has a special hammer-shaped arm for mating.'},
+  {s:'Grey nurse shark embryos eat their own siblings before birth.',a:true,f:'True — it\'s called intrauterine cannibalism; the strongest embryo survives.'},
+  {s:'Little penguins breed on Sydney\'s Northern Beaches.',a:true,f:'True — a colony lives around North Head, and they\'re sometimes seen at Cabbage Tree Bay.'},
+  {s:'Eastern gobbleguts males brood over 1,000 eggs in their mouth.',a:true,f:'True — the female hands the eggs over and the male broods them for about two weeks.'}
+];
+var tfQueue=[],tfScore=0,tfTotal=0,tfAnswered=false,tfCur=null;
+function initTrueFalse(){
+  tfQueue=shuffle(TF_QUESTIONS.slice());tfScore=0;tfTotal=0;tfAnswered=false;
+  $('tfScore').textContent=0;$('tfTotal').textContent=0;$('tfNotice').textContent='';
+  tfRound();
+}
+function tfRound(){
+  tfAnswered=false;tfCur=tfQueue.shift();
+  $('tfStatement').textContent=tfCur.s;$('tfReveal').textContent='';$('tfNext').style.display='none';
+  $('tfTrue').disabled=false;$('tfFalse').disabled=false;
+  $('tfTrue').style.opacity='1';$('tfFalse').style.opacity='1';
+  startTimer();
+}
+function tfAnswer(val){
+  if(tfAnswered)return;tfAnswered=true;tfTotal++;
+  $('tfTrue').disabled=true;$('tfFalse').disabled=true;
+  if(val===tfCur.a){tfScore++;award(timedReward());$('tfReveal').innerHTML='✅ <b>Correct!</b> '+esc(tfCur.f);}
+  else{penalize();$('tfReveal').innerHTML='❌ <b>Not quite.</b> '+esc(tfCur.f);}
+  $('tfScore').textContent=tfScore;$('tfTotal').textContent=tfTotal;
+  if(tfQueue.length>0)$('tfNext').style.display='inline-block';
+  else{$('tfNotice').textContent='Myths busted! 📖 Back to the menu…';setTimeout(advanceGame,2300);}
+}
+$('tfTrue').onclick=function(){tfAnswer(true);};
+$('tfFalse').onclick=function(){tfAnswer(false);};
+$('tfNext').onclick=tfRound;
+
+/* ════════ 8. COLOUR THE CREATURE ════════ */
+var COL_ROUNDS=[
+  {shape:'seadragon',name:'Weedy seadragon',correct:'Reddish-brown with yellow & purple-blue markings',
+   colors:['linear-gradient(135deg,#b14b2a,#f0c040 60%,#5566cc)','#2e7d32','#777777','#e84393'],
+   options:['Reddish-brown with yellow & purple-blue markings','Bright green all over','Plain grey','Hot pink'],f:'Their colours mimic the weed they drift among.'},
+  {shape:'groper',name:'Eastern blue groper (male)',correct:'Deep cobalt blue',
+   colors:['#1f5fd6','#e8b53a','#d33','#444'],options:['Deep cobalt blue','Golden yellow','Bright red','Charcoal black'],f:'Big males are vivid blue; females are reddish-brown.'},
+  {shape:'cuttle',name:'Giant cuttlefish',correct:'Shifting — any colour at all',
+   colors:['linear-gradient(135deg,#c0392b,#8e44ad,#16a085,#f1c40f)','#1f5fd6','#2e7d32','#9b6b3a'],
+   options:['Shifting — any colour at all','Always solid blue','Always green','Always brown'],f:'They flash through colours faster than almost any animal.'},
+  {shape:'bluedevil',name:'Eastern blue devil',correct:'Blue-grey with orange & blue stripes',
+   colors:['linear-gradient(135deg,#3a6ea5,#e67e22 50%,#3a6ea5)','#2e7d32','#000','#e84393'],
+   options:['Blue-grey with orange & blue stripes','Solid green','Jet black','Bubblegum pink'],f:'A shy, strikingly striped cave-dweller of NSW reefs.'}
+];
+var colQueue=[],colScore=0,colTotal=0,colAnswered=false;
+function initColour(){
+  colQueue=shuffle(COL_ROUNDS.slice());colScore=0;colTotal=0;colAnswered=false;
+  $('colScore').textContent=0;$('colTotal').textContent=0;$('colNotice').textContent='';
+  colRound();
+}
+function colRound(){
+  colAnswered=false;var r=colQueue.shift();
+  $('colStage').innerHTML=lineSVG(r.shape);
+  $('colFact').textContent='';$('colNext').style.display='none';
+  var idx=shuffle(r.options.map(function(_,i){return i;}));
+  $('colSwatches').innerHTML=idx.map(function(i){
+    return '<button class="swatch" data-opt="'+esc(r.options[i])+'"><span class="dot" style="background:'+r.colors[i]+'"></span><span>'+r.options[i]+'</span></button>';
+  }).join('');
+  $('colSwatches').querySelectorAll('.swatch').forEach(function(btn){btn.onclick=function(){
+    if(colAnswered)return;colAnswered=true;colTotal++;
+    $('colSwatches').querySelectorAll('.swatch').forEach(function(x){x.disabled=true;
+      if(x.dataset.opt===r.correct){x.style.borderColor='var(--good)';x.style.background='var(--goodd)';}});
+    if(btn.dataset.opt===r.correct){colScore++;award(timedReward());}
+    else{btn.style.borderColor='var(--bad)';btn.style.background='var(--badd)';penalize();}
+    $('colScore').textContent=colScore;$('colTotal').textContent=colTotal;$('colFact').textContent=r.f;
+    if(colQueue.length>0)$('colNext').style.display='inline-block';
+    else{$('colNotice').textContent='Beautifully done! 🎨 Back to the menu…';setTimeout(advanceGame,2300);}
+  };});
+  startTimer();
+}
+$('colNext').onclick=colRound;
+
+/* ════════ 9. ODD ONE OUT ════════ */
+var ODD_ROUNDS=[
+  {real:[['Weedy seadragon','🐉'],['Port Jackson shark','🦈'],['Blue groper','🐟']],fake:['Clownfish','🐠'],f:'Clownfish live on tropical coral reefs, not Sydney.'},
+  {real:[['Giant cuttlefish','🦑'],['Maori octopus','🐙'],['Bluespotted ray','🐡']],fake:['Piranha','🐟'],f:'Piranhas are freshwater fish from South America.'},
+  {real:[['Blue devil','🐟'],['Old wife','🐠'],['Mado','🐟']],fake:['Lionfish','🦂'],f:'Lionfish are invasive tropicals, not Sydney natives.'},
+  {real:[['Wobbegong','🦈'],['Sea tulip','🌷'],['Eastern blue groper','🐟']],fake:['Coral trout','🐠'],f:'Coral trout belong on the Great Barrier Reef.'},
+  {real:[['Weedy seadragon','🐉'],['Sea urchin','🦔'],['Cuttlefish','🦑']],fake:['Manatee','🦭'],f:'Manatees live in warm tropical rivers and bays.'}
+];
+var oddQueue=[],oddScore=0,oddTotal=0,oddAnswered=false;
+function initOddOne(){
+  oddQueue=shuffle(ODD_ROUNDS.slice());oddScore=0;oddTotal=0;oddAnswered=false;
+  $('oddScore').textContent=0;$('oddTotal').textContent=0;$('oddNotice').textContent='';
+  oddRound();
+}
+function oddRound(){
+  oddAnswered=false;var r=oddQueue.shift();
+  $('oddFact').textContent='';$('oddNext').style.display='none';
+  var cards=r.real.map(function(x){return {label:x[0],emoji:x[1],fake:false};});
+  cards.push({label:r.fake[0],emoji:r.fake[1],fake:true});
+  cards=shuffle(cards);
+  $('oddGrid').innerHTML=cards.map(function(c){
+    return '<button class="odd-card" data-fake="'+(c.fake?'1':'0')+'"><span class="oc-emoji">'+c.emoji+'</span><span>'+c.label+'</span></button>';
+  }).join('');
+  $('oddGrid').querySelectorAll('.odd-card').forEach(function(btn){btn.onclick=function(){
+    if(oddAnswered)return;oddAnswered=true;oddTotal++;
+    $('oddGrid').querySelectorAll('.odd-card').forEach(function(x){x.disabled=true;if(x.dataset.fake==='1')x.classList.add('right');});
+    if(btn.dataset.fake==='1'){oddScore++;award(timedReward());}
+    else{btn.classList.add('wrong');penalize();}
+    $('oddScore').textContent=oddScore;$('oddTotal').textContent=oddTotal;$('oddFact').textContent=r.f;
+    if(oddQueue.length>0)$('oddNext').style.display='inline-block';
+    else{$('oddNotice').textContent='Impostors caught! 🔍 Back to the menu…';setTimeout(advanceGame,2300);}
+  };});
+  startTimer();
+}
+$('oddNext').onclick=oddRound;
+
+/* ════════ 10. SPEED ROUND ════════ */
+var SPEED_QUESTIONS=[
+  {s:'Is a dolphin a fish?',a:false},
+  {s:'Can octopuses change colour?',a:true},
+  {s:'Do sharks have bones?',a:false},
+  {s:'Is a weedy seadragon a fish?',a:true},
+  {s:'Can a cuttlefish squirt ink?',a:true},
+  {s:'Do whales breathe air?',a:true},
+  {s:'Is a jellyfish a fish?',a:false},
+  {s:'Does a Port Jackson shark lay eggs?',a:true},
+  {s:'Can a sea star regrow an arm?',a:true},
+  {s:'Is coral a plant?',a:false},
+  {s:'Do octopuses have eight arms?',a:true},
+  {s:'Is the blue groper the NSW state fish?',a:true},
+  {s:'Can seahorses swim fast?',a:false},
+  {s:'Do rays sting with their tail?',a:true},
+  {s:'Is a turtle a mammal?',a:false},
+  {s:'Can a pufferfish inflate?',a:true},
+  {s:'Do crabs walk sideways?',a:true},
+  {s:'Is a whale shark dangerous to people?',a:false},
+  {s:'Can fish drown?',a:true},
+  {s:'Does an octopus have blue blood?',a:true}
+];
+var speedState={time:60,score:0,streak:0,queue:[],cur:null,timer:null,active:false,countTimer:null};
+function initSpeed(){
+  speedState={time:60,score:0,streak:0,queue:shuffle(SPEED_QUESTIONS.slice()),cur:null,timer:null,active:false,countTimer:null};
+  $('speedScore').textContent=0;$('speedTime').textContent=60;$('speedStreak').textContent=0;
+  $('speedFill').style.width='100%';$('speedFill').classList.remove('low');
+  $('speedReveal').textContent='';$('speedNotice').textContent='';
+  $('speedYes').disabled=true;$('speedNo').disabled=true;
+  $('speedStage').style.display='none';
+  var ci=$('speedCountIn');ci.style.display='block';var n=3;ci.textContent=n;
+  speedState.countTimer=setInterval(function(){
+    n--;if(n>0){ci.textContent=n;}else if(n===0){ci.textContent='GO!';}
+    else{clearInterval(speedState.countTimer);ci.style.display='none';$('speedStage').style.display='flex';startSpeed();}
+  },800);
+}
+function startSpeed(){
+  speedState.active=true;
+  $('speedYes').disabled=false;$('speedNo').disabled=false;
+  speedState.timer=setInterval(function(){
+    speedState.time--;$('speedTime').textContent=speedState.time;
+    var pct=speedState.time/60*100;$('speedFill').style.width=pct+'%';
+    if(speedState.time<=10)$('speedFill').classList.add('low');
+    if(speedState.time<=0)endSpeed();
+  },1000);
+  speedNext();
+}
+function speedNext(){
+  if(!speedState.active)return;
+  if(!speedState.queue.length)speedState.queue=shuffle(SPEED_QUESTIONS.slice());
+  speedState.cur=speedState.queue.shift();
+  $('speedStatement').textContent=speedState.cur.s;
+}
+function speedAnswer(val){
+  if(!speedState.active||!speedState.cur)return;
+  var correct=(val===speedState.cur.a);
+  if(correct){speedState.score++;speedState.streak++;
+    var bonus=speedState.streak>=5?2:1;award(Math.max(MIN_REWARD,4+bonus));
+    $('speedScore').textContent=speedState.score;$('speedStreak').textContent=speedState.streak;
+    $('speedReveal').innerHTML='<b style="color:var(--good)">✓</b>';
+  }else{speedState.streak=0;penalize();
+    $('speedStreak').textContent=0;$('speedReveal').innerHTML='<b style="color:var(--bad)">✗</b>';
+  }
+  speedState.cur=null;speedNext();
+}
+$('speedYes').onclick=function(){speedAnswer(true);};
+$('speedNo').onclick=function(){speedAnswer(false);};
+function endSpeed(){
+  speedState.active=false;clearInterval(speedState.timer);
+  $('speedYes').disabled=true;$('speedNo').disabled=true;
+  $('speedStatement').textContent='⏱️ Time! '+speedState.score+' correct.';
+  $('speedReveal').textContent='';
+  $('speedNotice').textContent='Nice work — back to the menu…';
+  setTimeout(advanceGame,2400);
+}
+
+/* ════════════════════════════════════════════════════════
+   13. WHEN WILL I SEE IT? — SEASON MATCH
+   ════════════════════════════════════════════════════════ */
+var SEASON_OPTS=['Summer (Dec–Feb)','Autumn (Mar–May)','Winter (Jun–Aug)','Spring (Sep–Nov)'];
+var SEASON_ROUNDS=[
+  {key:'pjshark',ans:'Winter (Jun–Aug)',f:'Port Jackson sharks aggregate in Sydney\'s shallows to breed from July to October, then vanish south for the rest of the year.'},
+  {key:'duskywhaler',ans:'Summer (Dec–Feb)',f:'Dusky whalers visit Cabbage Tree Bay every summer, when the water climbs above 22°C.'},
+  {key:'cuttle',ans:'Autumn (Mar–May)',f:'Giant cuttlefish leave deep water at the end of autumn to breed on the coastal reefs — then they die after laying.'},
+  {key:'angler',ans:'Spring (Sep–Nov)',f:'Anglerfish gather in the shallows by the Chowder Bay jetty to mate in spring — up to 5–6 on a single dive.'},
+  {key:'greynurse',ans:'Winter (Jun–Aug)',f:'Grey nurse sharks have shown more residency at Cabbage Tree Bay in the cooler months.'},
+  {key:'pjshark',ans:'Spring (Sep–Nov)',f:'Females linger into spring to lay their eggs after the males have already left — a clever way to reduce egg predation.'}
+];
+var seasonQueue=[],seasonScore=0,seasonTotal=0,seasonAnswered=false,seasonCur=null;
+function initSeason(){
+  seasonQueue=shuffle(SEASON_ROUNDS.slice()).slice(0,5);seasonScore=0;seasonTotal=0;seasonAnswered=false;
+  $('seasonScore').textContent=0;$('seasonTotal').textContent=0;$('seasonNotice').textContent='';
+  seasonRound();
+}
+function seasonRound(){
+  seasonAnswered=false;seasonCur=seasonQueue.shift();
+  $('seasonArt').innerHTML=ART_html(seasonCur.key,Math.round(artHeight(180)*0.7));
+  $('seasonName').textContent=CR[seasonCur.key].n;
+  $('seasonFact').textContent='';$('seasonNext').style.display='none';
+  $('seasonOpts').innerHTML=SEASON_OPTS.map(function(o){return '<button class="opt" data-o="'+o+'">'+o+'</button>';}).join('');
+  $('seasonOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(seasonAnswered)return;seasonAnswered=true;seasonTotal++;
+    $('seasonOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.o===seasonCur.ans)x.classList.add('right');});
+    if(btn.dataset.o===seasonCur.ans){seasonScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
+    $('seasonScore').textContent=seasonScore;$('seasonTotal').textContent=seasonTotal;$('seasonFact').textContent=seasonCur.f;
+    if(seasonQueue.length>0)$('seasonNext').style.display='inline-block';
+    else{$('seasonNotice').textContent='Seasons mastered! 📅 Back to the menu…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('seasonNext').onclick=seasonRound;
+
+/* ════════════════════════════════════════════════════════
+   14. WRECK DETECTIVE
+   ════════════════════════════════════════════════════════ */
+var WRECK_DB=[
+  {name:'TSS Currajong',clue:'A steamer that sank in 1910 after a collision in Sydney Harbour. It now rests upright in deep water off Bradleys Head — a popular technical dive.'},
+  {name:'SS Centennial',clue:'A collier sunk in a collision off the Sydney Heads in 1889. A protected historic shipwreck that divers explore as a shore-accessible site.'},
+  {name:'SS Dunbar',clue:'A clipper wrecked against the cliffs at The Gap in 1857 in one of Sydney\'s worst maritime disasters — only one of 122 aboard survived.'},
+  {name:'HMAS Adelaide',clue:'A decommissioned navy frigate deliberately scuttled off Avoca Beach in 2011 to create an artificial reef and dive attraction.'},
+  {name:'Japanese midget submarine',clue:'One of three that attacked Sydney Harbour in May 1942; the wartime raid is remembered at several harbour sites.'}
+];
+var wreckidQueue=[],wreckidScore=0,wreckidTotal=0,wreckidAnswered=false,wreckidCur=null;
+function initWreckId(){
+  wreckidQueue=shuffle(WRECK_DB.slice()).slice(0,4);wreckidScore=0;wreckidTotal=0;wreckidAnswered=false;
+  $('wreckidScore').textContent=0;$('wreckidTotal').textContent=0;$('wreckidNotice').textContent='';
+  wreckidRound();
+}
+function wreckidRound(){
+  wreckidAnswered=false;wreckidCur=wreckidQueue.shift();
+  $('wreckidArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.7)+'px">'+wreckSVG(wreckidCur.name)+'</div>';
+  $('wreckidClue').textContent=wreckidCur.clue;
+  $('wreckidFact').textContent='';$('wreckidNext').style.display='none';
+  var wrong=shuffle(WRECK_DB.filter(function(w){return w.name!==wreckidCur.name;})).slice(0,3).map(function(w){return w.name;});
+  var opts=shuffle([wreckidCur.name].concat(wrong));
+  $('wreckidOpts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+esc(n)+'">'+esc(n)+'</button>';}).join('');
+  $('wreckidOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(wreckidAnswered)return;wreckidAnswered=true;wreckidTotal++;
+    $('wreckidOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.n===wreckidCur.name)x.classList.add('right');});
+    if(btn.dataset.n===wreckidCur.name){wreckidScore++;award(timedReward());$('wreckidFact').textContent='✅ Correct!';}
+    else{btn.classList.add('wrong');penalize();$('wreckidFact').textContent='The answer was '+wreckidCur.name+'.';}
+    $('wreckidScore').textContent=wreckidScore;$('wreckidTotal').textContent=wreckidTotal;
+    if(wreckidQueue.length>0)$('wreckidNext').style.display='inline-block';
+    else{$('wreckidNotice').textContent='Case closed! 🔱 Back to the menu…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('wreckidNext').onclick=wreckidRound;
+
+/* ════════════════════════════════════════════════════════
+   15. WAVE LAB — predict the viz
+   ════════════════════════════════════════════════════════ */
+var WAVE_OPTS=['Great viz 🟢','Diveable 🟡','Blown out 🔴'];
+var WAVE_ROUNDS=[
+  {site:'Cabbage Tree Bay',swell:'1.0 m',period:'7 s',dir:'NE',wind:'Light SW',ans:'Great viz 🟢',
+   f:'Small swell from the north-east barely enters this south-facing bay — and an offshore wind keeps it glassy. Classic good-viz day.'},
+  {site:'Bare Island',swell:'3.5 m',period:'13 s',dir:'S',wind:'Strong S',ans:'Blown out 🔴',
+   f:'A big, long-period south swell wraps straight onto Bare Island, and an onshore southerly churns up the sediment. Stay home.'},
+  {site:'Chowder Bay',swell:'2.5 m',period:'11 s',dir:'SE',wind:'Moderate NE',ans:'Great viz 🟢',
+   f:'Tucked deep inside the harbour, Chowder Bay is sheltered from ocean swell — it often stays clear when the coast is firing.'},
+  {site:'Gordons Bay',swell:'1.5 m',period:'9 s',dir:'E',wind:'Moderate NE',ans:'Diveable 🟡',
+   f:'A moderate easterly swell brings some surge to this exposed bay — diveable, but expect a bit of stir near the entry.'},
+  {site:'Kurnell',swell:'2.0 m',period:'10 s',dir:'NE',wind:'Light W',ans:'Great viz 🟢',
+   f:'Kurnell faces into Botany Bay and is protected from NE swell; with a light offshore wind the viz is usually excellent.'},
+  {site:'Shark Point',swell:'3.0 m',period:'12 s',dir:'SE',wind:'Fresh SE',ans:'Blown out 🔴',
+   f:'An exposed point taking a solid SE swell on an onshore wind — too much energy and stir for a safe, clear dive.'}
+];
+var waveQueue=[],waveScore=0,waveTotal=0,waveAnswered=false,waveCur=null;
+function initWave(){
+  waveQueue=shuffle(WAVE_ROUNDS.slice()).slice(0,5);waveScore=0;waveTotal=0;waveAnswered=false;
+  $('waveScore').textContent=0;$('waveTotal').textContent=0;$('waveNotice').textContent='';
+  waveRound();
+}
+function waveRound(){
+  waveAnswered=false;waveCur=waveQueue.shift();
+  $('waveArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.55)+'px">'+waveSVG(waveCur)+'</div>';
+  $('waveCond').innerHTML='<b>'+esc(waveCur.site)+'</b><br>🌊 Swell: '+esc(waveCur.swell)+' @ '+esc(waveCur.period)+', from '+esc(waveCur.dir)+'<br>💨 Wind: '+esc(waveCur.wind);
+  $('waveFact').textContent='';$('waveNext').style.display='none';
+  $('waveOpts').innerHTML=WAVE_OPTS.map(function(o){return '<button class="opt" data-o="'+esc(o)+'">'+o+'</button>';}).join('');
+  $('waveOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
+    if(waveAnswered)return;waveAnswered=true;waveTotal++;
+    $('waveOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.o===waveCur.ans)x.classList.add('right');});
+    if(btn.dataset.o===waveCur.ans){waveScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
+    $('waveScore').textContent=waveScore;$('waveTotal').textContent=waveTotal;$('waveFact').textContent=waveCur.f;
+    if(waveQueue.length>0)$('waveNext').style.display='inline-block';
+    else{$('waveNotice').textContent='Forecast nailed! 🌊 Back to the menu…';setTimeout(advanceGame,2400);}
+  };});
+  startTimer();
+}
+$('waveNext').onclick=waveRound;
+function waveSVG(r){
+  var amp=Math.min(26,parseFloat(r.swell)*8+4);
+  return '<svg viewBox="0 0 660 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
+    '<defs><linearGradient id="wv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f6f86"/><stop offset="1" stop-color="#0c4257"/></linearGradient></defs>'+
+    '<rect width="660" height="180" fill="url(#wv)"/>'+
+    '<path d="M0 90 '+[0,1,2,3,4,5,6].map(function(i){var x=i*110;return 'Q '+(x+27)+' '+(90-amp)+' '+(x+55)+' 90 Q '+(x+82)+' '+(90+amp)+' '+(x+110)+' 90';}).join(' ')+'" fill="none" stroke="#bfe9f2" stroke-width="3" opacity="0.8"/>'+
+    '<g fill="#dff1f6" opacity="0.5" font-family="monospace" font-size="13"><text x="12" y="24">'+esc(r.dir)+' swell</text></g>'+
+    '</svg>';
+}
+
+/* ════════════════════════════════════════════════════════
+   16. WRECK FINDER — drag wrecks onto the Sydney map
+   ════════════════════════════════════════════════════════ */
+/* Positions are % coordinates on a stylised Sydney coast map (x:left, y:top) */
+var WRECK_SPOTS=[
+  {name:'TSS Currajong',x:46,y:40,hint:'Off Bradleys Head, inner harbour'},
+  {name:'SS Dunbar',x:62,y:34,hint:'The Gap, South Head'},
+  {name:'SS Centennial',x:66,y:28,hint:'Off the Sydney Heads'},
+  {name:'HMAS Adelaide',x:40,y:8,hint:'Avoca Beach, Central Coast'}
+];
+var wreckfindState=null;
+function initWreckFind(){
+  var spots=shuffle(WRECK_SPOTS.slice()).slice(0,4);
+  wreckfindState={spots:spots,placed:0,total:spots.length};
+  $('wreckfindPlaced').textContent=0;$('wreckfindTotal').textContent=spots.length;
+  $('wreckfindMsg').textContent='';$('wreckfindNotice').textContent='';
+  $('wreckfindMap').innerHTML=wreckMapSVG()+spots.map(function(s){
+    return '<div class="wf-target" data-name="'+esc(s.name)+'" style="position:absolute;left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%);width:34px;height:34px;border:2px dashed rgba(127,214,224,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(127,214,224,.7);font-size:12px">?</div>';
+  }).join('');
+  $('wreckfindTray').innerHTML=shuffle(spots.slice()).map(function(s){
+    return '<div class="wf-token" draggable="true" data-name="'+esc(s.name)+'" style="cursor:grab;background:var(--surface);border:1px solid var(--accent);color:var(--text);border-radius:8px;padding:7px 10px;font-size:12px;touch-action:none">🔱 '+esc(s.name)+'</div>';
+  }).join('');
+  wireWreckFind();
+  startTimer();
+}
+function wreckMapSVG(){
+  return '<svg viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
+    '<rect width="660" height="420" fill="#0b3340"/>'+
+    /* ocean right side */
+    '<rect x="380" width="280" height="420" fill="#0e4256"/>'+
+    /* simplified land mass (Sydney) */
+    '<path d="M0 0 H420 Q400 40 430 70 Q470 100 430 130 L470 150 Q430 175 470 200 L420 230 Q470 260 430 300 Q470 340 420 360 L440 420 H0 Z" fill="#10463a"/>'+
+    /* harbour inlet */
+    '<path d="M300 150 Q360 160 440 150 L440 200 Q360 210 300 200 Z" fill="#0e4256"/>'+
+    '<g fill="#7fd6e0" opacity="0.5" font-family="monospace" font-size="14"><text x="20" y="30">SYDNEY</text><text x="500" y="40">TASMAN SEA</text></g>'+
+    '</svg>';
+}
+function wireWreckFind(){
+  var tokens=$('wreckfindTray').querySelectorAll('.wf-token');
+  var targets=$('wreckfindMap').querySelectorAll('.wf-target');
+  var dragName=null,ghost=null;
+  function place(name,target){
+    if(target.dataset.name===name){
+      target.style.borderStyle='solid';target.style.borderColor='var(--good)';
+      target.style.color='var(--good)';target.textContent='🔱';
+      target.dataset.filled='1';
+      var tok=$('wreckfindTray').querySelector('.wf-token[data-name="'+cssEsc(name)+'"]');
+      if(tok)tok.remove();
+      wreckfindState.placed++;$('wreckfindPlaced').textContent=wreckfindState.placed;
+      award(Math.max(MIN_REWARD,8));
+      if(wreckfindState.placed>=wreckfindState.total){
+        $('wreckfindMsg').textContent='🏆 All wrecks charted!';
+        $('wreckfindNotice').textContent='All wrecks charted! 🗺️ Back to the menu…';
+        setTimeout(advanceGame,2400);
+      }
+      return true;
+    }else{
+      penalize();$('wreckfindMsg').textContent='Not quite — try another spot.';
+      return false;
+    }
+  }
+  /* Desktop drag-and-drop */
+  tokens.forEach(function(tok){
+    tok.addEventListener('dragstart',function(e){dragName=tok.dataset.name;try{e.dataTransfer.setData('text/plain',dragName);}catch(_){}});
+  });
+  targets.forEach(function(t){
+    t.addEventListener('dragover',function(e){if(!t.dataset.filled)e.preventDefault();});
+    t.addEventListener('drop',function(e){e.preventDefault();if(t.dataset.filled||!dragName)return;place(dragName,t);dragName=null;});
+  });
+  /* Touch drag (phones/tablets) */
+  tokens.forEach(function(tok){
+    tok.addEventListener('touchstart',function(e){
+      dragName=tok.dataset.name;
+      ghost=tok.cloneNode(true);ghost.style.position='fixed';ghost.style.zIndex='9999';ghost.style.opacity='0.85';ghost.style.pointerEvents='none';
+      document.body.appendChild(ghost);moveGhost(e.touches[0]);
+    },{passive:true});
+    tok.addEventListener('touchmove',function(e){if(ghost){moveGhost(e.touches[0]);}},{passive:true});
+    tok.addEventListener('touchend',function(e){
+      if(ghost){ghost.remove();ghost=null;}
+      if(!dragName)return;
+      var t=e.changedTouches[0];var el=document.elementFromPoint(t.clientX,t.clientY);
+      var target=el&&el.closest?el.closest('.wf-target'):null;
+      if(target&&!target.dataset.filled)place(dragName,target);
+      dragName=null;
+    });
+  });
+  function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
+}
+function cssEsc(s){return String(s).replace(/["\\]/g,'\\$&');}
+
+/* ════════ HALL OF FAME (real, shared board) ════════ */
+function encourageMsg(rank,total){
+  var n=USER.name;
+  if(rank===1)return '🥇 Incredible, '+n+'! You\'re top of the reef — a true marine legend!';
+  if(rank<=3)return '🌟 Amazing work, '+n+'! You\'re right up there with the best divers!';
+  if(rank<=total/2)return '🐠 Great diving, '+n+'! Swimming strong in the top half!';
+  return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play again to climb the ranks!';
+}
+function showHallOfFame(){
+  $('gamesstrip').style.display='none';
+  GAME_ORDER.forEach(function(g){var el=$('gs-'+g);el.classList.remove('active');el.classList.add('done');});
+  document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
+  $('p-hof').classList.add('show');
+  window.scrollTo(0,0);
+  $('hofGroupLabel').textContent=USER.group;
+  Cloud.updateSession({game:'done',points:POINTS});
+  if(!window._hofSubmitted){window._hofSubmitted=true;Cloud.submitScore(USER.group,USER.name,POINTS);}
+  Cloud.onLeaderboard(USER.group,renderHof);
+}
+function renderHof(board){
+  board=(board||[]).slice().sort(function(a,b){return b.score-a.score;});
+  var meIdx=-1;
+  for(var i=0;i<board.length;i++){if(board[i].device===DEVICE_ID&&board[i].name===USER.name&&board[i].score===POINTS){meIdx=i;break;}}
+  var medals=['🥇','🥈','🥉'];
+  var myRank=meIdx>=0?meIdx+1:board.length;
+  $('hofEncourage').textContent=encourageMsg(myRank,board.length||1);
+  var rows=board.slice(0,20).map(function(e,i){var r=i+1,b=medals[i]||'',me=(i===meIdx);
+    return '<div class="lrow'+(me?' me':'')+'"><div class="l"><span class="rank">'+r+'</span><span class="medal">'+b+'</span><span class="nm">'+esc(e.name)+(me?' (you)':'')+'</span></div><span class="sc">'+e.score+' pts</span></div>';
+  }).join('');
+  if(meIdx>=20){var e=board[meIdx];rows+='<div class="lrow me"><div class="l"><span class="rank">'+(meIdx+1)+'</span><span class="medal"></span><span class="nm">'+esc(e.name)+' (you)</span></div><span class="sc">'+e.score+' pts</span></div>';}
+  if(!board.length)rows='<div class="lrow"><div class="l"><span class="nm">🐚 Be the first on the board!</span></div></div>';
+  $('hofList').innerHTML=rows;
+}
+
+/* ════════ PLAY AGAIN ════════ */
+(function(){var bm=$('hofBackMenu');if(bm)bm.onclick=function(){showApp();showMenu();};})();
+$('hofPlayAgain').onclick=function(){
+  POINTS=0;syncPoints();currentGame=0;window._hofSubmitted=false;qStartTime=0;
+  Cloud.updateSession({game:'quiz',points:0});
+  document.getElementById('app').style.display='none';
+  window._skipWelcome=true;
+  document.getElementById('whoName').textContent=USER.name;
+  document.getElementById('whoGroup').textContent=USER.group;
+  window.SPLASH_CTRL.replay();
+};
+
+/* ════════ STARTUP: cloud + remote screensaver listener ════════ */
+Cloud.init(function(){
+  Cloud.onMyCommand(function(c){
+    var on=!!(c&&c.screensaver);
+    ssRemote=on;
+    if(on)showScreensaver(); else hideScreensaver(false);
+    Cloud.updateSession({ss:on});
+  });
+});
+
+</script>
+</body>
+</html>
