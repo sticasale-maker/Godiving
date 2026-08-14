@@ -36,6 +36,10 @@
   @media(min-width:900px){
     .wrap{max-width:1400px;padding:18px 36px calc(14px + env(safe-area-inset-bottom));}
   }
+  /* On iMac/ultra-wide, expand to full width */
+  @media(min-width:1700px){
+    .wrap{max-width:100%;padding:18px 48px calc(14px + env(safe-area-inset-bottom));}
+  }
 
   /* ── GAME PROGRESS STRIP ── */
   /* horizontal scroll strip; active step auto-scrolls into view */
@@ -270,6 +274,7 @@
   @media(min-width:600px){.menu-grid{grid-template-columns:repeat(3,1fr);gap:12px}}
   @media(min-width:900px){.menu-grid{grid-template-columns:repeat(4,1fr);gap:16px}}
   @media(min-width:1300px){.menu-grid{grid-template-columns:repeat(4,1fr);gap:20px}}
+  @media(min-width:1700px){.menu-grid{grid-template-columns:repeat(5,1fr);gap:24px;max-width:100%}}
   .menu-card{position:relative;display:flex;flex-direction:column;align-items:center;justify-content:center;
     gap:6px;text-align:center;cursor:pointer;border:1px solid var(--line);background:var(--bg2);
     border-radius:14px;padding:18px 12px;color:var(--text);transition:.15s;min-height:128px}
