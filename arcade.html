@@ -515,9 +515,9 @@
   <div id="welcome" class="welcome" style="display:none">
     <div class="welcome-inner">
       <div class="logobar">
-        <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+        <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
         <span class="sep"></span>
-        <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
+        <img src="images/branding/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
       </div>
       <div class="arcade-insert">— INSERT DIVER —</div>
       <div class="wcard">
@@ -829,9 +829,9 @@
     <!-- HALL OF FAME -->
     <div class="panel" id="p-hof">
       <div class="logobar" style="margin-bottom:10px;display:flex!important">
-        <img src="images/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
+        <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
         <span class="sep"></span>
-        <img src="images/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
+        <img src="images/branding/vizlogo.png" alt="VIZ" class="logo circle" onerror="this.outerHTML=LOGO_FALLBACK.viz">
       </div>
       <div class="hof-header">
         <h2>🏆 Hall of Fame</h2>
@@ -1381,15 +1381,15 @@ if(AUTO_ADMIN){
 
 /* ════════ ART ════════ */
 var PHOTOS={
-  seadragon:{src:'images/weedy.jpg',alt:'Weedy seadragon'},
-  pjshark:{src:'images/portjackson.jpg',alt:'Port Jackson shark'},
-  groper:{src:'images/groper.jpg',alt:'Eastern blue groper'},
-  cuttle:{src:'images/cuttle.jpg',alt:'Giant cuttlefish'},
-  bluedevil:{src:'images/bluedevil.jpg',alt:'Eastern blue devil'},
-  duskywhaler:{src:'images/duskywhaler.jpg',alt:'Dusky whaler shark'},
-  greynurse:{src:'images/greynurse.jpg',alt:'Grey nurse shark'},
-  hammeroct:{src:'images/hammeroct.jpg',alt:'Hammer octopus'},
-  angler:{src:'images/angler.jpg',alt:'Anglerfish'}
+  seadragon:{src:'images/creatures/weedy.jpg',alt:'Weedy seadragon'},
+  pjshark:{src:'images/creatures/portjackson.jpg',alt:'Port Jackson shark'},
+  groper:{src:'images/creatures/groper.jpg',alt:'Eastern blue groper'},
+  cuttle:{src:'images/creatures/cuttle.jpg',alt:'Giant cuttlefish'},
+  bluedevil:{src:'images/creatures/bluedevil.jpg',alt:'Eastern blue devil'},
+  duskywhaler:{src:'images/creatures/duskywhaler.jpg',alt:'Dusky whaler shark'},
+  greynurse:{src:'images/creatures/greynurse.jpg',alt:'Grey nurse shark'},
+  hammeroct:{src:'images/creatures/hammeroct.jpg',alt:'Hammer octopus'},
+  angler:{src:'images/creatures/angler.jpg',alt:'Anglerfish'}
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
 function creaturePlaceholder(key){var sh=SIL_SHAPE[key]||'groper';return silSVG(sh,'#15485a');}
@@ -1401,11 +1401,11 @@ var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){
 
 /* ════════ SITE DATA ════════ */
 var PHOTO_SCENES=[
-  {img:'images/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
-  {img:'images/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')},
-  {img:'images/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('SS Centennial')},
-  {img:'images/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('TSS Currajong')},
-  {img:'images/bareisland.jpg',name:'Bare Island',svg:siteSVG('Bare Island','#236f7e','#0c3a44','kelp')}
+  {img:'images/sites/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
+  {img:'images/sites/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')},
+  {img:'images/sites/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('SS Centennial')},
+  {img:'images/sites/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('TSS Currajong')},
+  {img:'images/sites/bareisland.jpg',name:'Bare Island',svg:siteSVG('Bare Island','#236f7e','#0c3a44','kelp')}
 ];
 var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
 function siteSVG(label,top,bottom,feature){
@@ -1619,7 +1619,7 @@ var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespo
 var logFound={},logDone=false;
 function initLog(){
   logFound={};logDone=false;$('logn').textContent=0;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
-  $('logscene').innerHTML='<img src="images/spotter1.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy" onerror="this.outerHTML=siteSVG(\'Spotter scene\',\'#1d7d72\',\'#0c4a44\',\'kelp\')">';
+  $('logscene').innerHTML='<img src="images/scenes/spotter1.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy" onerror="this.outerHTML=siteSVG(\'Spotter scene\',\'#1d7d72\',\'#0c4a44\',\'kelp\')">';
   var opts=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
   $('logchips').innerHTML=opts.map(function(sp){return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';}).join('');
   $('logchips').querySelectorAll('.chip').forEach(function(b){b.onclick=function(){

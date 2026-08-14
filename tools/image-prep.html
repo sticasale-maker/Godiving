@@ -52,7 +52,7 @@
 <body>
 <div class="wrap">
   <h1>🖼️ Godiving — Image Prep Tool</h1>
-  <p class="sub">Drop a photo into any slot below. It's checked against that slot's spec, auto-resized/compressed in your browser (nothing uploaded anywhere), and renamed to match exactly what <code>arcade.html</code> expects. Download the result and drop it straight into the <code>images/</code> folder on GitHub.</p>
+  <p class="sub">Drop a photo into any slot below. It's checked against that slot's spec, auto-resized/compressed in your browser (nothing uploaded anywhere), and renamed to match exactly what <code>arcade.html</code> expects. Only the still-missing images show up here — the ones already on GitHub aren't listed. Each card shows its target subfolder (e.g. <code>images/creatures/</code>) — download and drop it into that exact subfolder on GitHub.</p>
   <div class="toolbar">
     <button class="btn" id="downloadAll" style="display:none">⬇ Download all ready images</button>
     <span class="progress" id="progressLabel"></span>
@@ -61,29 +61,19 @@
 </div>
 
 <script>
-/* ---- Spec per image slot (filename, min px, target px, aspect tolerance, kind) ---- */
+/* ---- Spec per image slot: still-missing images only. ----
+   Uploaded already (not shown here): images/creatures/{weedy,portjackson,groper,cuttle,bluedevil}.jpg,
+   images/sites/{chowder,ctb}.jpg, images/scenes/spotter1.jpg, images/branding/{Go-Diving-Show-Logo-2024.png,vizlogo.png} */
 var SPECS=[
-  // Creatures — square-ish, shown with object-fit:contain
-  {file:'weedy.jpg',       label:'Weedy seadragon',       group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'portjackson.jpg', label:'Port Jackson shark',    group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'groper.jpg',      label:'Eastern blue groper',   group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'cuttle.jpg',      label:'Giant cuttlefish',      group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'bluedevil.jpg',   label:'Eastern blue devil',    group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'duskywhaler.jpg', label:'Dusky whaler shark',    group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'greynurse.jpg',   label:'Grey nurse shark',      group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'hammeroct.jpg',   label:'Hammer octopus',        group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'angler.jpg',      label:'Anglerfish',            group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  // Dive sites — landscape, shown with object-fit:cover, max-height 340
-  {file:'chowder.jpg',     label:'Chowder Bay',           group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  {file:'ctb.jpg',         label:'Cabbage Tree Bay',      group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  {file:'bareisland.jpg',  label:'Bare Island',           group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  {file:'centennial.jpg',  label:'SS Centennial wreck',   group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  {file:'currajong.jpg',   label:'TSS Currajong wreck',   group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  // Scene
-  {file:'spotter1.jpg',    label:'Spotter Log scene (3 creatures visible)', group:'Scene', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  // Branding — small transparent PNGs, no forced resize (just format/size check)
-  {file:'Go-Diving-Show-Logo-2024.png', label:'Go Diving Show logo', group:'Branding', minW:200, minH:60, targetW:600, targetH:0, ar:[1.5,8], keepAlpha:true},
-  {file:'vizlogo.png',     label:'VIZ logo',              group:'Branding', minW:120, minH:120, targetW:400, targetH:400, ar:[0.7,1.5], keepAlpha:true}
+  // Creatures — square-ish, shown with object-fit:contain — go in images/creatures/
+  {file:'duskywhaler.jpg', folder:'creatures', label:'Dusky whaler shark', group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'greynurse.jpg',   folder:'creatures', label:'Grey nurse shark',   group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'hammeroct.jpg',   folder:'creatures', label:'Hammer octopus',     group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'angler.jpg',      folder:'creatures', label:'Anglerfish',         group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  // Dive sites — landscape, shown with object-fit:cover, max-height 340 — go in images/sites/
+  {file:'bareisland.jpg',  folder:'sites', label:'Bare Island',            group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  {file:'centennial.jpg',  folder:'sites', label:'SS Centennial wreck',    group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  {file:'currajong.jpg',   folder:'sites', label:'TSS Currajong wreck',    group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]}
 ];
 
 var slotsEl=document.getElementById('slots');
@@ -96,7 +86,7 @@ SPECS.forEach(function(spec,idx){
   card.className='slot';
   card.innerHTML=
     '<h3>'+spec.label+'</h3>'+
-    '<span class="filename">images/'+spec.file+'</span>'+
+    '<span class="filename">images/'+spec.folder+'/'+spec.file+'</span>'+
     '<div class="meta">'+spec.group+' · min '+spec.minW+'×'+spec.minH+'px</div>'+
     '<div class="status pending" id="st-'+idx+'">Waiting for upload</div>'+
     '<div class="preview" id="pv-'+idx+'"><img id="pvimg-'+idx+'"></div>'+
