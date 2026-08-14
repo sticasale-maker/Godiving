@@ -1330,8 +1330,6 @@ function normName(s){return String(s).toLowerCase().replace(/@/g,'a').replace(/\
 function isCleanName(nm){
   var full=normName(nm);
   for(var i=0;i<BADWORDS_SUB.length;i++){if(full.indexOf(BADWORDS_SUB[i])>-1)return false;}
-  var tokens=String(nm).toLowerCase().split(/[^a-z0-9@$!|]+/).map(normName).filter(Boolean);
-  for(var j=0;j<tokens.length;j++){if(BADWORDS_EXACT.indexOf(tokens[j])>-1)return false;}
   return true;
 }
 
