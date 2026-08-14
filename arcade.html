@@ -284,6 +284,20 @@
     .menu-card{min-height:160px;padding:24px 16px}
     .mc-icon{font-size:44px}
   }
+  .mc-dim{opacity:.45}
+  .mc-agebadge{position:absolute;top:8px;left:8px;font-size:9px;color:var(--muted);
+    background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:2px 5px}
+  .admin-link{background:transparent;border:1px solid var(--line);color:var(--muted);
+    border-radius:8px;padding:6px 10px;font-size:12px;cursor:pointer;margin-left:8px}
+  .admin-link:hover{border-color:var(--accent);color:var(--text)}
+  .admin-grid{display:flex;flex-direction:column;gap:8px;overflow:auto}
+  .admin-row{display:flex;align-items:center;gap:10px;border:1px solid var(--line);
+    background:var(--bg2);border-radius:10px;padding:10px 12px;flex-wrap:wrap}
+  .admin-row .ar-name{flex:1 1 160px;font-weight:600;display:flex;align-items:center;gap:8px}
+  .admin-row .ar-icon{font-size:20px}
+  .admin-row label{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--muted);
+    border:1px solid var(--line);border-radius:8px;padding:5px 9px;cursor:pointer}
+  .admin-row label:has(input:checked){color:var(--text);border-color:var(--accent);background:var(--accentd)}
   .arcade-label{
     display:block;font-family:'Press Start 2P',monospace;font-size:clamp(11px,2vw,13px);color:var(--gold);
     letter-spacing:1px;text-align:left;margin:14px 0 7px;
@@ -550,6 +564,7 @@
           <div class="menu-sub" id="menuProgress">0 of 16 games played</div>
         </div>
         <button class="btn acc" id="menuFinish">🏆 Scores &amp; prizes</button>
+        <button class="admin-link" id="menuAdmin">⚙️ Age groups</button>
       </div>
       <div class="menu-grid" id="menuGrid"></div>
     </div>
@@ -819,6 +834,20 @@
       <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
       <button class="btn play-again" id="hofBackMenu" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">← Back to games</button>
       <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
+    </div>
+
+    <!-- AGE GROUP ADMIN PANEL -->
+    <div class="panel" id="p-admin">
+      <div class="menu-head">
+        <div>
+          <div class="menu-title">Age group <b>panel</b> ⚙️</div>
+          <div class="menu-sub">Tick which age groups each game suits</div>
+        </div>
+        <button class="btn ghost" id="adminBack">← Back to games</button>
+      </div>
+      <div class="admin-grid" id="adminGrid"></div>
+      <button class="btn acc" id="adminSave" style="margin-top:14px">💾 Save</button>
+      <span class="menu-sub" id="adminSaved" style="margin-left:10px"></span>
     </div>
 
   </div><!-- /app -->
@@ -1276,6 +1305,19 @@ function showApp(){
 /* ════════ WELCOME ════════ */
 var USER={name:'',age:0,group:''};
 function ageGroup(a){if(a<=12)return 'Young Explorer';if(a<=17)return 'Teen Explorer';return 'Adult Explorer';}
+var AGE_GROUPS=['Young Explorer','Teen Explorer','Adult Explorer'];
+var AGE_GROUP_SHORT={'Young Explorer':'Young (≤12)','Teen Explorer':'Teen (13–17)','Adult Explorer':'Adult (18+)'};
+function loadGameAgeGroups(){
+  var map={};
+  try{map=JSON.parse(localStorage.getItem('gds_game_agegroups')||'{}');}catch(e){map={};}
+  GAME_ORDER.forEach(function(g){
+    if(!map[g]){var o={};AGE_GROUPS.forEach(function(ag){o[ag]=true;});map[g]=o;}
+    else{AGE_GROUPS.forEach(function(ag){if(typeof map[g][ag]!=='boolean')map[g][ag]=true;});}
+  });
+  return map;
+}
+var GAME_AGE_GROUPS={};
+function saveGameAgeGroups(){try{localStorage.setItem('gds_game_agegroups',JSON.stringify(GAME_AGE_GROUPS));}catch(e){}}
 
 /* ---- friendly-name filter (keeps a public, kid-facing board clean) ---- */
 var BADWORDS_SUB=['fuck','shit','cunt','bitch','bastard','whore','slut','pussy','penis','vagina','nigger','nigga','faggot','retard','wanker','bollock','arsehole','asshole','dickhead','motherfuck','wank','tits','rape','nazi','hitler','pedo','paedo','kike','spastic','twat','jizz','dildo'];
@@ -1382,6 +1424,7 @@ var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
 var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind'];
+GAME_AGE_GROUPS=loadGameAgeGroups();
 var currentGame=0;
 var playedGames={};      /* games the diver has completed at least once */
 var activeGame=null;
@@ -1464,7 +1507,12 @@ function buildMenu(){
   var html=GAME_ORDER.map(function(g){
     var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
     var done=playedGames[g]?'<span class="mc-done">✓ played</span>':'';
-    return '<button class="menu-card" data-g="'+g+'">'+
+    var ags=GAME_AGE_GROUPS[g]||{};
+    var suited=!USER.group||ags[USER.group];
+    var dim=suited?'':' mc-dim';
+    var badge=(!USER.group||suited)?'':'<span class="mc-agebadge">not for '+esc(AGE_GROUP_SHORT[USER.group]||USER.group)+'</span>';
+    return '<button class="menu-card'+dim+'" data-g="'+g+'">'+
+      badge+
       '<span class="mc-icon">'+m.icon+'</span>'+
       '<span class="mc-name">'+esc(m.name)+'</span>'+
       '<span class="mc-desc">'+esc(m.desc)+'</span>'+done+
@@ -1475,6 +1523,32 @@ function buildMenu(){
     b.onclick=function(){startGame(b.dataset.g);};
   });
 }
+function buildAdminGrid(){
+  var html=GAME_ORDER.map(function(g){
+    var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
+    var ags=GAME_AGE_GROUPS[g]||{};
+    var boxes=AGE_GROUPS.map(function(ag){
+      var checked=ags[ag]?' checked':'';
+      return '<label><input type="checkbox" data-g="'+g+'" data-ag="'+esc(ag)+'"'+checked+'>'+esc(AGE_GROUP_SHORT[ag])+'</label>';
+    }).join('');
+    return '<div class="admin-row"><span class="ar-name"><span class="ar-icon">'+m.icon+'</span>'+esc(m.name)+'</span>'+boxes+'</div>';
+  }).join('');
+  $('adminGrid').innerHTML=html;
+}
+function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('p-admin');}
+(function(){
+  var ma=$('menuAdmin');if(ma)ma.onclick=showAdmin;
+  var ab=$('adminBack');if(ab)ab.onclick=showMenu;
+  var as=$('adminSave');if(as)as.onclick=function(){
+    $('adminGrid').querySelectorAll('input[type=checkbox]').forEach(function(cb){
+      var g=cb.dataset.g,ag=cb.dataset.ag;
+      if(!GAME_AGE_GROUPS[g])GAME_AGE_GROUPS[g]={};
+      GAME_AGE_GROUPS[g][ag]=cb.checked;
+    });
+    saveGameAgeGroups();
+    $('adminSaved').textContent='Saved ✓';
+  };
+})();
 /* Strip tiles jump straight to a game during play */
 GAME_ORDER.forEach(function(g){
   var el=$('gs-'+g);if(el){el.style.cursor='pointer';el.onclick=function(){startGame(g);};}
