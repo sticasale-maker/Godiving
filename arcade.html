@@ -103,6 +103,19 @@
   .qcat{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--gold);text-align:center;
     letter-spacing:.3px;flex-shrink:0}
 
+  /* ── SHARK ID (drag names onto photos) ── */
+  .si-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media(min-width:600px){.si-grid{grid-template-columns:repeat(3,1fr)}}
+  @media(min-width:900px){.si-grid{grid-template-columns:repeat(4,1fr)}}
+  .si-card{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);
+    display:flex;flex-direction:column}
+  .si-target{min-height:34px;display:flex;align-items:center;justify-content:center;text-align:center;
+    padding:6px 8px;font-size:12px;color:var(--muted);border-top:2px dashed var(--line)}
+  .si-target.si-filled{border-top-style:solid;border-top-color:var(--good);color:var(--good);font-weight:600}
+  .si-tray{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center}
+  .si-token{cursor:grab;background:var(--surface);border:1px solid var(--accent);color:var(--text);
+    border-radius:8px;padding:8px 12px;font-size:12.5px;touch-action:none}
+
   /* ── CHOICE BUTTONS — 2-col grid ── */
   .opts-grid{
     display:grid;
@@ -531,7 +544,7 @@
       <div class="arcade-insert">— INSERT DIVER —</div>
       <div class="wcard">
         <div class="arcade-title">SYDNEY DIVE<br>CHALLENGE</div>
-        <div class="arcade-sub">16 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <div class="arcade-sub">17 GAMES · ALL AGES · SYDNEY REEFS</div>
         <div class="arcade-event">Go Diving Show · 5–6 Sept 2026</div>
         <label class="arcade-label" for="wname">▶ YOUR NAME</label>
         <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
@@ -570,6 +583,7 @@
       <div class="gstep" id="gs-wreckid"><div class="icon">🔱</div><div class="label">Wreck detective</div></div>
       <div class="gstep" id="gs-wave"><div class="icon">🌊</div><div class="label">Wave lab</div></div>
       <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
+      <div class="gstep" id="gs-sharkid"><div class="icon">🦈</div><div class="label">Shark ID</div></div>
     </div>
 
     <!-- ═══ MENU HUB: pick any game ═══ -->
@@ -841,6 +855,18 @@
       <p class="auto-notice" id="wreckfindNotice"></p>
     </div>
 
+    <!-- 17. SHARK ID (drag each name onto its matching shark photo) -->
+    <div class="panel" id="p-sharkid">
+      <div class="game-header">
+        <span class="game-label">Drag each name onto its shark</span>
+        <span class="score">Matched <b id="sharkidPlaced">0</b> / <b id="sharkidTotal">0</b></span>
+      </div>
+      <div class="si-grid" id="sharkidGrid"></div>
+      <div class="si-tray" id="sharkidTray"></div>
+      <p class="qfact" id="sharkidMsg" style="margin-top:10px"></p>
+      <p class="auto-notice" id="sharkidNotice"></p>
+    </div>
+
     <!-- HALL OF FAME -->
     <div class="panel" id="p-hof">
       <div class="logobar" style="margin-bottom:10px;display:flex!important">
@@ -1069,7 +1095,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -1423,8 +1449,7 @@ function artHeight(fb){var v=getComputedStyle(document.documentElement).getPrope
 function creaturePlaceholder(key){
   var sh=SIL_SHAPE[key];
   if(sh)return silSVG(sh,'#15485a');
-  var d=QD(key),nm=(d&&d.n)||'Sea creature';
-  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">🐟</div><div style="font-size:13px;color:var(--muted)">'+nm+'</div></div>';
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">🐟</div><div style="font-size:11.5px;color:var(--muted)">Photo coming soon</div></div>';
 }
 var SIL_SHAPE={seadragon:'seadragon',pjshark:'pjshark',groper:'groper',cuttle:'cuttle',bluedevil:'bluedevil',duskywhaler:'pjshark',greynurse:'pjshark',hammeroct:'octopus',angler:'groper'};
 function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
@@ -1514,7 +1539,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind'];
+var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind','sharkid'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 var currentGame=0;
 var playedGames={};      /* games the diver has completed at least once */
@@ -1563,6 +1588,7 @@ function startGame(name){
   else if(name==='wreckid')initWreckId();
   else if(name==='wave')initWave();
   else if(name==='wreckfind')initWreckFind();
+  else if(name==='sharkid')initSharkId();
 }
 
 /* ════════ MENU HUB (pick any game) ════════ */
@@ -1582,7 +1608,8 @@ var GAME_META={
   season:{icon:'📅',name:'When Will I See It?',desc:'Match species to season'},
   wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
   wave:{icon:'🌊',name:'Wave Lab',desc:'Predict the visibility'},
-  wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'}
+  wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'},
+  sharkid:{icon:'🦈',name:'Shark ID',desc:'Drag each name onto its shark'}
 };
 function showMenu(){
   activeGame=null;
@@ -2470,6 +2497,75 @@ function wireWreckFind(){
   function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
 }
 function cssEsc(s){return String(s).replace(/["\\]/g,'\\$&');}
+
+/* ════════ SHARK ID (drag each name onto its matching photo) ════════ */
+var SHARK_ID_KEYS=['white','bull','bronzewhaler','greynurse','crestedhorn','pjshark','duskywhaler'];
+var sharkidState=null;
+function initSharkId(){
+  var keys=shuffle(SHARK_ID_KEYS.slice());
+  sharkidState={keys:keys,placed:0,total:keys.length};
+  $('sharkidPlaced').textContent=0;$('sharkidTotal').textContent=keys.length;
+  $('sharkidMsg').textContent='';$('sharkidNotice').textContent='';
+  $('sharkidGrid').innerHTML=keys.map(function(k){
+    return '<div class="si-card">'+ART_html(k,110)+
+      '<div class="si-target" data-key="'+k+'">Drop name here</div></div>';
+  }).join('');
+  $('sharkidTray').innerHTML=shuffle(keys.slice()).map(function(k){
+    return '<div class="si-token" draggable="true" data-key="'+k+'">'+esc(QD(k).n)+'</div>';
+  }).join('');
+  wireSharkId();
+  startTimer();
+}
+function wireSharkId(){
+  var tokens=$('sharkidTray').querySelectorAll('.si-token');
+  var targets=$('sharkidGrid').querySelectorAll('.si-target');
+  var dragKey=null,ghost=null;
+  function place(key,target){
+    if(target.dataset.key===key){
+      target.classList.add('si-filled');
+      target.textContent=QD(key).n;
+      var tok=$('sharkidTray').querySelector('.si-token[data-key="'+key+'"]');
+      if(tok)tok.remove();
+      sharkidState.placed++;$('sharkidPlaced').textContent=sharkidState.placed;
+      award(Math.max(MIN_REWARD,8));
+      if(sharkidState.placed>=sharkidState.total){
+        $('sharkidMsg').textContent='🏆 All sharks matched!';
+        $('sharkidNotice').textContent='All sharks matched! 🦈 Back to the menu…';
+        setTimeout(advanceGame,2400);
+      }
+      return true;
+    }else{
+      penalize();$('sharkidMsg').textContent='Not quite — try another shark.';
+      return false;
+    }
+  }
+  /* Desktop drag-and-drop */
+  tokens.forEach(function(tok){
+    tok.addEventListener('dragstart',function(e){dragKey=tok.dataset.key;try{e.dataTransfer.setData('text/plain',dragKey);}catch(_){}});
+  });
+  targets.forEach(function(t){
+    t.addEventListener('dragover',function(e){if(!t.classList.contains('si-filled'))e.preventDefault();});
+    t.addEventListener('drop',function(e){e.preventDefault();if(t.classList.contains('si-filled')||!dragKey)return;place(dragKey,t);dragKey=null;});
+  });
+  /* Touch drag (phones/tablets) */
+  tokens.forEach(function(tok){
+    tok.addEventListener('touchstart',function(e){
+      dragKey=tok.dataset.key;
+      ghost=tok.cloneNode(true);ghost.style.position='fixed';ghost.style.zIndex='9999';ghost.style.opacity='0.85';ghost.style.pointerEvents='none';
+      document.body.appendChild(ghost);moveGhost(e.touches[0]);
+    },{passive:true});
+    tok.addEventListener('touchmove',function(e){if(ghost){moveGhost(e.touches[0]);}},{passive:true});
+    tok.addEventListener('touchend',function(e){
+      if(ghost){ghost.remove();ghost=null;}
+      if(!dragKey)return;
+      var t=e.changedTouches[0];var el=document.elementFromPoint(t.clientX,t.clientY);
+      var target=el&&el.closest?el.closest('.si-target'):null;
+      if(target&&!target.classList.contains('si-filled'))place(dragKey,target);
+      dragKey=null;
+    });
+  });
+  function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
+}
 
 /* ════════ HALL OF FAME (real, shared board) ════════ */
 function encourageMsg(rank,total){
