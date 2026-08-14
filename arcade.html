@@ -1338,6 +1338,7 @@ function isCleanName(nm){
   return true;
 }
 
+var AUTO_ADMIN=new URLSearchParams(window.location.search).get('admin')==='1';
 document.getElementById('wstart').onclick=function(){
   var nm=document.getElementById('wname').value.trim();
   var av=parseInt(document.getElementById('wage').value,10);
@@ -1360,6 +1361,23 @@ document.getElementById('wstart').onclick=function(){
 ['wname','wage'].forEach(function(id){
   document.getElementById(id).addEventListener('keydown',function(e){if(e.key==='Enter')document.getElementById('wstart').click();});
 });
+
+/* Auto-submit Marco/99 if ?admin=1 in URL (fires after welcome screen is visible) */
+if(AUTO_ADMIN){
+  function tryAutoAdmin(){
+    var nm=document.getElementById('wname');
+    var ag=document.getElementById('wage');
+    var btn=document.getElementById('wstart');
+    if(nm&&ag&&btn&&document.getElementById('welcome').style.display!=='none'){
+      nm.value='Marco';
+      ag.value='99';
+      btn.click();
+    }else{
+      setTimeout(tryAutoAdmin,100);
+    }
+  }
+  tryAutoAdmin();
+}
 
 /* ════════ ART ════════ */
 var PHOTOS={
