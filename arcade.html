@@ -285,6 +285,8 @@
     .mc-icon{font-size:44px}
   }
   .mc-dim{opacity:.45}
+  .mc-played{opacity:.4;filter:grayscale(70%);cursor:default;pointer-events:none}
+  .mc-played:hover{border-color:var(--line);background:var(--bg2);transform:none}
   .mc-agebadge{position:absolute;top:8px;left:8px;font-size:9px;color:var(--muted);
     background:var(--bg2);border:1px solid var(--line);border-radius:6px;padding:2px 5px}
   .admin-link{background:transparent;border:1px solid var(--line);color:var(--muted);
@@ -1514,8 +1516,9 @@ function buildMenu(){
     (USER.group?' · '+esc(AGE_GROUP_SHORT[USER.group]||USER.group):'');
   var html=shown.map(function(g){
     var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
-    var done=playedGames[g]?'<span class="mc-done">✓ played</span>':'';
-    return '<button class="menu-card" data-g="'+g+'">'+
+    var isDone=!!playedGames[g];
+    var done=isDone?'<span class="mc-done">✓ played</span>':'';
+    return '<button class="menu-card'+(isDone?' mc-played':'')+'" data-g="'+g+'"'+(isDone?' disabled':'')+'>'+
       '<span class="mc-icon">'+m.icon+'</span>'+
       '<span class="mc-name">'+esc(m.name)+'</span>'+
       '<span class="mc-desc">'+esc(m.desc)+'</span>'+done+
@@ -1523,6 +1526,7 @@ function buildMenu(){
   }).join('');
   $('menuGrid').innerHTML=html||'<div class="menu-sub">No games are enabled for your age group yet — check the Age groups panel.</div>';
   $('menuGrid').querySelectorAll('.menu-card').forEach(function(b){
+    if(b.disabled)return;
     b.onclick=function(){startGame(b.dataset.g);};
   });
 }
