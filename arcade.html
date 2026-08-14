@@ -94,6 +94,13 @@
   .panel.show{display:flex}
   @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 
+  /* ── QUIZ LEVEL TABS ── */
+  .qlevels{display:flex;gap:6px;margin:0 0 8px;flex-shrink:0}
+  .qlevel{flex:1;background:var(--bg2);color:var(--muted);border:1px solid var(--line);
+    border-radius:8px;padding:7px 6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.12s}
+  .qlevel:hover{border-color:var(--accent);color:var(--text)}
+  .qlevel.on{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
+
   /* ── CHOICE BUTTONS — 2-col grid ── */
   .opts-grid{
     display:grid;
@@ -582,6 +589,11 @@
         <span class="game-label">Name the creature</span>
         <span class="game-tagline">Sydney Dive Challenge</span>
         <span class="score" style="flex:none">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span>
+      </div>
+      <div class="qlevels" id="qlevels">
+        <button class="qlevel" data-lv="junior">Junior</button>
+        <button class="qlevel" data-lv="kid">Kid</button>
+        <button class="qlevel" data-lv="adult">Adult</button>
       </div>
       <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
       <div class="opts-grid" id="qopts"></div>
@@ -1594,12 +1606,45 @@ GAME_ORDER.forEach(function(g){
 
 
 var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
+var QUIZ_LEVELS={junior:{n:4},kid:{n:3},adult:{n:5}};
+var quizLevel=(function(){try{return localStorage.getItem('gds_quiz_level')||'junior';}catch(e){return 'junior';}})();
+if(!QUIZ_LEVELS[quizLevel])quizLevel='junior';
+var QSTAT_KEYS=['len','depth','speed','life','camo'];
+function qDistractors(key,count){
+  var others=KEYS.filter(function(k){return k!==key;});
+  if(quizLevel!=='adult')return shuffle(others).slice(0,count);
+  // Adult: pick the most similar creatures (nearest by normalized stats) — harder to tell apart
+  var ranges={};
+  QSTAT_KEYS.forEach(function(s){
+    var vals=KEYS.map(function(k){return CR[k][s];});
+    ranges[s]={min:Math.min.apply(null,vals),max:Math.max.apply(null,vals)};
+  });
+  function norm(k,s){var r=ranges[s];return r.max===r.min?0:(CR[k][s]-r.min)/(r.max-r.min);}
+  var scored=others.map(function(k){
+    var d=0;
+    QSTAT_KEYS.forEach(function(s){var diff=norm(k,s)-norm(key,s);d+=diff*diff;});
+    return {k:k,d:d};
+  }).sort(function(a,b){return a.d-b.d;});
+  return scored.slice(0,count).map(function(o){return o.k;});
+}
+function setQuizLevel(lv){
+  if(!QUIZ_LEVELS[lv])return;
+  quizLevel=lv;
+  try{localStorage.setItem('gds_quiz_level',lv);}catch(e){}
+  $('qlevels').querySelectorAll('.qlevel').forEach(function(b){b.classList.toggle('on',b.dataset.lv===lv);});
+  initQuiz();
+}
+$('qlevels').querySelectorAll('.qlevel').forEach(function(b){
+  b.classList.toggle('on',b.dataset.lv===quizLevel);
+  b.onclick=function(){setQuizLevel(b.dataset.lv);};
+});
 function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';quizRound();}
 function quizRound(){
   qAnswered=false;$('qfact').textContent='';$('qnext').style.display='none';$('qnotice').textContent='';
   var key=qQueue.shift();
   $('qart').innerHTML=ART_html(key);
-  var opts=shuffle([key].concat(shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,3)));
+  var n=(QUIZ_LEVELS[quizLevel]||QUIZ_LEVELS.junior).n;
+  var opts=shuffle([key].concat(qDistractors(key,n-1)));
   $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
   $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(qAnswered)return;qAnswered=true;qTotal++;
