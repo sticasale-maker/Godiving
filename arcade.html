@@ -100,6 +100,8 @@
     border-radius:8px;padding:7px 6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.12s}
   .qlevel:hover{border-color:var(--accent);color:var(--text)}
   .qlevel.on{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
+  .qcat{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--gold);text-align:center;
+    letter-spacing:.3px;flex-shrink:0}
 
   /* ── CHOICE BUTTONS — 2-col grid ── */
   .opts-grid{
@@ -595,6 +597,7 @@
         <button class="qlevel" data-lv="kid">Kid</button>
         <button class="qlevel" data-lv="adult">Adult</button>
       </div>
+      <p class="qcat" id="qCatLabel" style="display:none"></p>
       <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
       <div class="opts-grid" id="qopts"></div>
       <p class="fact" id="qfact"></p>
@@ -1401,10 +1404,28 @@ var PHOTOS={
   duskywhaler:{src:'images/creatures/duskywhaler.jpg',alt:'Dusky whaler shark'},
   greynurse:{src:'images/creatures/greynurse.jpg',alt:'Grey nurse shark'},
   hammeroct:{src:'images/creatures/hammeroct.jpg',alt:'Hammer octopus'},
-  angler:{src:'images/creatures/angler.jpg',alt:'Anglerfish'}
+  angler:{src:'images/creatures/angler.jpg',alt:'Anglerfish'},
+  white:{src:'images/creatures/white.jpg',alt:'Great white shark'},
+  bronzewhaler:{src:'images/creatures/bronzewhaler.jpg',alt:'Bronze whaler shark'},
+  bull:{src:'images/creatures/bull.jpg',alt:'Bull shark'},
+  draughtboard:{src:'images/creatures/draughtboard.jpg',alt:'Draughtboard shark'},
+  crestedhorn:{src:'images/creatures/crestedhorn.jpg',alt:'Crested hornshark'},
+  wobbegong_spotted:{src:'images/creatures/wobbegong_spotted.jpg',alt:'Spotted wobbegong'},
+  wobbegong_banded:{src:'images/creatures/wobbegong_banded.jpg',alt:'Banded wobbegong'},
+  wobbegong_tasselled:{src:'images/creatures/wobbegong_tasselled.jpg',alt:'Tasselled wobbegong'},
+  wobbegong_northern:{src:'images/creatures/wobbegong_northern.jpg',alt:'Northern wobbegong'},
+  striped_angler:{src:'images/creatures/striped_angler.jpg',alt:'Striped anglerfish'},
+  painted_angler:{src:'images/creatures/painted_angler.jpg',alt:'Painted anglerfish'},
+  prickly_angler:{src:'images/creatures/prickly_angler.jpg',alt:'Prickly anglerfish'},
+  shaggy_angler:{src:'images/creatures/shaggy_angler.jpg',alt:'Shaggy anglerfish'}
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
-function creaturePlaceholder(key){var sh=SIL_SHAPE[key]||'groper';return silSVG(sh,'#15485a');}
+function creaturePlaceholder(key){
+  var sh=SIL_SHAPE[key];
+  if(sh)return silSVG(sh,'#15485a');
+  var d=QD(key),nm=(d&&d.n)||'Sea creature';
+  return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">🐟</div><div style="font-size:13px;color:var(--muted)">'+nm+'</div></div>';
+}
 var SIL_SHAPE={seadragon:'seadragon',pjshark:'pjshark',groper:'groper',cuttle:'cuttle',bluedevil:'bluedevil',duskywhaler:'pjshark',greynurse:'pjshark',hammeroct:'octopus',angler:'groper'};
 function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
   if(!ph){var sh=SIL_SHAPE[key]||'groper';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px">'+silSVG(sh,'#15485a')+'</div>';}
@@ -1462,6 +1483,33 @@ var CR={
   angler:{n:'Anglerfish',len:15,depth:40,speed:0.5,life:5,eggs:50000,camo:10,migrate:0,f:'Gathers near the Chowder Bay jetty to mate; the small male flees fast or risks being eaten.'}
 };
 var KEYS=Object.keys(CR);
+/* Extra species used only in Kid/Adult themed Guess Who rounds — kept out of CR/KEYS
+   so they never appear in Stat Battle, Silhouette, Spotter Log, etc. NOTE: facts below
+   are a first draft for the show — please fact-check before going live. */
+var EXTRA_CR={
+  white:{n:'Great white shark',f:'Australia\'s most famous shark — found along the NSW coast, especially near seal colonies, and can detect a single drop of blood from kilometres away.'},
+  bronzewhaler:{n:'Bronze whaler shark',f:'Common along the NSW coast in summer; easily confused with the dusky whaler — look for the bronze-copper sheen.'},
+  bull:{n:'Bull shark',f:'One of the few sharks that tolerates fresh water, and is sometimes seen well upriver in NSW estuaries.'},
+  draughtboard:{n:'Draughtboard shark',f:'A small bottom-dweller that can swallow water to puff up and wedge itself into crevices when threatened.'},
+  crestedhorn:{n:'Crested hornshark',f:'Closely related to the Port Jackson shark, but has a bony ridge above each eye and bolder, blotchier markings.'},
+  wobbegong_spotted:{n:'Spotted wobbegong',f:'The largest carpet shark on the NSW coast, camouflaged with pale O-shaped blotches.'},
+  wobbegong_banded:{n:'Banded (ornate) wobbegong',f:'Told apart from the spotted wobbegong by darker saddle-like bands rather than spots.'},
+  wobbegong_tasselled:{n:'Tasselled wobbegong',f:'Found on the Great Barrier Reef — its elaborate beard of skin flaps makes it the most camouflaged wobbegong of all.'},
+  wobbegong_northern:{n:'Northern wobbegong',f:'Found across tropical northern Australia; slimmer and more lightly patterned than its southern cousins.'},
+  striped_angler:{n:'Striped anglerfish',f:'Uses a built-in fishing rod tipped with a lure to tempt prey close before striking.'},
+  painted_angler:{n:'Painted anglerfish',f:'A master of disguise that can shift its skin colour to match its surroundings over days.'},
+  prickly_angler:{n:'Prickly anglerfish',f:'Covered in fine spines and found hiding among sponges and rubble on Sydney reefs.'},
+  shaggy_angler:{n:'Shaggy anglerfish',f:'Its skin flaps mimic seaweed so well it can sit in plain view and go unnoticed.'}
+};
+function QD(key){return CR[key]||EXTRA_CR[key];}
+/* Themed rounds for Kid/Adult — 3 rounds per category, cycled in this order.
+   NOTE: facts are a first draft for the show — please fact-check before going live. */
+var QUIZ_CATEGORIES=[
+  {title:'Sharks of Australia', keys:['white','bull','bronzewhaler','greynurse']},
+  {title:'Anglerfish', keys:['striped_angler','painted_angler','prickly_angler','shaggy_angler']},
+  {title:'Port Jackson vs Crested Hornshark', keys:['pjshark','crestedhorn'], fillers:['draughtboard','greynurse','duskywhaler']},
+  {title:'Wobbegongs of Australia', keys:['wobbegong_spotted','wobbegong_banded','wobbegong_tasselled','wobbegong_northern'], fillers:['draughtboard','pjshark']}
+];
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var $=function(id){return document.getElementById(id);};
 
@@ -1609,23 +1657,30 @@ var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
 var QUIZ_LEVELS={junior:{n:4},kid:{n:3},adult:{n:5}};
 var quizLevel=(function(){try{return localStorage.getItem('gds_quiz_level')||'junior';}catch(e){return 'junior';}})();
 if(!QUIZ_LEVELS[quizLevel])quizLevel='junior';
-var QSTAT_KEYS=['len','depth','speed','life','camo'];
 function qDistractors(key,count){
-  var others=KEYS.filter(function(k){return k!==key;});
-  if(quizLevel!=='adult')return shuffle(others).slice(0,count);
-  // Adult: pick the most similar creatures (nearest by normalized stats) — harder to tell apart
-  var ranges={};
-  QSTAT_KEYS.forEach(function(s){
-    var vals=KEYS.map(function(k){return CR[k][s];});
-    ranges[s]={min:Math.min.apply(null,vals),max:Math.max.apply(null,vals)};
+  return shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,count);
+}
+/* Kid/Adult: 3 rounds per themed category — sharks, anglerfish, PJ-vs-crested-hornshark, wobbegongs.
+   Options are drawn from within the category (plus fillers/padding) so the choices are genuinely
+   confusable, not random — this is what makes Kid/Adult harder than Junior. */
+function buildThemedRounds(){
+  var n=(QUIZ_LEVELS[quizLevel]||QUIZ_LEVELS.junior).n;
+  var rounds=[];
+  QUIZ_CATEGORIES.forEach(function(cat){
+    var pool=shuffle(cat.keys.slice());
+    for(var r=0;r<3;r++){
+      var key=pool[r%pool.length];
+      var candidates=shuffle(cat.keys.filter(function(k){return k!==key;}))
+        .concat(shuffle((cat.fillers||[]).slice()))
+        .concat(shuffle(KEYS.slice()));
+      var opts=[key];
+      for(var i=0;i<candidates.length&&opts.length<n;i++){
+        if(opts.indexOf(candidates[i])===-1)opts.push(candidates[i]);
+      }
+      rounds.push({key:key,opts:shuffle(opts),cat:cat.title});
+    }
   });
-  function norm(k,s){var r=ranges[s];return r.max===r.min?0:(CR[k][s]-r.min)/(r.max-r.min);}
-  var scored=others.map(function(k){
-    var d=0;
-    QSTAT_KEYS.forEach(function(s){var diff=norm(k,s)-norm(key,s);d+=diff*diff;});
-    return {k:k,d:d};
-  }).sort(function(a,b){return a.d-b.d;});
-  return scored.slice(0,count).map(function(o){return o.k;});
+  return rounds;
 }
 function setQuizLevel(lv){
   if(!QUIZ_LEVELS[lv])return;
@@ -1638,19 +1693,32 @@ $('qlevels').querySelectorAll('.qlevel').forEach(function(b){
   b.classList.toggle('on',b.dataset.lv===quizLevel);
   b.onclick=function(){setQuizLevel(b.dataset.lv);};
 });
-function initQuiz(){qScore=0;qTotal=0;qQueue=shuffle(KEYS.slice());$('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';quizRound();}
+function initQuiz(){
+  qScore=0;qTotal=0;
+  qQueue=(quizLevel==='junior')?shuffle(KEYS.slice()):buildThemedRounds();
+  $('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';
+  quizRound();
+}
 function quizRound(){
   qAnswered=false;$('qfact').textContent='';$('qnext').style.display='none';$('qnotice').textContent='';
-  var key=qQueue.shift();
+  var item=qQueue.shift();
+  var key,opts,catTitle='';
+  if(typeof item==='string'){
+    key=item;
+    var n=(QUIZ_LEVELS[quizLevel]||QUIZ_LEVELS.junior).n;
+    opts=shuffle([key].concat(qDistractors(key,n-1)));
+  }else{
+    key=item.key;opts=item.opts;catTitle=item.cat;
+  }
+  var catEl=$('qCatLabel');
+  if(catEl){catEl.textContent=catTitle;catEl.style.display=catTitle?'block':'none';}
   $('qart').innerHTML=ART_html(key);
-  var n=(QUIZ_LEVELS[quizLevel]||QUIZ_LEVELS.junior).n;
-  var opts=shuffle([key].concat(qDistractors(key,n-1)));
-  $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+CR[k].n+'</button>';}).join('');
+  $('qopts').innerHTML=opts.map(function(k){return '<button class="opt" data-k="'+k+'">'+QD(k).n+'</button>';}).join('');
   $('qopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(qAnswered)return;qAnswered=true;qTotal++;
     $('qopts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.k===key)x.classList.add('right');});
     if(btn.dataset.k===key){qScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
-    $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=CR[key].f;
+    $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=QD(key).f;
     if(qQueue.length>0)$('qnext').style.display='inline-block';
     else{$('qnotice').textContent='All creatures done! 🐠 Back to the menu…';setTimeout(advanceGame,2200);}
   };});
