@@ -857,6 +857,7 @@
 
 <script>
 /* ════════ SPLASH ════════ */
+var SKIP_SPLASH_ON_LOAD=true; /* set to false to re-enable intro */
 (function(){
   var splash=document.getElementById('splash'),video=document.getElementById('splashVideo'),
     canvas=document.getElementById('splashCanvas'),fallback=document.getElementById('splashFallback'),
@@ -945,7 +946,8 @@
   video.addEventListener('canplaythrough',attemptPlay);
   video.addEventListener('loadeddata',attemptPlay);
 
-  setTimeout(function(){if(!dismissed)afterSplash();},35000);
+  if(SKIP_SPLASH_ON_LOAD){setTimeout(function(){if(!dismissed)afterSplash();},100);}
+  else{setTimeout(function(){if(!dismissed)afterSplash();},35000);}
 
   /* ── Replay for Play Again ── */
   function replaySplash(){
