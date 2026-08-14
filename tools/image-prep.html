@@ -62,18 +62,28 @@
 
 <script>
 /* ---- Spec per image slot: still-missing images only. ----
-   Uploaded already (not shown here): images/creatures/{weedy,portjackson,groper,cuttle,bluedevil}.jpg,
-   images/sites/{chowder,ctb}.jpg, images/scenes/spotter1.jpg, images/branding/{Go-Diving-Show-Logo-2024.png,vizlogo.png} */
+   Uploaded already (not shown here): images/creatures/{weedy,portjackson,groper,cuttle,bluedevil,
+   duskywhaler,greynurse,hammeroct,angler}.jpg, images/sites/{chowder,ctb,bareisland,centennial,
+   currajong}.jpg, images/scenes/spotter1.jpg, images/branding/{Go-Diving-Show-Logo-2024.png,vizlogo.png}.
+   These are the species added for the Kid/Adult themed quiz rounds. */
 var SPECS=[
-  // Creatures — square-ish, shown with object-fit:contain — go in images/creatures/
-  {file:'duskywhaler.jpg', folder:'creatures', label:'Dusky whaler shark', group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'greynurse.jpg',   folder:'creatures', label:'Grey nurse shark',   group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'hammeroct.jpg',   folder:'creatures', label:'Hammer octopus',     group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'angler.jpg',      folder:'creatures', label:'Anglerfish',         group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  // Dive sites — landscape, shown with object-fit:cover, max-height 340 — go in images/sites/
-  {file:'bareisland.jpg',  folder:'sites', label:'Bare Island',            group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  {file:'centennial.jpg',  folder:'sites', label:'SS Centennial wreck',    group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
-  {file:'currajong.jpg',   folder:'sites', label:'TSS Currajong wreck',    group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]}
+  // Sharks of Australia
+  {file:'white.jpg',        folder:'creatures', label:'Great white shark',        group:'Sharks of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'bull.jpg',         folder:'creatures', label:'Bull shark',               group:'Sharks of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'bronzewhaler.jpg', folder:'creatures', label:'Bronze whaler shark',      group:'Sharks of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  // Anglerfish
+  {file:'striped_angler.jpg', folder:'creatures', label:'Striped anglerfish',     group:'Anglerfish', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'painted_angler.jpg', folder:'creatures', label:'Painted anglerfish',     group:'Anglerfish', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'prickly_angler.jpg', folder:'creatures', label:'Prickly anglerfish',     group:'Anglerfish', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'shaggy_angler.jpg',  folder:'creatures', label:'Shaggy anglerfish',      group:'Anglerfish', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  // Port Jackson vs Crested Hornshark
+  {file:'crestedhorn.jpg',  folder:'creatures', label:'Crested hornshark',        group:'PJ vs Crested Hornshark', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'draughtboard.jpg', folder:'creatures', label:'Draughtboard shark (filler)', group:'PJ vs Crested Hornshark', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  // Wobbegongs of Australia
+  {file:'wobbegong_spotted.jpg',  folder:'creatures', label:'Spotted wobbegong',   group:'Wobbegongs of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'wobbegong_banded.jpg',   folder:'creatures', label:'Banded (ornate) wobbegong', group:'Wobbegongs of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'wobbegong_tasselled.jpg',folder:'creatures', label:'Tasselled wobbegong', group:'Wobbegongs of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'wobbegong_northern.jpg', folder:'creatures', label:'Northern wobbegong',  group:'Wobbegongs of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]}
 ];
 
 var slotsEl=document.getElementById('slots');
