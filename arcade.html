@@ -1385,14 +1385,18 @@ var PHOTOS={
   pjshark:{src:'images/portjackson.jpg',alt:'Port Jackson shark'},
   groper:{src:'images/groper.jpg',alt:'Eastern blue groper'},
   cuttle:{src:'images/cuttle.jpg',alt:'Giant cuttlefish'},
-  bluedevil:{src:'images/bluedevil.jpg',alt:'Eastern blue devil'}
+  bluedevil:{src:'images/bluedevil.jpg',alt:'Eastern blue devil'},
+  duskywhaler:{src:'images/duskywhaler.jpg',alt:'Dusky whaler shark'},
+  greynurse:{src:'images/greynurse.jpg',alt:'Grey nurse shark'},
+  hammeroct:{src:'images/hammeroct.jpg',alt:'Hammer octopus'},
+  angler:{src:'images/angler.jpg',alt:'Anglerfish'}
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
-function creaturePlaceholder(key){var nm=(CR[key]&&CR[key].n)||'Sea creature';return '<div style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;width:100%;height:100%;text-align:center;padding:0 8px"><div style="font-size:34px;line-height:1">\uD83D\uDC1F</div><div style="font-size:13px;color:var(--muted)">'+nm+'</div></div>';}
+function creaturePlaceholder(key){var sh=SIL_SHAPE[key]||'groper';return silSVG(sh,'#15485a');}
 var SIL_SHAPE={seadragon:'seadragon',pjshark:'pjshark',groper:'groper',cuttle:'cuttle',bluedevil:'bluedevil',duskywhaler:'pjshark',greynurse:'pjshark',hammeroct:'octopus',angler:'groper'};
 function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
   if(!ph){var sh=SIL_SHAPE[key]||'groper';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px">'+silSVG(sh,'#15485a')+'</div>';}
-  return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.outerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
+  return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px" data-k="'+key+'"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.parentNode.innerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
 /* ════════ SITE DATA ════════ */
