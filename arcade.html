@@ -1501,24 +1501,27 @@ function showMenu(){
   showPanel('p-menu');
   Cloud.updateSession({game:'menu',points:POINTS});
 }
+function gamesForGroup(group){
+  return GAME_ORDER.filter(function(g){
+    var ags=GAME_AGE_GROUPS[g]||{};
+    return !group||ags[group];
+  });
+}
 function buildMenu(){
-  var played=Object.keys(playedGames).length,total=GAME_ORDER.length;
-  $('menuProgress').textContent=played+' of '+total+' games played';
-  var html=GAME_ORDER.map(function(g){
+  var shown=gamesForGroup(USER.group);
+  var played=Object.keys(playedGames).filter(function(g){return shown.indexOf(g)!==-1;}).length;
+  $('menuProgress').textContent=played+' of '+shown.length+' games played'+
+    (USER.group?' · '+esc(AGE_GROUP_SHORT[USER.group]||USER.group):'');
+  var html=shown.map(function(g){
     var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
     var done=playedGames[g]?'<span class="mc-done">✓ played</span>':'';
-    var ags=GAME_AGE_GROUPS[g]||{};
-    var suited=!USER.group||ags[USER.group];
-    var dim=suited?'':' mc-dim';
-    var badge=(!USER.group||suited)?'':'<span class="mc-agebadge">not for '+esc(AGE_GROUP_SHORT[USER.group]||USER.group)+'</span>';
-    return '<button class="menu-card'+dim+'" data-g="'+g+'">'+
-      badge+
+    return '<button class="menu-card" data-g="'+g+'">'+
       '<span class="mc-icon">'+m.icon+'</span>'+
       '<span class="mc-name">'+esc(m.name)+'</span>'+
       '<span class="mc-desc">'+esc(m.desc)+'</span>'+done+
       '</button>';
   }).join('');
-  $('menuGrid').innerHTML=html;
+  $('menuGrid').innerHTML=html||'<div class="menu-sub">No games are enabled for your age group yet — check the Age groups panel.</div>';
   $('menuGrid').querySelectorAll('.menu-card').forEach(function(b){
     b.onclick=function(){startGame(b.dataset.g);};
   });
