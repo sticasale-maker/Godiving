@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Godiving — Image Prep Tool</title>
+<style>
+  :root{
+    --bg:#04161e;--surface:#0b2531;--bg2:#0c2c39;--line:rgba(255,255,255,.12);
+    --text:#eaf6fb;--muted:#8fb0bb;--accent:#36c9c0;--accentd:rgba(54,201,192,.12);
+    --good:#4ade80;--goodd:rgba(74,222,128,.12);--bad:#f87171;--badd:rgba(248,113,113,.12);
+    --gold:#ffce54;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    padding:20px;
+  }
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13.5px;margin:0 0 22px}
+  .wrap{max-width:1100px;margin:0 auto}
+  .slots{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+  .slot{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:14px;
+    display:flex;flex-direction:column;gap:8px}
+  .slot h3{margin:0;font-size:14.5px}
+  .slot .meta{font-size:12px;color:var(--muted);line-height:1.4}
+  .slot .status{font-size:12px;font-weight:600;padding:4px 8px;border-radius:6px;display:inline-block;width:fit-content}
+  .status.pending{background:var(--bg2);color:var(--muted)}
+  .status.ok{background:var(--goodd);color:var(--good)}
+  .status.warn{background:rgba(255,206,84,.12);color:var(--gold)}
+  .status.bad{background:var(--badd);color:var(--bad)}
+  .drop{border:2px dashed var(--line);border-radius:10px;padding:14px;text-align:center;
+    cursor:pointer;transition:.15s;font-size:12.5px;color:var(--muted)}
+  .drop:hover,.drop.drag{border-color:var(--accent);background:var(--accentd);color:var(--text)}
+  .drop input{display:none}
+  .preview{width:100%;border-radius:8px;overflow:hidden;background:#000;display:none;
+    aspect-ratio:4/3;align-items:center;justify-content:center}
+  .preview img{width:100%;height:100%;object-fit:contain;display:block}
+  .btn{background:var(--accent);color:#04282a;border:none;border-radius:8px;
+    padding:9px 12px;font-size:13px;font-weight:600;cursor:pointer;display:none}
+  .btn:hover{filter:brightness(1.08)}
+  .issues{font-size:11.5px;color:var(--bad);line-height:1.4}
+  .filename{font-family:monospace;font-size:12px;color:var(--accent);background:var(--bg2);
+    border-radius:6px;padding:3px 7px;display:inline-block;width:fit-content}
+  .toolbar{display:flex;gap:10px;align-items:center;margin-bottom:18px;flex-wrap:wrap}
+  .toolbar .btn{display:inline-block}
+  .progress{font-size:13px;color:var(--muted)}
+  .zip-note{font-size:12px;color:var(--muted);margin-top:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🖼️ Godiving — Image Prep Tool</h1>
+  <p class="sub">Drop a photo into any slot below. It's checked against that slot's spec, auto-resized/compressed in your browser (nothing uploaded anywhere), and renamed to match exactly what <code>arcade.html</code> expects. Download the result and drop it straight into the <code>images/</code> folder on GitHub.</p>
+  <div class="toolbar">
+    <button class="btn" id="downloadAll" style="display:none">⬇ Download all ready images</button>
+    <span class="progress" id="progressLabel"></span>
+  </div>
+  <div class="slots" id="slots"></div>
+</div>
+
+<script>
+/* ---- Spec per image slot (filename, min px, target px, aspect tolerance, kind) ---- */
+var SPECS=[
+  // Creatures — square-ish, shown with object-fit:contain
+  {file:'weedy.jpg',       label:'Weedy seadragon',       group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'portjackson.jpg', label:'Port Jackson shark',    group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'groper.jpg',      label:'Eastern blue groper',   group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'cuttle.jpg',      label:'Giant cuttlefish',      group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  {file:'bluedevil.jpg',   label:'Eastern blue devil',    group:'Creature', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
+  // Dive sites — landscape, shown with object-fit:cover, max-height 340
+  {file:'chowder.jpg',     label:'Chowder Bay',           group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  {file:'ctb.jpg',         label:'Cabbage Tree Bay',      group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  {file:'bareisland.jpg',  label:'Bare Island',           group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  {file:'centennial.jpg',  label:'SS Centennial wreck',   group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  {file:'currajong.jpg',   label:'TSS Currajong wreck',   group:'Dive site', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  // Scene
+  {file:'spotter1.jpg',    label:'Spotter Log scene (3 creatures visible)', group:'Scene', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
+  // Branding — small transparent PNGs, no forced resize (just format/size check)
+  {file:'Go-Diving-Show-Logo-2024.png', label:'Go Diving Show logo', group:'Branding', minW:200, minH:60, targetW:600, targetH:0, ar:[1.5,8], keepAlpha:true},
+  {file:'vizlogo.png',     label:'VIZ logo',              group:'Branding', minW:120, minH:120, targetW:400, targetH:400, ar:[0.7,1.5], keepAlpha:true}
+];
+
+var slotsEl=document.getElementById('slots');
+var results={}; // file -> {blob, name}
+
+function fmtBytes(n){return n<1024?n+' B':n<1048576?(n/1024).toFixed(0)+' KB':(n/1048576).toFixed(1)+' MB';}
+
+SPECS.forEach(function(spec,idx){
+  var card=document.createElement('div');
+  card.className='slot';
+  card.innerHTML=
+    '<h3>'+spec.label+'</h3>'+
+    '<span class="filename">images/'+spec.file+'</span>'+
+    '<div class="meta">'+spec.group+' · min '+spec.minW+'×'+spec.minH+'px</div>'+
+    '<div class="status pending" id="st-'+idx+'">Waiting for upload</div>'+
+    '<div class="preview" id="pv-'+idx+'"><img id="pvimg-'+idx+'"></div>'+
+    '<div class="issues" id="is-'+idx+'"></div>'+
+    '<label class="drop" id="drop-'+idx+'">Click or drop image here<input type="file" accept="image/*" id="file-'+idx+'"></label>'+
+    '<button class="btn" id="dl-'+idx+'">⬇ Download '+spec.file+'</button>';
+  slotsEl.appendChild(card);
+
+  var drop=card.querySelector('#drop-'+idx);
+  var input=card.querySelector('#file-'+idx);
+  drop.addEventListener('click',function(){input.click();});
+  drop.addEventListener('dragover',function(e){e.preventDefault();drop.classList.add('drag');});
+  drop.addEventListener('dragleave',function(){drop.classList.remove('drag');});
+  drop.addEventListener('drop',function(e){
+    e.preventDefault();drop.classList.remove('drag');
+    if(e.dataTransfer.files[0])handleFile(spec,idx,e.dataTransfer.files[0]);
+  });
+  input.addEventListener('change',function(){
+    if(input.files[0])handleFile(spec,idx,input.files[0]);
+  });
+});
+
+function setStatus(idx,cls,text){
+  var el=document.getElementById('st-'+idx);
+  el.className='status '+cls;
+  el.textContent=text;
+}
+
+function handleFile(spec,idx,file){
+  var issues=[];
+  var validTypes=['image/jpeg','image/png','image/webp'];
+  if(validTypes.indexOf(file.type)===-1){
+    setStatus(idx,'bad','Unsupported format: '+(file.type||'unknown'));
+    document.getElementById('is-'+idx).textContent='Please upload a JPG, PNG or WebP file.';
+    return;
+  }
+  var img=new Image();
+  var url=URL.createObjectURL(file);
+  img.onload=function(){
+    var w=img.naturalWidth,h=img.naturalHeight,ar=w/h;
+    if(w<spec.minW||h<spec.minH){
+      issues.push('Low resolution: '+w+'×'+h+'px (need at least '+spec.minW+'×'+spec.minH+'px). Find a bigger photo if possible.');
+    }
+    if(ar<spec.ar[0]||ar>spec.ar[1]){
+      issues.push('Unusual aspect ratio ('+ar.toFixed(2)+'). It will be cropped/padded to fit — check the preview looks right.');
+    }
+    processImage(spec,idx,img,file,issues);
+    URL.revokeObjectURL(url);
+  };
+  img.onerror=function(){
+    setStatus(idx,'bad','Could not read image');
+    document.getElementById('is-'+idx).textContent='This file could not be opened as an image.';
+  };
+  img.src=url;
+}
+
+function processImage(spec,idx,img,file,issues){
+  var srcW=img.naturalWidth,srcH=img.naturalHeight;
+  var targetW=spec.targetW,targetH=spec.targetH||Math.round(targetW*srcH/srcW);
+  var canvas=document.createElement('canvas');
+  canvas.width=targetW;canvas.height=targetH;
+  var ctx=canvas.getContext('2d');
+  if(!spec.keepAlpha){ctx.fillStyle='#04161e';ctx.fillRect(0,0,targetW,targetH);}
+
+  // cover-fit crop
+  var srcAr=srcW/srcH, dstAr=targetW/targetH;
+  var sx,sy,sw,sh;
+  if(srcAr>dstAr){ sh=srcH; sw=srcH*dstAr; sx=(srcW-sw)/2; sy=0; }
+  else{ sw=srcW; sh=srcW/dstAr; sx=0; sy=(srcH-sh)/2; }
+  ctx.drawImage(img,sx,sy,sw,sh,0,0,targetW,targetH);
+
+  var mime=spec.keepAlpha?'image/png':'image/jpeg';
+  var quality=spec.keepAlpha?1:0.85;
+  canvas.toBlob(function(blob){
+    if(!blob){setStatus(idx,'bad','Resize failed');return;}
+    var wasResized=(srcW!==targetW||srcH!==targetH);
+    var pv=document.getElementById('pv-'+idx);
+    var pvimg=document.getElementById('pvimg-'+idx);
+    var objUrl=URL.createObjectURL(blob);
+    pvimg.src=objUrl;
+    pv.style.display='flex';
+
+    var isEl=document.getElementById('is-'+idx);
+    isEl.innerHTML=issues.length?issues.map(function(m){return '⚠ '+m;}).join('<br>'):'';
+
+    var statusCls=issues.length?'warn':'ok';
+    var statusText=(issues.length?'Ready (with notes) — ':'Ready — ')+targetW+'×'+targetH+'px, '+fmtBytes(blob.size)+(wasResized?' (auto-resized)':'');
+    setStatus(idx,statusCls,statusText);
+
+    results[spec.file]={blob:blob,name:spec.file};
+    var dl=document.getElementById('dl-'+idx);
+    dl.style.display='inline-block';
+    dl.onclick=function(){
+      var a=document.createElement('a');
+      a.href=objUrl;a.download=spec.file;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+    };
+    updateProgress();
+  },mime,quality);
+}
+
+function updateProgress(){
+  var done=Object.keys(results).length,total=SPECS.length;
+  document.getElementById('progressLabel').textContent=done+' of '+total+' images ready';
+  document.getElementById('downloadAll').style.display=done?'inline-block':'none';
+}
+
+document.getElementById('downloadAll').addEventListener('click',function(){
+  Object.keys(results).forEach(function(name,i){
+    setTimeout(function(){
+      var r=results[name];
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(r.blob);a.download=r.name;
+      document.body.appendChild(a);a.click();document.body.removeChild(a);
+    },i*250); // stagger to avoid browser blocking multiple downloads
+  });
+});
+</script>
+</body>
+</html>
