@@ -1931,9 +1931,6 @@ function breathEnd(){
   var msg=beat?('🏅 You matched a '+beat.who+'!'):'Nice dive — keep training those lungs!';
   $('breathResult').textContent=msg;
   if(secs>breathState.pb){breathState.pb=secs;try{localStorage.setItem('gds_breath_pb',String(secs));}catch(e){}$('breathPB').textContent=fmtSecs(secs);$('breathResult').textContent='🎉 New personal best! '+msg;}
-  /* award scaled to time: ~1 pt per 6s, capped */
-  var pts=Math.min(20,Math.max(MIN_REWARD,Math.round(secs/6)+3));
-  award(pts);
   $('breathHint').textContent='Tap again to retry, or continue';
   if(!breathState.done){breathState.done=true;$('breathNext').style.display='inline-block';}
 }
