@@ -1698,9 +1698,19 @@ function buildThemedRounds(){
     var pool=shuffle(cat.keys.slice());
     for(var r=0;r<3;r++){
       var key=pool[r%pool.length];
-      var candidates=shuffle(cat.keys.filter(function(k){return k!==key;}))
-        .concat(shuffle((cat.fillers||[]).slice()))
-        .concat(shuffle(KEYS.slice()));
+      var sameCat=shuffle(cat.keys.filter(function(k){return k!==key;}));
+      var fillerCat=shuffle((cat.fillers||[]).slice());
+      var outsidePool=shuffle(KEYS.filter(function(k){return cat.keys.indexOf(k)===-1;}));
+      var candidates;
+      if(quizLevel==='kid'){
+        /* Kid: only ONE confusable same-category option — rest are visually obvious,
+           so Kid sits strictly between Junior (zero confusable options) and Adult
+           (all options confusable). */
+        candidates=sameCat.slice(0,1).concat(outsidePool).concat(fillerCat);
+      }else{
+        /* Adult: maximise confusability — fill with same-category/filler options first. */
+        candidates=sameCat.concat(fillerCat).concat(outsidePool);
+      }
       var opts=[key];
       for(var i=0;i<candidates.length&&opts.length<n;i++){
         if(opts.indexOf(candidates[i])===-1)opts.push(candidates[i]);
