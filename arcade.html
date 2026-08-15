@@ -1762,35 +1762,44 @@ function qDistractors(key,count){
 /* Kid/Adult: 3 rounds per themed category — sharks, anglerfish, PJ-vs-crested-hornshark, wobbegongs.
    Options are drawn from within the category (plus fillers/padding) so the choices are genuinely
    confusable, not random — this is what makes Kid/Adult harder than Junior. */
+/* Fixed round sets per level — same species set for every player at a given level
+   (fair: nobody gets an easier/harder random draw), sized to keep the whole game
+   under the ~5-minute show budget, and deliberately spread across the newer
+   species instead of always landing on seadragon/groper/cuttlefish. Category name
+   is looked up per-key so this stays in sync if QUIZ_CATEGORIES changes. */
+function categoryOf(key){
+  for(var i=0;i<QUIZ_CATEGORIES.length;i++){if(QUIZ_CATEGORIES[i].keys.indexOf(key)>-1)return QUIZ_CATEGORIES[i];}
+  return null;
+}
+var FIXED_ROUNDS={
+  junior:['seadragon','pjshark','lionfish','moray','moorishidol','boxfish'],
+  kid:['bull','painted_angler','wobbegong_banded','flathead','blueringed','bronzewhaler'],
+  adult:['greynurse','striped_angler','pjshark','wobbegong_tasselled','senatorwrasse','sydneyoctopus','sixspined','fortescue']
+};
 function buildThemedRounds(){
   var n=(QUIZ_LEVELS[quizLevel]||QUIZ_LEVELS.junior).n;
-  var rounds=[];
-  QUIZ_CATEGORIES.forEach(function(cat){
-    if(cat.adultOnly&&quizLevel!=='adult')return;
-    var pool=shuffle(cat.keys.slice());
-    for(var r=0;r<3;r++){
-      var key=pool[r%pool.length];
-      var sameCat=shuffle(cat.keys.filter(function(k){return k!==key;}));
-      var fillerCat=shuffle((cat.fillers||[]).slice());
-      var outsidePool=shuffle(KEYS.filter(function(k){return cat.keys.indexOf(k)===-1;}));
-      var candidates;
-      if(quizLevel==='kid'){
-        /* Kid: only ONE confusable same-category option — rest are visually obvious,
-           so Kid sits strictly between Junior (zero confusable options) and Adult
-           (all options confusable). */
-        candidates=sameCat.slice(0,1).concat(outsidePool).concat(fillerCat);
-      }else{
-        /* Adult: maximise confusability — fill with same-category/filler options first. */
-        candidates=sameCat.concat(fillerCat).concat(outsidePool);
-      }
-      var opts=[key];
-      for(var i=0;i<candidates.length&&opts.length<n;i++){
-        if(opts.indexOf(candidates[i])===-1)opts.push(candidates[i]);
-      }
-      rounds.push({key:key,opts:shuffle(opts),cat:cat.title});
+  var keys=FIXED_ROUNDS[quizLevel]||FIXED_ROUNDS.kid;
+  return keys.map(function(key){
+    var cat=categoryOf(key)||{keys:[key]};
+    var sameCat=shuffle(cat.keys.filter(function(k){return k!==key;}));
+    var fillerCat=shuffle((cat.fillers||[]).slice());
+    var outsidePool=shuffle(KEYS.filter(function(k){return cat.keys.indexOf(k)===-1;}));
+    var candidates;
+    if(quizLevel==='kid'){
+      /* Kid: only ONE confusable same-category option — rest are visually obvious,
+         so Kid sits strictly between Junior (zero confusable options) and Adult
+         (all options confusable). */
+      candidates=sameCat.slice(0,1).concat(outsidePool).concat(fillerCat);
+    }else{
+      /* Adult: maximise confusability — fill with same-category/filler options first. */
+      candidates=sameCat.concat(fillerCat).concat(outsidePool);
     }
+    var opts=[key];
+    for(var i=0;i<candidates.length&&opts.length<n;i++){
+      if(opts.indexOf(candidates[i])===-1)opts.push(candidates[i]);
+    }
+    return {key:key,opts:shuffle(opts),cat:cat.title||''};
   });
-  return rounds;
 }
 function setQuizLevel(lv){
   if(!QUIZ_LEVELS[lv])return;
@@ -1805,7 +1814,7 @@ $('qlevels').querySelectorAll('.qlevel').forEach(function(b){
 });
 function initQuiz(){
   qScore=0;qTotal=0;
-  qQueue=(quizLevel==='junior')?shuffle(KEYS.concat(JUNIOR_EXTRA_KEYS)):buildThemedRounds();
+  qQueue=(quizLevel==='junior')?shuffle(FIXED_ROUNDS.junior.slice()):buildThemedRounds();
   $('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';
   quizRound();
 }
@@ -1860,7 +1869,7 @@ function renderLog(){
 
 /* ════════ GUESS ════════ */
 var gScore=0,gTotal=0,gQueue=[],gAnswered=false;
-function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice());$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
+function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice()).slice(0,3);$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
 function guessRound(){
   gAnswered=false;$('gnext').style.display='none';$('gnotice').textContent='';
   var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
@@ -1881,7 +1890,7 @@ function guessRound(){
 $('gnext').onclick=guessRound;
 
 /* ════════ TRUMPS ════════ */
-var TRUMPS_ROUNDS=5,tWin=0,tLose=0,tRound=0,tQueue=[];
+var TRUMPS_ROUNDS=3,tWin=0,tLose=0,tRound=0,tQueue=[];
 var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10'],['migrate','Migration','km']];
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
 function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
@@ -2063,7 +2072,7 @@ function silStageHTML(shape){
 }
 var silQueue=[],silScore=0,silTotal=0,silAnswered=false;
 function initSilhouette(){
-  silScore=0;silTotal=0;silAnswered=false;silQueue=shuffle(SIL_ROUNDS.slice());
+  silScore=0;silTotal=0;silAnswered=false;silQueue=shuffle(SIL_ROUNDS.slice()).slice(0,3);
   $('silScore').textContent=0;$('silTotal').textContent=0;$('silNotice').textContent='';
   silRound();
 }
@@ -2093,7 +2102,7 @@ var BUBBLE_FAKE=['Clownfish','Great white… reef','Piranha','Lionfish','Coral t
 var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:[],raf:null};
 function initBubble(){
   var f=$('bubbleField');f.innerHTML='';
-  bubbleState={time:20,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
+  bubbleState={time:15,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
   $('bubbleTime').textContent='20';$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
   $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';$('bubbleNotice').textContent='';
   bubbleState.timer=setInterval(function(){
@@ -2158,7 +2167,7 @@ var DEPTH_ROUNDS=[
 ];
 var depthQueue=[],depthRoundN=0,depthLocked=false,depthCur=null;
 function initDepth(){
-  depthQueue=shuffle(DEPTH_ROUNDS.slice()).slice(0,4);depthRoundN=0;
+  depthQueue=shuffle(DEPTH_ROUNDS.slice()).slice(0,3);depthRoundN=0;
   $('depthTotal').textContent=depthQueue.length;$('depthNotice').textContent='';
   buildDepthMarks();depthRound();
 }
@@ -2221,7 +2230,7 @@ var TF_QUESTIONS=[
 ];
 var tfQueue=[],tfScore=0,tfTotal=0,tfAnswered=false,tfCur=null;
 function initTrueFalse(){
-  tfQueue=shuffle(TF_QUESTIONS.slice());tfScore=0;tfTotal=0;tfAnswered=false;
+  tfQueue=shuffle(TF_QUESTIONS.slice()).slice(0,4);tfScore=0;tfTotal=0;tfAnswered=false;
   $('tfScore').textContent=0;$('tfTotal').textContent=0;$('tfNotice').textContent='';
   tfRound();
 }
@@ -2261,7 +2270,7 @@ var COL_ROUNDS=[
 ];
 var colQueue=[],colScore=0,colTotal=0,colAnswered=false;
 function initColour(){
-  colQueue=shuffle(COL_ROUNDS.slice());colScore=0;colTotal=0;colAnswered=false;
+  colQueue=shuffle(COL_ROUNDS.slice()).slice(0,3);colScore=0;colTotal=0;colAnswered=false;
   $('colScore').textContent=0;$('colTotal').textContent=0;$('colNotice').textContent='';
   colRound();
 }
@@ -2297,7 +2306,7 @@ var ODD_ROUNDS=[
 ];
 var oddQueue=[],oddScore=0,oddTotal=0,oddAnswered=false;
 function initOddOne(){
-  oddQueue=shuffle(ODD_ROUNDS.slice());oddScore=0;oddTotal=0;oddAnswered=false;
+  oddQueue=shuffle(ODD_ROUNDS.slice()).slice(0,3);oddScore=0;oddTotal=0;oddAnswered=false;
   $('oddScore').textContent=0;$('oddTotal').textContent=0;$('oddNotice').textContent='';
   oddRound();
 }
@@ -2346,9 +2355,9 @@ var SPEED_QUESTIONS=[
   {s:'Can fish drown?',a:true},
   {s:'Does an octopus have blue blood?',a:true}
 ];
-var speedState={time:60,score:0,streak:0,queue:[],cur:null,timer:null,active:false,countTimer:null};
+var speedState={time:30,score:0,streak:0,queue:[],cur:null,timer:null,active:false,countTimer:null};
 function initSpeed(){
-  speedState={time:60,score:0,streak:0,queue:shuffle(SPEED_QUESTIONS.slice()),cur:null,timer:null,active:false,countTimer:null};
+  speedState={time:30,score:0,streak:0,queue:shuffle(SPEED_QUESTIONS.slice()),cur:null,timer:null,active:false,countTimer:null};
   $('speedScore').textContent=0;$('speedTime').textContent=60;$('speedStreak').textContent=0;
   $('speedFill').style.width='100%';$('speedFill').classList.remove('low');
   $('speedReveal').textContent='';$('speedNotice').textContent='';
@@ -2365,7 +2374,7 @@ function startSpeed(){
   $('speedYes').disabled=false;$('speedNo').disabled=false;
   speedState.timer=setInterval(function(){
     speedState.time--;$('speedTime').textContent=speedState.time;
-    var pct=speedState.time/60*100;$('speedFill').style.width=pct+'%';
+    var pct=speedState.time/30*100;$('speedFill').style.width=pct+'%';
     if(speedState.time<=10)$('speedFill').classList.add('low');
     if(speedState.time<=0)endSpeed();
   },1000);
@@ -2414,7 +2423,7 @@ var SEASON_ROUNDS=[
 ];
 var seasonQueue=[],seasonScore=0,seasonTotal=0,seasonAnswered=false,seasonCur=null;
 function initSeason(){
-  seasonQueue=shuffle(SEASON_ROUNDS.slice()).slice(0,5);seasonScore=0;seasonTotal=0;seasonAnswered=false;
+  seasonQueue=shuffle(SEASON_ROUNDS.slice()).slice(0,3);seasonScore=0;seasonTotal=0;seasonAnswered=false;
   $('seasonScore').textContent=0;$('seasonTotal').textContent=0;$('seasonNotice').textContent='';
   seasonRound();
 }
@@ -2448,7 +2457,7 @@ var WRECK_DB=[
 ];
 var wreckidQueue=[],wreckidScore=0,wreckidTotal=0,wreckidAnswered=false,wreckidCur=null;
 function initWreckId(){
-  wreckidQueue=shuffle(WRECK_DB.slice()).slice(0,4);wreckidScore=0;wreckidTotal=0;wreckidAnswered=false;
+  wreckidQueue=shuffle(WRECK_DB.slice()).slice(0,3);wreckidScore=0;wreckidTotal=0;wreckidAnswered=false;
   $('wreckidScore').textContent=0;$('wreckidTotal').textContent=0;$('wreckidNotice').textContent='';
   wreckidRound();
 }
@@ -2493,7 +2502,7 @@ var WAVE_ROUNDS=[
 ];
 var waveQueue=[],waveScore=0,waveTotal=0,waveAnswered=false,waveCur=null;
 function initWave(){
-  waveQueue=shuffle(WAVE_ROUNDS.slice()).slice(0,5);waveScore=0;waveTotal=0;waveAnswered=false;
+  waveQueue=shuffle(WAVE_ROUNDS.slice()).slice(0,3);waveScore=0;waveTotal=0;waveAnswered=false;
   $('waveScore').textContent=0;$('waveTotal').textContent=0;$('waveNotice').textContent='';
   waveRound();
 }
