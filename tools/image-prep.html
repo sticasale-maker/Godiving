@@ -62,17 +62,14 @@
 
 <script>
 /* ---- Spec per image slot: still-missing images only. ----
-   Uploaded already (not shown here): images/creatures/{weedy,portjackson,groper,cuttle,bluedevil,
-   duskywhaler,greynurse,hammeroct,angler,white,bull,bronzewhaler,striped_angler,painted_angler,
-   prickly_angler,crestedhorn,wobbegong_spotted,wobbegong_banded}.jpg, images/sites/{chowder,ctb,
-   bareisland,centennial,currajong}.jpg, images/scenes/spotter1.jpg,
-   images/branding/{Go-Diving-Show-Logo-2024.png,vizlogo.png}. */
+   All species photos are uploaded. Remaining: 5 Silhouette Match images
+   (black shape, white or transparent background — generated externally). */
 var SPECS=[
-  // Port Jackson vs Crested Hornshark
-  {file:'draughtboard.jpg', folder:'creatures', label:'Draughtboard shark (filler)', group:'PJ vs Crested Hornshark', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  // Wobbegongs of Australia
-  {file:'wobbegong_tasselled.jpg',folder:'creatures', label:'Tasselled wobbegong', group:'Wobbegongs of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]},
-  {file:'wobbegong_northern.jpg', folder:'creatures', label:'Northern wobbegong',  group:'Wobbegongs of Australia', minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]}
+  {file:'sil-seadragon.png', folder:'creatures', label:'Weedy seadragon silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
+  {file:'sil-pjshark.png',   folder:'creatures', label:'Port Jackson shark silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
+  {file:'sil-cuttle.png',    folder:'creatures', label:'Giant cuttlefish silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
+  {file:'sil-turtle.png',    folder:'creatures', label:'Green turtle silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
+  {file:'sil-ray.png',       folder:'creatures', label:'Bluespotted ray silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true}
 ];
 
 var slotsEl=document.getElementById('slots');

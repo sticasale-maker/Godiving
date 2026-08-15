@@ -1974,6 +1974,21 @@ var SIL_ROUNDS=[
   {shape:'ray',name:'Bluespotted ray',f:'A flat disc with a long whip tail.'}
 ];
 var SIL_NAMES=['Weedy seadragon','Port Jackson shark','Giant cuttlefish','Green turtle','Bluespotted ray','Eastern blue groper','Maori octopus','Eastern blue devil'];
+/* Real silhouette images (generated externally) — fall back to the hand-drawn
+   SVG shape via onerror if the file isn't uploaded yet. */
+var SIL_PHOTOS={
+  seadragon:'images/creatures/sil-seadragon.png',
+  pjshark:'images/creatures/sil-pjshark.png',
+  cuttle:'images/creatures/sil-cuttle.png',
+  turtle:'images/creatures/sil-turtle.png',
+  ray:'images/creatures/sil-ray.png'
+};
+function silStageHTML(shape){
+  var src=SIL_PHOTOS[shape];
+  if(!src)return silSVG(shape);
+  return '<div style="width:100%;height:100%;background:#fff;border-radius:10px;display:flex;align-items:center;justify-content:center;padding:10px" data-k="'+shape+'">'+
+    '<img src="'+src+'" alt="Silhouette" style="width:100%;height:100%;object-fit:contain;display:block" onerror="this.parentNode.outerHTML=silSVG(this.dataset.k)" data-k="'+shape+'"></div>';
+}
 var silQueue=[],silScore=0,silTotal=0,silAnswered=false;
 function initSilhouette(){
   silScore=0;silTotal=0;silAnswered=false;silQueue=shuffle(SIL_ROUNDS.slice());
@@ -1983,7 +1998,7 @@ function initSilhouette(){
 function silRound(){
   silAnswered=false;$('silFact').textContent='';$('silNext').style.display='none';$('silBonus').textContent='⏱️ Answer fast for bonus points!';
   var r=silQueue.shift();
-  $('silStage').innerHTML=silSVG(r.shape);
+  $('silStage').innerHTML=silStageHTML(r.shape);
   var wrong=shuffle(SIL_NAMES.filter(function(n){return n!==r.name;})).slice(0,3);
   var opts=shuffle([r.name].concat(wrong));
   $('silOpts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+esc(n)+'">'+n+'</button>';}).join('');
