@@ -67,6 +67,7 @@
 var CREATURE_SPEC={minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]};
 function cr(file,label,group){return Object.assign({file:file,folder:'creatures',label:label,group:group},CREATURE_SPEC);}
 var SPECS=[
+  {file:'spotter1.jpg', folder:'scenes', label:'Spotter Log scene (Port Jackson shark, Eastern blue groper, Weedy seadragon visible)', group:'Spotter Log', minW:1000, minH:600, targetW:1400, targetH:820, ar:[1.3,2.2]},
   {file:'sil-seadragon.png', folder:'creatures', label:'Weedy seadragon silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
   {file:'sil-pjshark.png',   folder:'creatures', label:'Port Jackson shark silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
   {file:'sil-cuttle.png',    folder:'creatures', label:'Giant cuttlefish silhouette', group:'Silhouette Match', minW:800, minH:400, targetW:1600, targetH:800, ar:[1.4,3], keepAlpha:true},
@@ -84,16 +85,27 @@ var SPECS=[
   cr('fiddlerray.jpg','Eastern fiddler ray','Kid — Reef Regulars'),
   cr('flutemouth.jpg','Flutemouth','Kid — Reef Regulars'),
   cr('thornback.jpg','Thornback cowfish','Kid — Reef Regulars'),
-  // Adult — "Sydney vs Gloomy Octopus" + "Tricky IDs"
+  cr('blueringed.jpg','Blue-ringed octopus','Kid — Reef Regulars'),
+  cr('angelshark.jpg','Angel shark','Kid — Reef Regulars'),
+  cr('flathead.jpg','Flathead','Kid — Reef Regulars'),
+  cr('senatorwrasse.jpg','Senator wrasse','Kid — Reef Regulars'),
+  cr('diamondfish.jpg','Diamondfish','Kid — Reef Regulars'),
+  // Adult — "Sydney vs Gloomy Octopus" + "Leatherjackets" + "Tricky IDs"
   cr('sydneyoctopus.jpg','Sydney octopus','Adult — Sydney vs Gloomy Octopus'),
   cr('gloomyoctopus.jpg','Gloomy octopus','Adult — Sydney vs Gloomy Octopus'),
+  cr('fanbelly.jpg','Fan-bellied leatherjacket','Adult — Leatherjackets'),
+  cr('pygmyleatherjacket.jpg','Pygmy leatherjacket','Adult — Leatherjackets'),
+  cr('sixspined.jpg','Six-spined leatherjacket','Adult — Leatherjackets'),
   cr('flyinggurnard.jpg','Flying gurnard','Adult — Tricky IDs'),
-  cr('fanbelly.jpg','Fan-bellied leatherjacket','Adult — Tricky IDs'),
   cr('cardinalfish.jpg','Sydney cardinalfish','Adult — Tricky IDs'),
   cr('toadfish.jpg','Smooth toadfish','Adult — Tricky IDs'),
   cr('sergeantbaker.jpg','Sergeant baker','Adult — Tricky IDs'),
-  cr('pygmyleatherjacket.jpg','Pygmy leatherjacket','Adult — Tricky IDs'),
-  cr('blindshark.jpg','Eastern blind shark','Adult — Tricky IDs')
+  cr('blindshark.jpg','Eastern blind shark','Adult — Tricky IDs'),
+  cr('fortescue.jpg','Eastern fortescue','Adult — Tricky IDs'),
+  cr('weedfish.jpg','Weedfish','Adult — Tricky IDs'),
+  cr('spongecrab.jpg','Sponge decorator crab','Adult — Tricky IDs'),
+  // Junior — easy IDs
+  cr('boxfish.jpg','Yellow boxfish','Junior — easy IDs')
 ];
 
 var slotsEl=document.getElementById('slots');
