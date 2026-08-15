@@ -1532,7 +1532,7 @@ function QD(key){return CR[key]||EXTRA_CR[key];}
 var QUIZ_CATEGORIES=[
   {title:'Sharks of Australia', keys:['white','bull','bronzewhaler','greynurse']},
   {title:'Anglerfish', keys:['striped_angler','painted_angler','prickly_angler']},
-  {title:'Port Jackson vs Crested Hornshark', keys:['pjshark','crestedhorn'], fillers:['draughtboard','greynurse','duskywhaler']},
+  {title:'Port Jackson vs Crested Hornshark', keys:['pjshark','crestedhorn'], fillers:['draughtboard','greynurse','duskywhaler'], adultOnly:true},
   {title:'Wobbegongs of Australia', keys:['wobbegong_spotted','wobbegong_banded','wobbegong_tasselled','wobbegong_northern'], fillers:['draughtboard','pjshark']}
 ];
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
@@ -1694,6 +1694,7 @@ function buildThemedRounds(){
   var n=(QUIZ_LEVELS[quizLevel]||QUIZ_LEVELS.junior).n;
   var rounds=[];
   QUIZ_CATEGORIES.forEach(function(cat){
+    if(cat.adultOnly&&quizLevel!=='adult')return;
     var pool=shuffle(cat.keys.slice());
     for(var r=0;r<3;r++){
       var key=pool[r%pool.length];
