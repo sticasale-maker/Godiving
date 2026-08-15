@@ -1443,7 +1443,26 @@ var PHOTOS={
   striped_angler:{src:'images/creatures/striped_angler.jpg',alt:'Striped anglerfish'},
   painted_angler:{src:'images/creatures/painted_angler.jpg',alt:'Painted anglerfish'},
   prickly_angler:{src:'images/creatures/red-fingered.jpg',alt:'Red-fingered anglerfish'},
-  shaggy_angler:{src:'images/creatures/shaggy_angler.jpg',alt:'Shaggy anglerfish'}
+  shaggy_angler:{src:'images/creatures/shaggy_angler.jpg',alt:'Shaggy anglerfish'},
+  butterflyfish:{src:'images/creatures/butterflyfish.jpg',alt:'Butterflyfish'},
+  lionfish:{src:'images/creatures/lionfish.jpg',alt:'Lionfish'},
+  moorishidol:{src:'images/creatures/moorishidol.jpg',alt:'Moorish idol'},
+  moray:{src:'images/creatures/moray.jpg',alt:'Moray eel'},
+  oldwife:{src:'images/creatures/oldwife.jpg',alt:'Old wife'},
+  maoriwrasse:{src:'images/creatures/maoriwrasse.jpg',alt:'Maori wrasse'},
+  stripedcatfish:{src:'images/creatures/stripedcatfish.jpg',alt:'Striped catfish'},
+  fiddlerray:{src:'images/creatures/fiddlerray.jpg',alt:'Eastern fiddler ray'},
+  flutemouth:{src:'images/creatures/flutemouth.jpg',alt:'Flutemouth'},
+  thornback:{src:'images/creatures/thornback.jpg',alt:'Thornback cowfish'},
+  flyinggurnard:{src:'images/creatures/flyinggurnard.jpg',alt:'Flying gurnard'},
+  fanbelly:{src:'images/creatures/fanbelly.jpg',alt:'Fan-bellied leatherjacket'},
+  cardinalfish:{src:'images/creatures/cardinalfish.jpg',alt:'Sydney cardinalfish'},
+  toadfish:{src:'images/creatures/toadfish.jpg',alt:'Smooth toadfish'},
+  sergeantbaker:{src:'images/creatures/sergeantbaker.jpg',alt:'Sergeant baker'},
+  sydneyoctopus:{src:'images/creatures/sydneyoctopus.jpg',alt:'Sydney octopus'},
+  gloomyoctopus:{src:'images/creatures/gloomyoctopus.jpg',alt:'Gloomy octopus'},
+  pygmyleatherjacket:{src:'images/creatures/pygmyleatherjacket.jpg',alt:'Pygmy leatherjacket'},
+  blindshark:{src:'images/creatures/blindshark.jpg',alt:'Eastern blind shark'}
 };
 function artHeight(fb){var v=getComputedStyle(document.documentElement).getPropertyValue('--artH').trim();var n=parseInt(v,10);return isNaN(n)?(fb||180):n;}
 function creaturePlaceholder(key){
@@ -1524,16 +1543,47 @@ var EXTRA_CR={
   striped_angler:{n:'Striped anglerfish',f:'Uses a built-in fishing rod tipped with a lure to tempt prey close before striking.'},
   painted_angler:{n:'Painted anglerfish',f:'A master of disguise that can shift its skin colour to match its surroundings over days.'},
   prickly_angler:{n:'Red-fingered anglerfish',f:'Covered in fine spines and found hiding among sponges and rubble on Sydney reefs, using its red fin-rays to grip and climb.'},
-  shaggy_angler:{n:'Shaggy anglerfish',f:'Its skin flaps mimic seaweed so well it can sit in plain view and go unnoticed.'}
+  shaggy_angler:{n:'Shaggy anglerfish',f:'Its skin flaps mimic seaweed so well it can sit in plain view and go unnoticed.'},
+
+  /* ---- 19 extra species, graded by how easy they are to ID at a glance ---- */
+  /* Easy (Junior pool) — bold, unmistakable colours/shapes even for a first-time snorkeller */
+  butterflyfish:{n:'Butterflyfish',f:'Bright and boldly patterned reef fish that often pair for life and dart for cover when startled.'},
+  lionfish:{n:'Lionfish',f:'Those feathery spines are venomous — a slow, confident swimmer that rarely needs to hide.'},
+  moorishidol:{n:'Moorish idol',f:'A tall banner-like dorsal fin and bold black-white-yellow bands make it one of the reef\'s most recognisable fish.'},
+  moray:{n:'Moray eel',f:'Breathes by pumping water over its gills, which makes it look like it\'s constantly baring its teeth.'},
+
+  /* Medium (Kid category "Reef Regulars") — distinctive once you know the tell, but not obvious at a glance */
+  oldwife:{n:'Old wife',f:'Named for the grinding, creaking sound it makes with its teeth when caught.'},
+  maoriwrasse:{n:'Maori wrasse',f:'Develops a bold facial pattern reminiscent of Maori tā moko tattoos as it matures.'},
+  stripedcatfish:{n:'Striped catfish',f:'Juveniles form a tight, swirling ball for protection — one of the most striking sights on a Sydney reef.'},
+  fiddlerray:{n:'Eastern fiddler ray',f:'Shaped like its namesake instrument, with a banded pattern across its disc.'},
+  flutemouth:{n:'Flutemouth',f:'An extremely long, thin body built for ambushing small fish at close range.'},
+  thornback:{n:'Thornback cowfish',f:'A boxy body in a rigid shell with two horn-like spines above the eyes.'},
+
+  /* Hard (Adult only) — genuinely tricky IDs, even for experienced divers */
+  flyinggurnard:{n:'Flying gurnard',f:'Spreads huge fan-like pectoral fins to look bigger when threatened — it doesn\'t actually fly, just glides along the sand.'},
+  fanbelly:{n:'Fan-bellied leatherjacket',f:'Named for the fan-shaped pattern on its belly; its rough leathery skin was once used like sandpaper.'},
+  cardinalfish:{n:'Sydney cardinalfish',f:'A shy, shoaling fish that shelters in caves and under ledges by day and feeds at night.'},
+  toadfish:{n:'Smooth toadfish',f:'Puffs up with water or air when threatened and carries a potent toxin — never handle one.'},
+  sergeantbaker:{n:'Sergeant baker',f:'A lizardfish with iridescent blue and red markings, usually seen resting still on the sand.'},
+  sydneyoctopus:{n:'Sydney octopus',f:'Common on Sydney reefs and rock pools; changes colour and texture almost instantly to vanish into the background.'},
+  gloomyoctopus:{n:'Gloomy octopus',f:'Closely related to the Sydney octopus and easily confused with it — genetics, not looks, is how scientists tell them apart.'},
+  pygmyleatherjacket:{n:'Pygmy leatherjacket',f:'One of the smallest leatherjackets on the reef, often overlooked entirely among weed and sponge.'},
+  blindshark:{n:'Eastern blind shark',f:'Not actually blind — it closes its eyes tight when handled. A nocturnal shark that hides in reef crevices by day.'}
 };
 function QD(key){return CR[key]||EXTRA_CR[key];}
+/* Junior mode draws from the full random pool (KEYS) plus these easy, unmistakable extras */
+var JUNIOR_EXTRA_KEYS=['butterflyfish','lionfish','moorishidol','moray'];
 /* Themed rounds for Kid/Adult — 3 rounds per category, cycled in this order.
    NOTE: facts are a first draft for the show — please fact-check before going live. */
 var QUIZ_CATEGORIES=[
   {title:'Sharks of Australia', keys:['white','bull','bronzewhaler','greynurse']},
   {title:'Anglerfish', keys:['striped_angler','painted_angler','prickly_angler']},
   {title:'Port Jackson vs Crested Hornshark', keys:['pjshark','crestedhorn'], fillers:['draughtboard','greynurse','duskywhaler'], adultOnly:true},
-  {title:'Wobbegongs of Australia', keys:['wobbegong_spotted','wobbegong_banded','wobbegong_tasselled','wobbegong_northern'], fillers:['draughtboard','pjshark']}
+  {title:'Wobbegongs of Australia', keys:['wobbegong_spotted','wobbegong_banded','wobbegong_tasselled','wobbegong_northern'], fillers:['draughtboard','pjshark']},
+  {title:'Reef Regulars', keys:['oldwife','maoriwrasse','stripedcatfish','fiddlerray','flutemouth','thornback']},
+  {title:'Sydney vs Gloomy Octopus', keys:['sydneyoctopus','gloomyoctopus'], fillers:['hammeroct','cardinalfish'], adultOnly:true},
+  {title:'Tricky IDs', keys:['flyinggurnard','fanbelly','cardinalfish','toadfish','sergeantbaker','pygmyleatherjacket','blindshark'], adultOnly:true}
 ];
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var $=function(id){return document.getElementById(id);};
@@ -1685,7 +1735,8 @@ var QUIZ_LEVELS={junior:{n:4},kid:{n:3},adult:{n:5}};
 var quizLevel=(function(){try{return localStorage.getItem('gds_quiz_level')||'junior';}catch(e){return 'junior';}})();
 if(!QUIZ_LEVELS[quizLevel])quizLevel='junior';
 function qDistractors(key,count){
-  return shuffle(KEYS.filter(function(k){return k!==key;})).slice(0,count);
+  var pool=KEYS.concat(JUNIOR_EXTRA_KEYS);
+  return shuffle(pool.filter(function(k){return k!==key;})).slice(0,count);
 }
 /* Kid/Adult: 3 rounds per themed category — sharks, anglerfish, PJ-vs-crested-hornshark, wobbegongs.
    Options are drawn from within the category (plus fillers/padding) so the choices are genuinely
@@ -1733,7 +1784,7 @@ $('qlevels').querySelectorAll('.qlevel').forEach(function(b){
 });
 function initQuiz(){
   qScore=0;qTotal=0;
-  qQueue=(quizLevel==='junior')?shuffle(KEYS.slice()):buildThemedRounds();
+  qQueue=(quizLevel==='junior')?shuffle(KEYS.concat(JUNIOR_EXTRA_KEYS)):buildThemedRounds();
   $('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';
   quizRound();
 }
@@ -1766,7 +1817,7 @@ $('qnext').onclick=quizRound;
 
 /* ════════ SPOTTER LOG ════════ */
 var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
-var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin'];
+var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin','Moray eel','Striped catfish','Thornback cowfish','Old wife','Maori wrasse'];
 var logFound={},logDone=false;
 function initLog(){
   logFound={};logDone=false;$('logn').textContent=0;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
