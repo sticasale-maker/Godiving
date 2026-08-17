@@ -1460,7 +1460,6 @@ var PHOTOS={
   toadfish:{src:'images/creatures/toadfish.jpg',alt:'Smooth toadfish'},
   sergeantbaker:{src:'images/creatures/sergeantbaker.jpg',alt:'Sergeant baker'},
   sydneyoctopus:{src:'images/creatures/sydneyoctopus.jpg',alt:'Sydney octopus'},
-  gloomyoctopus:{src:'images/creatures/gloomyoctopus.jpg',alt:'Gloomy octopus'},
   pygmyleatherjacket:{src:'images/creatures/pygmyleatherjacket.jpg',alt:'Pygmy leatherjacket'},
   blindshark:{src:'images/creatures/blindshark.jpg',alt:'Eastern blind shark'},
   fortescue:{src:'images/creatures/fortescue.jpg',alt:'Eastern fortescue'},
@@ -1583,7 +1582,6 @@ var EXTRA_CR={
   toadfish:{n:'Smooth toadfish',f:'Puffs up with water or air when threatened and carries a potent toxin — never handle one.'},
   sergeantbaker:{n:'Sergeant baker',f:'A lizardfish with iridescent blue and red markings, usually seen resting still on the sand.'},
   sydneyoctopus:{n:'Sydney octopus',f:'Common on Sydney reefs and rock pools; changes colour and texture almost instantly to vanish into the background.'},
-  gloomyoctopus:{n:'Gloomy octopus',f:'Closely related to the Sydney octopus and easily confused with it — genetics, not looks, is how scientists tell them apart.'},
   pygmyleatherjacket:{n:'Pygmy leatherjacket',f:'One of the smallest leatherjackets on the reef, often overlooked entirely among weed and sponge.'},
   sixspined:{n:'Six-spined leatherjacket',f:'One of several similar-looking leatherjackets on Sydney reefs — the number of dorsal spines is the real giveaway.'},
   blindshark:{n:'Eastern blind shark',f:'Not actually blind — it closes its eyes tight when handled. A nocturnal shark that hides in reef crevices by day.'},
@@ -1602,9 +1600,8 @@ var QUIZ_CATEGORIES=[
   {title:'Port Jackson vs Crested Hornshark', keys:['pjshark','crestedhorn'], fillers:['draughtboard','greynurse','duskywhaler'], adultOnly:true},
   {title:'Wobbegongs of Australia', keys:['wobbegong_spotted','wobbegong_banded','wobbegong_tasselled','wobbegong_northern'], fillers:['draughtboard','pjshark']},
   {title:'Reef Regulars', keys:['oldwife','maoriwrasse','stripedcatfish','fiddlerray','flutemouth','thornback','blueringed','angelshark','flathead','senatorwrasse','diamondfish']},
-  {title:'Sydney vs Gloomy Octopus', keys:['sydneyoctopus','gloomyoctopus'], fillers:['hammeroct','cardinalfish'], adultOnly:true},
   {title:'Leatherjackets', keys:['fanbelly','pygmyleatherjacket','sixspined'], fillers:['thornback','draughtboard'], adultOnly:true},
-  {title:'Tricky IDs', keys:['flyinggurnard','cardinalfish','toadfish','sergeantbaker','blindshark','fortescue','weedfish','spongecrab'], adultOnly:true}
+  {title:'Tricky IDs', keys:['flyinggurnard','cardinalfish','toadfish','sergeantbaker','blindshark','fortescue','weedfish','spongecrab','sydneyoctopus'], adultOnly:true}
 ];
 function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
 var $=function(id){return document.getElementById(id);};

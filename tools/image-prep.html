@@ -62,45 +62,11 @@
 
 <script>
 /* ---- Spec per image slot: still-missing images only. ----
-   All original species photos, silhouettes, and the Spotter Log scene are
-   uploaded. Remaining: new Guess Who species, grouped by difficulty tier
-   (see arcade.html EXTRA_CR). */
+   Every species currently in the game has a photo uploaded. Add new
+   entries here as new species get added to arcade.html's EXTRA_CR. */
 var CREATURE_SPEC={minW:800, minH:600, targetW:1200, targetH:900, ar:[0.8,1.6]};
 function cr(file,label,group){return Object.assign({file:file,folder:'creatures',label:label,group:group},CREATURE_SPEC);}
 var SPECS=[
-  // Junior — easy, unmistakable
-  cr('butterflyfish.jpg','Butterflyfish','Junior — easy IDs'),
-  cr('lionfish.jpg','Lionfish','Junior — easy IDs'),
-  cr('moorishidol.jpg','Moorish idol','Junior — easy IDs'),
-  cr('moray.jpg','Moray eel','Junior — easy IDs'),
-  // Kid — "Reef Regulars"
-  cr('oldwife.jpg','Old wife','Kid — Reef Regulars'),
-  cr('maoriwrasse.jpg','Maori wrasse','Kid — Reef Regulars'),
-  cr('stripedcatfish.jpg','Striped catfish','Kid — Reef Regulars'),
-  cr('fiddlerray.jpg','Eastern fiddler ray','Kid — Reef Regulars'),
-  cr('flutemouth.jpg','Flutemouth','Kid — Reef Regulars'),
-  cr('thornback.jpg','Thornback cowfish','Kid — Reef Regulars'),
-  cr('blueringed.jpg','Blue-ringed octopus','Kid — Reef Regulars'),
-  cr('angelshark.jpg','Angel shark','Kid — Reef Regulars'),
-  cr('flathead.jpg','Flathead','Kid — Reef Regulars'),
-  cr('senatorwrasse.jpg','Senator wrasse','Kid — Reef Regulars'),
-  cr('diamondfish.jpg','Diamondfish','Kid — Reef Regulars'),
-  // Adult — "Sydney vs Gloomy Octopus" + "Leatherjackets" + "Tricky IDs"
-  cr('sydneyoctopus.jpg','Sydney octopus','Adult — Sydney vs Gloomy Octopus'),
-  cr('gloomyoctopus.jpg','Gloomy octopus','Adult — Sydney vs Gloomy Octopus'),
-  cr('fanbelly.jpg','Fan-bellied leatherjacket','Adult — Leatherjackets'),
-  cr('pygmyleatherjacket.jpg','Pygmy leatherjacket','Adult — Leatherjackets'),
-  cr('sixspined.jpg','Six-spined leatherjacket','Adult — Leatherjackets'),
-  cr('flyinggurnard.jpg','Flying gurnard','Adult — Tricky IDs'),
-  cr('cardinalfish.jpg','Sydney cardinalfish','Adult — Tricky IDs'),
-  cr('toadfish.jpg','Smooth toadfish','Adult — Tricky IDs'),
-  cr('sergeantbaker.jpg','Sergeant baker','Adult — Tricky IDs'),
-  cr('blindshark.jpg','Eastern blind shark','Adult — Tricky IDs'),
-  cr('fortescue.jpg','Eastern fortescue','Adult — Tricky IDs'),
-  cr('weedfish.jpg','Weedfish','Adult — Tricky IDs'),
-  cr('spongecrab.jpg','Sponge decorator crab','Adult — Tricky IDs'),
-  // Junior — easy IDs
-  cr('boxfish.jpg','Yellow boxfish','Junior — easy IDs')
 ];
 
 var slotsEl=document.getElementById('slots');
