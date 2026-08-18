@@ -458,6 +458,66 @@
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
     color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
 
+  /* ── SAFE ASCENT ── */
+  .asc-wrap{display:flex;gap:10px;flex:1;min-height:0}
+  .asc-col{position:relative;flex:1;min-width:0;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);
+    background:linear-gradient(180deg,#0a4a63 0%,#083a52 35%,#062a3d 70%,#041d2b 100%)}
+  .asc-surface{position:absolute;left:0;right:0;top:0;height:5px;
+    background:linear-gradient(180deg,#8fe8ff,rgba(143,232,255,0));opacity:.85}
+  .asc-scale{position:absolute;inset:0;pointer-events:none}
+  .asc-scale i{position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.13)}
+  .asc-scale span{position:absolute;left:4px;transform:translateY(-50%);
+    font-size:10px;color:rgba(255,255,255,.5);font-weight:700}
+  .asc-stopzone{position:absolute;left:0;right:0;border-top:1px dashed var(--gold);
+    border-bottom:1px dashed var(--gold);background:rgba(243,198,79,.10);
+    display:flex;align-items:center;justify-content:flex-end;pointer-events:none}
+  .asc-stopzone span{font-size:9px;color:var(--gold);padding-right:5px;letter-spacing:.5px}
+  .asc-stopzone.hit{background:rgba(243,198,79,.26)}
+  .asc-diver{position:absolute;right:14%;transform:translateY(-50%);
+    display:flex;align-items:center;gap:5px;transition:none}
+  .asc-body{font-size:30px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
+  .asc-buoy{font-size:11px;font-weight:800;padding:2px 6px;border-radius:999px;
+    background:var(--badd);color:#f7cfcf;border:1px solid var(--bad);white-space:nowrap}
+  .asc-buoy.pos{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
+  .asc-buoy.neutral{background:var(--goodd);color:#cdf3df;border-color:var(--good)}
+  .asc-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .asc-bub{position:absolute;border-radius:50%;background:rgba(200,240,255,.55);
+    border:1px solid rgba(255,255,255,.5)}
+
+  .asc-instruments{width:38%;max-width:190px;display:flex;flex-direction:column;gap:8px}
+  .asc-readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .asc-readout .lab,.asc-ratebox .lab{display:block;font-size:10px;letter-spacing:1px;
+    text-transform:uppercase;color:var(--muted);font-weight:700}
+  .asc-readout b{font-size:26px;line-height:1.1}
+  .asc-readout .unit,.asc-ratebox .unit{font-size:11px;color:var(--muted);margin-left:3px}
+  .asc-ratebox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .asc-ratebox b{font-size:22px}
+  .asc-rate{position:relative;height:12px;border-radius:999px;background:var(--bg2);
+    border:1px solid var(--line);overflow:hidden;margin:6px 0 4px}
+  .asc-rate i{position:absolute;top:0;bottom:0;left:50%;width:0;background:var(--good);transition:none}
+  .asc-rate i.warn{background:var(--gold)}
+  .asc-rate i.bad{background:var(--bad)}
+  .asc-limit{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bad);opacity:.9}
+  .asc-msg{flex:1;font-size:12px;line-height:1.45;color:var(--muted);
+    background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .asc-msg.good{color:#cdf3df;border-color:var(--good)}
+  .asc-msg.bad{color:#f7cfcf;border-color:var(--bad)}
+
+  .asc-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;flex-shrink:0}
+  .asc-btn{padding:16px 8px;border-radius:14px;border:2px solid var(--line);cursor:pointer;
+    font-family:'Press Start 2P',monospace;font-size:clamp(11px,2.6vw,14px);letter-spacing:1px;
+    display:flex;flex-direction:column;align-items:center;gap:5px;touch-action:none;user-select:none}
+  .asc-btn small{font-family:inherit;font-size:9px;opacity:.65;letter-spacing:0}
+  .asc-in{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
+  .asc-out{background:#3a3010;color:var(--gold);border-color:var(--gold)}
+  .asc-btn.on{transform:translateY(2px);filter:brightness(1.45)}
+  .asc-btn:disabled{opacity:.4}
+  @media(max-width:430px){
+    .asc-instruments{width:44%}
+    .asc-readout b{font-size:21px}
+  }
+
   /* ── ZOOM IN ── */
   .zoom-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
     border:1px solid var(--line);height:var(--artH);max-height:44vh;
@@ -672,6 +732,7 @@
       <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
       <div class="gstep" id="gs-sharkid"><div class="icon">🦈</div><div class="label">Shark ID</div></div>
       <div class="gstep" id="gs-zoom"><div class="icon">🔍</div><div class="label">Zoom in</div></div>
+      <div class="gstep" id="gs-ascent"><div class="icon">⬆️</div><div class="label">Safe ascent</div></div>
       <div class="gstep" id="gs-fishkit"><div class="icon">🐙</div><div class="label">Fish or kit</div></div>
       <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
       <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
@@ -959,6 +1020,41 @@
     </div>
 
     <!-- HALL OF FAME -->
+    <!-- SAFE ASCENT -->
+    <div class="panel" id="p-ascent">
+      <div class="game-header">
+        <span class="game-label">Return to the surface</span>
+        <span class="score">Attempt <b id="ascTry">1</b> / <b id="ascTries">3</b></span>
+      </div>
+      <div class="asc-wrap">
+        <div class="asc-col" id="ascCol">
+          <div class="asc-scale" id="ascScale"></div>
+          <div class="asc-bubbles" id="ascBubbles"></div>
+          <div class="asc-stopzone" id="ascStopZone"><span>safety stop</span></div>
+          <div class="asc-diver" id="ascDiver">
+            <span class="asc-body">🤿</span>
+            <span class="asc-buoy" id="ascBuoy">0.0</span>
+          </div>
+          <div class="asc-surface"></div>
+        </div>
+        <div class="asc-instruments">
+          <div class="asc-readout"><span class="lab">Depth</span><b id="ascDepth">30.0</b><span class="unit">m</span></div>
+          <div class="asc-ratebox">
+            <span class="lab">Ascent rate</span>
+            <div class="asc-rate"><i id="ascRateFill"></i><span class="asc-limit"></span></div>
+            <b id="ascRate">0.0</b><span class="unit">m/min · limit 18</span>
+          </div>
+          <div class="asc-readout"><span class="lab">BCD</span><b id="ascBcd">0.0</b><span class="unit">L</span></div>
+          <div class="asc-msg" id="ascMsg">Inflate a little to get off the bottom</div>
+        </div>
+      </div>
+      <div class="asc-buttons">
+        <button class="asc-btn asc-in" id="ascInflate">▲ INFLATE<small>hold</small></button>
+        <button class="asc-btn asc-out" id="ascDeflate">▼ DEFLATE<small>hold</small></button>
+      </div>
+      <p class="auto-notice" id="ascNotice"></p>
+    </div>
+
     <!-- ZOOM IN -->
     <div class="panel" id="p-zoom">
       <div class="game-header">
@@ -1256,7 +1352,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',zoom:'Zoom In',fishkit:'Fish or Kit?',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',zoom:'Zoom In',fishkit:'Fish or Kit?',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -2133,7 +2229,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid'];
+var GAME_ORDER=['quiz','zoom','ascent','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2188,6 +2284,7 @@ function startGame(name){
   else if(name==='fishkit')initFishKit();
   else if(name==='lineup')initLineUp();
   else if(name==='memory')initMemory();
+  else if(name==='ascent')initAscent();
 }
 
 /* ════════ MENU HUB (pick any game) ════════ */
@@ -2212,7 +2309,8 @@ var GAME_META={
   zoom:{icon:'🔍',name:'Zoom In',desc:'Name it before it zooms out'},
   fishkit:{icon:'🐙',name:'Fish or Kit?',desc:'Is it a fish or dive gear?'},
   lineup:{icon:'📏',name:'Size Line-Up',desc:'Tap them into the right order'},
-  memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'}
+  memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'},
+  ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'}
 };
 function showMenu(){
   activeGame=null;
@@ -3262,6 +3360,234 @@ function wireSharkId(){
   });
   function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
 }
+
+/* ════════════════════════════════════════════════════════════════
+   SAFE ASCENT — return to the surface without hurting yourself.
+
+   The physics is the real thing, not a curve fitted to feel right:
+
+     absolute pressure   P(d) = 1 + d/10   ata
+     Boyle's law         gas in the BCD expands as P falls, so the
+                         same breath of air is 4.6 L at 30 m and
+                         18.5 L at the surface
+     wetsuit             neoprene compresses with Boyle too, so it
+                         gives 1.25 kg of lift at 30 m and 5 kg at
+                         the surface — it fights you on the way up
+     buoyancy            B = bcd*1.03 + suitLift(d) - ballast   (kg)
+     motion              m dv/dt = B*g - k*v*|v|  (quadratic drag)
+
+   Calibrated so +1 kg of positive buoyancy settles at almost exactly
+   18 m/min, the ascent limit. That is the whole lesson: a single
+   kilo is the difference between a safe ascent and an embolism.
+
+   Start negatively buoyant on the bottom at 30 m. Inflate to get
+   moving, then keep dumping as you rise or the expansion runs away
+   with you — carry your 30 m gas to the surface untouched and you
+   arrive at 76 m/min.
+
+   Runs at 2x wall-clock so a realistic 3-minute ascent fits a booth
+   queue. Every number displayed is a true dive value.
+   ════════════════════════════════════════════════════════════════ */
+var ASC={
+  START:30, BALLAST:6, SUIT0:5, MASS:90, DRAG:110, G:9.81,
+  LIMIT:18/60,          /* 18 m/min, in m/s          */
+  CAUTION:9/60,         /* amber above 9 m/min       */
+  GRACE:0.5,            /* seconds over the limit before it counts  */
+  INFLATE:2.2,          /* L/s at ambient pressure   */
+  DEFLATE:3.0,
+  TIMESCALE:2,
+  STOP_DEPTH:5, STOP_BAND:1.5, STOP_SECS:20,   /* compressed from the real 3 min */
+  TRIES:3
+};
+var asc=null,ascRAF=null;
+
+function ascP(d){return 1+d/10;}
+function ascSuit(d){return ASC.SUIT0/ascP(d);}
+function ascBuoyancy(d,bcd){return bcd*1.03+ascSuit(d)-ASC.BALLAST;}
+
+function initAscent(){
+  $('ascTries').textContent=ASC.TRIES;
+  asc={tries:0,points:0};
+  ascBuildScale();
+  ascStart();
+}
+function ascBuildScale(){
+  var s=$('ascScale'),h='';
+  for(var d=0;d<=30;d+=5){
+    var pct=(d/ASC.START)*100;
+    h+='<i style="top:'+pct+'%"></i><span style="top:'+pct+'%">'+d+' m</span>';
+  }
+  s.innerHTML=h;
+  var z=$('ascStopZone');
+  z.style.top=((ASC.STOP_DEPTH-ASC.STOP_BAND)/ASC.START*100)+'%';
+  z.style.height=((ASC.STOP_BAND*2)/ASC.START*100)+'%';
+}
+function ascStart(){
+  ascStop();
+  asc.tries++;
+  $('ascTry').textContent=asc.tries;
+  asc.d=ASC.START;          /* depth, m            */
+  asc.v=0;                  /* vertical speed, m/s (+ = up) */
+  asc.bcd=0;                /* BCD volume at depth, L */
+  asc.over=0;               /* seconds spent over the limit */
+  asc.stop=0;               /* safety-stop seconds banked   */
+  asc.done=false;
+  asc.inflate=false;asc.deflate=false;
+  $('ascInflate').disabled=false;$('ascDeflate').disabled=false;
+  ascMsg('Inflate a little to get off the bottom','');
+  asc.last=performance.now();
+  ascRAF=requestAnimationFrame(ascStep);
+}
+function ascStop(){if(ascRAF){cancelAnimationFrame(ascRAF);ascRAF=null;}}
+function ascMsg(t,cls){var m=$('ascMsg');if(!m)return;m.textContent=t;m.className='asc-msg'+(cls?' '+cls:'');}
+
+function ascStep(now){
+  if(!asc||asc.done)return;
+  var dt=Math.min(0.05,(now-asc.last)/1000)*ASC.TIMESCALE;
+  asc.last=now;
+
+  /* ---- BCD: inflating adds gas at ambient pressure ---- */
+  if(asc.inflate)asc.bcd+=ASC.INFLATE*dt;
+  if(asc.deflate)asc.bcd=Math.max(0,asc.bcd-ASC.DEFLATE*dt);
+  if(asc.bcd>25)asc.bcd=25;
+
+  /* ---- physics ---- */
+  var B=ascBuoyancy(asc.d,asc.bcd);
+  var drag=ASC.DRAG*asc.v*Math.abs(asc.v);
+  asc.v+=((B*ASC.G-drag)/ASC.MASS)*dt;
+
+  var prevD=asc.d;
+  asc.d-=asc.v*dt;                       /* up is decreasing depth */
+  if(asc.d>ASC.START){asc.d=ASC.START;if(asc.v<0)asc.v=0;}   /* seabed */
+  if(asc.d<0)asc.d=0;
+
+  /* Boyle: gas already in the BCD expands as we rise */
+  if(asc.d!==prevD&&asc.bcd>0)asc.bcd*=ascP(prevD)/ascP(asc.d);
+
+  /* ---- ascent rate + the limit ---- */
+  var rate=asc.v*60;                     /* m/min, + = up */
+  if(asc.v>ASC.LIMIT){
+    asc.over+=dt;
+    if(asc.over>ASC.GRACE)return ascFail(rate);
+  } else asc.over=Math.max(0,asc.over-dt*2);
+
+  /* ---- safety stop ---- */
+  var inZone=Math.abs(asc.d-ASC.STOP_DEPTH)<=ASC.STOP_BAND;
+  $('ascStopZone').classList.toggle('hit',inZone&&asc.stop<ASC.STOP_SECS);
+  if(inZone&&asc.stop<ASC.STOP_SECS&&Math.abs(asc.v)<0.12)asc.stop+=dt;
+
+  ascRender(rate,B,inZone);
+
+  if(asc.d<=0.05)return ascSurface();
+  ascRAF=requestAnimationFrame(ascStep);
+}
+
+function ascRender(rate,B,inZone){
+  $('ascDepth').textContent=asc.d.toFixed(1);
+  $('ascBcd').textContent=asc.bcd.toFixed(1);
+  $('ascRate').textContent=(rate>=0?'↑':'↓')+Math.abs(rate).toFixed(1);
+
+  /* rate bar: centre is zero, right half is ascent */
+  var frac=Math.max(-1,Math.min(1,asc.v/(ASC.LIMIT*1.6)));
+  var f=$('ascRateFill');
+  f.style.left=(frac>=0?50:50+frac*50)+'%';
+  f.style.width=Math.abs(frac)*50+'%';
+  f.className=asc.v>ASC.LIMIT?'bad':(asc.v>ASC.CAUTION?'warn':'');
+  document.querySelector('.asc-limit').style.left=(50+50/1.6)+'%';
+
+  /* diver position + the buoyancy badge on their body */
+  $('ascDiver').style.top=(asc.d/ASC.START*100)+'%';
+  var badge=$('ascBuoy');
+  badge.textContent=(B>=0?'+':'')+B.toFixed(1)+' kg';
+  badge.className='asc-buoy'+(Math.abs(B)<0.35?' neutral':(B>0?' pos':''));
+
+  if(asc.deflate&&Math.random()<0.5)ascBubble();
+
+  if(asc.done)return;
+  if(inZone&&asc.stop<ASC.STOP_SECS){
+    ascMsg('Safety stop: hold here — '+Math.ceil(ASC.STOP_SECS-asc.stop)+'s to go',
+      Math.abs(asc.v)<0.12?'good':'');
+  } else if(asc.v>ASC.CAUTION&&asc.d<15){
+    ascMsg('Rising fast and the gas is still expanding — dump now.','bad');
+  } else if(B>0.9){
+    ascMsg('Too much lift. Deflate before it runs away.','bad');
+  } else if(asc.d>=ASC.START-0.2&&asc.bcd<1){
+    ascMsg('You are '+ascBuoyancy(asc.d,asc.bcd).toFixed(1)+' kg negative. Inflate to lift off.','');
+  } else if(asc.v>0.01){
+    ascMsg('Good — keep dumping as you rise. The shallower you get, the faster it expands.','good');
+  } else {
+    ascMsg('Hovering. Add a touch of air to start up.','');
+  }
+}
+
+function ascBubble(){
+  var box=$('ascBubbles');if(!box)return;
+  var b=document.createElement('div');
+  b.className='asc-bub';
+  var sz=3+Math.random()*5;
+  b.style.width=b.style.height=sz+'px';
+  b.style.right=(13+Math.random()*5)+'%';
+  b.style.top=(asc.d/ASC.START*100)+'%';
+  box.appendChild(b);
+  var top=parseFloat(b.style.top),drift=(Math.random()-0.5)*3;
+  var t0=performance.now();
+  (function rise(now){
+    var p=(now-t0)/1400;
+    if(p>=1||!b.parentNode){if(b.parentNode)b.parentNode.removeChild(b);return;}
+    b.style.top=(top-p*top)+'%';
+    b.style.transform='translateX('+(drift*p*10)+'px)';
+    b.style.opacity=String(1-p*0.85);
+    requestAnimationFrame(rise);
+  })(t0);
+}
+
+function ascFail(rate){
+  asc.done=true;ascStop();
+  $('ascInflate').disabled=true;$('ascDeflate').disabled=true;
+  penalize();
+  ascMsg('💥 '+Math.abs(rate).toFixed(0)+' m/min — way over 18. That is how you get a lung '+
+    'overexpansion injury. Expanding gas has to come out of the BCD as you rise.','bad');
+  if(asc.tries>=ASC.TRIES){
+    $('ascNotice').textContent='Tough one — that is exactly why it is a skill. Back to the menu…';
+    setTimeout(advanceGame,3400);
+  } else {
+    $('ascNotice').textContent='Resetting to 30 m…';
+    setTimeout(function(){$('ascNotice').textContent='';ascStart();},2600);
+  }
+}
+
+function ascSurface(){
+  asc.done=true;ascStop();
+  $('ascInflate').disabled=true;$('ascDeflate').disabled=true;
+  $('ascDepth').textContent='0.0';
+  var didStop=asc.stop>=ASC.STOP_SECS;
+  var pts=20+(didStop?12:0)+Math.max(0,(ASC.TRIES-asc.tries)*4);
+  award(pts);
+  ascMsg(didStop
+    ? '🎉 Surfaced clean, safety stop complete. That is a textbook ascent.'
+    : '🙂 Surfaced safely — but you skipped the safety stop at 5 m. Worth three minutes every time.',
+    'good');
+  $('ascNotice').textContent='+'+pts+' points · back to the menu…';
+  setTimeout(advanceGame,3200);
+}
+
+/* hold-to-actuate, pointer events so mouse and touch behave the same */
+(function(){
+  function hold(id,onKey){
+    var b=$(id);if(!b)return;
+    var set=function(on){
+      return function(ev){
+        ev.preventDefault();
+        if(!asc||asc.done)return;
+        asc[onKey]=on;b.classList.toggle('on',on);
+      };
+    };
+    b.addEventListener('pointerdown',set(true));
+    ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(false));});
+  }
+  hold('ascInflate','inflate');
+  hold('ascDeflate','deflate');
+})();
 
 /* ════════════════════════════════════════════════════════════════
    ZOOM IN — a macro crop that pulls back over time.
