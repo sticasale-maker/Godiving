@@ -3616,18 +3616,28 @@ $('migNext').onclick=migRound;
    Drawn as geometry and silhouette — dark rock, light shafts, a
    side-on finning diver — not illustration.
    ═══════════════════════════════════════════════════════════════ */
+/* TWO metrics govern this, and only measuring the first is what made
+   earlier builds unplayable:
+     REACH    can the diver cross the steepest part of the tunnel in
+              the time the scroll allows?  (this one passed all along)
+     REVERSAL how long from "going up" to "actually going down"?
+              At mass 45 / drag 60 this was 2.5 s and 145 px of
+              committed tunnel — you could see the mistake coming and
+              had no way to undo it, which reads as dead weight.
+   Now ~1.0 s and ~43 px. Keep both in range if these are ever
+   retuned; the lag should be felt, not fought. */
 var NU={
-  LUNG_IN:3.0, LUNG_OUT:3.4,   /* litres per second                */
-  LUNG_MAX:3.2,                /* usable tidal range               */
-  MASS:45, DRAG:60, G:9.81,
-  PXM:70,                      /* px per metre of travel           */
-  SPEED:58,                    /* px/s the cave scrolls past       */
+  LUNG_IN:8.0, LUNG_OUT:8.5,   /* litres per second                */
+  LUNG_MAX:1.8,                /* usable tidal range               */
+  MASS:12, DRAG:22, G:9.81,
+  PXM:64,                      /* px per metre of travel           */
+  SPEED:42,                    /* px/s the cave scrolls past       */
   SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
      px-per-px capability (top vertical speed / scroll speed) */
   A1:30, L1:600, A2:10, L2:280,
-  HALF:{'Young Explorer':80,'Teen Explorer':62,'Adult Explorer':48},
+  HALF:{'Young Explorer':88,'Teen Explorer':70,'Adult Explorer':56},
   PINCH:0.20,                  /* how much the tunnel narrows      */
   TICK:2,                      /* award every N seconds survived   */
   TICK_PTS:3,
@@ -4005,12 +4015,15 @@ var ASC={
   MASS:260, DRAG:110, G:9.81,
   LIMIT:18/60,          /* 18 m/min, in m/s          */
   CAUTION:9/60,         /* amber above 9 m/min       */
-  GRACE:1.2,            /* seconds over the limit before it counts   */
+  /* dive-seconds over the limit before it counts. Scaled with
+     TIMESCALE so the player always gets ~0.75s of REAL time to
+     catch an overshoot, whatever the playback speed. */
+  GRACE:3.0,
   /* small, slow valves: a press has to be held to do anything, which
      is how a real inflator behaves and stops twitchy over-correction */
   INFLATE:0.85,         /* L/s at ambient pressure   */
   DEFLATE:1.15,
-  TIMESCALE:1.6,
+  TIMESCALE:4,
   STOP_DEPTH:5, STOP_BAND:1.5, STOP_SECS:20,   /* compressed from the real 3 min */
   /* "holding" the stop means drifting no faster than ~9.6 m/min. With
      a heavy, high-inertia diver you never truly stop dead, so demanding
