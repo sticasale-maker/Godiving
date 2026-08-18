@@ -458,6 +458,15 @@
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
     color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
 
+  /* ── EXPERIENCE PICKER on the welcome screen ── */
+  .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
+  .exp-btn{padding:11px 6px;border-radius:10px;cursor:pointer;transition:.12s;
+    background:rgba(255,255,255,.05);border:2px solid var(--line);color:var(--text);
+    font-family:inherit;font-size:13px;font-weight:700;line-height:1.3;text-align:center}
+  .exp-btn .ic{display:block;font-size:20px;margin-bottom:3px}
+  .exp-btn:active{transform:translateY(1px)}
+  .exp-btn.sel{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
+
   /* ── PRIZE TICKET on the end screen ── */
   .ticket-box{background:linear-gradient(160deg,#0f4a56,#0c3142);border:2px solid var(--gold);
     border-radius:14px;padding:14px 12px;margin:0 0 12px;text-align:center;flex-shrink:0}
@@ -561,6 +570,8 @@
         <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
         <label class="arcade-label" for="wage">▶ YOUR AGE</label>
         <input class="arcade-input" id="wage" type="number" min="3" max="120" placeholder="00" inputmode="numeric">
+        <label class="arcade-label">▶ YOUR DIVING</label>
+        <div class="exp-grid" id="wexp"></div>
         <p class="werr" id="werr"></p>
         <button class="arcade-start" id="wstart">DIVE IN →</button>
       </div>
@@ -1399,7 +1410,58 @@ function showApp(){
 }
 
 /* ════════ WELCOME ════════ */
-var USER={name:'',age:0,group:''};
+var USER={name:'',age:0,group:'',exp:''};
+
+/* ════════ CONTENT GATING: TWO INDEPENDENT AXES ════════
+   Age decides DIFFICULTY. Experience decides SUBJECT MATTER.
+
+   They are a matrix, not a hierarchy. Junior Open Water starts at 10,
+   so a kid can legitimately be a scuba diver — they should get scuba
+   content written at kid level, not adult deco questions, and not zero
+   scuba content just because they are young. Equally, a 40-year-old who
+   has never been in the water should never see a no-stop limit question.
+
+   Tag any item with {exp:[...]} and/or {minAge:n} / {groups:[...]}.
+   An untagged item is general and shows to everyone.               */
+var EXP_LEVELS=[
+  {key:'none',    icon:'🌊', label:'Never dived'},
+  {key:'snorkel', icon:'🤿', label:'Snorkeller'},
+  {key:'scuba',   icon:'🐠', label:'Scuba diver'},
+  {key:'freedive',icon:'🫁', label:'Freediver'}
+];
+var EXP_LABEL={};EXP_LEVELS.forEach(function(e){EXP_LABEL[e.key]=e.label;});
+
+function contentAllowed(tags){
+  if(!tags)return true;
+  if(tags.exp&&tags.exp.indexOf(USER.exp)===-1)return false;
+  if(tags.minAge&&(USER.age||0)<tags.minAge)return false;
+  if(tags.groups&&tags.groups.indexOf(USER.group)===-1)return false;
+  return true;
+}
+/* Filters a bank, but never returns an empty round: if gating strips
+   everything, fall back to the untagged (general) items so a game can
+   never open with nothing to show. */
+function filterContent(bank){
+  var ok=(bank||[]).filter(function(it){return contentAllowed(it.tags);});
+  if(ok.length)return ok;
+  return (bank||[]).filter(function(it){return !it.tags;});
+}
+
+/* Draws n items, guaranteeing that at least `want` of them are specific
+   to this diver's experience where such items exist. Without this, a
+   scuba diver picking 4 from a bank of 16 general + 5 scuba questions
+   would usually see no scuba content at all, and the whole experience
+   axis would be invisible to the person it was built for. */
+function pickForDiver(bank,n,want){
+  var allowed=filterContent(bank);
+  var specific=shuffle(allowed.filter(function(it){return it.tags&&it.tags.exp;}));
+  var general =shuffle(allowed.filter(function(it){return !(it.tags&&it.tags.exp);}));
+  var take=Math.min(want==null?1:want,specific.length,n);
+  var out=specific.slice(0,take);
+  out=out.concat(general.concat(specific.slice(take)).slice(0,n-out.length));
+  return shuffle(out);
+}
+
 function ageGroup(a){if(a<=12)return 'Young Explorer';if(a<=17)return 'Teen Explorer';return 'Adult Explorer';}
 var AGE_GROUPS=['Young Explorer','Teen Explorer','Adult Explorer'];
 var AGE_GROUP_SHORT={'Young Explorer':'Young (≤12)','Teen Explorer':'Teen (13–17)','Adult Explorer':'Adult (18+)'};
@@ -1426,6 +1488,26 @@ function isCleanName(nm){
 }
 
 var AUTO_ADMIN=new URLSearchParams(window.location.search).get('admin')==='1';
+
+/* experience picker — single choice, kept to one tap so the queue moves */
+var pickedExp='';
+(function(){
+  var box=document.getElementById('wexp');if(!box)return;
+  box.innerHTML=EXP_LEVELS.map(function(e){
+    return '<button type="button" class="exp-btn" data-exp="'+e.key+'">'+
+           '<span class="ic">'+e.icon+'</span>'+esc(e.label)+'</button>';
+  }).join('');
+  box.addEventListener('click',function(ev){
+    var b=ev.target.closest('.exp-btn');if(!b)return;
+    pickedExp=b.getAttribute('data-exp');
+    Array.prototype.forEach.call(box.querySelectorAll('.exp-btn'),function(x){
+      x.classList.toggle('sel',x===b);
+    });
+    var er=document.getElementById('werr');
+    if(er&&er.textContent==='PICK YOUR DIVING')er.textContent='';
+  });
+})();
+
 document.getElementById('wstart').onclick=function(){
   var nm=document.getElementById('wname').value.trim();
   var av=parseInt(document.getElementById('wage').value,10);
@@ -1433,14 +1515,15 @@ document.getElementById('wstart').onclick=function(){
   if(!nm){err.textContent='ENTER YOUR NAME';return;}
   if(!av||av<3||av>120){err.textContent='VALID AGE: 3 – 120';return;}
   if(nm.toLowerCase()!=='marco'&&!isCleanName(nm)){err.textContent='PLEASE PICK A FRIENDLY NAME';return;}
+  if(!pickedExp){err.textContent='PICK YOUR DIVING';return;}
   err.textContent='';
-  USER.name=nm;USER.age=av;USER.group=ageGroup(av);
+  USER.name=nm;USER.age=av;USER.group=ageGroup(av);USER.exp=pickedExp;
   window._hofSubmitted=false;
   document.getElementById('whoName').textContent=USER.name;
   var _mn=document.getElementById('menuName');if(_mn)_mn.textContent=USER.name;
   document.getElementById('whoGroup').textContent=USER.group;
   document.getElementById('welcome').style.display='none';
-  Cloud.startSession({name:USER.name,group:USER.group,age:USER.age,game:'quiz',points:0,started:Date.now()});
+  Cloud.startSession({name:USER.name,group:USER.group,age:USER.age,exp:USER.exp,game:'quiz',points:0,started:Date.now()});
   showApp();
   if(nm.toLowerCase()==='marco'&&av===99){showAdmin();}
   else{showMenu();}
@@ -1458,6 +1541,10 @@ if(AUTO_ADMIN){
     if(nm&&ag&&btn&&document.getElementById('welcome').style.display!=='none'){
       nm.value='Marco';
       ag.value='99';
+      /* the experience picker is now required, so satisfy it before
+         clicking or admin entry is blocked by validation */
+      var sc=document.querySelector('#wexp .exp-btn[data-exp="scuba"]');
+      if(sc)sc.click();
       btn.click();
     }else{
       setTimeout(tryAutoAdmin,100);
@@ -2269,11 +2356,34 @@ var TF_QUESTIONS=[
   {s:'The hammer octopus is found only along Australia\'s east coast.',a:true,f:'True — and the male has a special hammer-shaped arm for mating.'},
   {s:'Grey nurse shark embryos eat their own siblings before birth.',a:true,f:'True — it\'s called intrauterine cannibalism; the strongest embryo survives.'},
   {s:'Little penguins breed on Sydney\'s Northern Beaches.',a:true,f:'True — a colony lives around North Head, and they\'re sometimes seen at Cabbage Tree Bay.'},
-  {s:'Eastern gobbleguts males brood over 1,000 eggs in their mouth.',a:true,f:'True — the female hands the eggs over and the male broods them for about two weeks.'}
+  {s:'Eastern gobbleguts males brood over 1,000 eggs in their mouth.',a:true,f:'True — the female hands the eggs over and the male broods them for about two weeks.'},
+
+  /* ── scuba divers only ── */
+  {s:'Your regulator\'s "octopus" has eight arms.',a:false,tags:{exp:['scuba']},
+   f:'False — it\'s the spare second stage you donate to an out-of-air buddy. One hose, no arms. The eight-armed one lives under the ledge at Shiprock.'},
+  {s:'Everything underwater looks about a third bigger than it really is.',a:true,tags:{exp:['scuba','freedive','snorkel']},
+   f:'True — refraction magnifies by about 33%. That "one metre" fish your buddy signalled is closer to 75 cm. Every fish story starts here.'},
+  {s:'You should always be the last person to check your own gear.',a:true,tags:{exp:['scuba']},
+   f:'True — a buddy check is vital, but nobody drowns in your place. Air on, weights on, releases known, air checked.'},
+  {s:'Sydney divers can get bent at Bare Island.',a:true,tags:{exp:['scuba'],minAge:13},
+   f:'True — DCS is about time and depth, not exotic locations. Repeated deep dives on a Bare Island weekend absolutely count.'},
+  {s:'A wetsuit keeps you warm by keeping water out.',a:false,tags:{exp:['scuba','freedive','snorkel']},
+   f:'False — it lets a thin layer in and your body heats it. A drysuit is the one that keeps water out.'},
+
+  /* ── freedivers only ── */
+  {s:'Shallow water blackout usually strikes on the way down.',a:false,tags:{exp:['freedive']},
+   f:'False — it strikes on the way UP, in the last few metres, as falling pressure drops your oxygen. This is why you never freedive alone.'},
+  {s:'Your heart rate drops when you put your face in cold water.',a:true,tags:{exp:['freedive','snorkel']},
+   f:'True — the mammalian dive reflex can slow it 10–25%, shunting blood to the core. Seals and dolphins run the same trick, harder.'},
+  {s:'Hyperventilating before a breath-hold makes it safer.',a:false,tags:{exp:['freedive']},
+   f:'False, and dangerously so — it blunts the urge to breathe without adding oxygen, so you black out with no warning.'}
 ];
 var tfQueue=[],tfScore=0,tfTotal=0,tfAnswered=false,tfCur=null;
 function initTrueFalse(){
-  tfQueue=shuffle(TF_QUESTIONS.slice()).slice(0,4);tfScore=0;tfTotal=0;tfAnswered=false;
+  /* Gated by experience: a scuba diver gets the regulator and DCS
+     questions, a freediver gets the blackout ones, a first-timer gets
+     neither and never sees a question they have no way to answer. */
+  tfQueue=pickForDiver(TF_QUESTIONS,4,1);tfScore=0;tfTotal=0;tfAnswered=false;
   $('tfScore').textContent=0;$('tfTotal').textContent=0;$('tfNotice').textContent='';
   tfRound();
 }
