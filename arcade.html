@@ -458,6 +458,62 @@
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
     color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
 
+  /* ── MIGRATION HIGHWAY ── */
+  .mig-stage{flex-shrink:0;margin-bottom:10px}
+  .mig-coast{position:relative;height:min(34vh,240px);border-radius:12px;border:1px solid var(--line);
+    background:linear-gradient(180deg,#12525f 0%,#0d3f52 45%,#0a2c40 100%);overflow:hidden}
+  .mig-end{position:absolute;left:0;right:0;text-align:center;font-size:12px;font-weight:700;
+    color:var(--text);padding:6px 4px;opacity:.9}
+  .mig-end small{display:block;font-size:9px;color:var(--muted);font-weight:600}
+  .mig-top{top:4px}
+  .mig-bot{bottom:4px}
+  .mig-here{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);text-align:center;
+    font-size:12px;font-weight:800;color:var(--gold);
+    border-top:1px dashed rgba(243,198,79,.5);border-bottom:1px dashed rgba(243,198,79,.5);padding:3px 0}
+  .mig-animal{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);font-size:38px;
+    transition:top 1.5s ease-in-out;filter:drop-shadow(0 2px 5px rgba(0,0,0,.5))}
+  .mig-arrow{position:absolute;left:50%;top:50%;width:0;height:0;opacity:0;transition:opacity .3s;
+    border-left:11px solid transparent;border-right:11px solid transparent;margin-left:22px}
+  .mig-arrow.up{opacity:1;border-bottom:20px solid var(--good);margin-top:-34px}
+  .mig-arrow.down{opacity:1;border-top:20px solid var(--accent);margin-top:14px}
+  .mig-q{font-size:15px;line-height:1.45;text-align:center;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:11px;margin:0 0 10px;flex-shrink:0}
+  .mig-q b{color:var(--gold)}
+
+  /* ── NEUTRAL ── */
+  .nu-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);background:#062a3d}
+  .nu-stage canvas{display:block;width:100%;height:100%}
+  .nu-hud{position:absolute;left:0;right:0;top:0;padding:7px 10px;font-size:12px;color:var(--text);
+    background:linear-gradient(180deg,rgba(4,20,30,.8),rgba(4,20,30,0));pointer-events:none}
+  .nu-btn{width:100%;margin-top:8px;padding:16px 8px;border-radius:14px;cursor:pointer;flex-shrink:0;
+    background:#0d3b46;color:#9fe8e2;border:2px solid var(--accent);
+    font-family:'Press Start 2P',monospace;font-size:clamp(10px,2.5vw,13px);letter-spacing:1px;
+    display:flex;flex-direction:column;align-items:center;gap:5px;touch-action:none;user-select:none}
+  .nu-btn small{font-family:inherit;font-size:9px;opacity:.65;letter-spacing:0}
+  .nu-btn.on{transform:translateY(2px);filter:brightness(1.45)}
+
+  /* ── NAV TRAINER ── */
+  .nav-task{font-size:14px;line-height:1.45;text-align:center;background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:10px;margin:0 0 8px;flex-shrink:0}
+  .nav-task b{color:var(--gold)}
+  .nav-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+  .nav-stage canvas{max-width:100%;max-height:100%;aspect-ratio:1/1}
+  .nav-meters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;flex-shrink:0}
+  .nav-meter .lab{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
+  .nav-bar{height:9px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);
+    overflow:hidden;margin-top:3px}
+  .nav-bar i{display:block;height:100%;width:0;background:var(--good);transition:width .15s}
+  .nav-bar i.dist{background:var(--accent)}
+  .nav-bar i.low{background:var(--bad)}
+  .nav-controls{display:grid;grid-template-columns:1fr 1.6fr 1fr;gap:8px;flex-shrink:0}
+  .nav-btn{padding:15px 6px;border-radius:12px;border:2px solid var(--line);background:var(--surface);
+    color:var(--text);cursor:pointer;font-family:'Press Start 2P',monospace;
+    font-size:clamp(11px,2.6vw,14px);touch-action:none;user-select:none}
+  .nav-btn.on{transform:translateY(2px);filter:brightness(1.4)}
+  .nav-go{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
+  .nav-btn:disabled{opacity:.4}
+
   /* ── SAFE ASCENT ── */
   .asc-wrap{display:flex;gap:10px;flex:1;min-height:0}
   .asc-col{position:relative;flex:1;min-width:0;border-radius:12px;overflow:hidden;
@@ -485,22 +541,35 @@
   .asc-bub{position:absolute;border-radius:50%;background:rgba(200,240,255,.55);
     border:1px solid rgba(255,255,255,.5)}
 
-  .asc-instruments{width:38%;max-width:190px;display:flex;flex-direction:column;gap:8px}
-  .asc-readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-  .asc-readout .lab,.asc-ratebox .lab{display:block;font-size:10px;letter-spacing:1px;
+  /* vertical gauges either side of the water, dive-computer style */
+  .asc-vbar{width:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+  .asc-vbar .vlab{font-size:9px;letter-spacing:1.5px;color:var(--muted);font-weight:800}
+  .asc-vbar b{font-size:15px;line-height:1}
+  .asc-vbar small{font-size:9px;color:var(--muted)}
+  .vtrack{position:relative;flex:1;width:26px;border-radius:8px;background:var(--bg2);
+    border:1px solid var(--line);overflow:hidden}
+  .vzero{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,.35)}
+  .vfill{position:absolute;left:2px;right:2px;top:50%;height:0;background:var(--good);border-radius:4px}
+  .vfill.pos{background:var(--accent)}
+  .vfill.neg{background:var(--bad)}
+  .vlimit{position:absolute;left:-1px;right:-1px;height:2px;background:var(--bad);opacity:.9}
+  /* rate segments are drawn as stacked blocks so it reads like a gauge */
+  .vseg{position:absolute;left:3px;right:3px;height:5px;border-radius:2px;background:rgba(255,255,255,.10)}
+  .vseg.on{background:var(--good)}
+  .vseg.on.warn{background:var(--gold)}
+  .vseg.on.bad{background:var(--bad)}
+  .vseg.down.on{background:var(--accent)}
+
+  .asc-readouts{display:grid;grid-template-columns:auto auto 1fr;gap:8px;margin-top:8px;
+    align-items:stretch;flex-shrink:0}
+  .asc-readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
+  .asc-readout .lab{display:block;font-size:9px;letter-spacing:1px;
     text-transform:uppercase;color:var(--muted);font-weight:700}
-  .asc-readout b{font-size:26px;line-height:1.1}
-  .asc-readout .unit,.asc-ratebox .unit{font-size:11px;color:var(--muted);margin-left:3px}
-  .asc-ratebox{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
-  .asc-ratebox b{font-size:22px}
-  .asc-rate{position:relative;height:12px;border-radius:999px;background:var(--bg2);
-    border:1px solid var(--line);overflow:hidden;margin:6px 0 4px}
-  .asc-rate i{position:absolute;top:0;bottom:0;left:50%;width:0;background:var(--good);transition:none}
-  .asc-rate i.warn{background:var(--gold)}
-  .asc-rate i.bad{background:var(--bad)}
-  .asc-limit{position:absolute;top:-2px;bottom:-2px;width:2px;background:var(--bad);opacity:.9}
-  .asc-msg{flex:1;font-size:12px;line-height:1.45;color:var(--muted);
-    background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:8px 10px}
+  .asc-readout b{font-size:21px;line-height:1.1}
+  .asc-readout .unit{font-size:10px;color:var(--muted);margin-left:2px}
+  .asc-msg{font-size:11.5px;line-height:1.4;color:var(--muted);
+    background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px 9px;
+    display:flex;align-items:center}
   .asc-msg.good{color:#cdf3df;border-color:var(--good)}
   .asc-msg.bad{color:#f7cfcf;border-color:var(--bad)}
 
@@ -733,6 +802,9 @@
       <div class="gstep" id="gs-sharkid"><div class="icon">🦈</div><div class="label">Shark ID</div></div>
       <div class="gstep" id="gs-zoom"><div class="icon">🔍</div><div class="label">Zoom in</div></div>
       <div class="gstep" id="gs-ascent"><div class="icon">⬆️</div><div class="label">Safe ascent</div></div>
+      <div class="gstep" id="gs-nav"><div class="icon">🧭</div><div class="label">Nav trainer</div></div>
+      <div class="gstep" id="gs-neutral"><div class="icon">🫁</div><div class="label">Neutral</div></div>
+      <div class="gstep" id="gs-migrate"><div class="icon">🐋</div><div class="label">Migration</div></div>
       <div class="gstep" id="gs-fishkit"><div class="icon">🐙</div><div class="label">Fish or kit</div></div>
       <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
       <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
@@ -1020,6 +1092,63 @@
     </div>
 
     <!-- HALL OF FAME -->
+    <!-- MIGRATION HIGHWAY -->
+    <div class="panel" id="p-migrate">
+      <div class="game-header">
+        <span class="game-label">Migration highway</span>
+        <span class="score">Score <b id="migScore">0</b> / <b id="migTotal">0</b></span>
+      </div>
+      <div class="mig-stage">
+        <div class="mig-coast" id="migCoast">
+          <span class="mig-end mig-top">🌴 Queensland<small>warm · breeding</small></span>
+          <span class="mig-here" id="migHere">📍 Sydney</span>
+          <span class="mig-end mig-bot">🧊 Antarctica<small>cold · feeding</small></span>
+          <span class="mig-arrow" id="migArrow"></span>
+          <span class="mig-animal" id="migAnimal">🐋</span>
+        </div>
+      </div>
+      <p class="mig-q" id="migQ"></p>
+      <div class="opts-grid" id="migOpts"></div>
+      <p class="qfact" id="migFact"></p>
+      <div style="text-align:center"><button class="btn ghost" id="migNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="migNotice"></p>
+    </div>
+
+    <!-- NEUTRAL — buoyancy hover -->
+    <div class="panel" id="p-neutral">
+      <div class="game-header">
+        <span class="game-label">Neutral</span>
+        <span class="score">Gates <b id="nuGates">0</b> / <b id="nuTotal">0</b></span>
+      </div>
+      <div class="nu-stage" id="nuStage">
+        <canvas id="nuCanvas"></canvas>
+        <div class="nu-hud"><span id="nuHud">Hold to breathe in — rise. Release — sink.</span></div>
+      </div>
+      <button class="nu-btn" id="nuBreath">🫁 HOLD TO BREATHE IN<small>release to exhale and sink</small></button>
+      <p class="auto-notice" id="nuNotice"></p>
+    </div>
+
+    <!-- NAV TRAINER -->
+    <div class="panel" id="p-nav">
+      <div class="game-header">
+        <span class="game-label" id="navLabel">Compass navigation</span>
+        <span class="score">Leg <b id="navLeg">1</b> / <b id="navLegs">2</b></span>
+      </div>
+      <p class="nav-task" id="navTask"></p>
+      <div class="nav-stage"><canvas id="navCanvas"></canvas></div>
+      <div class="nav-meters">
+        <div class="nav-meter"><span class="lab">On course</span><div class="nav-bar"><i id="navAccFill"></i></div></div>
+        <div class="nav-meter"><span class="lab">Distance</span><div class="nav-bar"><i id="navDistFill" class="dist"></i></div></div>
+      </div>
+      <div class="nav-controls">
+        <button class="nav-btn" id="navLeft">◀</button>
+        <button class="nav-btn nav-go" id="navGo">SET BEZEL</button>
+        <button class="nav-btn" id="navRight">▶</button>
+      </div>
+      <p class="qfact" id="navFact"></p>
+      <p class="auto-notice" id="navNotice"></p>
+    </div>
+
     <!-- SAFE ASCENT -->
     <div class="panel" id="p-ascent">
       <div class="game-header">
@@ -1027,6 +1156,16 @@
         <span class="score">Attempt <b id="ascTry">1</b> / <b id="ascTries">3</b></span>
       </div>
       <div class="asc-wrap">
+        <!-- buoyancy: vertical bar, centre = neutral -->
+        <div class="asc-vbar" id="ascBuoyBar">
+          <span class="vlab">BUOY</span>
+          <div class="vtrack">
+            <i class="vzero"></i>
+            <i class="vfill" id="ascBuoyFill"></i>
+          </div>
+          <b id="ascBuoyVal">0.0</b><small>kg</small>
+        </div>
+
         <div class="asc-col" id="ascCol">
           <div class="asc-scale" id="ascScale"></div>
           <div class="asc-bubbles" id="ascBubbles"></div>
@@ -1037,16 +1176,21 @@
           </div>
           <div class="asc-surface"></div>
         </div>
-        <div class="asc-instruments">
-          <div class="asc-readout"><span class="lab">Depth</span><b id="ascDepth">30.0</b><span class="unit">m</span></div>
-          <div class="asc-ratebox">
-            <span class="lab">Ascent rate</span>
-            <div class="asc-rate"><i id="ascRateFill"></i><span class="asc-limit"></span></div>
-            <b id="ascRate">0.0</b><span class="unit">m/min · limit 18</span>
+
+        <!-- ascent rate: segmented vertical bar, as on a dive computer -->
+        <div class="asc-vbar" id="ascRateBar">
+          <span class="vlab">RATE</span>
+          <div class="vtrack" id="ascRateTrack">
+            <i class="vzero"></i>
+            <span class="vlimit"></span>
           </div>
-          <div class="asc-readout"><span class="lab">BCD</span><b id="ascBcd">0.0</b><span class="unit">L</span></div>
-          <div class="asc-msg" id="ascMsg">Inflate a little to get off the bottom</div>
+          <b id="ascRate">0.0</b><small>m/min</small>
         </div>
+      </div>
+      <div class="asc-readouts">
+        <div class="asc-readout"><span class="lab">Depth</span><b id="ascDepth">30.0</b><span class="unit">m</span></div>
+        <div class="asc-readout"><span class="lab">BCD</span><b id="ascBcd">0.0</b><span class="unit">L</span></div>
+        <div class="asc-msg" id="ascMsg">Inflate a little to get off the bottom</div>
       </div>
       <div class="asc-buttons">
         <button class="asc-btn asc-in" id="ascInflate">▲ INFLATE<small>hold</small></button>
@@ -1352,7 +1496,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',zoom:'Zoom In',fishkit:'Fish or Kit?',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',fishkit:'Fish or Kit?',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -1951,7 +2095,8 @@ var GAME_EXP_DEFAULTS={
   wreckfind:['snorkel','scuba','freedive'],
   wave:     ['snorkel','scuba','freedive'],   /* reading conditions before a dive */
   ascent:   ['scuba'],                        /* return-to-surface: scuba only */
-  nav:      ['scuba','freedive']
+  nav:      ['scuba','freedive'],
+  neutral:  ['snorkel','scuba','freedive']
 };
 var GAME_EXP={};
 function loadGameExp(){
@@ -2229,7 +2374,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ascent','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid'];
+var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2285,6 +2430,9 @@ function startGame(name){
   else if(name==='lineup')initLineUp();
   else if(name==='memory')initMemory();
   else if(name==='ascent')initAscent();
+  else if(name==='migrate')initMigrate();
+  else if(name==='neutral')initNeutral();
+  else if(name==='nav')initNav();
 }
 
 /* ════════ MENU HUB (pick any game) ════════ */
@@ -2310,7 +2458,10 @@ var GAME_META={
   fishkit:{icon:'🐙',name:'Fish or Kit?',desc:'Is it a fish or dive gear?'},
   lineup:{icon:'📏',name:'Size Line-Up',desc:'Tap them into the right order'},
   memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'},
-  ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'}
+  ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'},
+  migrate:{icon:'🐋',name:'Migration Highway',desc:'Which way is it heading?'},
+  neutral:{icon:'🫁',name:'Neutral',desc:'Hover through the gully on your lungs'},
+  nav:{icon:'🧭',name:'Nav Trainer',desc:'Set the bezel and hold the bearing'}
 };
 function showMenu(){
   activeGame=null;
@@ -3362,6 +3513,413 @@ function wireSharkId(){
 }
 
 /* ════════════════════════════════════════════════════════════════
+   MIGRATION HIGHWAY — which way is it heading, and is it going
+   anywhere at all?
+
+   Deliberately NOT a season-matching game; "When Will I See It?"
+   already does that. This one is about direction and residency,
+   which is the thing Sydney people actually get wrong — half the
+   coast assumes every whale is heading north.
+   ════════════════════════════════════════════════════════════════ */
+var MIG_OPTS=[
+  {k:'north',label:'⬆️ Heading north'},
+  {k:'south',label:'⬇️ Heading south'},
+  {k:'stay', label:'⚓ Not going anywhere'}
+];
+var MIG_ROUNDS=[
+  {icon:'🐋',who:'a humpback whale',where:'off Manly',month:'July',a:'north',
+   f:'North. From about May to August humpbacks stream past Sydney on their way from Antarctic feeding grounds to warm Queensland water to breed. Roughly 40,000 make the trip.'},
+  {icon:'🐋',who:'a humpback and her calf',where:'off Bondi',month:'October',a:'south',
+   f:'South, heading home to Antarctica. Mothers with calves hug the coast on the return leg, which is why September to November is the best headland watching of the year.'},
+  {icon:'🦈',who:'a Port Jackson shark',where:'at Bare Island',month:'November',a:'south',
+   f:'South. They pack into Sydney reefs to breed from July, then head off — tagged sharks have gone about 600 km to Tasmania and come back to the very same reef a year later.'},
+  {icon:'🐧',who:'a little penguin',where:'at North Head',month:'September',a:'stay',
+   f:'Staying put. Sydney has NSW\'s only mainland little penguin colony, right there at Manly, and they breed through the winter and spring.'},
+  {icon:'🐴',who:'a weedy seadragon',where:'at Kurnell',month:'March',a:'stay',
+   f:'Going nowhere. Seadragons are extraordinarily site-faithful — individuals are re-sighted on the same patch of reef for years, which is why local populations are so vulnerable.',
+   tags:{groups:['Teen Explorer','Adult Explorer']}},
+  {icon:'🦑',who:'a giant cuttlefish',where:'at Kurnell',month:'June',a:'stay',
+   f:'Local. They gather in the shallows to breed through winter, and die soon after a single breeding cycle.'},
+  {icon:'🦭',who:'an Australian fur seal',where:'at Barrenjoey',month:'August',a:'north',
+   f:'North. Fur seals breed in Bass Strait and range up the NSW coast in winter, hauling out on rocks around Sydney before heading back south.',
+   tags:{groups:['Teen Explorer','Adult Explorer']}},
+  {icon:'🐢',who:'a green turtle',where:'at Shelly Beach',month:'February',a:'stay',
+   f:'Hanging around. A few green turtles live in Sydney year-round now, warm-water strays that settled in — Cabbage Tree Bay has had resident individuals for years.'}
+];
+var migQueue=[],migScore=0,migTotal=0,migAnswered=false,migCur=null;
+
+function initMigrate(){
+  migQueue=pickForDiver(MIG_ROUNDS,4,0);
+  migScore=0;migTotal=0;
+  $('migScore').textContent=0;$('migTotal').textContent=0;$('migNotice').textContent='';
+  migRound();
+}
+function migRound(){
+  migAnswered=false;
+  migCur=migQueue.shift();
+  $('migFact').textContent='';$('migNext').style.display='none';
+  $('migArrow').className='mig-arrow';
+  var an=$('migAnimal');
+  an.textContent=migCur.icon;an.style.top='50%';
+  $('migQ').innerHTML='It\'s <b>'+esc(migCur.month)+'</b>. You spot '+esc(migCur.who)+' '+esc(migCur.where)+'.<br>Where is it going?';
+  $('migOpts').innerHTML=MIG_OPTS.map(function(o){
+    return '<button class="opt" data-k="'+o.k+'">'+o.label+'</button>';
+  }).join('');
+  $('migOpts').querySelectorAll('.opt').forEach(function(b){
+    b.onclick=function(){migAnswer(b);};
+  });
+  startTimer();
+}
+function migAnswer(btn){
+  if(migAnswered)return;
+  migAnswered=true;migTotal++;
+  $('migOpts').querySelectorAll('.opt').forEach(function(x){
+    x.disabled=true;if(x.dataset.k===migCur.a)x.classList.add('right');
+  });
+  if(btn.dataset.k===migCur.a){migScore++;award(timedReward());}
+  else{btn.classList.add('wrong');penalize();}
+  /* animate the answer up or down the coast */
+  var an=$('migAnimal'),ar=$('migArrow');
+  if(migCur.a==='north'){an.style.top='16%';ar.className='mig-arrow up';}
+  else if(migCur.a==='south'){an.style.top='84%';ar.className='mig-arrow down';}
+  $('migScore').textContent=migScore;$('migTotal').textContent=migTotal;
+  $('migFact').textContent=migCur.f;
+  if(migQueue.length>0)$('migNext').style.display='inline-block';
+  else{$('migNotice').textContent='You know the highway! 🐋 Back to the menu…';setTimeout(advanceGame,3000);}
+}
+$('migNext').onclick=migRound;
+
+/* ════════════════════════════════════════════════════════════════
+   NEUTRAL — hold your trim through a kelp gully.
+
+   Same buoyancy idea as Safe Ascent but the control is your lungs,
+   not the BCD: breathe in and you rise a moment later, breathe out
+   and you sink. The lag is the whole skill — new divers over-correct
+   and porpoise, which is exactly what this punishes.
+
+   Drawn as geometry and silhouette rather than illustration: dark
+   reef masses, light shafts, an emoji diver.
+   ════════════════════════════════════════════════════════════════ */
+var NU={
+  LUNG_IN:1.6, LUNG_OUT:1.9,   /* litres per second               */
+  LUNG_MAX:2.6,                /* usable tidal range              */
+  MASS:85, DRAG:120, G:9.81,
+  SPEED:74,                    /* px/s the reef scrolls past      */
+  GATES:{'Young Explorer':5,'Teen Explorer':7,'Adult Explorer':9},
+  GAP:{'Young Explorer':150,'Teen Explorer':118,'Adult Explorer':94}
+};
+var nu=null,nuRAF=null;
+
+function initNeutral(){
+  var cv=$('nuCanvas'),st=$('nuStage');
+  cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
+  nu={
+    w:cv.width,h:cv.height,
+    y:cv.height/2, v:0, lung:0,
+    x:0, gates:[], passed:0, hits:0,
+    total:NU.GATES[USER.group]||7,
+    gap:NU.GAP[USER.group]||118,
+    breathing:false, done:false
+  };
+  for(var i=0;i<nu.total;i++){
+    nu.gates.push({x:320+i*230, y:0, r:0, done:false});
+  }
+  nu.gates.forEach(function(g,i){
+    g.y=nu.h*(0.28+0.44*Math.abs(Math.sin(i*1.7)));
+  });
+  $('nuGates').textContent=0;$('nuTotal').textContent=nu.total;$('nuNotice').textContent='';
+  nu.last=performance.now();
+  nuRAF=requestAnimationFrame(nuStep);
+}
+function nuStop(){if(nuRAF){cancelAnimationFrame(nuRAF);nuRAF=null;}}
+
+function nuStep(now){
+  if(!nu||nu.done)return;
+  var dt=Math.min(0.05,(now-nu.last)/1000);nu.last=now;
+
+  /* lungs: the only control. Buoyancy follows volume, motion follows
+     buoyancy — two integrations, hence the lag that makes it hard. */
+  nu.lung+=(nu.breathing?NU.LUNG_IN:-NU.LUNG_OUT)*dt;
+  nu.lung=Math.max(-NU.LUNG_MAX,Math.min(NU.LUNG_MAX,nu.lung));
+  var B=nu.lung*1.03;
+  nu.v+=((B*NU.G-NU.DRAG*nu.v*Math.abs(nu.v))/NU.MASS)*dt;
+  nu.y-=nu.v*26*dt;                    /* 26 px per metre           */
+  nu.x+=NU.SPEED*dt;
+
+  if(nu.y<12){nu.y=12;nu.v=0;}
+  if(nu.y>nu.h-12){nu.y=nu.h-12;nu.v=0;}
+
+  var dx=64;                            /* diver's screen x          */
+  nu.gates.forEach(function(g){
+    var gx=g.x-nu.x;
+    if(!g.done&&gx<dx&&gx>dx-NU.SPEED*dt-6){
+      g.done=true;
+      if(Math.abs(nu.y-g.y)<nu.gap/2){nu.passed++;award(timedReward());}
+      else{nu.hits++;penalize();}
+      $('nuGates').textContent=nu.passed;
+      startTimer();
+    }
+  });
+  nuDraw(dx);
+
+  var lastG=nu.gates[nu.gates.length-1];
+  if(lastG.done&&lastG.x-nu.x<dx-60)return nuEnd();
+  nuRAF=requestAnimationFrame(nuStep);
+}
+
+function nuDraw(dx){
+  var c=$('nuCanvas').getContext('2d'),w=nu.w,h=nu.h;
+  var grd=c.createLinearGradient(0,0,0,h);
+  grd.addColorStop(0,'#0a4a63');grd.addColorStop(1,'#041d2b');
+  c.fillStyle=grd;c.fillRect(0,0,w,h);
+
+  /* light shafts */
+  c.save();c.globalAlpha=.07;c.fillStyle='#bfefff';
+  for(var s=0;s<4;s++){
+    var sx=((s*167-nu.x*0.25)%(w+150))-75;
+    c.beginPath();c.moveTo(sx,0);c.lineTo(sx+34,0);c.lineTo(sx+96,h);c.lineTo(sx+18,h);c.closePath();c.fill();
+  }
+  c.restore();
+
+  /* gates: a gap between two dark reef masses */
+  nu.gates.forEach(function(g){
+    var gx=g.x-nu.x;
+    if(gx<-70||gx>w+70)return;
+    var top=g.y-nu.gap/2, bot=g.y+nu.gap/2;
+    c.fillStyle=g.done?(Math.abs(nu.y-g.y)<nu.gap/2?'#16624a':'#5c2020'):'#07222f';
+    c.strokeStyle='rgba(255,255,255,.10)';
+    c.beginPath();c.moveTo(gx-26,0);c.lineTo(gx+26,0);c.lineTo(gx+14,top);c.lineTo(gx-14,top);c.closePath();c.fill();c.stroke();
+    c.beginPath();c.moveTo(gx-26,h);c.lineTo(gx+26,h);c.lineTo(gx+14,bot);c.lineTo(gx-14,bot);c.closePath();c.fill();c.stroke();
+  });
+
+  /* diver */
+  c.font='26px serif';c.textAlign='center';c.textBaseline='middle';
+  c.fillText('🤿',dx,nu.y);
+
+  /* lung / buoyancy indicator on the body */
+  var frac=nu.lung/NU.LUNG_MAX;
+  c.fillStyle=Math.abs(frac)<0.22?'#4fd28a':(frac>0?'#36c9c0':'#ef6b6b');
+  c.fillRect(dx-16,nu.y+18,32*Math.abs(frac),4);
+  c.strokeStyle='rgba(255,255,255,.35)';c.strokeRect(dx-16,nu.y+18,32,4);
+
+  var hud=$('nuHud');
+  if(hud)hud.textContent=nu.breathing?'Breathing in — you will start rising in a moment'
+    :(Math.abs(frac)<0.22?'Neutral — this is where you want to live':'Exhaling — sinking');
+}
+
+function nuEnd(){
+  nu.done=true;nuStop();
+  var msg=nu.passed===nu.total?'Beautiful trim! 🫁 Not one touch.'
+    :(nu.passed>=nu.total*0.6?'Solid hovering — '+nu.passed+' of '+nu.total+' clean.'
+    :'Trickier than it looks. Real divers spend years on this.');
+  $('nuNotice').textContent=msg+' Back to the menu…';
+  setTimeout(advanceGame,2800);
+}
+(function(){
+  var b=$('nuBreath');if(!b)return;
+  var set=function(on){return function(ev){ev.preventDefault();if(!nu||nu.done)return;nu.breathing=on;b.classList.toggle('on',on);};};
+  b.addEventListener('pointerdown',set(true));
+  ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(false));});
+})();
+
+/* ════════════════════════════════════════════════════════════════
+   NAV TRAINER — set the bezel, then hold the bearing.
+
+   Two phases, exactly as underwater: rotate the bezel until the
+   index gate sits on the bearing you were given, then swim it,
+   correcting for a cross-current you cannot see directly — you only
+   notice the needle drifting out of the gate.
+
+   The instrument is the photographed brass housing from the prize
+   compass with the working parts generated over it: illustration for
+   the body, trigonometry for everything that moves.
+   ════════════════════════════════════════════════════════════════ */
+var NAV={
+  LEGS:{'Young Explorer':1,'Teen Explorer':2,'Adult Explorer':3},
+  CURRENT:{'Young Explorer':0,'Teen Explorer':3.5,'Adult Explorer':7},  /* deg/s push */
+  GATE:15,          /* half-width of the index gate, degrees          */
+  TURN:42,          /* deg/s the diver can turn                       */
+  LEGSECS:11
+};
+var nav=null,navRAF=null,navImg=null,navImgOK=false;
+
+function navLoadHousing(){
+  if(navImg)return;
+  navImg=new Image();
+  navImg.onload=function(){navImgOK=true;};
+  navImg.onerror=function(){navImgOK=false;};
+  navImg.src='images/prizes/compass-housing.png';
+}
+function initNav(){
+  navLoadHousing();
+  var cv=$('navCanvas'),st=cv.parentNode;
+  var side=Math.min(st.clientWidth||320,st.clientHeight||320)||320;
+  var dpr=Math.min(2,window.devicePixelRatio||1);
+  cv.width=side*dpr;cv.height=side*dpr;cv.style.width=cv.style.height=side+'px';
+  cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
+
+  var legs=NAV.LEGS[USER.group]||2;
+  nav={
+    legs:legs, leg:0, side:side,
+    phase:'set', heading:0, bezel:0, target:0,
+    current:NAV.CURRENT[USER.group]||3.5, curDir:1,
+    onCourse:0, elapsed:0, turn:0, score:0, done:false
+  };
+  $('navLegs').textContent=legs;$('navNotice').textContent='';$('navFact').textContent='';
+  navNextLeg();
+}
+function navNextLeg(){
+  nav.leg++;
+  if(nav.leg>nav.legs)return navEnd();
+  $('navLeg').textContent=nav.leg;
+  nav.target=Math.floor(Math.random()*24)*15;         /* whole 15° steps */
+  nav.heading=(nav.target+120+Math.random()*120)%360; /* start well off  */
+  nav.bezel=nav.heading;
+  nav.phase='set';nav.onCourse=0;nav.elapsed=0;
+  nav.curDir=Math.random()<0.5?-1:1;
+  $('navTask').innerHTML='Leg '+nav.leg+' — turn the bezel to <b>'+navFmt(nav.target)+'</b>, then press GO.';
+  $('navGo').textContent='SET BEZEL';
+  $('navGo').disabled=false;
+  nav.last=performance.now();
+  if(!navRAF)navRAF=requestAnimationFrame(navStep);
+}
+function navFmt(d){return ('00'+Math.round((d%360+360)%360)).slice(-3)+'°';}
+function navDiff(a,b){return ((a-b+540)%360)-180;}
+
+function navStep(now){
+  if(!nav||nav.done){navRAF=null;return;}
+  var dt=Math.min(0.05,(now-nav.last)/1000);nav.last=now;
+
+  if(nav.phase==='set'){
+    nav.bezel=(nav.bezel+nav.turn*NAV.TURN*dt+360)%360;
+  } else if(nav.phase==='swim'){
+    nav.elapsed+=dt;
+    nav.heading=(nav.heading+nav.turn*NAV.TURN*dt+nav.curDir*nav.current*dt+360)%360;
+    if(Math.abs(navDiff(nav.heading,nav.bezel))<=NAV.GATE)nav.onCourse+=dt;
+    if(nav.elapsed>=NAV.LEGSECS)return navFinishLeg();
+  }
+  navDraw();
+  navRAF=requestAnimationFrame(navStep);
+}
+
+function navDraw(){
+  var cv=$('navCanvas'),c=cv.getContext('2d'),S=nav.side,R=S/2,cx=R,cy=R;
+  c.clearRect(0,0,S,S);
+
+  /* housing: the photographed brass ring, or a drawn ring if it is
+     missing so the game never depends on the asset being present */
+  if(navImgOK)c.drawImage(navImg,0,0,S,S);
+  else{
+    c.beginPath();c.arc(cx,cy,R*0.87,0,7);c.lineWidth=R*0.16;
+    c.strokeStyle='#8a6f43';c.stroke();
+  }
+
+  var pol=function(deg,rad){
+    var a=(deg-nav.heading-90)*Math.PI/180;
+    return [cx+Math.cos(a)*rad*R, cy+Math.sin(a)*rad*R];
+  };
+  var line=function(deg,r1,r2,col,wid){
+    var p=pol(deg,r1),q=pol(deg,r2);
+    c.beginPath();c.moveTo(p[0],p[1]);c.lineTo(q[0],q[1]);
+    c.strokeStyle=col;c.lineWidth=wid;c.stroke();
+  };
+
+  c.beginPath();c.arc(cx,cy,R*0.775,0,7);c.fillStyle='#061a24';c.fill();
+  c.beginPath();c.arc(cx,cy,R*0.63,0,7);c.fillStyle='#0c3142';c.fill();
+
+  /* rotating bezel + index gate */
+  for(var d=0;d<360;d+=10)line(d+nav.bezel,0.769,0.65,d%30===0?'#9fc3d2':'#5a7885',d%30===0?2.4:1.4);
+  line(nav.bezel-NAV.GATE,0.771,0.634,'#f3c64f',5);
+  line(nav.bezel+NAV.GATE,0.771,0.634,'#f3c64f',5);
+  var t=pol(nav.bezel,0.66),l=pol(nav.bezel-6,0.762),r=pol(nav.bezel+6,0.762);
+  c.beginPath();c.moveTo(t[0],t[1]);c.lineTo(l[0],l[1]);c.lineTo(r[0],r[1]);c.closePath();
+  c.fillStyle='#f3c64f';c.fill();
+
+  /* degree dial */
+  for(var e=0;e<360;e+=5)line(e,0.60,e%10===0?0.566:0.582,e%10===0?'#eaf6fb':'#9fc3d2',e%10===0?1.8:1.2);
+  c.font='700 '+Math.round(S*0.048)+'px system-ui,sans-serif';
+  c.textAlign='center';c.textBaseline='middle';
+  for(var g=0;g<360;g+=30){
+    var lab={0:'N',90:'E',180:'S',270:'W'}[g];
+    var p=pol(g,0.515);
+    c.fillStyle=g===0?'#ef6b6b':(lab?'#eaf6fb':'#9fc3d2');
+    c.font='700 '+Math.round(S*(lab?0.068:0.046))+'px system-ui,sans-serif';
+    c.fillText(lab||g,p[0],p[1]);
+  }
+
+  /* needle */
+  var nd=function(deg,col){
+    var tip=pol(deg,0.44),a=pol(deg+90,0.045),b=pol(deg-90,0.045);
+    c.beginPath();c.moveTo(tip[0],tip[1]);c.lineTo(a[0],a[1]);c.lineTo(b[0],b[1]);c.closePath();
+    c.fillStyle=col;c.fill();
+  };
+  nd(0,'#ef6b6b');nd(180,'#c8d6de');
+  c.beginPath();c.arc(cx,cy,R*0.05,0,7);c.fillStyle='#bdccd6';c.fill();
+
+  /* lubber line — where the diver is actually pointing */
+  c.beginPath();c.moveTo(cx,cy-R*0.79);c.lineTo(cx,cy-R*0.60);
+  c.strokeStyle='#36c9c0';c.lineWidth=4;c.stroke();
+
+  /* readout */
+  c.fillStyle='#eaf6fb';c.font='800 '+Math.round(S*0.11)+'px system-ui,sans-serif';
+  c.fillText(navFmt(nav.heading),cx,cy+R*0.30);
+  var err=Math.abs(navDiff(nav.heading,nav.bezel));
+  c.font='600 '+Math.round(S*0.042)+'px system-ui,sans-serif';
+  c.fillStyle=err<=NAV.GATE?'#4fd28a':'#f3c64f';
+  c.fillText(nav.phase==='set'?'bezel '+navFmt(nav.bezel)
+    :(err<=NAV.GATE?'ON COURSE':Math.round(err)+'° OFF'),cx,cy+R*0.44);
+
+  var acc=nav.elapsed?nav.onCourse/nav.elapsed:0;
+  var af=$('navAccFill');af.style.width=Math.round(acc*100)+'%';
+  af.className=acc<0.5?'low':'';
+  $('navDistFill').style.width=Math.round(Math.min(1,nav.elapsed/NAV.LEGSECS)*100)+'%';
+}
+
+function navFinishLeg(){
+  var acc=nav.onCourse/Math.max(0.001,nav.elapsed);
+  nav.score+=acc;
+  var pts=Math.round(acc*22);
+  if(pts>=MIN_REWARD)award(pts);else penalize();
+  $('navFact').textContent='Leg '+nav.leg+': on course '+Math.round(acc*100)+'% of the way. '+
+    (acc>0.85?'That is a bearing you could actually dive.'
+     :acc>0.6?'The current was winning some of the time — lead into it.'
+     :'Watch the needle, not the numbers. Small corrections, held.');
+  nav.phase='wait';
+  $('navGo').textContent=nav.leg>=nav.legs?'FINISH':'NEXT LEG';
+  $('navTask').innerHTML='Leg complete.';
+}
+function navEnd(){
+  nav.done=true;
+  if(navRAF){cancelAnimationFrame(navRAF);navRAF=null;}
+  var avg=nav.score/Math.max(1,nav.legs);
+  $('navNotice').textContent=(avg>0.8?'Navigator! 🧭 ':'Good effort 🧭 ')+
+    'Average '+Math.round(avg*100)+'% on course. Back to the menu…';
+  setTimeout(advanceGame,3000);
+}
+(function(){
+  function turnBtn(id,dir){
+    var b=$(id);if(!b)return;
+    var set=function(v){return function(ev){ev.preventDefault();if(!nav||nav.done)return;nav.turn=v;b.classList.toggle('on',v!==0);};};
+    b.addEventListener('pointerdown',set(dir));
+    ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(0));});
+  }
+  turnBtn('navLeft',-1);turnBtn('navRight',1);
+  var go=$('navGo');if(!go)return;
+  go.onclick=function(){
+    if(!nav||nav.done)return;
+    if(nav.phase==='set'){
+      var off=Math.abs(navDiff(nav.bezel,nav.target));
+      if(off>4){$('navTask').innerHTML='Bezel is <b>'+Math.round(off)+'°</b> out — line the gate up with '+navFmt(nav.target)+' first.';return;}
+      nav.bezel=nav.target;nav.phase='swim';nav.elapsed=0;nav.onCourse=0;nav.turn=0;
+      $('navTask').innerHTML='Swim it — hold the needle inside the gold gate. There is a current.';
+      $('navGo').disabled=true;
+    } else if(nav.phase==='wait'){
+      $('navGo').disabled=false;$('navFact').textContent='';navNextLeg();
+    }
+  };
+})();
+
+/* ════════════════════════════════════════════════════════════════
    SAFE ASCENT — return to the surface without hurting yourself.
 
    The physics is the real thing, not a curve fitted to feel right:
@@ -3389,15 +3947,27 @@ function wireSharkId(){
    queue. Every number displayed is a true dive value.
    ════════════════════════════════════════════════════════════════ */
 var ASC={
-  START:30, BALLAST:6, SUIT0:5, MASS:90, DRAG:110, G:9.81,
+  START:30, BALLAST:6, SUIT0:5,
+  /* MASS is the inertia term: raising it makes speed build up slowly
+     and smoothly without changing the terminal rate, so the runaway
+     is still real but you get time to react to it. DRAG sets the
+     terminal rate, and is calibrated so +1 kg settles at ~18 m/min. */
+  MASS:260, DRAG:110, G:9.81,
   LIMIT:18/60,          /* 18 m/min, in m/s          */
   CAUTION:9/60,         /* amber above 9 m/min       */
-  GRACE:0.5,            /* seconds over the limit before it counts  */
-  INFLATE:2.2,          /* L/s at ambient pressure   */
-  DEFLATE:3.0,
-  TIMESCALE:2,
+  GRACE:1.2,            /* seconds over the limit before it counts   */
+  /* small, slow valves: a press has to be held to do anything, which
+     is how a real inflator behaves and stops twitchy over-correction */
+  INFLATE:0.85,         /* L/s at ambient pressure   */
+  DEFLATE:1.15,
+  TIMESCALE:1.6,
   STOP_DEPTH:5, STOP_BAND:1.5, STOP_SECS:20,   /* compressed from the real 3 min */
-  TRIES:3
+  /* "holding" the stop means drifting no faster than ~9.6 m/min. With
+     a heavy, high-inertia diver you never truly stop dead, so demanding
+     near-zero speed made the stop unbankable. */
+  STOP_STILL:0.16,
+  TRIES:3,
+  RATE_SEGS:9           /* segments per half of the rate gauge       */
 };
 var asc=null,ascRAF=null;
 
@@ -3407,7 +3977,7 @@ function ascBuoyancy(d,bcd){return bcd*1.03+ascSuit(d)-ASC.BALLAST;}
 
 function initAscent(){
   $('ascTries').textContent=ASC.TRIES;
-  asc={tries:0,points:0};
+  asc={tries:0,points:0,segUp:[],segDown:[]};
   ascBuildScale();
   ascStart();
 }
@@ -3421,6 +3991,24 @@ function ascBuildScale(){
   var z=$('ascStopZone');
   z.style.top=((ASC.STOP_DEPTH-ASC.STOP_BAND)/ASC.START*100)+'%';
   z.style.height=((ASC.STOP_BAND*2)/ASC.START*100)+'%';
+
+  /* build the segmented rate gauge once: RATE_SEGS blocks above the
+     centre line for ascent, the same below for descent */
+  var tr=$('ascRateTrack');
+  tr.querySelectorAll('.vseg').forEach(function(n){n.remove();});
+  asc.segUp=[];asc.segDown=[];
+  var half=50/ASC.RATE_SEGS;
+  for(var i=0;i<ASC.RATE_SEGS;i++){
+    var u=document.createElement('i');u.className='vseg';
+    u.style.top=(50-(i+1)*half+0.6)+'%';u.style.height=(half-1.2)+'%';
+    tr.appendChild(u);asc.segUp.push(u);
+    var d2=document.createElement('i');d2.className='vseg down';
+    d2.style.top=(50+i*half+0.6)+'%';d2.style.height=(half-1.2)+'%';
+    tr.appendChild(d2);asc.segDown.push(d2);
+  }
+  /* the 18 m/min limit line, at 1/1.5 of the way up the scale */
+  var lim=tr.querySelector('.vlimit');
+  if(lim)lim.style.top=(50-50/1.5)+'%';
 }
 function ascStart(){
   ascStop();
@@ -3474,7 +4062,7 @@ function ascStep(now){
   /* ---- safety stop ---- */
   var inZone=Math.abs(asc.d-ASC.STOP_DEPTH)<=ASC.STOP_BAND;
   $('ascStopZone').classList.toggle('hit',inZone&&asc.stop<ASC.STOP_SECS);
-  if(inZone&&asc.stop<ASC.STOP_SECS&&Math.abs(asc.v)<0.12)asc.stop+=dt;
+  if(inZone&&asc.stop<ASC.STOP_SECS&&Math.abs(asc.v)<ASC.STOP_STILL)asc.stop+=dt;
 
   ascRender(rate,B,inZone);
 
@@ -3487,13 +4075,27 @@ function ascRender(rate,B,inZone){
   $('ascBcd').textContent=asc.bcd.toFixed(1);
   $('ascRate').textContent=(rate>=0?'↑':'↓')+Math.abs(rate).toFixed(1);
 
-  /* rate bar: centre is zero, right half is ascent */
-  var frac=Math.max(-1,Math.min(1,asc.v/(ASC.LIMIT*1.6)));
-  var f=$('ascRateFill');
-  f.style.left=(frac>=0?50:50+frac*50)+'%';
-  f.style.width=Math.abs(frac)*50+'%';
-  f.className=asc.v>ASC.LIMIT?'bad':(asc.v>ASC.CAUTION?'warn':'');
-  document.querySelector('.asc-limit').style.left=(50+50/1.6)+'%';
+  /* vertical rate gauge, dive-computer style: segments light upward
+     from the centre for ascent, downward for descent, with the 18
+     m/min limit marked across the track */
+  var full=ASC.LIMIT*60*1.5;                 /* top of scale, m/min  */
+  var lit=Math.round(Math.min(1,Math.abs(rate)/full)*ASC.RATE_SEGS);
+  var up=rate>=0;
+  for(var i=0;i<ASC.RATE_SEGS;i++){
+    var segU=asc.segUp[i],segD=asc.segDown[i];
+    var onU=up&&i<lit, onD=!up&&i<lit;
+    segU.className='vseg'+(onU?' on'+(rate>ASC.LIMIT*60?' bad':(rate>ASC.CAUTION*60?' warn':'')):'');
+    segD.className='vseg down'+(onD?' on':'');
+  }
+
+  /* vertical buoyancy bar: grows up from the centre when positive,
+     down when negative, so "which way am I being pulled" is readable
+     at a glance without doing arithmetic */
+  var bf=$('ascBuoyFill'),bfrac=Math.max(-1,Math.min(1,B/6));
+  bf.style.height=(Math.abs(bfrac)*50)+'%';
+  bf.style.top=bfrac>=0?(50-Math.abs(bfrac)*50)+'%':'50%';
+  bf.className='vfill '+(Math.abs(B)<0.35?'':(B>0?'pos':'neg'));
+  $('ascBuoyVal').textContent=(B>=0?'+':'')+B.toFixed(1);
 
   /* diver position + the buoyancy badge on their body */
   $('ascDiver').style.top=(asc.d/ASC.START*100)+'%';
@@ -3506,7 +4108,7 @@ function ascRender(rate,B,inZone){
   if(asc.done)return;
   if(inZone&&asc.stop<ASC.STOP_SECS){
     ascMsg('Safety stop: hold here — '+Math.ceil(ASC.STOP_SECS-asc.stop)+'s to go',
-      Math.abs(asc.v)<0.12?'good':'');
+      Math.abs(asc.v)<ASC.STOP_STILL?'good':'');
   } else if(asc.v>ASC.CAUTION&&asc.d<15){
     ascMsg('Rising fast and the gas is still expanding — dump now.','bad');
   } else if(B>0.9){
