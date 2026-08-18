@@ -1125,7 +1125,7 @@
     <div class="panel" id="p-neutral">
       <div class="game-header">
         <span class="game-label">Neutral</span>
-        <span class="score">Gates <b id="nuGates">0</b> / <b id="nuTotal">0</b></span>
+        <span class="score">+<b id="nuScore">0</b> · bumps <b id="nuHits">0</b> · <b id="nuLeft">0</b>s</span>
       </div>
       <div class="nu-stage" id="nuStage">
         <canvas id="nuCanvas"></canvas>
@@ -3595,54 +3595,64 @@ function migAnswer(btn){
 $('migNext').onclick=migRound;
 
 /* ════════════════════════════════════════════════════════════════
-   NEUTRAL — hold your trim through a kelp gully.
+   NEUTRAL — hold your trim through a cave tunnel.
 
-   Same buoyancy idea as Safe Ascent but the control is your lungs,
-   not the BCD: breathe in and you rise a moment later, breathe out
-   and you sink. The lag is the whole skill — new divers over-correct
-   and porpoise, which is exactly what this punishes.
+   A continuous cave rather than discrete gates: rock above and below,
+   winding and pinching in and out. Points tick up for every second
+   spent off the rock and come off every time it is scraped.
 
-   Drawn as geometry and silhouette rather than illustration: dark
-   reef masses, light shafts, an emoji diver.
-   ════════════════════════════════════════════════════════════════ */
-/* Tuned against a reachability budget, not by feel: the diver has to
-   be able to cross the worst-case height change between two gates in
-   the time the scroll gives them, with margin to spare. The first
-   version failed that badly — 38 px of reachable travel against gates
-   up to 130 px apart, which is impossible rather than hard. */
+   The control is your lungs, not a BCD: breathe in and you rise a
+   moment later, breathe out and you sink. That lag is the whole
+   skill — buoyancy integrates to velocity which integrates to
+   position, so new divers over-correct and porpoise, and this
+   punishes exactly that.
+
+   REACHABILITY BUDGET, not feel: the diver's top vertical speed has
+   to comfortably beat the steepest slope of the tunnel at scroll
+   speed, or the course is impossible rather than hard. The gate
+   version of this game failed that test badly, so the tunnel slope
+   is now derived from the physics instead of chosen by eye.
+
+   Drawn as geometry and silhouette — dark rock, light shafts, a
+   side-on finning diver — not illustration.
+   ═══════════════════════════════════════════════════════════════ */
 var NU={
-  LUNG_IN:3.0, LUNG_OUT:3.4,   /* litres per second               */
-  LUNG_MAX:3.2,                /* usable tidal range              */
-  MASS:45, DRAG:60, G:9.81,    /* lighter + slipperier = it answers */
-  PXM:70,                      /* px per metre of travel          */
-  SPEED:58,                    /* px/s the reef scrolls past      */
-  SPREAD:0.40,                 /* how far gates roam vertically   */
-  GATES:{'Young Explorer':5,'Teen Explorer':7,'Adult Explorer':9},
-  GAP:{'Young Explorer':175,'Teen Explorer':142,'Adult Explorer':115}
+  LUNG_IN:3.0, LUNG_OUT:3.4,   /* litres per second                */
+  LUNG_MAX:3.2,                /* usable tidal range               */
+  MASS:45, DRAG:60, G:9.81,
+  PXM:70,                      /* px per metre of travel           */
+  SPEED:58,                    /* px/s the cave scrolls past       */
+  SECS:38,                     /* length of the swim               */
+  /* centreline is two summed sine waves; peak slope is
+     A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
+     px-per-px capability (top vertical speed / scroll speed) */
+  A1:30, L1:600, A2:10, L2:280,
+  HALF:{'Young Explorer':80,'Teen Explorer':62,'Adult Explorer':48},
+  PINCH:0.20,                  /* how much the tunnel narrows      */
+  TICK:2,                      /* award every N seconds survived   */
+  TICK_PTS:3,
+  HIT_COOLDOWN:0.7             /* stops one scrape draining points */
 };
 var nu=null,nuRAF=null;
+
+/* tunnel centreline and half-height at a given world x */
+function nuMid(x){return nu.h/2+NU.A1*Math.sin(x/NU.L1*6.283)+NU.A2*Math.sin(x/NU.L2*6.283+1.7);}
+function nuHalf(x){return nu.half*(1-NU.PINCH*0.5+NU.PINCH*0.5*Math.sin(x/190+0.6));}
 
 function initNeutral(){
   var cv=$('nuCanvas'),st=$('nuStage');
   cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
   nu={
     w:cv.width,h:cv.height,
-    y:cv.height/2, v:0, lung:0,
-    x:0, gates:[], passed:0, hits:0,
-    total:NU.GATES[USER.group]||7,
-    gap:NU.GAP[USER.group]||118,
+    y:cv.height/2, v:0, lung:0, x:0,
+    half:NU.HALF[USER.group]||62,
+    hits:0, pts:0, t:0, sinceTick:0, cool:0,
     breathing:false, done:false
   };
-  for(var i=0;i<nu.total;i++){
-    nu.gates.push({x:320+i*230, y:0, r:0, done:false});
-  }
-  /* keep gates inside a band the diver can actually traverse between
-     one gate and the next; see the reachability note on NU */
-  var lo=(1-NU.SPREAD)/2;
-  nu.gates.forEach(function(g,i){
-    g.y=nu.h*(lo+NU.SPREAD*Math.abs(Math.sin(i*1.7)));
-  });
-  $('nuGates').textContent=0;$('nuTotal').textContent=nu.total;$('nuNotice').textContent='';
+  /* open centred in the tunnel mouth so nobody starts inside rock */
+  nu.y=nuMid(72);
+  $('nuScore').textContent=0;$('nuHits').textContent=0;
+  $('nuLeft').textContent=NU.SECS;$('nuNotice').textContent='';
   nu.last=performance.now();
   nuRAF=requestAnimationFrame(nuStep);
 }
@@ -3651,84 +3661,109 @@ function nuStop(){if(nuRAF){cancelAnimationFrame(nuRAF);nuRAF=null;}}
 function nuStep(now){
   if(!nu||nu.done)return;
   var dt=Math.min(0.05,(now-nu.last)/1000);nu.last=now;
+  nu.t+=dt;nu.x+=NU.SPEED*dt;
+  if(nu.cool>0)nu.cool-=dt;
 
-  /* lungs: the only control. Buoyancy follows volume, motion follows
-     buoyancy — two integrations, hence the lag that makes it hard. */
+  /* lungs -> buoyancy -> velocity -> position. Two integrations, and
+     the lag between them is the thing being taught. */
   nu.lung+=(nu.breathing?NU.LUNG_IN:-NU.LUNG_OUT)*dt;
   nu.lung=Math.max(-NU.LUNG_MAX,Math.min(NU.LUNG_MAX,nu.lung));
   var B=nu.lung*1.03;
   nu.v+=((B*NU.G-NU.DRAG*nu.v*Math.abs(nu.v))/NU.MASS)*dt;
   nu.y-=nu.v*NU.PXM*dt;
-  nu.x+=NU.SPEED*dt;
 
-  if(nu.y<12){nu.y=12;nu.v=0;}
-  if(nu.y>nu.h-12){nu.y=nu.h-12;nu.v=0;}
+  /* the rock */
+  var dx=72, mid=nuMid(nu.x+dx), half=nuHalf(nu.x+dx), r=11;
+  var ceil=mid-half+r, floor=mid+half-r, scraped=false;
+  if(nu.y<ceil){nu.y=ceil;nu.v=Math.min(0,nu.v);scraped=true;}
+  if(nu.y>floor){nu.y=floor;nu.v=Math.max(0,nu.v);scraped=true;}
+  if(scraped&&nu.cool<=0){
+    nu.cool=NU.HIT_COOLDOWN;nu.hits++;penalize();
+    $('nuHits').textContent=nu.hits;
+  }
 
-  var dx=64;                            /* diver's screen x          */
-  nu.gates.forEach(function(g){
-    var gx=g.x-nu.x;
-    if(!g.done&&gx<dx&&gx>dx-NU.SPEED*dt-6){
-      g.done=true;
-      if(Math.abs(nu.y-g.y)<nu.gap/2){nu.passed++;award(timedReward());}
-      else{nu.hits++;penalize();}
-      $('nuGates').textContent=nu.passed;
-      startTimer();
-    }
-  });
-  nuDraw(dx);
+  /* points for time spent off the rock */
+  nu.sinceTick+=dt;
+  if(nu.sinceTick>=NU.TICK){
+    nu.sinceTick-=NU.TICK;
+    if(nu.cool<=0){nu.pts+=NU.TICK_PTS;award(NU.TICK_PTS);$('nuScore').textContent=nu.pts;}
+  }
+  $('nuLeft').textContent=Math.max(0,Math.ceil(NU.SECS-nu.t));
 
-  var lastG=nu.gates[nu.gates.length-1];
-  if(lastG.done&&lastG.x-nu.x<dx-60)return nuEnd();
+  nuDraw(dx,scraped);
+  if(nu.t>=NU.SECS)return nuEnd();
   nuRAF=requestAnimationFrame(nuStep);
 }
 
-function nuDraw(dx){
+function nuDraw(dx,scraped){
   var c=$('nuCanvas').getContext('2d'),w=nu.w,h=nu.h;
-  var grd=c.createLinearGradient(0,0,0,h);
-  grd.addColorStop(0,'#0a4a63');grd.addColorStop(1,'#041d2b');
-  c.fillStyle=grd;c.fillRect(0,0,w,h);
+  var g=c.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#0a4a63');g.addColorStop(1,'#04212f');
+  c.fillStyle=g;c.fillRect(0,0,w,h);
 
-  /* light shafts */
-  c.save();c.globalAlpha=.07;c.fillStyle='#bfefff';
-  for(var s=0;s<4;s++){
-    var sx=((s*167-nu.x*0.25)%(w+150))-75;
-    c.beginPath();c.moveTo(sx,0);c.lineTo(sx+34,0);c.lineTo(sx+96,h);c.lineTo(sx+18,h);c.closePath();c.fill();
+  /* light leaking through the roof */
+  c.save();c.globalAlpha=.06;c.fillStyle='#bfefff';
+  for(var sh=0;sh<4;sh++){
+    var sx=((sh*191-nu.x*0.3)%(w+160))-80;
+    c.beginPath();c.moveTo(sx,0);c.lineTo(sx+30,0);c.lineTo(sx+88,h);c.lineTo(sx+16,h);c.closePath();c.fill();
   }
   c.restore();
 
-  /* gates: a gap between two dark reef masses */
-  nu.gates.forEach(function(g){
-    var gx=g.x-nu.x;
-    if(gx<-70||gx>w+70)return;
-    var top=g.y-nu.gap/2, bot=g.y+nu.gap/2;
-    c.fillStyle=g.done?(Math.abs(nu.y-g.y)<nu.gap/2?'#16624a':'#5c2020'):'#07222f';
-    c.strokeStyle='rgba(255,255,255,.10)';
-    c.beginPath();c.moveTo(gx-26,0);c.lineTo(gx+26,0);c.lineTo(gx+14,top);c.lineTo(gx-14,top);c.closePath();c.fill();c.stroke();
-    c.beginPath();c.moveTo(gx-26,h);c.lineTo(gx+26,h);c.lineTo(gx+14,bot);c.lineTo(gx-14,bot);c.closePath();c.fill();c.stroke();
-  });
+  /* rock: one filled band above the ceiling, one below the floor */
+  var step=6;
+  function band(top){
+    c.beginPath();
+    c.moveTo(-step,top?0:h);
+    for(var px=-step;px<=w+step;px+=step){
+      var wx=nu.x+px, m=nuMid(wx), hh=nuHalf(wx);
+      c.lineTo(px, top? m-hh : m+hh);
+    }
+    c.lineTo(w+step,top?0:h);
+    c.closePath();
+    var rg=c.createLinearGradient(0,top?0:h,0,top?h*0.62:h*0.38);
+    rg.addColorStop(0,'#06202c');rg.addColorStop(1,'#0b3040');
+    c.fillStyle=rg;c.fill();
+    c.strokeStyle='rgba(160,220,240,.22)';c.lineWidth=2;c.stroke();
+  }
+  band(true);band(false);
 
-  /* diver */
-  c.font='26px serif';c.textAlign='center';c.textBaseline='middle';
-  c.fillText('🤿',dx,nu.y);
+  /* diver, side on, finning to the right */
+  var y=nu.y;
+  c.save();c.translate(dx,y);
+  if(scraped){c.shadowColor='#ef6b6b';c.shadowBlur=16;}
+  c.fillStyle='#0d2b38';c.strokeStyle='#8fd8e8';c.lineWidth=1.6;
+  c.beginPath();c.ellipse(0,0,15,7,0,0,7);c.fill();c.stroke();
+  c.fillStyle='#20404e';
+  c.beginPath();c.ellipse(-4,-7,8,3.6,0,0,7);c.fill();c.stroke();
+  c.fillStyle='#0d2b38';
+  c.beginPath();c.arc(13,-2,5.4,0,7);c.fill();c.stroke();
+  c.fillStyle='#9fe8e2';
+  c.beginPath();c.ellipse(15.5,-3,3,2.2,0,0,7);c.fill();
+  c.strokeStyle='#8fd8e8';c.lineWidth=3;c.lineCap='round';
+  c.beginPath();c.moveTo(-14,1);c.lineTo(-23,-3);c.stroke();
+  c.fillStyle='#2a5666';c.strokeStyle='#8fd8e8';c.lineWidth=1.4;
+  c.beginPath();c.moveTo(-23,-3);c.lineTo(-33,-8);c.lineTo(-31,1);c.closePath();c.fill();c.stroke();
+  c.restore();
 
   /* lung / buoyancy indicator on the body */
-  var frac=nu.lung/NU.LUNG_MAX;
-  c.fillStyle=Math.abs(frac)<0.22?'#4fd28a':(frac>0?'#36c9c0':'#ef6b6b');
-  c.fillRect(dx-16,nu.y+18,32*Math.abs(frac),4);
-  c.strokeStyle='rgba(255,255,255,.35)';c.strokeRect(dx-16,nu.y+18,32,4);
+  var f=nu.lung/NU.LUNG_MAX;
+  c.fillStyle=Math.abs(f)<0.22?'#4fd28a':(f>0?'#36c9c0':'#ef6b6b');
+  c.fillRect(dx-16,y+14,32*Math.abs(f),4);
+  c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.strokeRect(dx-16,y+14,32,4);
 
   var hud=$('nuHud');
-  if(hud)hud.textContent=nu.breathing?'Breathing in — you will start rising in a moment'
-    :(Math.abs(frac)<0.22?'Neutral — this is where you want to live':'Exhaling — sinking');
+  if(hud)hud.textContent=scraped?'Scraping the rock — ease off'
+    :(nu.breathing?'Breathing in — you will rise in a moment'
+    :(Math.abs(f)<0.22?'Neutral — this is where you want to live':'Exhaling — sinking'));
 }
 
 function nuEnd(){
   nu.done=true;nuStop();
-  var msg=nu.passed===nu.total?'Beautiful trim! 🫁 Not one touch.'
-    :(nu.passed>=nu.total*0.6?'Solid hovering — '+nu.passed+' of '+nu.total+' clean.'
-    :'Trickier than it looks. Real divers spend years on this.');
+  var msg=nu.hits===0?'Flawless — not one touch on the rock.'
+    :(nu.hits<=3?'Nicely held: only '+nu.hits+' scrape'+(nu.hits>1?'s':'')+'.'
+    :'Through the cave, with '+nu.hits+' scrapes. Real divers spend years on this.');
   $('nuNotice').textContent=msg+' Back to the menu…';
-  setTimeout(advanceGame,2800);
+  setTimeout(advanceGame,2900);
 }
 (function(){
   var b=$('nuBreath');if(!b)return;
@@ -3737,7 +3772,7 @@ function nuEnd(){
   ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(false));});
 })();
 
-/* ════════════════════════════════════════════════════════════════
+/* ═══════════════════════════════════════════════════════════════
    NAV TRAINER — set the bezel, then hold the bearing.
 
    Two phases, exactly as underwater: rotate the bezel until the
@@ -4173,8 +4208,10 @@ function ascBubble(){
   b.className='asc-bub';
   var sz=3+Math.random()*5;
   b.style.width=b.style.height=sz+'px';
-  b.style.right=(13+Math.random()*5)+'%';
-  b.style.top=ascYPct(asc.d)+'%';
+  /* leave from the BCD dump valve: the diver is centred in the column
+     and the valve sits high on their left shoulder */
+  b.style.left='calc(50% - '+(9+Math.random()*9)+'px)';
+  b.style.top=(ascYPct(asc.d)-2.4)+'%';
   box.appendChild(b);
   var top=parseFloat(b.style.top),drift=(Math.random()-0.5)*3;
   var t0=performance.now();
