@@ -517,6 +517,12 @@
   .mem-card.done .mem-front{border-color:var(--good);background:var(--goodd)}
   .mem-card.done{pointer-events:none}
 
+  /* ── admin grid: two gating axes per game ── */
+  .ar-axis{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
+    border-left:1px solid var(--line);padding-left:10px;margin-left:4px}
+  .ar-axlabel{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
+    font-weight:700;margin-right:2px}
+
   /* ── EXPERIENCE PICKER on the welcome screen ── */
   .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
   .exp-btn{padding:11px 6px;border-radius:10px;cursor:pointer;transition:.12s;
@@ -1027,7 +1033,7 @@
       </div>
       <p class="encourage" id="hofEncourage"></p>
       <div class="ticket-box" id="hofTicket" style="display:none">
-        <div class="ticket-lead">📸 Scan to check if you win a compass</div>
+        <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a compass</div>
         <div class="ticket-qr" id="hofQR"></div>
         <div class="ticket-code" id="hofCode">—</div>
         <div class="ticket-sub" id="hofDrawInfo"></div>
@@ -1338,13 +1344,44 @@ var Cloud=(function(){
     } else {cb(lsScores());}
   }
   function pullScores(cb){if(mode==='cloud'&&sb){fetchScores(null,cb);}else{cb(lsScores());}}
-  function deleteScore(id){
-    if(mode==='cloud'&&sb){sb.from('scores').delete().eq('id',id).then(function(){},function(){});}
-    else{lsSave(lsScores().filter(function(e){return e.id!==id;}));Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],boardFor(g));});}
+  /* SOFT delete. Anonymous DELETE on scores is revoked (anyone who
+     viewed source could otherwise wipe the board mid-show, and the
+     board now decides who gets a physical prize), so admin removal
+     sets hidden=true instead. Reversible, and every read filters it. */
+  function deleteScore(id,cb){
+    if(mode==='cloud'&&sb){sb.from('scores').update({hidden:true}).eq('id',id).then(function(){if(cb)cb();},function(){if(cb)cb();});}
+    else{lsSave(lsScores().filter(function(e){return e.id!==id;}));Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],boardFor(g));});if(cb)cb();}
   }
-  function resetAll(){
-    if(mode==='cloud'&&sb){sb.from('scores').delete().neq('id','00000000-0000-0000-0000-000000000000').then(function(){},function(){});}
-    else{lsSave([]);Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],[]);});}
+  function resetAll(cb){
+    if(mode==='cloud'&&sb){sb.from('scores').update({hidden:true}).not('hidden','is',true).then(function(){if(cb)cb();},function(){if(cb)cb();});}
+    else{lsSave([]);Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],[]);});if(cb)cb();}
+  }
+
+  /* ----- prize settings + claims ----- */
+  function getSettings(cb){
+    if(mode==='cloud'&&sb){
+      sb.from('settings').select('*').eq('id',1).single().then(function(r){cb(r.data||null);},function(){cb(null);});
+    } else {
+      var v={};try{v=JSON.parse(localStorage.getItem('gds_settings')||'{}');}catch(e){}
+      cb(Object.assign({winners_per_group:2,stock:120,reserve_for_instant:45,max_per_player_per_day:1},v));
+    }
+  }
+  function saveSettings(patch,cb){
+    if(mode==='cloud'&&sb){
+      sb.from('settings').update(patch).eq('id',1).then(function(){if(cb)cb();},function(){if(cb)cb();});
+    } else {
+      var v={};try{v=JSON.parse(localStorage.getItem('gds_settings')||'{}');}catch(e){}
+      Object.assign(v,patch);
+      try{localStorage.setItem('gds_settings',JSON.stringify(v));}catch(e){}
+      if(cb)cb();
+    }
+  }
+  function setClaimed(id,claimed,cb){
+    var val=claimed?new Date().toISOString():null;
+    if(mode==='cloud'&&sb){sb.from('scores').update({claimed_at:val}).eq('id',id).then(function(){if(cb)cb();},function(){if(cb)cb();});}
+    else{
+      var a=lsScores();a.forEach(function(e){if(e.id===id)e.claimed_at=val;});lsSave(a);if(cb)cb();
+    }
   }
 
   /* ----- sessions / presence (Realtime Presence) ----- */
@@ -1391,6 +1428,7 @@ var Cloud=(function(){
 
   return {init:init,get mode(){return mode;},submitScore:submitScore,onLeaderboard:onLeaderboard,allScores:allScores,pullScores:pullScores,
     deleteScore:deleteScore,resetAll:resetAll,startSession:startSession,updateSession:updateSession,
+    getSettings:getSettings,saveSettings:saveSettings,setClaimed:setClaimed,
     onSessions:onSessions,onMyCommand:onMyCommand,onCommands:onCommands,sendCommand:sendCommand};
 })();
 
@@ -1424,7 +1462,21 @@ function buildAdminShell(){
   document.body.appendChild(ov);
   document.getElementById('admClose').onclick=function(){ADM.open=false;ov.classList.remove('on');};
 }
-function openAdmin(){buildAdminShell();adminWire();ADM.open=true;document.getElementById('adminOv').classList.add('on');adminRefresh();}
+function openAdmin(){
+  buildAdminShell();adminWire();ADM.open=true;
+  document.getElementById('adminOv').classList.add('on');
+  if(new URLSearchParams(location.search).get('prizetest')==='1'&&!PRIZE.isTestMode())PRIZE.enableTestMode(3,8);
+  Cloud.getSettings(function(s){ADM.settings=s||{};adminRefresh();});
+  /* the console is a live operational screen — refresh it so the
+     countdown ticks and a draw rolling over is visible without a
+     volunteer having to remember to press anything */
+  if(!ADM.timer)ADM.timer=setInterval(function(){
+    if(!ADM.open)return;
+    var next=PRIZE.nextDraw(Date.now()),el=document.getElementById('admCountdown');
+    if(next&&el)el.textContent=fmtLeft(next.at.getTime()-Date.now());
+    if(next&&next.at.getTime()-Date.now()<1000){ADM.drawIdx=null;setTimeout(adminRefresh,1500);}
+  },1000);
+}
 function adminRefresh(){Cloud.pullScores(function(a){ADM.scores=a;if(ADM.open)renderAdmin();});}
 function ago(ts){if(!ts)return '—';var s=Math.round((Date.now()-ts)/1000);if(s<60)return s+'s ago';if(s<3600)return Math.round(s/60)+'m ago';return Math.round(s/3600)+'h ago';}
 function renderAdmin(){
@@ -1447,16 +1499,8 @@ function renderAdmin(){
     live+='</table>';
   }
   live+='</div>';
-  /* ---- PRIZE HELPER ---- */
-  var cutoff=Date.now()-PRIZE_WINDOW_MIN*60000;
-  var onlineDevices={};(ADM.sessions||[]).forEach(function(s){if((Date.now()-(s.ts||0))<60000)onlineDevices[s.device]=true;});
-  var elig=(ADM.scores||[]).filter(function(e){return (ADM.group==='All'||e.group===ADM.group)&&e.ts>=cutoff;}).sort(function(a,b){return b.score-a.score;});
-  var prize='<div class="card"><h3>🏆 Prize round — '+esc(ADM.group==='All'?'All groups':ADM.group)+' (last '+PRIZE_WINDOW_MIN+' min)</h3>';
-  prize+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupP','adminSetGroup(this.value)')+'</div>';
-  prize+='<table><tr><th>#</th><th>Player</th><th>Score</th><th>When</th><th>Still here?</th></tr>';
-  if(!elig.length)prize+='<tr><td colspan="5" class="muted">No scores in this window yet.</td></tr>';
-  elig.slice(0,10).forEach(function(e,i){var here=Cloud.mode==='cloud'?(onlineDevices[e.device]?'<span class="on-dot">● online</span>':'<span class="off-dot">○ gone</span>'):'—';prize+='<tr'+(i<3?' style="background:var(--accentd)"':'')+'><td>'+(['🥇','🥈','🥉'][i]||(i+1))+'</td><td>'+esc(e.name)+'</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td>'+here+'</td></tr>';});
-  prize+='</table></div>';
+  /* ---- PRIZE CONSOLE ---- */
+  var prize=renderPrizeConsole();
   /* ---- LEADERBOARD MANAGEMENT ---- */
   var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
   var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
@@ -1472,6 +1516,205 @@ function renderAdmin(){
   var bar='<div class="row" style="margin-bottom:10px;align-items:center"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
   b.innerHTML=bar+live+prize+mng+dev;
 }
+/* ════════════════════════════════════════════════════════════════
+   PRIZE CONSOLE — the staff-facing side of the hourly draw.
+
+   Everything here is derived from the same PRIZE.compute() the
+   players' ticket pages run, so a volunteer at the stand and a
+   visitor's phone can never show different winners.
+   ════════════════════════════════════════════════════════════════ */
+function admCfg(){
+  var s=ADM.settings||{};
+  return {
+    winnersPerGroup:s.winners_per_group!=null?s.winners_per_group:2,
+    stock:s.stock!=null?s.stock:120,
+    reserveForInstant:s.reserve_for_instant!=null?s.reserve_for_instant:45,
+    maxPerPlayerPerDay:s.max_per_player_per_day!=null?s.max_per_player_per_day:1
+  };
+}
+function fmtLeft(ms){
+  if(ms<0)ms=0;
+  var s=Math.floor(ms/1000),m=Math.floor(s/60);s=s%60;
+  return m+':'+(s<10?'0':'')+s;
+}
+function renderPrizeConsole(){
+  var cfg=admCfg();
+  var scores=(ADM.scores||[]).filter(function(e){return !e.hidden;});
+  var res=PRIZE.compute(scores,cfg);
+  var now=Date.now();
+  var all=PRIZE.draws();
+
+  /* which draw are we looking at: default to the most recent that has
+     run, else the first upcoming one */
+  if(ADM.drawIdx==null){
+    var idx=-1;
+    for(var i=0;i<all.length;i++)if(all[i].at.getTime()<=now)idx=i;
+    ADM.drawIdx=idx<0?0:idx;
+  }
+  var sel=all[ADM.drawIdx],selRes=res.byDraw[ADM.drawIdx];
+  var next=PRIZE.nextDraw(now);
+
+  /* ---- stock ---- */
+  var claimed=0,goldenIssued=0;
+  var winnerIds={};
+  res.byDraw.forEach(function(d){
+    Object.keys(d.groups).forEach(function(g){
+      d.groups[g].winners.forEach(function(w){winnerIds[w.id]=true;if(w.claimed_at)claimed++;});
+    });
+  });
+  scores.forEach(function(e){if(e.golden)goldenIssued++;});
+  var issued=res.issued;
+  var remaining=cfg.stock-issued-goldenIssued;
+
+  var h='<div class="card"><h3>🧭 Prize console — stand 440</h3>';
+
+  h+='<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
+     '<span style="font-size:26px;font-weight:800;color:'+(remaining<10?'var(--bad)':'var(--gold)')+'">'+remaining+'</span>'+
+     '<span class="muted">compasses left of '+cfg.stock+'</span>'+
+     '<span class="badge">'+issued+' won on draws</span>'+
+     '<span class="badge">'+goldenIssued+' golden</span>'+
+     '<span class="badge">'+claimed+' collected</span>'+
+     '<span class="badge'+((issued-claimed)>0?' warn':'')+'">'+(issued-claimed)+' waiting</span>'+
+     '</div>';
+
+  if(next){
+    h+='<p class="muted" style="margin:0 0 10px">Next draw <b style="color:var(--accent)">'+esc(next.label)+
+       '</b> — in <b id="admCountdown">'+fmtLeft(next.at.getTime()-now)+'</b>'+
+       (PRIZE.isTestMode()?' <span class="badge warn">TEST MODE</span>':'')+'</p>';
+  } else {
+    h+='<p class="muted" style="margin:0 0 10px">All draws for the show have run.</p>';
+  }
+
+  /* ---- settings ---- */
+  h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
+     '<span class="muted">Winners per age group, per draw:</span>';
+  [1,2,3].forEach(function(n){
+    h+='<button class="'+(cfg.winnersPerGroup===n?'acc':'')+'" onclick="admSetWinners('+n+')">'+n+'</button>';
+  });
+  h+='<span class="muted">· Stock:</span><input id="admStock" value="'+cfg.stock+'" style="width:70px">'+
+     '<button class="acc" onclick="admSaveStock()">Save</button></div>';
+  h+='<p class="muted" style="font-size:12px;margin:0 0 12px">Dial winners down if stock runs low — every device recomputes from this immediately.</p>';
+
+  /* ---- claim by code ---- */
+  h+='<div class="row" style="gap:8px;margin-bottom:6px;align-items:center">'+
+     '<span class="muted">Claim a ticket:</span>'+
+     '<input id="admClaimCode" placeholder="VIZ-7K3M" style="width:130px;text-transform:uppercase">'+
+     '<button class="acc" onclick="admLookup()">Look up</button></div>';
+  h+='<div id="admClaimResult" style="margin-bottom:12px">'+(ADM.claimMsg||'')+'</div>';
+
+  /* ---- draw picker ---- */
+  h+='<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">'+
+     '<span class="muted">Draw:</span><select onchange="admSetDraw(this.value)">';
+  all.forEach(function(d,i){
+    var run=d.at.getTime()<=now;
+    h+='<option value="'+i+'"'+(i===ADM.drawIdx?' selected':'')+'>Day '+d.day+' · '+d.label+(run?'':' (upcoming)')+'</option>';
+  });
+  h+='</select><button class="acc" onclick="admBigScreen()">📺 Big screen</button></div>';
+
+  /* ---- winners for the selected draw ---- */
+  h+='<table><tr><th>Group</th><th>#</th><th>Player</th><th>Score</th><th>Code</th><th>Collected</th></tr>';
+  var any=false;
+  PRIZE.GROUPS.forEach(function(g){
+    var w=(selRes&&selRes.groups[g]&&selRes.groups[g].winners)||[];
+    var field=(selRes&&selRes.groups[g]&&selRes.groups[g].board.length)||0;
+    if(!w.length){
+      h+='<tr><td>'+esc(AGE_GROUP_SHORT[g]||g)+'</td><td colspan="5" class="muted">'+
+         (field?'no winner allocated':'nobody played this round')+'</td></tr>';
+      return;
+    }
+    any=true;
+    w.forEach(function(e,i){
+      h+='<tr><td>'+(i===0?esc(AGE_GROUP_SHORT[g]||g):'')+'</td><td>'+(['🥇','🥈','🥉'][i]||(i+1))+'</td>'+
+         '<td>'+esc(e.name)+'</td><td>'+e.score+'</td>'+
+         '<td><b style="color:var(--gold)">'+esc(e.code||'—')+'</b></td>'+
+         '<td>'+(e.claimed_at
+            ? '<span class="on-dot">✓ yes</span> <button onclick="admClaim(\''+e.id+'\',false)">undo</button>'
+            : '<button class="acc" onclick="admClaim(\''+e.id+'\',true)">Mark collected</button>')+'</td></tr>';
+    });
+  });
+  if(!any&&sel&&sel.at.getTime()>now)h+='<tr><td colspan="6" class="muted">This draw has not run yet.</td></tr>';
+  h+='</table></div>';
+  return h;
+}
+function admSetDraw(i){ADM.drawIdx=parseInt(i,10);renderAdmin();}
+function admSetWinners(n){
+  Cloud.saveSettings({winners_per_group:n},function(){
+    ADM.settings=Object.assign(ADM.settings||{},{winners_per_group:n});renderAdmin();
+  });
+}
+function admSaveStock(){
+  var v=parseInt((document.getElementById('admStock')||{}).value,10);
+  if(!v||v<0)return;
+  Cloud.saveSettings({stock:v},function(){
+    ADM.settings=Object.assign(ADM.settings||{},{stock:v});renderAdmin();
+  });
+}
+function admClaim(id,on){
+  Cloud.setClaimed(id,on,function(){adminRefresh();});
+}
+function admLookup(){
+  var raw=(document.getElementById('admClaimCode')||{}).value||'';
+  var code=PRIZE.normaliseCode(raw);
+  var out=document.getElementById('admClaimResult');
+  if(!code){out.innerHTML='<span class="muted">Enter a code like VIZ-7K3M.</span>';return;}
+  var scores=(ADM.scores||[]).filter(function(e){return !e.hidden;});
+  var res=PRIZE.compute(scores,admCfg());
+  var r=res.byCode[code];
+  if(!r){
+    ADM.claimMsg='<span style="color:var(--bad)">No ticket '+esc(code)+'. Check the code, or hit Refresh — it can take a moment to sync.</span>';
+    out.innerHTML=ADM.claimMsg;return;
+  }
+  var e=r.entry,drawn=PRIZE.hasDrawn(r.draw,Date.now());
+  if(!drawn){
+    ADM.claimMsg='<span class="muted"><b>'+esc(e.name)+'</b> · '+esc(e.group)+' · '+e.score+' pts — '+
+      'their draw at <b>'+esc(r.draw.label)+'</b> has not run yet (currently '+r.rank+' of '+r.fieldSize+').</span>';
+  } else if(!r.won){
+    ADM.claimMsg='<span style="color:var(--muted)"><b>'+esc(e.name)+'</b> placed '+r.rank+' of '+r.fieldSize+
+      ' in the '+esc(r.draw.label)+' draw — <b>no prize</b> on this ticket.</span>';
+  } else {
+    ADM.claimMsg='<div style="background:var(--goodd);border:1px solid var(--good);border-radius:8px;padding:10px">'+
+      '🧭 <b>'+esc(e.name)+'</b> WON — '+esc(e.group)+' · '+e.score+' pts · '+esc(r.draw.label)+' draw'+
+      (e.claimed_at?' <span class="on-dot">· already collected</span>'
+        :' <button class="acc" onclick="admClaim(\''+e.id+'\',true)">Hand over a compass</button>')+'</div>';
+  }
+  out.innerHTML=ADM.claimMsg;
+}
+/* Fullscreen winner board for a screen facing the aisle. The hourly
+   moment is free theatre — people look over when a screen changes. */
+function admBigScreen(){
+  var cfg=admCfg();
+  var scores=(ADM.scores||[]).filter(function(e){return !e.hidden;});
+  var res=PRIZE.compute(scores,cfg);
+  var all=PRIZE.draws(),i=ADM.drawIdx||0,d=all[i],r=res.byDraw[i];
+  var ov=document.getElementById('bigOv');
+  if(!ov){
+    ov=document.createElement('div');ov.id='bigOv';
+    ov.style.cssText='position:fixed;inset:0;z-index:9999;background:var(--bg);display:none;'+
+      'flex-direction:column;align-items:center;justify-content:center;padding:4vh 4vw;text-align:center;overflow:auto';
+    ov.onclick=function(){ov.style.display='none';};
+    document.body.appendChild(ov);
+  }
+  var rows='';
+  PRIZE.GROUPS.forEach(function(g){
+    var w=(r&&r.groups[g]&&r.groups[g].winners)||[];
+    if(!w.length)return;
+    rows+='<div style="margin:2.2vh 0"><div style="font-size:2.2vh;color:var(--muted);letter-spacing:2px;'+
+      'text-transform:uppercase">'+esc(AGE_GROUP_SHORT[g]||g)+'</div>';
+    w.forEach(function(e,k){
+      rows+='<div style="font-size:5vh;font-weight:800;line-height:1.25">'+(['🥇','🥈','🥉'][k]||'')+' '+
+        esc(e.name)+' <span style="color:var(--gold);font-family:\'Press Start 2P\',monospace;font-size:3vh">'+
+        esc(e.code||'')+'</span></div>';
+    });
+    rows+='</div>';
+  });
+  if(!rows)rows='<div style="font-size:3vh;color:var(--muted)">No winners in this draw yet.</div>';
+  ov.innerHTML='<div style="font-family:\'Press Start 2P\',monospace;font-size:3.4vh;color:var(--accent);'+
+    'margin-bottom:1vh">'+esc(d?d.label:'')+' DRAW</div>'+
+    '<div style="font-size:2.4vh;color:var(--muted);margin-bottom:2vh">Come to stand 440 to collect 🧭</div>'+
+    rows+'<div style="margin-top:3vh;font-size:1.8vh;color:var(--muted)">tap anywhere to close</div>';
+  ov.style.display='flex';
+}
+
 function groupSelect(id,onchg){var gs=['All','Young Explorer','Teen Explorer','Adult Explorer'];return '<select id="'+id+'" onchange="'+onchg+'">'+gs.map(function(g){return '<option'+(g===ADM.group?' selected':'')+' value="'+g+'">'+(g==='All'?'All groups':g)+'</option>';}).join('')+'</select>';}
 function adminSetGroup(g){ADM.group=g;renderAdmin();}
 function adminScreensaver(device,on){Cloud.sendCommand(device,{screensaver:!!on});setTimeout(renderAdmin,150);}
@@ -1602,6 +1845,30 @@ function loadGameAgeGroups(){
 }
 var GAME_AGE_GROUPS={};
 function saveGameAgeGroups(){try{localStorage.setItem('gds_game_agegroups',JSON.stringify(GAME_AGE_GROUPS));}catch(e){}}
+
+/* ---- which diver categories each game is offered to ----
+   Defaults are "everyone" because most of the arcade is marine life,
+   which anyone can enjoy. Only genuinely diving-specific games are
+   narrowed here; the rest is the operator's call in the admin panel. */
+var GAME_EXP_DEFAULTS={
+  wreckid:  ['snorkel','scuba','freedive'],   /* Sydney wrecks are a diving subject */
+  wreckfind:['snorkel','scuba','freedive'],
+  wave:     ['snorkel','scuba','freedive'],   /* reading conditions before a dive */
+  ascent:   ['scuba'],                        /* return-to-surface: scuba only */
+  nav:      ['scuba','freedive']
+};
+var GAME_EXP={};
+function loadGameExp(){
+  var map={};
+  try{map=JSON.parse(localStorage.getItem('gds_game_exp')||'{}');}catch(e){map={};}
+  GAME_ORDER.forEach(function(g){
+    var def=GAME_EXP_DEFAULTS[g]||EXP_LEVELS.map(function(e){return e.key;});
+    if(!map[g]){var o={};EXP_LEVELS.forEach(function(e){o[e.key]=def.indexOf(e.key)>-1;});map[g]=o;}
+    else EXP_LEVELS.forEach(function(e){if(typeof map[g][e.key]!=='boolean')map[g][e.key]=def.indexOf(e.key)>-1;});
+  });
+  return map;
+}
+function saveGameExp(){try{localStorage.setItem('gds_game_exp',JSON.stringify(GAME_EXP));}catch(e){}}
 
 /* ---- friendly-name filter (keeps a public, kid-facing board clean) ---- */
 var BADWORDS_SUB=['fuck','shit','cunt','bitch','bastard','whore','slut','pussy','penis','vagina','nigger','nigga','faggot','retard','wanker','bollock','arsehole','asshole','dickhead','motherfuck','wank','tits','rape','nazi','hitler','pedo','paedo','kike','spastic','twat','jizz','dildo'];
@@ -1868,6 +2135,7 @@ var $=function(id){return document.getElementById(id);};
 /* ════════ GAME FLOW ════════ */
 var GAME_ORDER=['quiz','zoom','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
+GAME_EXP=loadGameExp();
 var currentGame=0;
 var playedGames={};      /* games the diver has completed at least once */
 var activeGame=null;
@@ -1957,7 +2225,11 @@ function showMenu(){
 function gamesForGroup(group){
   return GAME_ORDER.filter(function(g){
     var ags=GAME_AGE_GROUPS[g]||{};
-    return !group||ags[group];
+    if(group&&!ags[group])return false;
+    /* second axis: is this game offered to this kind of diver? */
+    var ex=GAME_EXP[g];
+    if(USER.exp&&ex&&ex[USER.exp]===false)return false;
+    return true;
   });
 }
 function buildMenu(){
@@ -1989,7 +2261,14 @@ function buildAdminGrid(){
       var checked=ags[ag]?' checked':'';
       return '<label><input type="checkbox" data-g="'+g+'" data-ag="'+esc(ag)+'"'+checked+'>'+esc(AGE_GROUP_SHORT[ag])+'</label>';
     }).join('');
-    return '<div class="admin-row"><span class="ar-name"><span class="ar-icon">'+m.icon+'</span>'+esc(m.name)+'</span>'+boxes+'</div>';
+    var exs=GAME_EXP[g]||{};
+    var ebox=EXP_LEVELS.map(function(e){
+      return '<label><input type="checkbox" data-g="'+g+'" data-exp="'+esc(e.key)+'"'+(exs[e.key]?' checked':'')+'>'+
+             e.icon+' '+esc(e.label)+'</label>';
+    }).join('');
+    return '<div class="admin-row"><span class="ar-name"><span class="ar-icon">'+m.icon+'</span>'+esc(m.name)+'</span>'+
+           '<span class="ar-axis"><span class="ar-axlabel">Age</span>'+boxes+'</span>'+
+           '<span class="ar-axis"><span class="ar-axlabel">Divers</span>'+ebox+'</span></div>';
   }).join('');
   $('adminGrid').innerHTML=html;
 }
@@ -1999,11 +2278,16 @@ function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('
   var ab=$('adminBack');if(ab)ab.onclick=showMenu;
   var as=$('adminSave');if(as)as.onclick=function(){
     $('adminGrid').querySelectorAll('input[type=checkbox]').forEach(function(cb){
-      var g=cb.dataset.g,ag=cb.dataset.ag;
-      if(!GAME_AGE_GROUPS[g])GAME_AGE_GROUPS[g]={};
-      GAME_AGE_GROUPS[g][ag]=cb.checked;
+      var g=cb.dataset.g;
+      if(cb.dataset.ag){
+        if(!GAME_AGE_GROUPS[g])GAME_AGE_GROUPS[g]={};
+        GAME_AGE_GROUPS[g][cb.dataset.ag]=cb.checked;
+      } else if(cb.dataset.exp){
+        if(!GAME_EXP[g])GAME_EXP[g]={};
+        GAME_EXP[g][cb.dataset.exp]=cb.checked;
+      }
     });
-    saveGameAgeGroups();
+    saveGameAgeGroups();saveGameExp();
     $('adminSaved').textContent='Saved ✓';
   };
 })();
@@ -3132,6 +3416,15 @@ var FK_WORDS=[
   {w:'Pony bottle',a:'gear',tags:{exp:['scuba']},f:'Kit — a small independent cylinder carried as a bail-out gas supply.'},
   {w:'Dump valve',a:'gear',tags:{exp:['scuba']},f:'Kit — the pull-cord vent that lets air out of your BCD.'},
   {w:'Lanyard',a:'gear',f:'Kit — a leash clipping you to something, or something to you. Freedivers use one to the line.'},
+  /* General kit — deliberately untagged so snorkellers and first-timers
+     get a balanced round rather than one where "fish" is nearly always
+     the answer. All are mask/fin/snorkel parts anyone in the water meets. */
+  {w:'Skirt',a:'gear',f:'Kit — the soft silicone rim of a mask that seals against your face.'},
+  {w:'Blade',a:'gear',f:'Kit — the long flat part of a fin. Longer blades, more push, more cramp.'},
+  {w:'Purge',a:'gear',f:'Kit — the one-way valve at the bottom of a snorkel that lets you blow water out.'},
+  {w:'Barrel',a:'gear',f:'Kit — the tube of a snorkel. A wider barrel breathes easier but holds more water.'},
+  {w:'Keeper',a:'gear',f:'Kit — the little clip holding your snorkel to your mask strap.'},
+  {w:'Foot pocket',a:'gear',f:'Kit — the part of the fin your foot goes into. Full-foot for snorkelling, open-heel for scuba.'},
   {w:'Noseclip',a:'gear',tags:{exp:['freedive']},f:'Kit — freedivers use one so both hands stay free for equalising and finning.'},
   {w:'Backplate',a:'gear',tags:{exp:['scuba']},f:'Kit — the steel or aluminium plate a wing and harness bolt onto.'}
 ];
@@ -3376,34 +3669,57 @@ function ticketURL(code){
   var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
   return base+'ticket.html?t='+encodeURIComponent(code);
 }
+/* A booth laptop is one launched with ?station=... (or renamed in
+   admin); anything else keeps the default "Phone xxxx" label. The
+   QR only makes sense on the booth machines — it exists to carry the
+   ticket URL onto a phone the player is taking away with them. On
+   their own phone it would be a code they cannot scan with the device
+   already displaying it, so they get a direct link instead. */
+function isBoothStation(){return !/^Phone /.test(STATION||'');}
+
 function renderTicket(code){
   var box=$('hofTicket'); if(!box||!code)return;
   box.style.display='block';
   $('hofCode').textContent=code;
 
-  var draw=PRIZE.drawFor(Date.now()),info;
-  if(draw){
-    info='Your draw is at <b style="color:var(--gold)">'+esc(draw.label)+'</b>. '+
-         'Top '+PRIZE.DEFAULTS.winnersPerGroup+' in '+esc(USER.group)+' win a compass.<br>'+
-         'Scan now — the page shows your live position and tells you if you win.';
-  } else {
-    info='Scan to check your result, or come to <b style="color:var(--gold)">stand 440</b> and show this code.';
-  }
-  $('hofDrawInfo').innerHTML=info;
+  var booth=isBoothStation();
+  var draw=PRIZE.drawFor(Date.now());
+  var when=draw
+    ? 'Your draw is at <b style="color:var(--gold)">'+esc(draw.label)+'</b> — top '+
+      PRIZE.DEFAULTS.winnersPerGroup+' in '+esc(USER.group)+' win a compass.'
+    : 'The last draw has passed — come to <b style="color:var(--gold)">stand 440</b> anyway.';
 
-  /* The QR is the whole booth-to-phone handoff, so it degrades in
-     stages rather than vanishing: canvas -> printed URL -> the code
-     alone, which staff can look up at the stand. */
-  var qr=$('hofQR');
-  if(!qr)return;
+  $('hofTicketLead').textContent=booth
+    ? '📸 Scan this with your phone before you go'
+    : '🧭 Your prize ticket';
+
+  var qr=$('hofQR'), url=ticketURL(code);
   qr.innerHTML='';
-  var url=ticketURL(code);
-  try{
-    if(!window.QRCode)throw new Error('qr.js did not load');
-    qr.appendChild(QRCode.canvas(url,{size:170}));
-  }catch(e){
-    qr.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
-      'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
+
+  if(booth){
+    /* degrade in stages rather than vanishing: QR -> printed URL */
+    try{
+      if(!window.QRCode)throw new Error('qr.js did not load');
+      qr.appendChild(QRCode.canvas(url,{size:170}));
+    }catch(e){
+      qr.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
+        'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
+    }
+    /* This is the line staff repeat out loud all weekend, so it says
+       the one thing the player has to do and nothing else. */
+    $('hofDrawInfo').innerHTML=when+
+      '<br><b style="color:var(--accent)">Scan it, then check that page at '+
+      (draw?esc(draw.label):'the hour')+'</b> — it tells you if you need to come back and collect.';
+  } else {
+    /* already on their own device — a link beats a QR */
+    var a=document.createElement('a');
+    a.href=url;
+    a.className='btn';
+    a.style.cssText='display:block;text-decoration:none;padding:14px;border-radius:12px;'+
+      'background:var(--accent);color:#04222b;font-weight:800;font-size:16px;text-align:center';
+    a.textContent='Open my prize ticket →';
+    qr.appendChild(a);
+    $('hofDrawInfo').innerHTML=when+'<br>Keep that page open — it updates live and tells you if you win.';
   }
 }
 
