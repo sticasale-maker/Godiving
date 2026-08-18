@@ -1055,6 +1055,7 @@
 </div><!-- /wrap -->
 
 <script src="prize.js"></script>
+<script src="qr.js"></script>
 <script>
 /* ════════ SPLASH ════════ */
 var SKIP_SPLASH_ON_LOAD=true; /* set to false to re-enable intro */
@@ -3390,11 +3391,19 @@ function renderTicket(code){
   }
   $('hofDrawInfo').innerHTML=info;
 
+  /* The QR is the whole booth-to-phone handoff, so it degrades in
+     stages rather than vanishing: canvas -> printed URL -> the code
+     alone, which staff can look up at the stand. */
   var qr=$('hofQR');
-  if(qr&&window.QRCode){
-    qr.innerHTML='';
-    try{qr.appendChild(QRCode.canvas(ticketURL(code),{size:150}));}
-    catch(e){qr.innerHTML='<span class="muted" style="font-size:12px">'+esc(ticketURL(code))+'</span>';}
+  if(!qr)return;
+  qr.innerHTML='';
+  var url=ticketURL(code);
+  try{
+    if(!window.QRCode)throw new Error('qr.js did not load');
+    qr.appendChild(QRCode.canvas(url,{size:170}));
+  }catch(e){
+    qr.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
+      'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
   }
 }
 
