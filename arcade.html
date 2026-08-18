@@ -458,6 +458,65 @@
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
     color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
 
+  /* ── ZOOM IN ── */
+  .zoom-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
+    border:1px solid var(--line);height:var(--artH);max-height:44vh;
+    display:flex;align-items:center;justify-content:center}
+  .zoom-stage img{width:100%;height:100%;object-fit:cover;will-change:transform}
+  .zoom-meter{height:8px;border-radius:999px;background:var(--bg2);overflow:hidden;
+    border:1px solid var(--line);margin:8px 0 4px;flex-shrink:0}
+  .zoom-meter i{display:block;height:100%;width:100%;
+    background:linear-gradient(90deg,var(--gold),var(--good));transition:width .1s linear}
+  .zoom-meter i.low{background:var(--bad)}
+  .zoom-hint{font-size:12px;color:var(--muted);text-align:center;margin:0 0 8px}
+
+  /* ── FISH OR KIT? ── */
+  .fk-word{font-size:clamp(26px,8vw,42px);font-weight:800;text-align:center;line-height:1.25;
+    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:30px 18px}
+  .tf-btn.fkfish{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
+  .tf-btn.fkgear{background:#3a3010;color:var(--gold);border-color:var(--gold)}
+
+  /* ── SIZE LINE-UP ── */
+  .lu-task{font-size:15px;text-align:center;color:var(--text);background:var(--surface);
+    border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px;flex-shrink:0}
+  .lu-task b{color:var(--accent)}
+  .lu-slots{display:flex;gap:6px;margin-bottom:10px;flex-shrink:0}
+  .lu-slot{flex:1;min-width:0;aspect-ratio:1/1.25;border-radius:10px;border:2px dashed var(--line);
+    background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;
+    padding:3px;overflow:hidden;position:relative}
+  .lu-slot.filled{border-style:solid;border-color:var(--accent);background:var(--surface)}
+  .lu-slot.right{border-color:var(--good);background:var(--goodd)}
+  .lu-slot.wrong{border-color:var(--bad);background:var(--badd)}
+  .lu-slot img{width:100%;height:64%;object-fit:cover;border-radius:6px}
+  .lu-slot .nm{font-size:9px;line-height:1.15;text-align:center;margin-top:3px;color:var(--text);
+    max-height:32%;overflow:hidden}
+  .lu-slot .pos{position:absolute;top:2px;left:4px;font-size:10px;color:var(--muted);font-weight:700}
+  .lu-pool{display:grid;grid-template-columns:repeat(auto-fit,minmax(84px,1fr));gap:8px;margin-bottom:10px}
+  .lu-card{border-radius:10px;border:1px solid var(--line);background:var(--surface);
+    padding:5px;cursor:pointer;transition:.12s;font-family:inherit;color:var(--text)}
+  .lu-card img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:7px;display:block}
+  .lu-card .nm{font-size:11px;line-height:1.2;margin-top:4px;text-align:center}
+  .lu-card:active{transform:translateY(2px)}
+  .lu-card.used{opacity:.28;pointer-events:none}
+
+  /* ── DIVE LOG MEMORY ── */
+  .mem-hint{font-size:13px;color:var(--muted);text-align:center;margin:0 0 8px;flex-shrink:0}
+  .mem-grid{display:grid;gap:7px;flex:1;min-height:0;align-content:start}
+  .mem-card{position:relative;aspect-ratio:1/1;border-radius:10px;cursor:pointer;border:none;
+    padding:0;background:transparent;font-family:inherit;perspective:600px}
+  .mem-face{position:absolute;inset:0;border-radius:10px;display:flex;align-items:center;
+    justify-content:center;overflow:hidden;backface-visibility:hidden;transition:transform .3s}
+  .mem-back{background:linear-gradient(150deg,#12556b,#0a3040);border:1px solid var(--line);
+    font-size:22px}
+  .mem-front{background:var(--surface);border:2px solid var(--accent);transform:rotateY(180deg)}
+  .mem-card.flip .mem-back{transform:rotateY(-180deg)}
+  .mem-card.flip .mem-front{transform:rotateY(0)}
+  .mem-front img{width:100%;height:100%;object-fit:cover}
+  .mem-front .nm{font-size:11px;line-height:1.2;text-align:center;padding:4px;color:var(--text);
+    font-weight:700}
+  .mem-card.done .mem-front{border-color:var(--good);background:var(--goodd)}
+  .mem-card.done{pointer-events:none}
+
   /* ── EXPERIENCE PICKER on the welcome screen ── */
   .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
   .exp-btn{padding:11px 6px;border-radius:10px;cursor:pointer;transition:.12s;
@@ -606,6 +665,10 @@
       <div class="gstep" id="gs-wave"><div class="icon">🌊</div><div class="label">Wave lab</div></div>
       <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
       <div class="gstep" id="gs-sharkid"><div class="icon">🦈</div><div class="label">Shark ID</div></div>
+      <div class="gstep" id="gs-zoom"><div class="icon">🔍</div><div class="label">Zoom in</div></div>
+      <div class="gstep" id="gs-fishkit"><div class="icon">🐙</div><div class="label">Fish or kit</div></div>
+      <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
+      <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
     </div>
 
     <!-- ═══ MENU HUB: pick any game ═══ -->
@@ -890,6 +953,68 @@
     </div>
 
     <!-- HALL OF FAME -->
+    <!-- ZOOM IN -->
+    <div class="panel" id="p-zoom">
+      <div class="game-header">
+        <span class="game-label">Zoom in</span>
+        <span class="score">Score <b id="zoomScore">0</b> / <b id="zoomTotal">0</b></span>
+      </div>
+      <div class="zoom-stage" id="zoomStage"><img id="zoomImg" alt=""></div>
+      <div class="zoom-meter"><i id="zoomBar"></i></div>
+      <p class="zoom-hint" id="zoomHint">Buzz in early — the longer you wait, the fewer points</p>
+      <div class="opts-grid" id="zoomOpts"></div>
+      <p class="qfact" id="zoomFact"></p>
+      <div style="text-align:center"><button class="btn ghost" id="zoomNext" style="display:none">Next →</button></div>
+      <p class="auto-notice" id="zoomNotice"></p>
+    </div>
+
+    <!-- FISH OR KIT? -->
+    <div class="panel" id="p-fishkit">
+      <div class="game-header">
+        <span class="game-label">Fish or kit?</span>
+        <span class="score">Score <b id="fkScore">0</b> / <b id="fkTotal">0</b></span>
+      </div>
+      <div class="tf-stage">
+        <div class="fk-word" id="fkWord"></div>
+        <div class="tf-buttons">
+          <button class="tf-btn fkfish" id="fkFish">🐠 FISH</button>
+          <button class="tf-btn fkgear" id="fkGear">🤿 KIT</button>
+        </div>
+        <div class="tf-reveal" id="fkReveal"></div>
+      </div>
+      <p class="auto-notice" id="fkNotice"></p>
+    </div>
+
+    <!-- SIZE LINE-UP -->
+    <div class="panel" id="p-lineup">
+      <div class="game-header">
+        <span class="game-label" id="luLabel">Line them up</span>
+        <span class="score">Round <b id="luRound">1</b> / <b id="luRounds">2</b></span>
+      </div>
+      <p class="lu-task" id="luTask"></p>
+      <div class="lu-slots" id="luSlots"></div>
+      <div class="lu-pool" id="luPool"></div>
+      <div style="text-align:center">
+        <button class="btn ghost" id="luUndo" style="display:none">↩ Undo</button>
+        <button class="btn" id="luCheck" style="display:none">Check my order</button>
+        <button class="btn ghost" id="luNext" style="display:none">Next →</button>
+      </div>
+      <p class="qfact" id="luFact"></p>
+      <p class="auto-notice" id="luNotice"></p>
+    </div>
+
+    <!-- DIVE LOG MEMORY -->
+    <div class="panel" id="p-memory">
+      <div class="game-header">
+        <span class="game-label">Dive log memory</span>
+        <span class="score">Pairs <b id="memFound">0</b> / <b id="memTotal">0</b></span>
+      </div>
+      <p class="mem-hint" id="memHint">Match each photo to its name</p>
+      <div class="mem-grid" id="memGrid"></div>
+      <p class="qfact" id="memFact"></p>
+      <p class="auto-notice" id="memNotice"></p>
+    </div>
+
     <div class="panel" id="p-hof">
       <div class="logobar" style="margin-bottom:10px;display:flex!important">
         <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
@@ -1124,7 +1249,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',zoom:'Zoom In',fishkit:'Fish or Kit?',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -1740,7 +1865,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','breath','silhouette','log','bubble','depth','guess','truefalse','colour','trumps','oddone','speed','season','wreckid','wave','wreckfind','sharkid'];
+var GAME_ORDER=['quiz','zoom','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 var currentGame=0;
 var playedGames={};      /* games the diver has completed at least once */
@@ -1790,6 +1915,10 @@ function startGame(name){
   else if(name==='wave')initWave();
   else if(name==='wreckfind')initWreckFind();
   else if(name==='sharkid')initSharkId();
+  else if(name==='zoom')initZoom();
+  else if(name==='fishkit')initFishKit();
+  else if(name==='lineup')initLineUp();
+  else if(name==='memory')initMemory();
 }
 
 /* ════════ MENU HUB (pick any game) ════════ */
@@ -1810,7 +1939,11 @@ var GAME_META={
   wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
   wave:{icon:'🌊',name:'Wave Lab',desc:'Predict the visibility'},
   wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'},
-  sharkid:{icon:'🦈',name:'Shark ID',desc:'Drag each name onto its shark'}
+  sharkid:{icon:'🦈',name:'Shark ID',desc:'Drag each name onto its shark'},
+  zoom:{icon:'🔍',name:'Zoom In',desc:'Name it before it zooms out'},
+  fishkit:{icon:'🐙',name:'Fish or Kit?',desc:'Is it a fish or dive gear?'},
+  lineup:{icon:'📏',name:'Size Line-Up',desc:'Tap them into the right order'},
+  memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'}
 };
 function showMenu(){
   activeGame=null;
@@ -2843,6 +2976,356 @@ function wireSharkId(){
     });
   });
   function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
+}
+
+/* ════════════════════════════════════════════════════════════════
+   ZOOM IN — a macro crop that pulls back over time.
+
+   Buzz in early for more points. Everything here reuses photos that
+   are already in images/creatures/, so it cost no new assets.
+   Difficulty is the zoom itself: the tighter the start and the fewer
+   the seconds, the harder the call.
+   ════════════════════════════════════════════════════════════════ */
+var ZOOM_CFG={
+  'Young Explorer':{start:4.0,secs:13,opts:3,confusable:false},
+  'Teen Explorer' :{start:6.5,secs:11,opts:4,confusable:true},
+  'Adult Explorer':{start:9.0,secs:9, opts:5,confusable:true}
+};
+var ZOOM_ROUNDS=3;
+var zoomQueue=[],zoomScore=0,zoomTotal=0,zoomCur=null,zoomAnswered=false,zoomRAF=null,zoomT0=0;
+
+function zoomPool(){
+  return Object.keys(PHOTOS).filter(function(k){return QD(k)&&PHOTOS[k];});
+}
+function zoomCfg(){return ZOOM_CFG[USER.group]||ZOOM_CFG['Teen Explorer'];}
+
+function initZoom(){
+  var pool=shuffle(zoomPool());
+  zoomQueue=pool.slice(0,ZOOM_ROUNDS);
+  zoomScore=0;zoomTotal=0;
+  $('zoomScore').textContent=0;$('zoomTotal').textContent=0;$('zoomNotice').textContent='';
+  zoomRound();
+}
+function zoomStop(){if(zoomRAF){cancelAnimationFrame(zoomRAF);zoomRAF=null;}}
+
+function zoomRound(){
+  zoomStop();
+  zoomAnswered=false;
+  $('zoomFact').textContent='';$('zoomNext').style.display='none';
+  $('zoomHint').textContent='Buzz in early — the longer you wait, the fewer points';
+  var cfg=zoomCfg();
+  var key=zoomQueue.shift();
+  zoomCur=key;
+  var ph=PHOTOS[key],meta=QD(key);
+
+  var img=$('zoomImg');
+  img.src=ph.src;img.alt='';
+  /* random focal point, kept away from the extreme edge so the crop
+     lands on the animal rather than open water */
+  var fx=25+Math.random()*50, fy=25+Math.random()*50;
+  img.style.transformOrigin=fx+'% '+fy+'%';
+  img.style.transform='scale('+cfg.start+')';
+
+  /* options: for teen/adult prefer species from the same category so
+     the choice is genuinely confusable, not a giveaway */
+  var others;
+  if(cfg.confusable){
+    var cat=categoryOf(key);
+    var same=cat?cat.keys.filter(function(k){return k!==key&&PHOTOS[k];}):[];
+    others=shuffle(same);
+    if(others.length<cfg.opts-1){
+      others=others.concat(shuffle(zoomPool().filter(function(k){
+        return k!==key&&others.indexOf(k)===-1;})));
+    }
+  } else {
+    others=shuffle(zoomPool().filter(function(k){return k!==key;}));
+  }
+  others=others.slice(0,cfg.opts-1);
+  var opts=shuffle([key].concat(others));
+  $('zoomOpts').innerHTML=opts.map(function(k){
+    return '<button class="opt" data-k="'+esc(k)+'">'+esc(QD(k).n)+'</button>';
+  }).join('');
+  $('zoomOpts').querySelectorAll('.opt').forEach(function(b){
+    b.onclick=function(){zoomAnswer(b,key);};
+  });
+
+  /* pull back from cfg.start to 1.0 over cfg.secs */
+  zoomT0=performance.now();
+  var bar=$('zoomBar');bar.classList.remove('low');
+  (function step(now){
+    var t=Math.min(1,(now-zoomT0)/(cfg.secs*1000));
+    var s=cfg.start+(1-cfg.start)*t;
+    img.style.transform='scale('+s.toFixed(3)+')';
+    bar.style.width=Math.round((1-t)*100)+'%';
+    if(t>0.65)bar.classList.add('low');
+    if(t<1&&!zoomAnswered)zoomRAF=requestAnimationFrame(step);
+    else if(!zoomAnswered){
+      zoomRAF=null;
+      $('zoomHint').textContent='Fully zoomed out — last chance, 3 points';
+    }
+  })(zoomT0);
+}
+/* points decay with the zoom: buzzing at full crop is worth 18, a
+   fully-pulled-back answer is worth the 3-point floor */
+function zoomReward(){
+  var cfg=zoomCfg();
+  var t=Math.min(1,(performance.now()-zoomT0)/(cfg.secs*1000));
+  return Math.max(MIN_REWARD,Math.round(18-(18-MIN_REWARD)*t));
+}
+function zoomAnswer(btn,key){
+  if(zoomAnswered)return;
+  zoomAnswered=true;zoomStop();zoomTotal++;
+  var img=$('zoomImg');
+  img.style.transition='transform .45s ease-out';
+  img.style.transform='scale(1)';
+  setTimeout(function(){img.style.transition='';},500);
+
+  $('zoomOpts').querySelectorAll('.opt').forEach(function(x){
+    x.disabled=true;if(x.dataset.k===key)x.classList.add('right');
+  });
+  if(btn.dataset.k===key){
+    zoomScore++;var amt=zoomReward();award(amt);
+    $('zoomHint').textContent='✅ +'+amt+' points';
+  } else {
+    btn.classList.add('wrong');penalize();
+    $('zoomHint').textContent='❌ It was the '+QD(key).n;
+  }
+  $('zoomScore').textContent=zoomScore;$('zoomTotal').textContent=zoomTotal;
+  $('zoomFact').textContent=QD(key).f||'';
+  if(zoomQueue.length>0)$('zoomNext').style.display='inline-block';
+  else{$('zoomNotice').textContent='Sharp eyes! 🔍 Back to the menu…';setTimeout(advanceGame,2200);}
+}
+$('zoomNext').onclick=zoomRound;
+
+/* ════════════════════════════════════════════════════════════════
+   FISH OR KIT? — a word appears, is it a Sydney fish or dive gear?
+
+   Text only, no assets. The joke is that Sydney fish names sound like
+   equipment (old wife, sergeant baker, leatherjacket) and equipment
+   sounds like animals (octopus, wing, boot). Words marked both:true
+   accept either answer — "octopus" really is both, and being told so
+   is more fun than being marked wrong.
+   ════════════════════════════════════════════════════════════════ */
+var FK_WORDS=[
+  /* fish that sound like kit */
+  {w:'Old wife',a:'fish',f:'A fish — a black-and-white Sydney local that grinds its teeth audibly when caught.'},
+  {w:'Leatherjacket',a:'fish',f:'A fish. Its skin is so rough it was once used like sandpaper.'},
+  {w:'Sergeant baker',a:'fish',f:'A fish — a lizardfish that sits dead still on the sand watching you.'},
+  {w:'Fortescue',a:'fish',f:'A fish — a little scorpionfish with venomous spines. Watch where you kneel.'},
+  {w:'Flying gurnard',a:'fish',f:'A fish. It spreads huge fan-like fins but never actually flies.'},
+  {w:'Draughtboard',a:'fish',f:'A fish — a catshark with a chequerboard pattern that puffs up with water.'},
+  {w:'Wobbegong',a:'fish',f:'A fish — a carpet shark that looks exactly like the reef it is lying on.'},
+  {w:'Blue devil',a:'fish',f:'A fish — a shy cave-dweller found only along the NSW coast.'},
+  {w:'Weedfish',a:'fish',f:'A fish that sways like algae so convincingly you swim straight past it.'},
+  {w:'Toadfish',a:'fish',f:'A fish — puffs up when threatened and is seriously toxic. Do not handle.'},
+  {w:'Flutemouth',a:'fish',f:'A fish — a long thin ambush predator that hangs motionless in the water.'},
+  {w:'Cardinalfish',a:'fish',f:'A fish. The males brood the eggs in their mouths for about two weeks.'},
+  /* kit that sounds like fish */
+  {w:'Octopus',a:'gear',both:true,f:'Both! The animal — and a diver\'s spare second stage, the one you donate to an out-of-air buddy.'},
+  {w:'Wing',a:'gear',tags:{exp:['scuba']},f:'Kit — the inflatable bladder on a backplate BCD that gives you lift.'},
+  {w:'Boot',a:'gear',f:'Kit — the neoprene sock you wear inside an open-heel fin.'},
+  {w:'Spool',a:'gear',tags:{exp:['scuba']},f:'Kit — a small finger reel of line for deploying an SMB from depth.'},
+  {w:'Snoot',a:'gear',f:'Kit — a cone on an underwater strobe that narrows the light to a spotlight.'},
+  {w:'Manifold',a:'gear',tags:{exp:['scuba']},f:'Kit — the bar joining twin cylinders so you can breathe both through either regulator.'},
+  {w:'First stage',a:'gear',tags:{exp:['scuba']},f:'Kit — the part that clamps to your tank valve and drops the pressure down.'},
+  {w:'Pony bottle',a:'gear',tags:{exp:['scuba']},f:'Kit — a small independent cylinder carried as a bail-out gas supply.'},
+  {w:'Dump valve',a:'gear',tags:{exp:['scuba']},f:'Kit — the pull-cord vent that lets air out of your BCD.'},
+  {w:'Lanyard',a:'gear',f:'Kit — a leash clipping you to something, or something to you. Freedivers use one to the line.'},
+  {w:'Noseclip',a:'gear',tags:{exp:['freedive']},f:'Kit — freedivers use one so both hands stay free for equalising and finning.'},
+  {w:'Backplate',a:'gear',tags:{exp:['scuba']},f:'Kit — the steel or aluminium plate a wing and harness bolt onto.'}
+];
+var FK_ROUNDS=10;
+var fkQueue=[],fkScore=0,fkTotal=0,fkCur=null,fkAnswered=false;
+
+function initFishKit(){
+  fkQueue=pickForDiver(FK_WORDS,FK_ROUNDS,2);
+  fkScore=0;fkTotal=0;
+  $('fkScore').textContent=0;$('fkTotal').textContent=0;$('fkNotice').textContent='';
+  fkRound();
+}
+function fkRound(){
+  fkAnswered=false;
+  fkCur=fkQueue.shift();
+  $('fkWord').textContent=fkCur.w;
+  $('fkReveal').textContent='';
+  $('fkFish').disabled=false;$('fkGear').disabled=false;
+  startTimer();
+}
+function fkAnswer(choice){
+  if(fkAnswered||!fkCur)return;
+  fkAnswered=true;fkTotal++;
+  $('fkFish').disabled=true;$('fkGear').disabled=true;
+  var right=fkCur.both||choice===fkCur.a;
+  if(right){fkScore++;award(timedReward());}
+  else penalize();
+  $('fkReveal').innerHTML=(right?'✅ ':'❌ ')+esc(fkCur.f);
+  $('fkScore').textContent=fkScore;$('fkTotal').textContent=fkTotal;
+  setTimeout(function(){
+    if(fkQueue.length>0)fkRound();
+    else{$('fkNotice').textContent='Nice ear for jargon! 🤿 Back to the menu…';setTimeout(advanceGame,1600);}
+  },fkCur.both?2600:1900);
+}
+$('fkFish').onclick=function(){fkAnswer('fish');};
+$('fkGear').onclick=function(){fkAnswer('gear');};
+
+/* ════════════════════════════════════════════════════════════════
+   SIZE LINE-UP — tap five creatures into order.
+
+   Tap-to-place rather than drag: drag is fiddly on a shared booth
+   touchscreen and fails badly with a queue behind you. Uses the len /
+   depth / life numbers already in CR.
+   ════════════════════════════════════════════════════════════════ */
+var LU_TASKS=[
+  {k:'len',  label:'shortest to longest',   unit:'cm',    q:'How big do they actually get?'},
+  {k:'depth',label:'shallowest to deepest', unit:'m',     q:'How deep do they live?'},
+  {k:'life', label:'shortest to longest life', unit:' yrs',q:'How long do they live?'}
+];
+var LU_ROUNDS=2, LU_N=5;
+var luRoundN=0,luTasks=[],luCur=null,luPicked=[],luDone=false;
+
+function initLineUp(){
+  luRoundN=0;luTasks=shuffle(LU_TASKS.slice()).slice(0,LU_ROUNDS);
+  $('luRounds').textContent=LU_ROUNDS;$('luNotice').textContent='';
+  luNextRound();
+}
+function luNextRound(){
+  luDone=false;luPicked=[];
+  $('luFact').textContent='';$('luNext').style.display='none';
+  $('luCheck').style.display='none';$('luUndo').style.display='none';
+  luRoundN++;
+  $('luRound').textContent=luRoundN;
+  var task=luTasks[luRoundN-1];
+  /* only species with photos AND a distinct value, so there is always
+     exactly one correct order */
+  var pool=shuffle(KEYS.filter(function(k){return PHOTOS[k]&&CR[k]&&typeof CR[k][task.k]==='number';}));
+  var chosen=[],seen={};
+  for(var i=0;i<pool.length&&chosen.length<LU_N;i++){
+    var v=CR[pool[i]][task.k];
+    if(seen[v])continue;
+    seen[v]=true;chosen.push(pool[i]);
+  }
+  luCur={task:task,keys:shuffle(chosen)};
+  $('luTask').innerHTML=esc(task.q)+'<br>Tap them in order — <b>'+esc(task.label)+'</b>';
+  luRender();
+}
+function luRender(){
+  var n=luCur.keys.length;
+  var slots='';
+  for(var i=0;i<n;i++){
+    var k=luPicked[i];
+    slots+='<div class="lu-slot'+(k?' filled':'')+'" data-i="'+i+'"><span class="pos">'+(i+1)+'</span>'+
+      (k?'<img src="'+esc(PHOTOS[k].src)+'" alt=""><span class="nm">'+esc(CR[k].n)+'</span>':'')+'</div>';
+  }
+  $('luSlots').innerHTML=slots;
+  $('luPool').innerHTML=luCur.keys.map(function(k){
+    var used=luPicked.indexOf(k)>-1;
+    return '<button class="lu-card'+(used?' used':'')+'" data-k="'+esc(k)+'">'+
+      '<img src="'+esc(PHOTOS[k].src)+'" alt="" loading="lazy">'+
+      '<span class="nm">'+esc(CR[k].n)+'</span></button>';
+  }).join('');
+  $('luPool').querySelectorAll('.lu-card').forEach(function(b){
+    b.onclick=function(){
+      if(luDone||luPicked.length>=luCur.keys.length)return;
+      luPicked.push(b.dataset.k);luRender();
+    };
+  });
+  $('luUndo').style.display=(!luDone&&luPicked.length)?'inline-block':'none';
+  $('luCheck').style.display=(!luDone&&luPicked.length===luCur.keys.length)?'inline-block':'none';
+}
+$('luUndo').onclick=function(){if(luDone)return;luPicked.pop();luRender();};
+$('luCheck').onclick=function(){
+  if(luDone)return;
+  luDone=true;
+  var task=luCur.task;
+  var correct=luCur.keys.slice().sort(function(a,b){return CR[a][task.k]-CR[b][task.k];});
+  var right=0;
+  var slots=$('luSlots').children;
+  for(var i=0;i<luPicked.length;i++){
+    var ok=luPicked[i]===correct[i];
+    if(ok)right++;
+    if(slots[i])slots[i].classList.add(ok?'right':'wrong');
+  }
+  /* part marks: this is an ordering task, all-or-nothing feels unfair */
+  if(right===correct.length)award(REWARD+6);
+  else if(right>=Math.ceil(correct.length/2))award(Math.max(MIN_REWARD,right*2));
+  else penalize();
+  $('luFact').innerHTML='You placed <b>'+right+' of '+correct.length+'</b> correctly.<br>'+
+    correct.map(function(k){return esc(CR[k].n)+' ('+CR[k][task.k]+esc(task.unit)+')';}).join(' → ');
+  $('luUndo').style.display='none';$('luCheck').style.display='none';
+  if(luRoundN<LU_ROUNDS)$('luNext').style.display='inline-block';
+  else{$('luNotice').textContent='Good sense of scale! 🃏 Back to the menu…';setTimeout(advanceGame,3000);}
+};
+$('luNext').onclick=luNextRound;
+
+/* ════════════════════════════════════════════════════════════════
+   DIVE LOG MEMORY — concentration, photo to name.
+   Grid size scales with age group.
+   ════════════════════════════════════════════════════════════════ */
+var MEM_PAIRS={'Young Explorer':4,'Teen Explorer':5,'Adult Explorer':6};
+var memCards=[],memFlipped=[],memFound=0,memPairs=0,memLock=false,memMisses=0;
+
+function initMemory(){
+  memPairs=MEM_PAIRS[USER.group]||5;
+  memFound=0;memMisses=0;memFlipped=[];memLock=false;
+  $('memFound').textContent=0;$('memTotal').textContent=memPairs;
+  $('memNotice').textContent='';$('memFact').textContent='';
+  $('memHint').textContent='Match each photo to its name';
+
+  var keys=shuffle(KEYS.filter(function(k){return PHOTOS[k]&&CR[k];})).slice(0,memPairs);
+  memCards=[];
+  keys.forEach(function(k){
+    memCards.push({k:k,type:'img'});
+    memCards.push({k:k,type:'name'});
+  });
+  memCards=shuffle(memCards);
+
+  /* 4 columns at every size: 8 cards -> 4x2, 10 -> 4x3 ragged, 12 -> 4x3 */
+  $('memGrid').style.gridTemplateColumns='repeat(4,1fr)';
+  $('memGrid').innerHTML=memCards.map(function(c,i){
+    var front=c.type==='img'
+      ? '<img src="'+esc(PHOTOS[c.k].src)+'" alt="" loading="lazy">'
+      : '<span class="nm">'+esc(CR[c.k].n)+'</span>';
+    return '<button class="mem-card" data-i="'+i+'">'+
+      '<span class="mem-face mem-back">🫧</span>'+
+      '<span class="mem-face mem-front">'+front+'</span></button>';
+  }).join('');
+  $('memGrid').querySelectorAll('.mem-card').forEach(function(b){
+    b.onclick=function(){memFlip(parseInt(b.dataset.i,10),b);};
+  });
+  startTimer();
+}
+function memFlip(i,el){
+  if(memLock||el.classList.contains('flip')||el.classList.contains('done'))return;
+  el.classList.add('flip');
+  memFlipped.push({i:i,el:el,c:memCards[i]});
+  if(memFlipped.length<2)return;
+
+  var a=memFlipped[0],b=memFlipped[1];
+  memLock=true;
+  if(a.c.k===b.c.k&&a.c.type!==b.c.type){
+    /* matched */
+    setTimeout(function(){
+      a.el.classList.add('done');b.el.classList.add('done');
+      memFound++;$('memFound').textContent=memFound;
+      award(timedReward());
+      $('memFact').textContent=CR[a.c.k].f||'';
+      memFlipped=[];memLock=false;
+      if(memFound>=memPairs){
+        $('memHint').textContent='All matched! 🧠';
+        $('memNotice').textContent='Sharp memory! Back to the menu…';
+        setTimeout(advanceGame,2400);
+      } else startTimer();
+    },420);
+  } else {
+    memMisses++;
+    /* the first two misses are free — this is a memory game, not a
+       punishment, and young players need room to learn the board */
+    if(memMisses>2)penalize();
+    setTimeout(function(){
+      a.el.classList.remove('flip');b.el.classList.remove('flip');
+      memFlipped=[];memLock=false;
+    },900);
+  }
 }
 
 /* ════════ HALL OF FAME (real, shared board) ════════ */
