@@ -458,6 +458,17 @@
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
     color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
 
+  /* ── PRIZE TICKET on the end screen ── */
+  .ticket-box{background:linear-gradient(160deg,#0f4a56,#0c3142);border:2px solid var(--gold);
+    border-radius:14px;padding:14px 12px;margin:0 0 12px;text-align:center;flex-shrink:0}
+  .ticket-lead{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:10px}
+  .ticket-qr{display:flex;justify-content:center;margin-bottom:8px;min-height:8px}
+  .ticket-qr canvas,.ticket-qr img{background:#fff;padding:8px;border-radius:8px;
+    image-rendering:pixelated;width:150px;height:150px}
+  .ticket-code{font-family:'Press Start 2P',monospace;font-size:clamp(15px,4.5vw,21px);
+    color:var(--gold);letter-spacing:2px;margin:6px 0 4px}
+  .ticket-sub{font-size:12px;color:var(--muted);line-height:1.5}
+
   /* ── 8. COLOUR THE CREATURE ── */
   .colour-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
     display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
@@ -879,6 +890,12 @@
         <div class="hof-group" id="hofGroupLabel"></div>
       </div>
       <p class="encourage" id="hofEncourage"></p>
+      <div class="ticket-box" id="hofTicket" style="display:none">
+        <div class="ticket-lead">📸 Scan to check if you win a compass</div>
+        <div class="ticket-qr" id="hofQR"></div>
+        <div class="ticket-code" id="hofCode">—</div>
+        <div class="ticket-sub" id="hofDrawInfo"></div>
+      </div>
       <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
       <button class="btn play-again" id="hofBackMenu" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">← Back to games</button>
       <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
@@ -901,6 +918,7 @@
   </div><!-- /app -->
 </div><!-- /wrap -->
 
+<script src="prize.js"></script>
 <script>
 /* ════════ SPLASH ════════ */
 var SKIP_SPLASH_ON_LOAD=true; /* set to false to re-enable intro */
@@ -1114,7 +1132,9 @@ var Cloud=(function(){
   function lsScores(){try{return JSON.parse(localStorage.getItem('gds_scores')||'[]');}catch(e){return [];}}
   function lsSave(a){try{localStorage.setItem('gds_scores',JSON.stringify(a));}catch(e){}}
   function boardFor(g){return lsScores().filter(function(e){return e.group===g;}).sort(function(a,b){return b.score-a.score;});}
-  function mapRow(x){return {id:x.id,name:x.name,score:x.score,group:x.grp,device:x.device,station:x.station,ts:x.ts?new Date(x.ts).getTime():Date.now()};}
+  function mapRow(x){return {id:x.id,name:x.name,score:x.score,group:x.grp,device:x.device,station:x.station,
+    code:x.code,exp:x.exp,age:x.age,claimed_at:x.claimed_at,golden:x.golden,
+    ts:x.ts?new Date(x.ts).getTime():Date.now()};}
 
   /* keep-alive: a cheap query every 6h resets Supabase free-tier 7-day pause clock */
   function keepAlive(){
@@ -1133,12 +1153,38 @@ var Cloud=(function(){
   }
 
   /* ----- scores / leaderboard (Postgres + realtime changes) ----- */
-  function submitScore(group,name,score){
-    if(mode==='cloud'&&sb){sb.from('scores').insert({name:name,score:score,grp:group,device:DEVICE_ID,station:STATION}).then(function(){},function(){});}
-    else{var entry={name:name,score:score,group:group,ts:Date.now(),device:DEVICE_ID,station:STATION,id:'s'+Date.now()+Math.random().toString(36).slice(2,5)};var a=lsScores();a.push(entry);lsSave(a);fire(lbListeners[group],boardFor(group));}
+  /* Issues a ticket code and hands it back via cb so the end screen
+     can show it and build the QR. Retries once on a unique-index
+     collision — 31^4 codes makes that vanishingly unlikely, but a
+     duplicate would send two people to the same ticket. */
+  function submitScore(group,name,score,extra,cb){
+    var code=PRIZE.newCode();
+    var row=Object.assign({name:name,score:score,grp:group,code:code,
+                           device:DEVICE_ID,station:STATION},extra||{});
+    if(mode==='cloud'&&sb){
+      sb.from('scores').insert(row).then(function(r){
+        if(r&&r.error){
+          if(String(r.error.code)==='23505'){      /* unique_violation on code */
+            row.code=code=PRIZE.newCode();
+            sb.from('scores').insert(row).then(function(){if(cb)cb(code);},function(){if(cb)cb(code);});
+            return;
+          }
+          if(cb)cb(code);return;
+        }
+        if(cb)cb(code);
+      },function(){if(cb)cb(code);});
+    }
+    else{
+      var entry=Object.assign({name:name,score:score,group:group,code:code,ts:Date.now(),
+        device:DEVICE_ID,station:STATION,id:'s'+Date.now()+Math.random().toString(36).slice(2,5)},extra||{});
+      var a=lsScores();a.push(entry);lsSave(a);fire(lbListeners[group],boardFor(group));
+      if(cb)cb(code);
+    }
   }
   function fetchScores(group,cb){
-    var q=sb.from('scores').select('*').order('score',{ascending:false});
+    /* not(is true) rather than eq(false): rows predating the hidden
+       column read back as null */
+    var q=sb.from('scores').select('*').not('hidden','is',true).order('score',{ascending:false});
     if(group)q=q.eq('grp',group);
     q.then(function(r){cb((r.data||[]).map(mapRow));},function(){cb([]);});
   }
@@ -2705,7 +2751,12 @@ function showHallOfFame(){
   window.scrollTo(0,0);
   $('hofGroupLabel').textContent=USER.group;
   Cloud.updateSession({game:'done',points:POINTS});
-  if(!window._hofSubmitted){window._hofSubmitted=true;Cloud.submitScore(USER.group,USER.name,POINTS);}
+  if(!window._hofSubmitted){
+    window._hofSubmitted=true;
+    Cloud.submitScore(USER.group,USER.name,POINTS,
+      {exp:USER.exp||null,age:USER.age||null},
+      function(code){USER.code=code;renderTicket(code);});
+  }
   Cloud.onLeaderboard(USER.group,renderHof);
 }
 function renderHof(board){
@@ -2723,10 +2774,42 @@ function renderHof(board){
   $('hofList').innerHTML=rows;
 }
 
+/* ════════ PRIZE TICKET ════════
+   The handoff from a booth machine to the player's own phone. The QR
+   carries the ticket URL; the code underneath is the fallback for a
+   camera that will not focus, and the thing staff type at the stand. */
+function ticketURL(code){
+  var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
+  return base+'ticket.html?t='+encodeURIComponent(code);
+}
+function renderTicket(code){
+  var box=$('hofTicket'); if(!box||!code)return;
+  box.style.display='block';
+  $('hofCode').textContent=code;
+
+  var draw=PRIZE.drawFor(Date.now()),info;
+  if(draw){
+    info='Your draw is at <b style="color:var(--gold)">'+esc(draw.label)+'</b>. '+
+         'Top '+PRIZE.DEFAULTS.winnersPerGroup+' in '+esc(USER.group)+' win a compass.<br>'+
+         'Scan now — the page shows your live position and tells you if you win.';
+  } else {
+    info='Scan to check your result, or come to <b style="color:var(--gold)">stand 440</b> and show this code.';
+  }
+  $('hofDrawInfo').innerHTML=info;
+
+  var qr=$('hofQR');
+  if(qr&&window.QRCode){
+    qr.innerHTML='';
+    try{qr.appendChild(QRCode.canvas(ticketURL(code),{size:150}));}
+    catch(e){qr.innerHTML='<span class="muted" style="font-size:12px">'+esc(ticketURL(code))+'</span>';}
+  }
+}
+
 /* ════════ PLAY AGAIN ════════ */
 (function(){var bm=$('hofBackMenu');if(bm)bm.onclick=function(){showApp();showMenu();};})();
 $('hofPlayAgain').onclick=function(){
   POINTS=0;syncPoints();currentGame=0;window._hofSubmitted=false;qStartTime=0;
+  USER.code='';var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
   Cloud.updateSession({game:'quiz',points:0});
   document.getElementById('app').style.display='none';
   window._skipWelcome=true;

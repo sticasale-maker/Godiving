@@ -1,0 +1,395 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06222e">
+<title>Your prize ticket — VIZ Sydney Dive Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
+    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
+    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b; --badd:#3d1414;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%}
+  body{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
+  .wrap{width:100%;max-width:440px}
+
+  .logobar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
+  .logobar img{height:34px;width:auto}
+  .logobar img.circle{border-radius:50%}
+  .logobar .sep{width:1px;height:26px;background:var(--line)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:18px 16px;margin-bottom:12px}
+
+  .eyebrow{font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+
+  .who{font-size:26px;font-weight:800;line-height:1.15;margin:0 0 2px}
+  .meta{color:var(--muted);font-size:14px}
+  .meta b{color:var(--accent)}
+
+  .code{font-family:'Press Start 2P',monospace;font-size:clamp(22px,7vw,32px);
+    color:var(--gold);letter-spacing:3px;text-align:center;margin:14px 0 4px;word-break:break-all}
+  .codehint{text-align:center;color:var(--muted);font-size:12px}
+
+  .countdown{font-family:'Press Start 2P',monospace;font-size:clamp(30px,11vw,48px);
+    color:var(--accent);text-align:center;line-height:1.25;margin:6px 0}
+  .countlabel{text-align:center;color:var(--muted);font-size:13px;margin-bottom:2px}
+
+  .rankbig{font-size:clamp(38px,14vw,58px);font-weight:800;line-height:1;text-align:center;
+    color:var(--text)}
+  .rankbig small{font-size:.4em;font-weight:600;color:var(--muted);display:block;margin-top:6px;
+    letter-spacing:1px;text-transform:uppercase}
+  .instatus{text-align:center;font-size:15px;line-height:1.5;margin-top:12px;padding:12px;
+    border-radius:12px}
+  .instatus.in{background:var(--goodd);border:1px solid var(--good);color:#cdf3df}
+  .instatus.out{background:var(--badd);border:1px solid var(--bad);color:#f7cfcf}
+  .instatus b{color:#fff}
+
+  .won{background:linear-gradient(160deg,#1c5c3c,#0e3d28);border:2px solid var(--good);
+    text-align:center;padding:26px 18px}
+  .won .big{font-family:'Press Start 2P',monospace;font-size:clamp(20px,7vw,30px);
+    color:var(--good);line-height:1.5;margin-bottom:10px}
+  .won .compass{font-size:70px;line-height:1;margin-bottom:8px;
+    animation:spin 4s linear infinite;display:inline-block}
+  @keyframes spin{from{transform:rotate(0)}to{transform:rotate(360deg)}}
+  .stand{font-family:'Press Start 2P',monospace;font-size:clamp(26px,9vw,40px);
+    color:var(--gold);margin:12px 0 4px;letter-spacing:2px}
+  .lost{background:var(--bg2);border:1px solid var(--line);text-align:center;padding:22px 18px}
+  .lost .big{font-size:22px;font-weight:800;margin-bottom:8px}
+
+  .btn{display:block;width:100%;padding:15px;border-radius:12px;border:none;cursor:pointer;
+    font-size:16px;font-weight:700;background:var(--accent);color:#04222b;margin-top:10px;
+    text-align:center;text-decoration:none;font-family:inherit}
+  .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line)}
+
+  .muted{color:var(--muted);font-size:13px;line-height:1.5}
+  .center{text-align:center}
+  .claimed{background:var(--accentd);border:1px solid var(--accent);border-radius:10px;
+    padding:10px;text-align:center;color:var(--accent);font-weight:700;margin-top:10px}
+  .err{background:var(--badd);border:1px solid var(--bad);color:#f7cfcf}
+  .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:14px;line-height:1.6}
+  .pulse{animation:pulse 1.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="logobar">
+    <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show"
+         onerror="this.style.display='none'">
+    <span class="sep"></span>
+    <img src="images/branding/vizlogo.png" alt="VIZ" class="circle"
+         onerror="this.style.display='none'">
+  </div>
+
+  <div id="content">
+    <div class="card center">
+      <p class="muted pulse">Loading your ticket…</p>
+    </div>
+  </div>
+
+  <p class="foot">
+    VIZ Sydney Diving Visibility Reports<br>
+    Go Diving Show · 5–6 September 2026 · Stand 440
+  </p>
+</div>
+
+<script src="prize.js"></script>
+<script>
+/* ════════════════════════════════════════════════════════════════
+   TICKET — the personal prize page.
+
+   One page serves both routes into the prize draw:
+     · phone players land here straight off their own device
+     · booth players scan the QR on the end screen, which carries
+       this URL onto their phone
+
+   Before their draw it shows a live standing, which is the point:
+   "you are 2nd, someone needs to beat 340" brings people back to
+   the stand BEFORE the hour rather than after it.
+
+   Winners are computed locally from the same deterministic engine
+   the admin console uses (prize.js), so this page can never
+   disagree with the staff screen at the stand.
+   ════════════════════════════════════════════════════════════════ */
+'use strict';
+
+var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
+
+var qs = new URLSearchParams(location.search);
+var CODE = PRIZE.normaliseCode(qs.get('t') || qs.get('code') || '');
+if (qs.get('prizetest') === '1') PRIZE.enableTestMode(3, 8);
+
+var $ = function (id) { return document.getElementById(id); };
+var content = $('content');
+var sb = null, scores = [], cfg = null, entry = null, announced = false, tick = null;
+
+function esc(s) {
+  return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+function card(cls, html) { return '<div class="card ' + (cls || '') + '">' + html + '</div>'; }
+
+function fmtClock(ms) {
+  if (ms < 0) ms = 0;
+  var s = Math.floor(ms / 1000), h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60);
+  s = s % 60;
+  var p = function (v) { return (v < 10 ? '0' : '') + v; };
+  return h > 0 ? h + ':' + p(m) + ':' + p(s) : p(m) + ':' + p(s);
+}
+
+/* ── load ──────────────────────────────────────────────────────── */
+function loadScript(src) {
+  return new Promise(function (res, rej) {
+    var s = document.createElement('script');
+    s.src = src; s.onload = res; s.onerror = rej;
+    document.head.appendChild(s);
+  });
+}
+
+function fetchAll() {
+  return Promise.all([
+    /* not(is true) rather than eq(false): rows that predate the
+       hidden column may read back as null */
+    sb.from('scores').select('*').not('hidden', 'is', true),
+    sb.from('settings').select('*').eq('id', 1).single()
+  ]).then(function (r) {
+    scores = (r[0].data || []).map(function (x) {
+      return {
+        id: x.id, name: x.name, score: x.score, group: x.grp, code: x.code,
+        claimed_at: x.claimed_at, golden: x.golden,
+        ts: x.ts ? new Date(x.ts).getTime() : 0
+      };
+    });
+    var s = r[1].data || {};
+    cfg = {
+      winnersPerGroup: s.winners_per_group != null ? s.winners_per_group : 2,
+      stock: s.stock != null ? s.stock : 120,
+      reserveForInstant: s.reserve_for_instant != null ? s.reserve_for_instant : 45,
+      maxPerPlayerPerDay: s.max_per_player_per_day != null ? s.max_per_player_per_day : 1
+    };
+    entry = null;
+    for (var i = 0; i < scores.length; i++) {
+      if (scores[i].code === CODE) { entry = scores[i]; break; }
+    }
+  });
+}
+
+/* ── the draw moment ───────────────────────────────────────────── */
+function announce(won) {
+  if (announced) return;
+  announced = true;
+  try { if (navigator.vibrate) navigator.vibrate(won ? [140, 70, 140, 70, 260] : [90]); } catch (e) {}
+  try {
+    var Ctx = window.AudioContext || window.webkitAudioContext;
+    if (!Ctx) return;
+    var ac = new Ctx();
+    /* rising triad on a win, single low tone otherwise */
+    var notes = won ? [523.25, 659.25, 783.99, 1046.5] : [330];
+    notes.forEach(function (f, i) {
+      var o = ac.createOscillator(), g = ac.createGain();
+      o.type = 'sine'; o.frequency.value = f;
+      o.connect(g); g.connect(ac.destination);
+      var t0 = ac.currentTime + i * 0.16;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.22, t0 + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.42);
+      o.start(t0); o.stop(t0 + 0.45);
+    });
+  } catch (e) {}
+}
+
+/* ── render ────────────────────────────────────────────────────── */
+function render() {
+  if (tick) { clearInterval(tick); tick = null; }
+
+  if (!CODE) {
+    content.innerHTML = card('err',
+      '<div class="eyebrow">No ticket code</div>' +
+      '<p class="muted">This link is missing its ticket code. Scan the QR on the game screen ' +
+      'again, or come to stand 440 and we will look you up by name.</p>');
+    return;
+  }
+  if (!entry) {
+    content.innerHTML = card('err',
+      '<div class="eyebrow">Ticket not found</div>' +
+      '<div class="code">' + esc(CODE) + '</div>' +
+      '<p class="muted center">We could not find this ticket. It can take a few seconds to ' +
+      'register after you finish — pull down to refresh. If it still will not load, come to ' +
+      'stand 440 with this code.</p>' +
+      '<button class="btn ghost" onclick="location.reload()">Try again</button>');
+    return;
+  }
+
+  var draw = PRIZE.drawFor(entry.ts);
+  var now = Date.now();
+
+  var head =
+    '<div class="eyebrow">Prize ticket</div>' +
+    '<div class="who">' + esc(entry.name) + '</div>' +
+    '<div class="meta">' + esc(entry.group) + ' · <b>' + entry.score + ' points</b></div>' +
+    '<div class="code">' + esc(entry.code) + '</div>' +
+    '<div class="codehint">Show this code at stand 440</div>';
+
+  /* played after the last draw of the day */
+  if (!draw) {
+    content.innerHTML =
+      card('', head) +
+      card('', '<div class="eyebrow">After the last draw</div>' +
+        '<p class="muted">You played after the final draw of the day, so this score is not in ' +
+        'an hourly prize round. Come to <b>stand 440</b> anyway — we keep compasses aside and ' +
+        'we would love to talk to you about diving Sydney.</p>');
+    return;
+  }
+
+  var drawn = PRIZE.hasDrawn(draw, now);
+
+  /* ── before the draw: live standing ── */
+  if (!drawn) {
+    var pv = PRIZE.provisional(scores, entry, cfg) || { rank: 1, fieldSize: 1, inWinningSlots: true };
+    var remaining = draw.at.getTime() - now;
+
+    var status;
+    if (pv.inWinningSlots) {
+      status = '<div class="instatus in">' +
+        '<b>You are in the prizes.</b><br>' +
+        (pv.threatScore != null
+          ? 'Closest challenger is on ' + pv.threatScore + '. Anyone who beats <b>' +
+            entry.score + '</b> knocks you out.'
+          : 'Nobody is close yet — but the round is still open.') +
+        '</div>';
+    } else {
+      status = '<div class="instatus out">' +
+        '<b>Not in the prizes yet.</b><br>' +
+        (pv.cutoff != null
+          ? 'You need to beat <b>' + pv.cutoff + '</b> to take a spot.'
+          : 'Play another round to climb.') +
+        '</div>';
+    }
+
+    content.innerHTML =
+      card('', head) +
+      card('',
+        '<div class="countlabel">Your draw is at <b>' + esc(draw.label) + '</b></div>' +
+        '<div class="countdown" id="cd">' + fmtClock(remaining) + '</div>' +
+        '<div class="countlabel">Top ' + cfg.winnersPerGroup + ' in ' + esc(entry.group) +
+          ' win a compass</div>') +
+      card('',
+        '<div class="rankbig">' + pv.rank +
+          '<small>of ' + pv.fieldSize + ' in this round</small></div>' +
+        status) +
+      '<a class="btn" href="arcade.html">🎮 Play again to improve your score</a>' +
+      '<p class="foot">Keep this page open — it will update itself and chime at ' +
+        esc(draw.label) + '.<br>Or bookmark it and check back.</p>';
+
+    tick = setInterval(function () {
+      var left = draw.at.getTime() - Date.now();
+      var el = $('cd');
+      if (left <= 0) { clearInterval(tick); tick = null; refresh(); return; }
+      if (el) el.textContent = fmtClock(left);
+    }, 1000);
+    return;
+  }
+
+  /* ── after the draw: the verdict ── */
+  var res = PRIZE.compute(scores, cfg).byCode[entry.code];
+  var won = !!(res && res.won);
+  announce(won);
+
+  var next = PRIZE.nextDraw(now);
+
+  if (won) {
+    content.innerHTML =
+      card('won',
+        '<div class="compass">🧭</div>' +
+        '<div class="big">YOU WON<br>A COMPASS</div>' +
+        '<div class="muted" style="color:#cdf3df">' + esc(entry.name) + ' · ' +
+          esc(entry.group) + ' · ' + entry.score + ' pts · ' +
+          (res.rank === 1 ? '🥇 1st' : res.rank === 2 ? '🥈 2nd' : res.rank + 'th') +
+          ' in the ' + esc(draw.label) + ' draw</div>' +
+        '<div class="stand">STAND 440</div>' +
+        '<div class="muted" style="color:#cdf3df">Show this screen to collect</div>' +
+        (entry.claimed_at
+          ? '<div class="claimed">✓ Collected — thanks for playing!</div>'
+          : '<div class="claimed">Collect before the show closes</div>')) +
+      card('', '<div class="code">' + esc(entry.code) + '</div>' +
+        '<div class="codehint">Your claim code</div>') +
+      '<a class="btn ghost" href="arcade.html">🎮 Play again</a>';
+  } else {
+    renderLost(res, head, draw, next);
+  }
+}
+
+function renderLost(res, head, draw, next) {
+  var ord = function (n) {
+    var s = ['th', 'st', 'nd', 'rd'], v = n % 100;
+    return n + (s[(v - 20) % 10] || s[v] || s[0]);
+  };
+
+  content.innerHTML =
+    card('', head) +
+    card('lost',
+      '<div class="big">Not this time</div>' +
+      '<div class="muted">You finished <b>' + ord(res.rank) + ' of ' + res.fieldSize +
+        '</b> in the ' + esc(draw.label) + ' draw' +
+        (res.cutoff != null ? ', where <b>' + res.cutoff + '</b> took the last compass' : '') +
+        '.</div>' +
+      (next
+        ? '<div class="muted" style="margin-top:12px">Next draw is at <b>' + esc(next.label) +
+          '</b> — play again and you are straight back in.</div>'
+        : '<div class="muted" style="margin-top:12px">That was the last draw. Come say hello ' +
+          'at stand 440 anyway.</div>')) +
+    '<a class="btn" href="arcade.html">🎮 Play again for the ' +
+      (next ? esc(next.label) : 'next') + ' draw</a>';
+}
+
+function refresh() {
+  return fetchAll().then(render, function (e) {
+    content.innerHTML = card('err',
+      '<div class="eyebrow">Connection problem</div>' +
+      '<p class="muted">Could not reach the leaderboard. Check your signal and try again — ' +
+      'or just come to stand 440 with your code.</p>' +
+      '<button class="btn ghost" onclick="location.reload()">Retry</button>');
+  });
+}
+
+/* ── boot ──────────────────────────────────────────────────────── */
+loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2').then(function () {
+  sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  return refresh();
+}).then(function () {
+  /* live updates while the round is open */
+  sb.channel('ticket-scores')
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'scores' }, function () {
+      fetchAll().then(render);
+    })
+    .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, function () {
+      fetchAll().then(render);
+    })
+    .subscribe();
+  /* phones suspend timers when backgrounded — recheck on wake */
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refresh();
+  });
+}).catch(function () {
+  content.innerHTML = card('err',
+    '<div class="eyebrow">Offline</div>' +
+    '<p class="muted">This page needs a connection to check the draw. ' +
+    'Your code is still valid — bring it to stand 440.</p>' +
+    (CODE ? '<div class="code">' + esc(CODE) + '</div>' : ''));
+});
+</script>
+</body>
+</html>

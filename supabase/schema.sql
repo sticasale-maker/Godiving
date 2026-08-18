@@ -80,11 +80,42 @@ revoke delete on public.scores from anon;
 revoke update on public.scores from anon;
 grant  update (claimed_at, hidden) on public.scores to anon;
 
+-- ── Shared draw settings ─────────────────────────────────────────
+-- Winners are computed independently on every device, so every device
+-- MUST agree on the rules. If staff drop winners_per_group from 2 to 1
+-- because stock is running low, a ticket page still using 2 would tell
+-- someone they won a compass that was never allocated. Config lives
+-- here, not in localStorage, for exactly that reason.
+create table if not exists public.settings (
+  id                     int primary key default 1,
+  winners_per_group      int default 2,
+  stock                  int default 120,
+  reserve_for_instant    int default 45,
+  max_per_player_per_day int default 1,
+  updated_at             timestamptz default now(),
+  constraint settings_single_row check (id = 1)
+);
+insert into public.settings (id) values (1) on conflict (id) do nothing;
+
+alter table public.settings enable row level security;
+drop policy if exists "anon read settings"   on public.settings;
+drop policy if exists "anon update settings" on public.settings;
+create policy "anon read settings"   on public.settings for select using (true);
+create policy "anon update settings" on public.settings for update using (true) with check (true);
+revoke delete, insert on public.settings from anon;
+
 -- ── Realtime ─────────────────────────────────────────────────────
 -- Wrapped because adding a table that is already published errors.
 do $$
 begin
   alter publication supabase_realtime add table public.scores;
+exception
+  when duplicate_object then null;
+end $$;
+
+do $$
+begin
+  alter publication supabase_realtime add table public.settings;
 exception
   when duplicate_object then null;
 end $$;
