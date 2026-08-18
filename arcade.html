@@ -549,6 +549,13 @@
   .vfill{position:absolute;left:2px;right:2px;top:50%;height:0;background:var(--good);border-radius:4px}
   .vfill.pos{background:var(--accent)}
   .vfill.neg{background:var(--bad)}
+  /* pegged: buoyancy is past the end of the +/-3 kg scale */
+  .vfill.over{animation:vpeg .5s ease-in-out infinite}
+  @keyframes vpeg{0%,100%{filter:brightness(1)}50%{filter:brightness(1.9)}}
+  .vend{position:absolute;left:0;right:0;text-align:center;font-size:8px;font-weight:800;
+    color:rgba(255,255,255,.4);z-index:2;pointer-events:none}
+  .vtop{top:1px}
+  .vbot{bottom:1px}
   .vlimit{position:absolute;left:-1px;right:-1px;height:2px;background:var(--bad);opacity:.9}
   /* rate segments are drawn as stacked blocks so it reads like a gauge */
   .vseg{position:absolute;left:3px;right:3px;height:5px;border-radius:2px;background:rgba(255,255,255,.10)}
@@ -1178,7 +1185,9 @@
           <div class="asc-vbar">
             <span class="vlab">BUOY</span>
             <div class="vtrack">
+              <span class="vend vtop">+3</span>
               <i class="vzero"></i>
+              <span class="vend vbot">-3</span>
               <i class="vfill" id="ascBuoyFill"></i>
             </div>
             <b id="ascBuoyVal">0.0</b><small>kg</small>
@@ -4007,7 +4016,10 @@ function navEnd(){
    queue. Every number displayed is a true dive value.
    ════════════════════════════════════════════════════════════════ */
 var ASC={
-  START:20, BALLAST:6, SUIT0:5,
+  /* BALLAST is set so an empty BCD reads exactly -3.0 kg at the
+     start depth: wetsuit lift (5/3 kg at 20 m) plus 3. */
+  START:20, BALLAST:4.667, SUIT0:5,
+  BUOY_SCALE:3,         /* full deflection of the buoyancy bar, kg */
   /* MASS is the inertia term: raising it makes speed build up slowly
      and smoothly without changing the terminal rate, so the runaway
      is still real but you get time to react to it. DRAG sets the
@@ -4187,10 +4199,10 @@ function ascRender(rate,B,inZone){
   /* vertical buoyancy bar: grows up from the centre when positive,
      down when negative, so "which way am I being pulled" is readable
      at a glance without doing arithmetic */
-  var bf=$('ascBuoyFill'),bfrac=Math.max(-1,Math.min(1,B/6));
+  var bf=$('ascBuoyFill'),bfrac=Math.max(-1,Math.min(1,B/ASC.BUOY_SCALE));
   bf.style.height=(Math.abs(bfrac)*50)+'%';
   bf.style.top=bfrac>=0?(50-Math.abs(bfrac)*50)+'%':'50%';
-  bf.className='vfill '+(Math.abs(B)<0.35?'':(B>0?'pos':'neg'));
+  bf.className='vfill '+(Math.abs(B)<0.35?'':(B>0?'pos':'neg'))+(Math.abs(B)>ASC.BUOY_SCALE?' over':'');
   $('ascBuoyVal').textContent=(B>=0?'+':'')+B.toFixed(1);
 
   /* diver position + the buoyancy badge on their body */
