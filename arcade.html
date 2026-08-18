@@ -530,19 +530,16 @@
     display:flex;align-items:center;justify-content:flex-end;pointer-events:none}
   .asc-stopzone span{font-size:9px;color:var(--gold);padding-right:5px;letter-spacing:.5px}
   .asc-stopzone.hit{background:rgba(243,198,79,.26)}
-  .asc-diver{position:absolute;right:14%;transform:translateY(-50%);
-    display:flex;align-items:center;gap:5px;transition:none}
-  .asc-body{font-size:30px;line-height:1;filter:drop-shadow(0 2px 4px rgba(0,0,0,.5))}
-  .asc-buoy{font-size:11px;font-weight:800;padding:2px 6px;border-radius:999px;
-    background:var(--badd);color:#f7cfcf;border:1px solid var(--bad);white-space:nowrap}
-  .asc-buoy.pos{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
-  .asc-buoy.neutral{background:var(--goodd);color:#cdf3df;border-color:var(--good)}
+  .asc-diver{position:absolute;left:50%;transform:translate(-50%,-50%);
+    width:58px;height:86px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));pointer-events:none}
+  .asc-diver svg{width:100%;height:100%;display:block}
   .asc-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
   .asc-bub{position:absolute;border-radius:50%;background:rgba(200,240,255,.55);
     border:1px solid rgba(255,255,255,.5)}
 
-  /* vertical gauges either side of the water, dive-computer style */
-  .asc-vbar{width:58px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px}
+  /* both gauges together in one column beside the water */
+  .asc-gauges{display:flex;gap:6px;flex-shrink:0}
+  .asc-vbar{width:52px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:3px}
   .asc-vbar .vlab{font-size:9px;letter-spacing:1.5px;color:var(--muted);font-weight:800}
   .asc-vbar b{font-size:15px;line-height:1}
   .asc-vbar small{font-size:9px;color:var(--muted)}
@@ -560,18 +557,26 @@
   .vseg.on.bad{background:var(--bad)}
   .vseg.down.on{background:var(--accent)}
 
-  .asc-readouts{display:grid;grid-template-columns:auto auto 1fr;gap:8px;margin-top:8px;
-    align-items:stretch;flex-shrink:0}
-  .asc-readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 9px}
+  .asc-readouts{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px;flex-shrink:0}
+  .asc-readout{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px 10px}
   .asc-readout .lab{display:block;font-size:9px;letter-spacing:1px;
     text-transform:uppercase;color:var(--muted);font-weight:700}
-  .asc-readout b{font-size:21px;line-height:1.1}
+  .asc-readout b{font-size:24px;line-height:1.1}
   .asc-readout .unit{font-size:10px;color:var(--muted);margin-left:2px}
-  .asc-msg{font-size:11.5px;line-height:1.4;color:var(--muted);
-    background:var(--bg2);border:1px solid var(--line);border-radius:10px;padding:6px 9px;
-    display:flex;align-items:center}
-  .asc-msg.good{color:#cdf3df;border-color:var(--good)}
-  .asc-msg.bad{color:#f7cfcf;border-color:var(--bad)}
+
+  /* coaching sits big across the middle of the water — this is the
+     thing the player must not miss while watching the gauges */
+  /* translucent backing so the coaching stays legible when the diver
+     passes behind it — they share the middle of the column */
+  .asc-msg{position:absolute;left:4%;right:4%;top:50%;transform:translateY(-50%);
+    text-align:center;font-size:clamp(17px,4.6vw,25px);font-weight:800;line-height:1.3;
+    color:#eaf6fb;text-shadow:0 2px 8px rgba(0,0,0,.9);
+    background:rgba(4,20,30,.62);border-radius:14px;padding:12px 10px;
+    backdrop-filter:blur(2px);-webkit-backdrop-filter:blur(2px);
+    pointer-events:none;transition:opacity .2s}
+  .asc-msg.good{color:#9ff0c4}
+  .asc-msg.bad{color:#ffb3b3}
+  .asc-msg.quiet{opacity:0}
 
   .asc-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;flex-shrink:0}
   .asc-btn{padding:16px 8px;border-radius:14px;border:2px solid var(--line);cursor:pointer;
@@ -583,7 +588,9 @@
   .asc-btn.on{transform:translateY(2px);filter:brightness(1.45)}
   .asc-btn:disabled{opacity:.4}
   @media(max-width:430px){
-    .asc-instruments{width:44%}
+    .asc-vbar{width:44px}
+    .asc-gauges{gap:4px}
+    .asc-diver{width:50px;height:74px}
     .asc-readout b{font-size:21px}
   }
 
@@ -1156,41 +1163,39 @@
         <span class="score">Attempt <b id="ascTry">1</b> / <b id="ascTries">3</b></span>
       </div>
       <div class="asc-wrap">
-        <!-- buoyancy: vertical bar, centre = neutral -->
-        <div class="asc-vbar" id="ascBuoyBar">
-          <span class="vlab">BUOY</span>
-          <div class="vtrack">
-            <i class="vzero"></i>
-            <i class="vfill" id="ascBuoyFill"></i>
-          </div>
-          <b id="ascBuoyVal">0.0</b><small>kg</small>
-        </div>
-
         <div class="asc-col" id="ascCol">
           <div class="asc-scale" id="ascScale"></div>
           <div class="asc-bubbles" id="ascBubbles"></div>
           <div class="asc-stopzone" id="ascStopZone"><span>safety stop</span></div>
-          <div class="asc-diver" id="ascDiver">
-            <span class="asc-body">🤿</span>
-            <span class="asc-buoy" id="ascBuoy">0.0</span>
-          </div>
+          <div class="asc-diver" id="ascDiver"></div>
           <div class="asc-surface"></div>
+          <!-- coaching, big and centred over the water -->
+          <div class="asc-msg" id="ascMsg">Hold INFLATE to get off the bottom</div>
         </div>
 
-        <!-- ascent rate: segmented vertical bar, as on a dive computer -->
-        <div class="asc-vbar" id="ascRateBar">
-          <span class="vlab">RATE</span>
-          <div class="vtrack" id="ascRateTrack">
-            <i class="vzero"></i>
-            <span class="vlimit"></span>
+        <!-- the two gauges side by side, as on a dive computer -->
+        <div class="asc-gauges">
+          <div class="asc-vbar">
+            <span class="vlab">BUOY</span>
+            <div class="vtrack">
+              <i class="vzero"></i>
+              <i class="vfill" id="ascBuoyFill"></i>
+            </div>
+            <b id="ascBuoyVal">0.0</b><small>kg</small>
           </div>
-          <b id="ascRate">0.0</b><small>m/min</small>
+          <div class="asc-vbar">
+            <span class="vlab">RATE</span>
+            <div class="vtrack" id="ascRateTrack">
+              <i class="vzero"></i>
+              <span class="vlimit"></span>
+            </div>
+            <b id="ascRate">0.0</b><small>m/min</small>
+          </div>
         </div>
       </div>
       <div class="asc-readouts">
-        <div class="asc-readout"><span class="lab">Depth</span><b id="ascDepth">30.0</b><span class="unit">m</span></div>
+        <div class="asc-readout"><span class="lab">Depth</span><b id="ascDepth">20.0</b><span class="unit">m</span></div>
         <div class="asc-readout"><span class="lab">BCD</span><b id="ascBcd">0.0</b><span class="unit">L</span></div>
-        <div class="asc-msg" id="ascMsg">Inflate a little to get off the bottom</div>
       </div>
       <div class="asc-buttons">
         <button class="asc-btn asc-in" id="ascInflate">▲ INFLATE<small>hold</small></button>
@@ -3600,13 +3605,20 @@ $('migNext').onclick=migRound;
    Drawn as geometry and silhouette rather than illustration: dark
    reef masses, light shafts, an emoji diver.
    ════════════════════════════════════════════════════════════════ */
+/* Tuned against a reachability budget, not by feel: the diver has to
+   be able to cross the worst-case height change between two gates in
+   the time the scroll gives them, with margin to spare. The first
+   version failed that badly — 38 px of reachable travel against gates
+   up to 130 px apart, which is impossible rather than hard. */
 var NU={
-  LUNG_IN:1.6, LUNG_OUT:1.9,   /* litres per second               */
-  LUNG_MAX:2.6,                /* usable tidal range              */
-  MASS:85, DRAG:120, G:9.81,
-  SPEED:74,                    /* px/s the reef scrolls past      */
+  LUNG_IN:3.0, LUNG_OUT:3.4,   /* litres per second               */
+  LUNG_MAX:3.2,                /* usable tidal range              */
+  MASS:45, DRAG:60, G:9.81,    /* lighter + slipperier = it answers */
+  PXM:70,                      /* px per metre of travel          */
+  SPEED:58,                    /* px/s the reef scrolls past      */
+  SPREAD:0.40,                 /* how far gates roam vertically   */
   GATES:{'Young Explorer':5,'Teen Explorer':7,'Adult Explorer':9},
-  GAP:{'Young Explorer':150,'Teen Explorer':118,'Adult Explorer':94}
+  GAP:{'Young Explorer':175,'Teen Explorer':142,'Adult Explorer':115}
 };
 var nu=null,nuRAF=null;
 
@@ -3624,8 +3636,11 @@ function initNeutral(){
   for(var i=0;i<nu.total;i++){
     nu.gates.push({x:320+i*230, y:0, r:0, done:false});
   }
+  /* keep gates inside a band the diver can actually traverse between
+     one gate and the next; see the reachability note on NU */
+  var lo=(1-NU.SPREAD)/2;
   nu.gates.forEach(function(g,i){
-    g.y=nu.h*(0.28+0.44*Math.abs(Math.sin(i*1.7)));
+    g.y=nu.h*(lo+NU.SPREAD*Math.abs(Math.sin(i*1.7)));
   });
   $('nuGates').textContent=0;$('nuTotal').textContent=nu.total;$('nuNotice').textContent='';
   nu.last=performance.now();
@@ -3643,7 +3658,7 @@ function nuStep(now){
   nu.lung=Math.max(-NU.LUNG_MAX,Math.min(NU.LUNG_MAX,nu.lung));
   var B=nu.lung*1.03;
   nu.v+=((B*NU.G-NU.DRAG*nu.v*Math.abs(nu.v))/NU.MASS)*dt;
-  nu.y-=nu.v*26*dt;                    /* 26 px per metre           */
+  nu.y-=nu.v*NU.PXM*dt;
   nu.x+=NU.SPEED*dt;
 
   if(nu.y<12){nu.y=12;nu.v=0;}
@@ -3947,7 +3962,7 @@ function navEnd(){
    queue. Every number displayed is a true dive value.
    ════════════════════════════════════════════════════════════════ */
 var ASC={
-  START:30, BALLAST:6, SUIT0:5,
+  START:20, BALLAST:6, SUIT0:5,
   /* MASS is the inertia term: raising it makes speed build up slowly
      and smoothly without changing the terminal rate, so the runaway
      is still real but you get time to react to it. DRAG sets the
@@ -3971,6 +3986,37 @@ var ASC={
 };
 var asc=null,ascRAF=null;
 
+/* Full-body diver, upright and finning, drawn as flat silhouette
+   shapes so it stays readable at 52px. Swappable: drop a prepared
+   PNG at images/creatures/sil-diver.png (same pipeline as the other
+   sil-*.png files) and it is used instead, no code change. */
+var ASC_DIVER_SVG=
+ '<svg viewBox="0 0 52 78" xmlns="http://www.w3.org/2000/svg">'+
+ '<g fill="#0d2b38" stroke="#8fd8e8" stroke-width="1.6" stroke-linejoin="round">'+
+   '<rect x="12" y="16" width="11" height="26" rx="5" fill="#20404e"/>'+   /* tank */
+   '<rect x="14.5" y="12" width="6" height="5" rx="2" fill="#20404e"/>'+   /* valve */
+   '<path d="M21 22 q7 -4 8 -8" fill="none" stroke="#8fd8e8" stroke-width="1.8"/>'+ /* hose */
+   '<circle cx="30" cy="12" r="8"/>'+                                      /* head */
+   '<path d="M27 8 q6 -2 9 2 q1 4 -3 5 q-5 0 -6 -4 Z" fill="#9fe8e2"/>'+   /* mask */
+   '<path d="M22 20 q9 -3 13 3 l2 18 q-8 5 -16 0 Z"/>'+                    /* torso */
+   '<path d="M35 26 q7 4 5 12" fill="none" stroke="#8fd8e8" stroke-width="3" stroke-linecap="round"/>'+ /* arm */
+   '<path d="M23 40 q6 3 12 0 l-2 16 q-4 2 -8 0 Z"/>'+                     /* hips */
+   '<path d="M25 55 l-2 13" stroke="#8fd8e8" stroke-width="4" stroke-linecap="round"/>'+
+   '<path d="M32 55 l2 13" stroke="#8fd8e8" stroke-width="4" stroke-linecap="round"/>'+
+   '<path d="M18 66 q6 -3 8 2 q-4 6 -10 4 Z" fill="#2a5666"/>'+            /* fins */
+   '<path d="M38 66 q-6 -3 -8 2 q4 6 10 4 Z" fill="#2a5666"/>'+
+ '</g></svg>';
+
+function ascDiverHTML(){
+  return '<img src="images/creatures/sil-diver.png" alt="diver" '+
+         'style="width:100%;height:100%;object-fit:contain" '+
+         'onerror="this.outerHTML=ASC_DIVER_SVG">';
+}
+
+/* Depth -> vertical position, inset top and bottom so the diver is
+   never clipped by the edge of the water column at either extreme. */
+function ascYPct(d){return 8+(d/ASC.START)*84;}
+
 function ascP(d){return 1+d/10;}
 function ascSuit(d){return ASC.SUIT0/ascP(d);}
 function ascBuoyancy(d,bcd){return bcd*1.03+ascSuit(d)-ASC.BALLAST;}
@@ -3983,14 +4029,14 @@ function initAscent(){
 }
 function ascBuildScale(){
   var s=$('ascScale'),h='';
-  for(var d=0;d<=30;d+=5){
-    var pct=(d/ASC.START)*100;
+  for(var d=0;d<=ASC.START;d+=5){
+    var pct=ascYPct(d);
     h+='<i style="top:'+pct+'%"></i><span style="top:'+pct+'%">'+d+' m</span>';
   }
   s.innerHTML=h;
   var z=$('ascStopZone');
-  z.style.top=((ASC.STOP_DEPTH-ASC.STOP_BAND)/ASC.START*100)+'%';
-  z.style.height=((ASC.STOP_BAND*2)/ASC.START*100)+'%';
+  z.style.top=ascYPct(ASC.STOP_DEPTH-ASC.STOP_BAND)+'%';
+  z.style.height=(ascYPct(ASC.STOP_DEPTH+ASC.STOP_BAND)-ascYPct(ASC.STOP_DEPTH-ASC.STOP_BAND))+'%';
 
   /* build the segmented rate gauge once: RATE_SEGS blocks above the
      centre line for ascent, the same below for descent */
@@ -4021,8 +4067,10 @@ function ascStart(){
   asc.stop=0;               /* safety-stop seconds banked   */
   asc.done=false;
   asc.inflate=false;asc.deflate=false;
+  $('ascDiver').innerHTML=ascDiverHTML();
+  $('ascDiver').style.top=ascYPct(asc.d)+'%';
   $('ascInflate').disabled=false;$('ascDeflate').disabled=false;
-  ascMsg('Inflate a little to get off the bottom','');
+  ascMsg('Hold INFLATE to get off the bottom','');
   asc.last=performance.now();
   ascRAF=requestAnimationFrame(ascStep);
 }
@@ -4098,10 +4146,7 @@ function ascRender(rate,B,inZone){
   $('ascBuoyVal').textContent=(B>=0?'+':'')+B.toFixed(1);
 
   /* diver position + the buoyancy badge on their body */
-  $('ascDiver').style.top=(asc.d/ASC.START*100)+'%';
-  var badge=$('ascBuoy');
-  badge.textContent=(B>=0?'+':'')+B.toFixed(1)+' kg';
-  badge.className='asc-buoy'+(Math.abs(B)<0.35?' neutral':(B>0?' pos':''));
+  $('ascDiver').style.top=ascYPct(asc.d)+'%';
 
   if(asc.deflate&&Math.random()<0.5)ascBubble();
 
@@ -4129,7 +4174,7 @@ function ascBubble(){
   var sz=3+Math.random()*5;
   b.style.width=b.style.height=sz+'px';
   b.style.right=(13+Math.random()*5)+'%';
-  b.style.top=(asc.d/ASC.START*100)+'%';
+  b.style.top=ascYPct(asc.d)+'%';
   box.appendChild(b);
   var top=parseFloat(b.style.top),drift=(Math.random()-0.5)*3;
   var t0=performance.now();
