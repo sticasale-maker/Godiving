@@ -586,9 +586,10 @@
   .asc-msg.good{color:#9ff0c4}
   .asc-msg.bad{color:#ffb3b3}
   .asc-msg.quiet{opacity:0}
-  /* dropped clear of the diver; bottom-anchored so it can never
-     overflow a short column on a phone */
+  /* parked clear of the diver at one end or the other; edge-anchored
+     so it can never overflow a short column on a phone */
   .asc-msg.low{top:auto;bottom:6px;transform:none}
+  .asc-msg.high{top:6px;bottom:auto;transform:none}
 
   .asc-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;flex-shrink:0}
   /* see holdButton(): long-press text selection was eating events */
@@ -1193,9 +1194,9 @@
           <div class="asc-vbar">
             <span class="vlab">BUOY</span>
             <div class="vtrack">
-              <span class="vend vtop">+3</span>
+              <span class="vend vtop">+2</span>
               <i class="vzero"></i>
-              <span class="vend vbot">-3</span>
+              <span class="vend vbot">-2</span>
               <i class="vfill" id="ascBuoyFill"></i>
             </div>
             <b id="ascBuoyVal">0.0</b><small>kg</small>
@@ -4055,10 +4056,10 @@ function navEnd(){
    queue. Every number displayed is a true dive value.
    ════════════════════════════════════════════════════════════════ */
 var ASC={
-  /* BALLAST is set so an empty BCD reads exactly -3.0 kg at the
-     start depth: wetsuit lift (5/3 kg at 20 m) plus 3. */
-  START:20, BALLAST:4.667, SUIT0:5,
-  BUOY_SCALE:3,         /* full deflection of the buoyancy bar, kg */
+  /* BALLAST is set so an empty BCD reads exactly -2.0 kg at the
+     start depth: wetsuit lift (5/3 kg at 20 m) plus 2. */
+  START:20, BALLAST:3.667, SUIT0:5,
+  BUOY_SCALE:2,         /* full deflection of the buoyancy bar, kg */
   /* MASS is the inertia term: raising it makes speed build up slowly
      and smoothly without changing the terminal rate, so the runaway
      is still real but you get time to react to it. DRAG sets the
@@ -4166,8 +4167,10 @@ function ascStart(){
   asc.stop=0;               /* safety-stop seconds banked   */
   asc.done=false;
   asc.inflate=false;asc.deflate=false;
-  asc.msgLow=false;asc.msgCool=0;asc.frame=0;
-  var _m=$('ascMsg');if(_m)_m.classList.remove('low');
+  /* diver starts on the bottom, so the coaching starts up top */
+  asc.msgLow=false;
+  var _m0=$('ascMsg');
+  if(_m0){_m0.classList.remove('low');_m0.classList.add('high');}
   $('ascDiver').innerHTML=ascDiverHTML();
   $('ascDiver').style.top=ascYPct(asc.d)+'%';
 
@@ -4180,13 +4183,12 @@ function ascStop(){if(ascRAF){cancelAnimationFrame(ascRAF);ascRAF=null;}}
 /* preserves the 'low' position class, which is owned by the
    collision check in ascRender rather than by whoever sets text */
 function ascMsg(t,cls){var m=$('ascMsg');if(!m)return;m.textContent=t;
-  m.className='asc-msg'+(cls?' '+cls:'')+(asc&&asc.msgLow?' low':'');}
+  m.className='asc-msg'+(cls?' '+cls:'')+(asc?(asc.msgLow?' low':' high'):'');}
 
 function ascStep(now){
   if(!asc||asc.done)return;
   var dt=Math.min(0.05,(now-asc.last)/1000)*ASC.TIMESCALE;
   asc.last=now;
-  if(asc.msgCool>0)asc.msgCool-=dt;
 
   /* ---- BCD: inflating adds gas at ambient pressure ---- */
   if(asc.inflate)asc.bcd+=ASC.INFLATE*dt;
@@ -4254,21 +4256,21 @@ function ascRender(rate,B,inZone){
   /* diver position */
   $('ascDiver').style.top=ascYPct(asc.d)+'%';
 
-  /* Never let the coaching sit on top of the diver. Tested against
-     real geometry rather than a magic percentage, because the water
-     column is far shorter on a phone. Whenever they would collide the
-     text jumps to the other end of the column, with a cooldown so it
-     cannot flap while the diver hovers on the boundary. */
-  if((asc.frame=(asc.frame||0)+1)%4===0&&(asc.msgCool||0)<=0){
-    var mEl=$('ascMsg'),dEl=$('ascDiver');
-    if(mEl&&dEl){
-      var mr=mEl.getBoundingClientRect(),dr=dEl.getBoundingClientRect();
-      if(!(dr.bottom<mr.top-8||dr.top>mr.bottom+8)){
-        asc.msgLow=!asc.msgLow;asc.msgCool=1.2;
-        mEl.classList.toggle('low',asc.msgLow);
-      }
-    }
-  }
+  /* Keep the coaching out of the diver's way. The earlier version
+     toggled on collision, which flip-flopped: on a short phone column
+     the text block is tall enough to touch the diver at BOTH ends, so
+     it bounced between them and covered the diver half the time.
+
+     Deterministic instead — the text lives in whichever half of the
+     column the diver is not in. The diver ascends from the bottom, so
+     this is one clean move per run: text starts high, drops low as
+     they climb past the middle. The dead band stops it twitching for
+     anyone hovering right on the midpoint. */
+  var _dp=ascYPct(asc.d);
+  if(asc.msgLow&&_dp>56)asc.msgLow=false;
+  else if(!asc.msgLow&&_dp<44)asc.msgLow=true;
+  var _m=$('ascMsg');
+  if(_m){_m.classList.toggle('low',asc.msgLow);_m.classList.toggle('high',!asc.msgLow);}
 
   if(asc.deflate&&Math.random()<0.5)ascBubble();
 
