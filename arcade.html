@@ -547,7 +547,9 @@
     border:1px solid var(--line);overflow:hidden}
   .vzero{position:absolute;left:0;right:0;top:50%;height:1px;background:rgba(255,255,255,.35)}
   .vfill{position:absolute;left:2px;right:2px;top:50%;height:0;background:var(--good);border-radius:4px}
-  .vfill.pos{background:var(--accent)}
+  /* green means the water is lifting you, red means it is not:
+     no dead band, because "which way am I going" is the whole read */
+  .vfill.pos{background:var(--good)}
   .vfill.neg{background:var(--bad)}
   /* pegged: buoyancy is past the end of the +/-3 kg scale */
   .vfill.over{animation:vpeg .5s ease-in-out infinite}
@@ -584,8 +586,15 @@
   .asc-msg.good{color:#9ff0c4}
   .asc-msg.bad{color:#ffb3b3}
   .asc-msg.quiet{opacity:0}
+  /* dropped clear of the diver; bottom-anchored so it can never
+     overflow a short column on a phone */
+  .asc-msg.low{top:auto;bottom:6px;transform:none}
 
   .asc-buttons{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;flex-shrink:0}
+  /* see holdButton(): long-press text selection was eating events */
+  .asc-btn,.nu-btn,.nav-btn{-webkit-user-select:none;-ms-user-select:none;user-select:none;
+    -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+  .asc-btn *,.nu-btn *,.nav-btn *{pointer-events:none}
   .asc-btn{padding:16px 8px;border-radius:14px;border:2px solid var(--line);cursor:pointer;
     font-family:'Press Start 2P',monospace;font-size:clamp(11px,2.6vw,14px);letter-spacing:1px;
     display:flex;flex-direction:column;align-items:center;gap:5px;touch-action:none;user-select:none}
@@ -614,11 +623,6 @@
   .zoom-hint{font-size:12px;color:var(--muted);text-align:center;margin:0 0 8px}
 
   /* ── FISH OR KIT? ── */
-  .fk-word{font-size:clamp(26px,8vw,42px);font-weight:800;text-align:center;line-height:1.25;
-    background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:30px 18px}
-  .tf-btn.fkfish{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
-  .tf-btn.fkgear{background:#3a3010;color:var(--gold);border-color:var(--gold)}
-
   /* ── SIZE LINE-UP ── */
   .lu-task{font-size:15px;text-align:center;color:var(--text);background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px;flex-shrink:0}
@@ -674,6 +678,11 @@
   .exp-btn .ic{display:block;font-size:20px;margin-bottom:3px}
   .exp-btn:active{transform:translateY(1px)}
   .exp-btn.sel{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
+
+  /* ── WRECK DETECTIVE: the clue carries the game ── */
+  .wreck-clue{font-size:clamp(15px,3.9vw,20px);line-height:1.45;color:var(--text);
+    background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--gold);
+    border-radius:12px;padding:14px 14px;margin:8px 0 12px;flex-shrink:0}
 
   /* ── PRIZE TICKET on the end screen ── */
   .ticket-box{background:linear-gradient(160deg,#0f4a56,#0c3142);border:2px solid var(--gold);
@@ -819,7 +828,6 @@
       <div class="gstep" id="gs-nav"><div class="icon">🧭</div><div class="label">Nav trainer</div></div>
       <div class="gstep" id="gs-neutral"><div class="icon">🫁</div><div class="label">Neutral</div></div>
       <div class="gstep" id="gs-migrate"><div class="icon">🐋</div><div class="label">Migration</div></div>
-      <div class="gstep" id="gs-fishkit"><div class="icon">🐙</div><div class="label">Fish or kit</div></div>
       <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
       <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
     </div>
@@ -1057,7 +1065,7 @@
         <span class="score">Score <b id="wreckidScore">0</b> / <b id="wreckidTotal">0</b></span>
       </div>
       <div id="wreckidArt" style="margin-bottom:8px"></div>
-      <p class="qfact" id="wreckidClue" style="margin:2px 0 10px;font-size:14px;color:var(--text)"></p>
+      <p class="wreck-clue" id="wreckidClue"></p>
       <div class="opts-grid" id="wreckidOpts"></div>
       <p class="qfact" id="wreckidFact" style="margin-top:10px"></p>
       <div style="text-align:center"><button class="btn ghost" id="wreckidNext" style="display:none">Next →</button></div>
@@ -1226,23 +1234,6 @@
       <p class="qfact" id="zoomFact"></p>
       <div style="text-align:center"><button class="btn ghost" id="zoomNext" style="display:none">Next →</button></div>
       <p class="auto-notice" id="zoomNotice"></p>
-    </div>
-
-    <!-- FISH OR KIT? -->
-    <div class="panel" id="p-fishkit">
-      <div class="game-header">
-        <span class="game-label">Fish or kit?</span>
-        <span class="score">Score <b id="fkScore">0</b> / <b id="fkTotal">0</b></span>
-      </div>
-      <div class="tf-stage">
-        <div class="fk-word" id="fkWord"></div>
-        <div class="tf-buttons">
-          <button class="tf-btn fkfish" id="fkFish">🐠 FISH</button>
-          <button class="tf-btn fkgear" id="fkGear">🤿 KIT</button>
-        </div>
-        <div class="tf-reveal" id="fkReveal"></div>
-      </div>
-      <p class="auto-notice" id="fkNotice"></p>
     </div>
 
     <!-- SIZE LINE-UP -->
@@ -1510,7 +1501,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',fishkit:'Fish or Kit?',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -2268,11 +2259,11 @@ var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){
 
 /* ════════ SITE DATA ════════ */
 var PHOTO_SCENES=[
-  {img:'images/sites/chowder.jpg',name:'Chowder Bay',svg:siteSVG('Chowder Bay','#1f6f86','#0c4257','pier')},
-  {img:'images/sites/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('Cabbage Tree Bay','#1d7d72','#0c4a44','kelp')},
-  {img:'images/sites/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('SS Centennial')},
-  {img:'images/sites/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('TSS Currajong')},
-  {img:'images/sites/bareisland.jpg',name:'Bare Island',svg:siteSVG('Bare Island','#236f7e','#0c3a44','kelp')}
+  {img:'images/sites/chowder.jpg',name:'Chowder Bay',svg:siteSVG('WHERE AM I?','#1f6f86','#0c4257','pier')},
+  {img:'images/sites/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')},
+  {img:'images/sites/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('WHERE AM I?')},
+  {img:'images/sites/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('WHERE AM I?')},
+  {img:'images/sites/bareisland.jpg',name:'Bare Island',svg:siteSVG('WHERE AM I?','#236f7e','#0c3a44','kelp')}
 ];
 var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
 function siteSVG(label,top,bottom,feature){
@@ -2388,7 +2379,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','fishkit','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate'];
+var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2440,7 +2431,6 @@ function startGame(name){
   else if(name==='wreckfind')initWreckFind();
   else if(name==='sharkid')initSharkId();
   else if(name==='zoom')initZoom();
-  else if(name==='fishkit')initFishKit();
   else if(name==='lineup')initLineUp();
   else if(name==='memory')initMemory();
   else if(name==='ascent')initAscent();
@@ -2469,7 +2459,6 @@ var GAME_META={
   wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'},
   sharkid:{icon:'🦈',name:'Shark ID',desc:'Drag each name onto its shark'},
   zoom:{icon:'🔍',name:'Zoom In',desc:'Name it before it zooms out'},
-  fishkit:{icon:'🐙',name:'Fish or Kit?',desc:'Is it a fish or dive gear?'},
   lineup:{icon:'📏',name:'Size Line-Up',desc:'Tap them into the right order'},
   memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'},
   ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'},
@@ -3297,7 +3286,9 @@ function initWreckId(){
 }
 function wreckidRound(){
   wreckidAnswered=false;wreckidCur=wreckidQueue.shift();
-  $('wreckidArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.7)+'px">'+wreckSVG(wreckidCur.name)+'</div>';
+  /* NEVER pass the wreck's name here: wreckSVG draws its label
+     across the artwork, which printed the answer above the options */
+  $('wreckidArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.42)+'px">'+wreckSVG('UNIDENTIFIED WRECK')+'</div>';
   $('wreckidClue').textContent=wreckidCur.clue;
   $('wreckidFact').textContent='';$('wreckidNext').style.display='none';
   var wrong=shuffle(WRECK_DB.filter(function(w){return w.name!==wreckidCur.name;})).slice(0,3).map(function(w){return w.name;});
@@ -3526,6 +3517,55 @@ function wireSharkId(){
   function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
 }
 
+
+/* ════════════════════════════════════════════════════════════════
+   HOLD BUTTONS
+
+   Press-and-hold controls were dropping inputs. The cause is that a
+   long press on a button containing TEXT starts a text selection (and
+   on iOS the callout menu), which steals the pointer stream so the
+   matching pointerup never arrives and the control sticks on or off.
+
+   Three defences, all needed:
+     1. the label is wrapped in a non-selectable span and the whole
+        control opts out of selection, callouts and tap highlight
+     2. setPointerCapture routes every later event for that finger to
+        this element, so the release is heard even if it drifts off
+        the button or over another element
+     3. selectstart / contextmenu / dragstart are cancelled outright
+
+   Anything that must respond to being held should go through here
+   rather than wiring pointerdown itself.
+   ════════════════════════════════════════════════════════════════ */
+function holdButton(el,onChange){
+  if(!el)return;
+  var down=false;
+  function set(on,ev){
+    if(ev)ev.preventDefault();
+    if(down===on)return;
+    down=on;
+    el.classList.toggle('on',on);
+    try{onChange(on);}catch(e){}
+  }
+  el.addEventListener('pointerdown',function(ev){
+    try{el.setPointerCapture(ev.pointerId);}catch(e){}
+    set(true,ev);
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){
+    el.addEventListener(t,function(ev){set(false,ev);});
+  });
+  /* a pointer that leaves without capture (mouse dragged off) */
+  el.addEventListener('pointerleave',function(ev){
+    if(!el.hasPointerCapture||!el.hasPointerCapture(ev.pointerId))set(false,ev);
+  });
+  ['selectstart','contextmenu','dragstart'].forEach(function(t){
+    el.addEventListener(t,function(ev){ev.preventDefault();return false;});
+  });
+  /* releasing anywhere at all is a release */
+  window.addEventListener('pointerup',function(){set(false);});
+  window.addEventListener('blur',function(){set(false);});
+}
+
 /* ════════════════════════════════════════════════════════════════
    MIGRATION HIGHWAY — which way is it heading, and is it going
    anywhere at all?
@@ -3636,17 +3676,23 @@ $('migNext').onclick=migRound;
    Now ~1.0 s and ~43 px. Keep both in range if these are ever
    retuned; the lag should be felt, not fought. */
 var NU={
-  LUNG_IN:8.0, LUNG_OUT:8.5,   /* litres per second                */
-  LUNG_MAX:1.8,                /* usable tidal range               */
-  MASS:12, DRAG:22, G:9.81,
-  PXM:64,                      /* px per metre of travel           */
-  SPEED:42,                    /* px/s the cave scrolls past       */
+  LUNG_IN:12.0, LUNG_OUT:13.0, /* litres per second                */
+  LUNG_MAX:1.2,                /* usable tidal range               */
+  MASS:6, DRAG:13, G:9.81,
+  PXM:62,                      /* px per metre of travel           */
+  SPEED:36,                    /* px/s the cave scrolls past       */
   SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
      px-per-px capability (top vertical speed / scroll speed) */
-  A1:30, L1:600, A2:10, L2:280,
-  HALF:{'Young Explorer':88,'Teen Explorer':70,'Adult Explorer':56},
+  /* Everything vertical is a FRACTION of the canvas height, because
+     the same pixel tunnel is far tighter on a short phone canvas than
+     on a desktop one. OPEN is how much of the height the tunnel mouth
+     occupies; ROAM1/ROAM2 are the centreline wander. The constraint
+     that keeps rock on screen is
+        0.5 - (ROAM1+ROAM2) - OPEN/2*(1+PINCH/2) > 0                */
+  ROAM1:0.060, L1:600, ROAM2:0.020, L2:280,
+  OPEN:{'Young Explorer':0.68,'Teen Explorer':0.56,'Adult Explorer':0.46},
   PINCH:0.20,                  /* how much the tunnel narrows      */
   TICK:2,                      /* award every N seconds survived   */
   TICK_PTS:3,
@@ -3655,7 +3701,7 @@ var NU={
 var nu=null,nuRAF=null;
 
 /* tunnel centreline and half-height at a given world x */
-function nuMid(x){return nu.h/2+NU.A1*Math.sin(x/NU.L1*6.283)+NU.A2*Math.sin(x/NU.L2*6.283+1.7);}
+function nuMid(x){return nu.h/2+nu.a1*Math.sin(x/NU.L1*6.283)+nu.a2*Math.sin(x/NU.L2*6.283+1.7);}
 function nuHalf(x){return nu.half*(1-NU.PINCH*0.5+NU.PINCH*0.5*Math.sin(x/190+0.6));}
 
 function initNeutral(){
@@ -3664,7 +3710,8 @@ function initNeutral(){
   nu={
     w:cv.width,h:cv.height,
     y:cv.height/2, v:0, lung:0, x:0,
-    half:NU.HALF[USER.group]||62,
+    half:cv.height*(NU.OPEN[USER.group]||0.56)/2,
+    a1:cv.height*NU.ROAM1, a2:cv.height*NU.ROAM2,
     hits:0, pts:0, t:0, sinceTick:0, cool:0,
     breathing:false, done:false
   };
@@ -3784,12 +3831,7 @@ function nuEnd(){
   $('nuNotice').textContent=msg+' Back to the menu…';
   setTimeout(advanceGame,2900);
 }
-(function(){
-  var b=$('nuBreath');if(!b)return;
-  var set=function(on){return function(ev){ev.preventDefault();if(!nu||nu.done)return;nu.breathing=on;b.classList.toggle('on',on);};};
-  b.addEventListener('pointerdown',set(true));
-  ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(false));});
-})();
+holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;});
 
 /* ═══════════════════════════════════════════════════════════════
    NAV TRAINER — set the bezel, then hold the bearing.
@@ -3967,10 +4009,7 @@ function navEnd(){
 }
 (function(){
   function turnBtn(id,dir){
-    var b=$(id);if(!b)return;
-    var set=function(v){return function(ev){ev.preventDefault();if(!nav||nav.done)return;nav.turn=v;b.classList.toggle('on',v!==0);};};
-    b.addEventListener('pointerdown',set(dir));
-    ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(0));});
+    holdButton($(id),function(on){if(nav&&!nav.done)nav.turn=on?dir:0;});
   }
   turnBtn('navLeft',-1);turnBtn('navRight',1);
   var go=$('navGo');if(!go)return;
@@ -4127,20 +4166,27 @@ function ascStart(){
   asc.stop=0;               /* safety-stop seconds banked   */
   asc.done=false;
   asc.inflate=false;asc.deflate=false;
+  asc.msgLow=false;asc.msgCool=0;asc.frame=0;
+  var _m=$('ascMsg');if(_m)_m.classList.remove('low');
   $('ascDiver').innerHTML=ascDiverHTML();
   $('ascDiver').style.top=ascYPct(asc.d)+'%';
+
   $('ascInflate').disabled=false;$('ascDeflate').disabled=false;
   ascMsg('Hold INFLATE to get off the bottom','');
   asc.last=performance.now();
   ascRAF=requestAnimationFrame(ascStep);
 }
 function ascStop(){if(ascRAF){cancelAnimationFrame(ascRAF);ascRAF=null;}}
-function ascMsg(t,cls){var m=$('ascMsg');if(!m)return;m.textContent=t;m.className='asc-msg'+(cls?' '+cls:'');}
+/* preserves the 'low' position class, which is owned by the
+   collision check in ascRender rather than by whoever sets text */
+function ascMsg(t,cls){var m=$('ascMsg');if(!m)return;m.textContent=t;
+  m.className='asc-msg'+(cls?' '+cls:'')+(asc&&asc.msgLow?' low':'');}
 
 function ascStep(now){
   if(!asc||asc.done)return;
   var dt=Math.min(0.05,(now-asc.last)/1000)*ASC.TIMESCALE;
   asc.last=now;
+  if(asc.msgCool>0)asc.msgCool-=dt;
 
   /* ---- BCD: inflating adds gas at ambient pressure ---- */
   if(asc.inflate)asc.bcd+=ASC.INFLATE*dt;
@@ -4202,11 +4248,27 @@ function ascRender(rate,B,inZone){
   var bf=$('ascBuoyFill'),bfrac=Math.max(-1,Math.min(1,B/ASC.BUOY_SCALE));
   bf.style.height=(Math.abs(bfrac)*50)+'%';
   bf.style.top=bfrac>=0?(50-Math.abs(bfrac)*50)+'%':'50%';
-  bf.className='vfill '+(Math.abs(B)<0.35?'':(B>0?'pos':'neg'))+(Math.abs(B)>ASC.BUOY_SCALE?' over':'');
+  bf.className='vfill '+(B>=0?'pos':'neg')+(Math.abs(B)>ASC.BUOY_SCALE?' over':'');
   $('ascBuoyVal').textContent=(B>=0?'+':'')+B.toFixed(1);
 
-  /* diver position + the buoyancy badge on their body */
+  /* diver position */
   $('ascDiver').style.top=ascYPct(asc.d)+'%';
+
+  /* Never let the coaching sit on top of the diver. Tested against
+     real geometry rather than a magic percentage, because the water
+     column is far shorter on a phone. Whenever they would collide the
+     text jumps to the other end of the column, with a cooldown so it
+     cannot flap while the diver hovers on the boundary. */
+  if((asc.frame=(asc.frame||0)+1)%4===0&&(asc.msgCool||0)<=0){
+    var mEl=$('ascMsg'),dEl=$('ascDiver');
+    if(mEl&&dEl){
+      var mr=mEl.getBoundingClientRect(),dr=dEl.getBoundingClientRect();
+      if(!(dr.bottom<mr.top-8||dr.top>mr.bottom+8)){
+        asc.msgLow=!asc.msgLow;asc.msgCool=1.2;
+        mEl.classList.toggle('low',asc.msgLow);
+      }
+    }
+  }
 
   if(asc.deflate&&Math.random()<0.5)ascBubble();
 
@@ -4282,17 +4344,8 @@ function ascSurface(){
 
 /* hold-to-actuate, pointer events so mouse and touch behave the same */
 (function(){
-  function hold(id,onKey){
-    var b=$(id);if(!b)return;
-    var set=function(on){
-      return function(ev){
-        ev.preventDefault();
-        if(!asc||asc.done)return;
-        asc[onKey]=on;b.classList.toggle('on',on);
-      };
-    };
-    b.addEventListener('pointerdown',set(true));
-    ['pointerup','pointercancel','pointerleave'].forEach(function(e){b.addEventListener(e,set(false));});
+  function hold(id,key){
+    holdButton($(id),function(on){if(asc&&!asc.done)asc[key]=on;});
   }
   hold('ascInflate','inflate');
   hold('ascDeflate','deflate');
@@ -4416,86 +4469,6 @@ function zoomAnswer(btn,key){
   else{$('zoomNotice').textContent='Sharp eyes! 🔍 Back to the menu…';setTimeout(advanceGame,2200);}
 }
 $('zoomNext').onclick=zoomRound;
-
-/* ════════════════════════════════════════════════════════════════
-   FISH OR KIT? — a word appears, is it a Sydney fish or dive gear?
-
-   Text only, no assets. The joke is that Sydney fish names sound like
-   equipment (old wife, sergeant baker, leatherjacket) and equipment
-   sounds like animals (octopus, wing, boot). Words marked both:true
-   accept either answer — "octopus" really is both, and being told so
-   is more fun than being marked wrong.
-   ════════════════════════════════════════════════════════════════ */
-var FK_WORDS=[
-  /* fish that sound like kit */
-  {w:'Old wife',a:'fish',f:'A fish — a black-and-white Sydney local that grinds its teeth audibly when caught.'},
-  {w:'Leatherjacket',a:'fish',f:'A fish. Its skin is so rough it was once used like sandpaper.'},
-  {w:'Sergeant baker',a:'fish',f:'A fish — a lizardfish that sits dead still on the sand watching you.'},
-  {w:'Fortescue',a:'fish',f:'A fish — a little scorpionfish with venomous spines. Watch where you kneel.'},
-  {w:'Flying gurnard',a:'fish',f:'A fish. It spreads huge fan-like fins but never actually flies.'},
-  {w:'Draughtboard',a:'fish',f:'A fish — a catshark with a chequerboard pattern that puffs up with water.'},
-  {w:'Wobbegong',a:'fish',f:'A fish — a carpet shark that looks exactly like the reef it is lying on.'},
-  {w:'Blue devil',a:'fish',f:'A fish — a shy cave-dweller found only along the NSW coast.'},
-  {w:'Weedfish',a:'fish',f:'A fish that sways like algae so convincingly you swim straight past it.'},
-  {w:'Toadfish',a:'fish',f:'A fish — puffs up when threatened and is seriously toxic. Do not handle.'},
-  {w:'Flutemouth',a:'fish',f:'A fish — a long thin ambush predator that hangs motionless in the water.'},
-  {w:'Cardinalfish',a:'fish',f:'A fish. The males brood the eggs in their mouths for about two weeks.'},
-  /* kit that sounds like fish */
-  {w:'Octopus',a:'gear',both:true,f:'Both! The animal — and a diver\'s spare second stage, the one you donate to an out-of-air buddy.'},
-  {w:'Wing',a:'gear',tags:{exp:['scuba']},f:'Kit — the inflatable bladder on a backplate BCD that gives you lift.'},
-  {w:'Boot',a:'gear',f:'Kit — the neoprene sock you wear inside an open-heel fin.'},
-  {w:'Spool',a:'gear',tags:{exp:['scuba']},f:'Kit — a small finger reel of line for deploying an SMB from depth.'},
-  {w:'Snoot',a:'gear',f:'Kit — a cone on an underwater strobe that narrows the light to a spotlight.'},
-  {w:'Manifold',a:'gear',tags:{exp:['scuba']},f:'Kit — the bar joining twin cylinders so you can breathe both through either regulator.'},
-  {w:'First stage',a:'gear',tags:{exp:['scuba']},f:'Kit — the part that clamps to your tank valve and drops the pressure down.'},
-  {w:'Pony bottle',a:'gear',tags:{exp:['scuba']},f:'Kit — a small independent cylinder carried as a bail-out gas supply.'},
-  {w:'Dump valve',a:'gear',tags:{exp:['scuba']},f:'Kit — the pull-cord vent that lets air out of your BCD.'},
-  {w:'Lanyard',a:'gear',f:'Kit — a leash clipping you to something, or something to you. Freedivers use one to the line.'},
-  /* General kit — deliberately untagged so snorkellers and first-timers
-     get a balanced round rather than one where "fish" is nearly always
-     the answer. All are mask/fin/snorkel parts anyone in the water meets. */
-  {w:'Skirt',a:'gear',f:'Kit — the soft silicone rim of a mask that seals against your face.'},
-  {w:'Blade',a:'gear',f:'Kit — the long flat part of a fin. Longer blades, more push, more cramp.'},
-  {w:'Purge',a:'gear',f:'Kit — the one-way valve at the bottom of a snorkel that lets you blow water out.'},
-  {w:'Barrel',a:'gear',f:'Kit — the tube of a snorkel. A wider barrel breathes easier but holds more water.'},
-  {w:'Keeper',a:'gear',f:'Kit — the little clip holding your snorkel to your mask strap.'},
-  {w:'Foot pocket',a:'gear',f:'Kit — the part of the fin your foot goes into. Full-foot for snorkelling, open-heel for scuba.'},
-  {w:'Noseclip',a:'gear',tags:{exp:['freedive']},f:'Kit — freedivers use one so both hands stay free for equalising and finning.'},
-  {w:'Backplate',a:'gear',tags:{exp:['scuba']},f:'Kit — the steel or aluminium plate a wing and harness bolt onto.'}
-];
-var FK_ROUNDS=10;
-var fkQueue=[],fkScore=0,fkTotal=0,fkCur=null,fkAnswered=false;
-
-function initFishKit(){
-  fkQueue=pickForDiver(FK_WORDS,FK_ROUNDS,2);
-  fkScore=0;fkTotal=0;
-  $('fkScore').textContent=0;$('fkTotal').textContent=0;$('fkNotice').textContent='';
-  fkRound();
-}
-function fkRound(){
-  fkAnswered=false;
-  fkCur=fkQueue.shift();
-  $('fkWord').textContent=fkCur.w;
-  $('fkReveal').textContent='';
-  $('fkFish').disabled=false;$('fkGear').disabled=false;
-  startTimer();
-}
-function fkAnswer(choice){
-  if(fkAnswered||!fkCur)return;
-  fkAnswered=true;fkTotal++;
-  $('fkFish').disabled=true;$('fkGear').disabled=true;
-  var right=fkCur.both||choice===fkCur.a;
-  if(right){fkScore++;award(timedReward());}
-  else penalize();
-  $('fkReveal').innerHTML=(right?'✅ ':'❌ ')+esc(fkCur.f);
-  $('fkScore').textContent=fkScore;$('fkTotal').textContent=fkTotal;
-  setTimeout(function(){
-    if(fkQueue.length>0)fkRound();
-    else{$('fkNotice').textContent='Nice ear for jargon! 🤿 Back to the menu…';setTimeout(advanceGame,1600);}
-  },fkCur.both?2600:1900);
-}
-$('fkFish').onclick=function(){fkAnswer('fish');};
-$('fkGear').onclick=function(){fkAnswer('gear');};
 
 /* ════════════════════════════════════════════════════════════════
    SIZE LINE-UP — tap five creatures into order.
