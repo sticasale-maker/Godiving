@@ -458,6 +458,62 @@
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
     color:var(--accent);text-align:center;animation:tapBlink 1s step-end infinite}
 
+  /* ── shared hold-button chrome (see holdButton()) ── */
+  .hold-btn{width:100%;margin-top:8px;padding:15px 8px;border-radius:14px;cursor:pointer;
+    flex-shrink:0;display:flex;flex-direction:column;align-items:center;gap:4px;
+    border:2px solid var(--line);background:var(--surface);color:var(--text);
+    -webkit-user-select:none;-ms-user-select:none;user-select:none;
+    -webkit-touch-callout:none;-webkit-tap-highlight-color:transparent;touch-action:none}
+  .hold-btn *{pointer-events:none}
+  .hb-main{font-family:'Press Start 2P',monospace;font-size:clamp(11px,2.7vw,15px);letter-spacing:1px}
+  .hb-sub{font-size:10px;opacity:.65}
+  .hold-btn.on{transform:translateY(2px);filter:brightness(1.45)}
+  .hold-btn:disabled{opacity:.45}
+  .ledge-btn{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
+  .ledge-btn.grip{background:#3a3010;color:var(--gold);border-color:var(--gold)}
+  .macro-btn{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
+
+  /* ── LEDGE ── */
+  .ledge-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);background:#052232}
+  .ledge-stage canvas{display:block;width:100%;height:100%}
+  .ledge-call{position:absolute;left:4%;right:4%;top:50%;transform:translateY(-50%);
+    text-align:center;font-size:clamp(16px,4.4vw,24px);font-weight:800;line-height:1.3;
+    color:#eaf6fb;text-shadow:0 2px 8px rgba(0,0,0,.9);background:rgba(4,20,30,.62);
+    border-radius:14px;padding:11px 10px;pointer-events:none;opacity:0;transition:opacity .18s}
+  .ledge-call.show{opacity:1}
+  .ledge-call.good{color:#9ff0c4}
+  .ledge-call.bad{color:#ffb3b3}
+  .ledge-call.wait{color:var(--gold)}
+
+  /* ── BETWEEN THE SURGES ── */
+  .macro-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);background:#04161f}
+  .macro-stage canvas{display:block;width:100%;height:100%}
+  .macro-intro{position:absolute;inset:0;background:rgba(4,22,31,.94);display:flex;
+    flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;text-align:center}
+  .macro-intro.gone{display:none}
+  .mi-title{font-size:clamp(16px,4.4vw,22px);font-weight:800;color:var(--text)}
+  .mi-steps{font-size:clamp(12px,3.2vw,15px);line-height:1.7;color:var(--muted)}
+  .mi-steps b{color:var(--accent)}
+  .mi-demo{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center}
+  .mi-demo i{position:absolute;inset:0;border-radius:50%;border:3px solid var(--accent);
+    transform:scale(1.5);opacity:.25}
+  .mi-demo i.closing{animation:miClose 3s ease-in-out infinite}
+  @keyframes miClose{
+    0%{transform:scale(1.5);opacity:.25}
+    45%{transform:scale(1);opacity:1}
+    62%{transform:scale(1);opacity:1}
+    70%{transform:scale(1.15);opacity:0}
+    100%{transform:scale(1.5);opacity:0}
+  }
+  .mi-demo span{font-size:34px;animation:miPress 3s ease-in-out infinite}
+  @keyframes miPress{
+    0%,8%{transform:translateY(-10px)}
+    18%,62%{transform:translateY(2px)}
+    70%,100%{transform:translateY(-10px)}
+  }
+
   /* ── MIGRATION HIGHWAY ── */
   .mig-stage{flex-shrink:0;margin-bottom:10px}
   .mig-coast{position:relative;height:min(34vh,240px);border-radius:12px;border:1px solid var(--line);
@@ -829,6 +885,8 @@
       <div class="gstep" id="gs-nav"><div class="icon">🧭</div><div class="label">Nav trainer</div></div>
       <div class="gstep" id="gs-neutral"><div class="icon">🫁</div><div class="label">Neutral</div></div>
       <div class="gstep" id="gs-migrate"><div class="icon">🐋</div><div class="label">Migration</div></div>
+      <div class="gstep" id="gs-ledge"><div class="icon">🌊</div><div class="label">Rock entry</div></div>
+      <div class="gstep" id="gs-macro"><div class="icon">📷</div><div class="label">Macro shot</div></div>
       <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
       <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
     </div>
@@ -1115,6 +1173,43 @@
     </div>
 
     <!-- HALL OF FAME -->
+    <!-- LEDGE — rock entry timing -->
+    <div class="panel" id="p-ledge">
+      <div class="game-header">
+        <span class="game-label" id="ledgeLabel">Rock entry</span>
+        <span class="score">Phase <b id="ledgePhase">1</b>/3 · <b id="ledgeLeft">0</b>s</span>
+      </div>
+      <div class="ledge-stage" id="ledgeStage">
+        <canvas id="ledgeCanvas"></canvas>
+        <div class="ledge-call" id="ledgeCall"></div>
+      </div>
+      <button class="hold-btn ledge-btn" id="ledgeBtn"><span class="hb-main" id="ledgeBtnMain">GO</span><span class="hb-sub" id="ledgeBtnSub">tap when it drops</span></button>
+      <p class="auto-notice" id="ledgeNotice"></p>
+    </div>
+
+    <!-- BETWEEN THE SURGES — the macro shot -->
+    <div class="panel" id="p-macro">
+      <div class="game-header">
+        <span class="game-label">Between the surges</span>
+        <span class="score">Shot <b id="macroShot">1</b>/<b id="macroShots">4</b></span>
+      </div>
+      <div class="macro-stage" id="macroStage">
+        <canvas id="macroCanvas"></canvas>
+        <div class="macro-intro" id="macroIntro">
+          <div class="mi-title">Photograph it in the surge</div>
+          <div class="mi-demo"><i id="miRing"></i><span id="miHand">✋</span></div>
+          <div class="mi-steps">
+            <b>HOLD</b> to focus — the ring must close<br>
+            <b>RELEASE</b> at the still moment between surges
+          </div>
+          <button class="btn" id="macroStart">I'm ready →</button>
+        </div>
+      </div>
+      <button class="hold-btn macro-btn" id="macroBtn"><span class="hb-main" id="macroBtnMain">HOLD TO FOCUS</span><span class="hb-sub">release to shoot</span></button>
+      <p class="qfact" id="macroCoach"></p>
+      <p class="auto-notice" id="macroNotice"></p>
+    </div>
+
     <!-- MIGRATION HIGHWAY -->
     <div class="panel" id="p-migrate">
       <div class="game-header">
@@ -1502,7 +1597,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',ledge:'Rock Entry',macro:'Between the Surges',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -2102,7 +2197,9 @@ var GAME_EXP_DEFAULTS={
   wave:     ['snorkel','scuba','freedive'],   /* reading conditions before a dive */
   ascent:   ['scuba'],                        /* return-to-surface: scuba only */
   nav:      ['scuba','freedive'],
-  neutral:  ['snorkel','scuba','freedive']
+  neutral:  ['snorkel','scuba','freedive'],
+  ledge:    ['snorkel','scuba','freedive'],
+  macro:    ['snorkel','scuba','freedive']
 };
 var GAME_EXP={};
 function loadGameExp(){
@@ -2380,7 +2477,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate'];
+var GAME_ORDER=['quiz','zoom','ledge','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate','macro'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2436,6 +2533,8 @@ function startGame(name){
   else if(name==='memory')initMemory();
   else if(name==='ascent')initAscent();
   else if(name==='migrate')initMigrate();
+  else if(name==='ledge')initLedge();
+  else if(name==='macro')initMacro();
   else if(name==='neutral')initNeutral();
   else if(name==='nav')initNav();
 }
@@ -2464,6 +2563,8 @@ var GAME_META={
   memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'},
   ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'},
   migrate:{icon:'🐋',name:'Migration Highway',desc:'Which way is it heading?'},
+  ledge:{icon:'🌊',name:'Rock Entry',desc:'Time the surge, get in and out'},
+  macro:{icon:'📷',name:'Between the Surges',desc:'Shoot it in the pause'},
   neutral:{icon:'🫁',name:'Neutral',desc:'Hover through the gully on your lungs'},
   nav:{icon:'🧭',name:'Nav Trainer',desc:'Set the bezel and hold the bearing'}
 };
@@ -3566,6 +3667,556 @@ function holdButton(el,onChange){
   window.addEventListener('pointerup',function(){set(false);});
   window.addEventListener('blur',function(){set(false);});
 }
+
+/* ════════════════════════════════════════════════════════════════
+   LEDGE — timing a rock-platform entry.
+
+   The one skill in the arcade that is pure TEMPORAL ANTICIPATION.
+   Safe Ascent, Neutral and Nav Trainer are all closed-loop: steer a
+   position against a force and correct continuously. Here you commit
+   to a discrete action ahead of your own reaction time, against a
+   signal that is periodic but not simple.
+
+   The water is a deterministic sum of sines with a set envelope, NOT
+   random. That matters: if the surface reads as random the game is
+   unfair and players can feel it. A watchful player can genuinely
+   learn the rhythm off the trace strip, which is the whole point.
+
+   Three phases, and the third one INVERTS the rule: you exit on the
+   TOP of a surge, not the bottom. That is the real Sydney lesson —
+   trying to climb out in the trough is how people get hurt — so the
+   first phase-3 failure is explicitly forgiven and explained rather
+   than punished, or it reads as a gotcha.
+   ════════════════════════════════════════════════════════════════ */
+var LEDGE={
+  TIERS:{
+    'Young Explorer' :{comps:1, env:0.00, lull:0.42, wash:0.30, phase3:false, trace:true,  clear:1.2},
+    'Teen Explorer'  :{comps:2, env:0.35, lull:0.30, wash:0.18, phase3:true,  trace:true,  clear:1.6},
+    'Adult Explorer' :{comps:3, env:0.55, lull:0.22, wash:0.08, phase3:true,  trace:true,  clear:2.0}
+  },
+  T1:9.0, T2:3.4, T3:5.7,      /* wave periods, seconds            */
+  A1:1.00, A2:0.42, A3:0.24,
+  SET:18.0,                    /* a bigger set every ~18 s         */
+  P1:22, P2:38, P3:16,         /* phase budgets, seconds           */
+  CAP:82,                      /* hard round cap, seconds          */
+  CRAWL:0.135,                 /* progress per second when moving  */
+  SHAKE_MAX:7,                 /* px, capped for motion sensitivity*/
+  PATIENCE:2                   /* points per set correctly sat out */
+};
+var lg=null,lgRAF=null;
+
+function lgTier(){return LEDGE.TIERS[USER.group]||LEDGE.TIERS['Teen Explorer'];}
+
+/* Water level at time t, normalised to about -1..+1. Deterministic
+   and periodic on purpose — see the note above. */
+function lgLevel(t){
+  var c=lg.tier,v=LEDGE.A1*Math.sin(6.28318*t/LEDGE.T1);
+  if(c.comps>1)v+=LEDGE.A2*Math.sin(6.28318*t/LEDGE.T2+1.1);
+  if(c.comps>2)v+=LEDGE.A3*Math.sin(6.28318*t/LEDGE.T3+2.3);
+  var norm=LEDGE.A1+(c.comps>1?LEDGE.A2:0)+(c.comps>2?LEDGE.A3:0);
+  var env=1+c.env*Math.sin(6.28318*t/LEDGE.SET);
+  return (v/norm)*env;
+}
+/* is a big set running right now? drives the SET COMING call and the
+   patience credit for correctly refusing to go */
+function lgSetting(t){
+  var c=lg.tier;
+  if(c.env<=0)return false;
+  return Math.sin(6.28318*t/LEDGE.SET)>0.55;
+}
+/* seconds until the level next climbs back above the lull threshold */
+function lgClear(t){
+  for(var k=0.1;k<6;k+=0.1){if(lgLevel(t+k)>lg.tier.lull)return k;}
+  return 6;
+}
+
+function initLedge(){
+  var cv=$('ledgeCanvas'),st=$('ledgeStage');
+  cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
+  lg={
+    w:cv.width,h:cv.height,tier:lgTier(),
+    t:0,phase:1,progress:0,held:false,done:false,
+    shake:0,trace:[],slams:0,washes:0,forgiven:false,
+    setCredited:-1,lastSetCall:-99,pts:0,phaseEnd:LEDGE.P1,msg:'',msgCls:'',msgUntil:0
+  };
+  $('ledgePhase').textContent=1;$('ledgeNotice').textContent='';
+  lgSetBtn('GO','tap when the water drops',false);
+  lgCall('Watch a few waves first','wait',2.6);
+  lg.last=performance.now();
+  lgRAF=requestAnimationFrame(lgStep);
+}
+function lgStop(){if(lgRAF){cancelAnimationFrame(lgRAF);lgRAF=null;}}
+function lgSetBtn(main,sub,grip){
+  $('ledgeBtnMain').textContent=main;$('ledgeBtnSub').textContent=sub;
+  $('ledgeBtn').classList.toggle('grip',!!grip);
+}
+function lgCall(text,cls,secs){
+  lg.msg=text;lg.msgCls=cls||'';lg.msgUntil=lg.t+(secs||1.8);
+  var el=$('ledgeCall');el.textContent=text;
+  el.className='ledge-call show'+(cls?' '+cls:'');
+}
+
+function lgStep(now){
+  if(!lg||lg.done)return;
+  /* the strip lets you jump games mid-round; do not keep simulating
+     a panel nobody is looking at */
+  if(!document.getElementById('p-ledge').classList.contains('show')){lgStop();return;}
+  var dt=Math.min(0.05,(now-lg.last)/1000);lg.last=now;
+  lg.t+=dt;
+  if(lg.shake>0)lg.shake=Math.max(0,lg.shake-dt*22);
+
+  var lvl=lgLevel(lg.t);
+  lg.trace.push({t:lg.t,v:lvl});
+  while(lg.trace.length&&lg.trace[0].t<lg.t-8)lg.trace.shift();
+
+  if(lg.t>lg.msgUntil)$('ledgeCall').className='ledge-call';
+
+  /* patience credit: sitting out a set is a skill, and it must pay,
+     or players learn that hesitating is always punished */
+  if(lg.phase===1&&lgSetting(lg.t)){
+    var setIdx=Math.floor(lg.t/LEDGE.SET);
+    if(lg.setCredited!==setIdx&&lg.t-lg.lastSetCall>2){
+      lg.lastSetCall=lg.t;lgCall('SET COMING — hold off','wait',1.8);
+    }
+    if(lg.setCredited!==setIdx&&!lgSetting(lg.t+0.6)){
+      lg.setCredited=setIdx;award(LEDGE.PATIENCE);
+      lgCall('+'+LEDGE.PATIENCE+' for waiting it out','good',1.6);
+    }
+  }
+
+  /* phase 2 movement */
+  if(lg.phase===2){
+    var washAt=lg.tier.wash+(0.34*lg.progress);   /* windows shrink as you go out */
+    if(!lg.held){
+      lg.progress+=LEDGE.CRAWL*dt;
+      if(lvl>washAt){
+        lg.progress=Math.max(0,lg.progress-0.16);
+        lg.shake=LEDGE.SHAKE_MAX;lg.washes++;penalize();
+        lgCall('Washed back — grip when it surges','bad',1.7);
+      }
+    }
+    if(lg.progress>=1)lgNextPhase();
+  }
+
+  /* time budget */
+  var left=Math.max(0,lg.phaseEnd-lg.t);
+  $('ledgeLeft').textContent=Math.ceil(left);
+  if(left<=0)lgTimeout();
+  if(lg.t>=LEDGE.CAP)return lgEnd();
+
+  lgDraw(lvl);
+  lgRAF=requestAnimationFrame(lgStep);
+}
+
+function lgDraw(lvl){
+  var c=$('ledgeCanvas').getContext('2d'),w=lg.w,h=lg.h;
+  var sh=lg.shake>0?(Math.random()-0.5)*lg.shake:0;
+  c.save();c.translate(sh,sh*0.6);
+
+  var g=c.createLinearGradient(0,0,0,h);
+  g.addColorStop(0,'#0a4a63');g.addColorStop(1,'#03161f');
+  c.fillStyle=g;c.fillRect(-10,-10,w+20,h+20);
+
+  var mid=h*0.56, amp=h*0.20;
+  var surf=function(x){
+    /* the surface advances a little across the frame so it reads as
+       travelling water rather than a rising bathtub */
+    return mid-lgLevel(lg.t-x/w*0.55)*amp;
+  };
+
+  /* water body */
+  c.beginPath();c.moveTo(0,h);
+  for(var x=0;x<=w;x+=6)c.lineTo(x,surf(x));
+  c.lineTo(w,h);c.closePath();
+  var wg=c.createLinearGradient(0,mid-amp,0,h);
+  wg.addColorStop(0,'rgba(90,200,230,.42)');wg.addColorStop(1,'rgba(10,70,95,.85)');
+  c.fillStyle=wg;c.fill();
+  c.beginPath();
+  for(var x2=0;x2<=w;x2+=6){if(x2===0)c.moveTo(0,surf(0));else c.lineTo(x2,surf(x2));}
+  c.strokeStyle='#bfefff';c.lineWidth=3;c.stroke();
+
+  /* the ledge: a blocky shelf on the left */
+  var lx=w*0.42, ly=mid+amp*0.30;
+  c.fillStyle='#08222e';c.strokeStyle='rgba(160,220,240,.28)';c.lineWidth=2;
+  c.beginPath();c.moveTo(-10,h);c.lineTo(-10,ly-30);c.lineTo(lx*0.45,ly-22);
+  c.lineTo(lx,ly);c.lineTo(lx+14,h);c.closePath();c.fill();c.stroke();
+
+  /* the diver marker */
+  var px,py;
+  if(lg.phase===1){px=lx-26;py=ly-26;}
+  else if(lg.phase===2){px=lx+10+(w-lx-40)*lg.progress;py=surf(px)+16;}
+  else {px=w*0.80;py=surf(px)+14;}
+  c.font='22px serif';c.textAlign='center';c.textBaseline='middle';
+  c.fillText('🤿',px,py);
+  if(lg.phase===2&&lg.held){
+    c.strokeStyle='#f3c64f';c.lineWidth=3;
+    c.beginPath();c.arc(px,py,17,0,6.283);c.stroke();
+  }
+
+  /* level bar with the live threshold marked */
+  var bx=w-26,bt=18,bh=h-70;
+  c.fillStyle='rgba(0,0,0,.30)';c.fillRect(bx,bt,16,bh);
+  c.strokeStyle='rgba(255,255,255,.25)';c.lineWidth=1;c.strokeRect(bx,bt,16,bh);
+  var lvlY=bt+bh*(1-(lvl+1)/2);
+  var thr=(lg.phase===2)?lg.tier.wash+0.34*lg.progress:(lg.phase===3?0.45:lg.tier.lull);
+  var thrY=bt+bh*(1-(thr+1)/2);
+  c.fillStyle=lg.phase===3?'#4fd28a':'#ef6b6b';
+  c.fillRect(bx-4,thrY-1,24,3);
+  c.fillStyle=(lg.phase===3?(lvl>thr):(lvl<thr))?'#4fd28a':'#f3c64f';
+  c.fillRect(bx+2,lvlY-3,12,6);
+
+  /* 8-second trace: this is what makes the rhythm learnable */
+  if(lg.tier.trace&&lg.trace.length>1){
+    var th=34;
+    c.fillStyle='rgba(3,20,28,.62)';c.fillRect(0,0,w,th);
+    c.beginPath();
+    for(var i=0;i<lg.trace.length;i++){
+      var p=lg.trace[i];
+      var tx=(p.t-(lg.t-8))/8*w, ty=th/2-p.v*(th/2-4);
+      if(i===0)c.moveTo(tx,ty);else c.lineTo(tx,ty);
+    }
+    c.strokeStyle='#7fd6e0';c.lineWidth=2;c.stroke();
+    c.fillStyle='rgba(255,255,255,.45)';c.font='9px system-ui,sans-serif';
+    c.textAlign='left';c.fillText('last 8s',5,th-5);
+  }
+  c.restore();
+}
+
+/* ── the three commits ──────────────────────────────────────────── */
+function lgCommit(){
+  if(!lg||lg.done)return;
+  var lvl=lgLevel(lg.t);
+
+  if(lg.phase===1){
+    var falling=lgLevel(lg.t+0.15)<lvl;
+    var clear=lgClear(lg.t);
+    if(lvl<lg.tier.lull&&falling&&clear>=lg.tier.clear){
+      award(REWARD+4);lgCall('In clean — now hold on','good',1.6);lgNextPhase();
+    } else {
+      lg.shake=LEDGE.SHAKE_MAX;lg.slams++;penalize();
+      lgCall(lvl>=lg.tier.lull?'Slammed — you went on the surge'
+        :(falling?'Too tight — the next one was on you':'You went on the rise'),'bad',1.8);
+    }
+    return;
+  }
+  if(lg.phase===3){
+    /* the rule is INVERTED here: you want the top of the surge */
+    var rising=lgLevel(lg.t+0.15)>lvl;
+    if(lvl>0.45&&rising){
+      award(REWARD+8);lgCall('Lifted onto the ledge — textbook','good',2.2);
+      return lgEnd();
+    }
+    if(!lg.forgiven){
+      lg.forgiven=true;
+      lgCall('No — on the TOP of the surge, not the bottom','wait',3.0);
+      return;   /* explicitly free: the inversion is the lesson */
+    }
+    lg.shake=LEDGE.SHAKE_MAX;penalize();
+    lgCall('Too low — let it lift you up','bad',1.8);
+  }
+}
+
+function lgNextPhase(){
+  if(lg.phase===1){
+    lg.phase=2;lg.progress=0;lg.phaseEnd=lg.t+LEDGE.P2;
+    $('ledgePhase').textContent=2;
+    lgSetBtn('HOLD ON','release to move, hold when it surges',true);
+    lgCall('Hold when it surges, move in the lulls','wait',2.6);
+  } else if(lg.phase===2){
+    if(!lg.tier.phase3){award(REWARD+6);return lgEnd();}
+    lg.phase=3;lg.phaseEnd=lg.t+LEDGE.P3;
+    $('ledgePhase').textContent=3;
+    lgSetBtn('GO','now the rule changes',false);
+    lgCall('Getting OUT — ride the surge UP onto the ledge','wait',3.2);
+  }
+}
+function lgTimeout(){
+  if(lg.phase===1){lgCall('Out of time on the entry','bad',1.6);lg.phase=1;lgNextPhase();}
+  else if(lg.phase===2){lgCall('Out of time on the traverse','bad',1.6);lg.progress=1;lgNextPhase();}
+  else lgEnd();
+}
+function lgEnd(){
+  if(lg.done)return;
+  lg.done=true;lgStop();
+  $('ledgeBtn').disabled=true;
+  var clean=lg.slams===0&&lg.washes===0;
+  $('ledgeNotice').textContent=(clean?'Not one bad wave. That is how it is done. 🌊 '
+    :(lg.slams+lg.washes<=3?'Solid — you read most of it. 🌊 '
+    :'Rock entries take practice. Watch the sets next time. 🌊 '))+'Back to the menu…';
+  setTimeout(advanceGame,3000);
+}
+
+holdButton($('ledgeBtn'),function(on){
+  if(!lg||lg.done)return;
+  if(lg.phase===2){lg.held=on;return;}
+  if(on)lgCommit();
+});
+
+/* ════════════════════════════════════════════════════════════════
+   BETWEEN THE SURGES — the macro shot.
+
+   Every other timed game in the arcade is react-to-what-you-see.
+   This one is "press BEFORE, release ON": you must commit to holding
+   roughly 0.6 s before the still moment exists, because the focus
+   ring has to close first. Committing ahead of a moment that has not
+   happened yet is a different motor grammar entirely.
+
+   The physics: you and the subject are both moved by the same surge,
+   but you are on a different phase and amplitude because you are
+   bracing against rock and it is not. So RELATIVE velocity — the
+   thing that actually blurs a photograph — passes through zero twice
+   a cycle at a moment you have to feel rather than count.
+
+   Blur is drawn as a three-ghost alpha composite rather than a canvas
+   filter: filters are slow and inconsistent across the machines this
+   will run on, and the cheap version reads better anyway.
+
+   Head points below were placed by eye off the actual photographs.
+   ════════════════════════════════════════════════════════════════ */
+var MACRO={
+  SUBJECTS:[
+    {key:'weedy',        hx:0.17, hy:0.31, name:'Weedy seadragon',
+     coach:'Seadragons sway with the surge — never chase one, wait for the pause.'},
+    {key:'portjackson',  hx:0.70, hy:0.45, name:'Port Jackson shark',
+     coach:'Resting sharks are easy: it is YOUR movement that ruins the frame.'},
+    {key:'groper',       hx:0.42, hy:0.34, name:'Eastern blue groper',
+     coach:'Gropers come to you. Brace, pre-focus, and wait for the lull.'},
+    {key:'cuttle',       hx:0.66, hy:0.35, name:'Giant cuttlefish',
+     coach:'Cuttlefish hover but the water still moves you. Steady beats close.'},
+    {key:'sydneyoctopus',hx:0.52, hy:0.38, name:'Sydney octopus',
+     coach:'Low light means a slow shutter, so the still moment matters even more.'}
+  ],
+  TIERS:{
+    'Young Explorer' :{period:3.4, focus:420, shots:3, tol:0.20, recycle:0, label:'HOLD STEADY'},
+    'Teen Explorer'  :{period:2.7, focus:520, shots:4, tol:0.15, recycle:0, label:'HOLD TO FOCUS'},
+    'Adult Explorer' :{period:2.1, focus:620, shots:4, tol:0.11, recycle:2200, label:'HOLD TO FOCUS'}
+  },
+  SUBJ_AMP:0.055,     /* of frame width */
+  VIEW_AMP:0.038,
+  VIEW_PHASE:1.05,    /* radians of lag between you and the subject */
+  CAPS:12             /* seconds per shot */
+};
+var mc=null,mcRAF=null,mcImgs={};
+
+function mcTier(){return MACRO.TIERS[USER.group]||MACRO.TIERS['Teen Explorer'];}
+
+function initMacro(){
+  var tier=mcTier();
+  var cv=$('macroCanvas'),st=$('macroStage');
+  cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
+  mc={
+    w:cv.width,h:cv.height,tier:tier,
+    queue:shuffle(MACRO.SUBJECTS.slice()).slice(0,tier.shots),
+    shot:0,total:tier.shots,done:false,started:false,
+    holding:false,holdT:0,locked:false,lastFire:-9999,scoreSum:0
+  };
+  $('macroShots').textContent=mc.total;$('macroShot').textContent=1;
+  $('macroCoach').textContent='';$('macroNotice').textContent='';
+  $('macroBtnMain').textContent=tier.label;
+  $('macroBtn').disabled=true;
+  var intro=$('macroIntro');
+  intro.classList.remove('gone');
+  $('miRing').className='closing';
+  mcRound();
+}
+function mcStop(){if(mcRAF){cancelAnimationFrame(mcRAF);mcRAF=null;}}
+
+function mcRound(){
+  mc.cur=mc.queue.shift();
+  mc.t=0;mc.holding=false;mc.holdT=0;mc.locked=false;mc.fired=false;
+  $('macroShot').textContent=mc.shot+1;
+  var k=mc.cur.key;
+  if(!mcImgs[k]){
+    var im=new Image();im.src=PHOTOS[k].src;mcImgs[k]=im;
+  }
+  if(mc.started){mc.last=performance.now();if(!mcRAF)mcRAF=requestAnimationFrame(mcStep);}
+}
+
+/* subject and viewfinder ride the same surge out of phase, so the
+   relative velocity — what actually blurs the shot — crosses zero */
+function mcOffsets(t){
+  var w=2*Math.PI/mc.tier.period;
+  var sx=MACRO.SUBJ_AMP*mc.w*Math.sin(w*t);
+  var vx=MACRO.VIEW_AMP*mc.w*Math.sin(w*t+MACRO.VIEW_PHASE);
+  var sv=MACRO.SUBJ_AMP*mc.w*w*Math.cos(w*t);
+  var vv=MACRO.VIEW_AMP*mc.w*w*Math.cos(w*t+MACRO.VIEW_PHASE);
+  return {off:sx-vx, rel:(sv-vv)};
+}
+function mcRelNorm(t){
+  var w=2*Math.PI/mc.tier.period;
+  var peak=(MACRO.SUBJ_AMP+MACRO.VIEW_AMP)*mc.w*w;
+  return Math.min(1,Math.abs(mcOffsets(t).rel)/peak);
+}
+
+function mcStep(now){
+  if(!mc||mc.done)return;
+  if(!document.getElementById('p-macro').classList.contains('show')){mcStop();return;}
+  var dt=Math.min(0.05,(now-mc.last)/1000);mc.last=now;
+  mc.t+=dt;
+  if(mc.holding&&!mc.locked){
+    mc.holdT+=dt*1000;
+    if(mc.holdT>=mc.tier.focus)mc.locked=true;
+  }
+  mcDraw();
+  if(mc.t>MACRO.CAPS&&!mc.fired)return mcFire(true);
+  mcRAF=requestAnimationFrame(mcStep);
+}
+
+function mcDraw(){
+  var c=$('macroCanvas').getContext('2d'),w=mc.w,h=mc.h;
+  c.fillStyle='#04161f';c.fillRect(0,0,w,h);
+  var im=mcImgs[mc.cur.key];
+  var o=mcOffsets(mc.t);
+
+  if(im&&im.complete&&im.naturalWidth){
+    var scale=Math.max(w/im.naturalWidth,h/im.naturalHeight)*1.25;
+    var dw=im.naturalWidth*scale,dh=im.naturalHeight*scale;
+    var dx=(w-dw)/2+o.off, dy=(h-dh)/2;
+    c.save();c.beginPath();c.rect(0,0,w,h);c.clip();
+    c.drawImage(im,dx,dy,dw,dh);
+    c.restore();
+    mc.frame={dx:dx,dy:dy,dw:dw,dh:dh};
+  } else {
+    c.fillStyle='#0b3040';c.fillRect(0,0,w,h);
+    c.fillStyle='#9fc3d2';c.font='13px system-ui,sans-serif';c.textAlign='center';
+    c.fillText('loading…',w/2,h/2);
+  }
+
+  /* viewfinder chrome */
+  var m=Math.min(w,h)*0.06;
+  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=3;
+  [[m,m,1,1],[w-m,m,-1,1],[m,h-m,1,-1],[w-m,h-m,-1,-1]].forEach(function(k){
+    c.beginPath();c.moveTo(k[0]+k[2]*22,k[1]);c.lineTo(k[0],k[1]);c.lineTo(k[0],k[1]+k[3]*22);c.stroke();
+  });
+
+  /* focus box: fixed at frame centre, the subject moves through it */
+  var fx=w/2,fy=h*0.46,fr=Math.min(w,h)*0.13;
+  var prog=Math.min(1,mc.holdT/mc.tier.focus);
+  c.strokeStyle=mc.locked?'#4fd28a':'rgba(255,255,255,.6)';
+  c.lineWidth=mc.locked?3:2;
+  c.strokeRect(fx-fr,fy-fr,fr*2,fr*2);
+  if(mc.holding&&!mc.locked){
+    var r=fr*(1.9-0.9*prog);
+    c.strokeStyle='#36c9c0';c.lineWidth=3;
+    c.beginPath();c.arc(fx,fy,r,0,6.283);c.stroke();
+  }
+
+  /* sharpness needle: live relative velocity */
+  var rel=mcRelNorm(mc.t);
+  var bw=w*0.62,bx=(w-bw)/2,by=h-30;
+  c.fillStyle='rgba(3,20,28,.66)';c.fillRect(bx,by,bw,12);
+  c.fillStyle=rel<mc.tier.tol?'#4fd28a':(rel<0.4?'#f3c64f':'#ef6b6b');
+  c.fillRect(bx+2,by+2,(bw-4)*(1-rel),8);
+  c.fillStyle='rgba(255,255,255,.85)';
+  c.fillRect(bx+2+(bw-4)*(1-mc.tier.tol)-1,by-2,2,16);
+  c.font='10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#9fc3d2';
+  c.fillText(rel<mc.tier.tol?'STILL — SHOOT NOW':'moving',w/2,by-6);
+
+  /* strobe recycle, adult tier only */
+  if(mc.tier.recycle){
+    var since=performance.now()-mc.lastFire;
+    if(since<mc.tier.recycle){
+      c.fillStyle='rgba(239,107,107,.9)';
+      c.fillRect(bx,by+16,(bw)*(1-since/mc.tier.recycle),4);
+      c.fillStyle='#ef6b6b';c.fillText('strobe recycling',w/2,by+30);
+    }
+  }
+}
+
+function mcFire(timedOut){
+  if(!mc||mc.fired)return;
+  mc.fired=true;
+  var tier=mc.tier;
+
+  if(timedOut){
+    penalize();
+    $('macroCoach').textContent='Missed the shot — it swam off. Commit sooner.';
+    return mcNext();
+  }
+  if(!mc.locked){
+    penalize();
+    $('macroCoach').textContent='Out of focus — you have to HOLD until the ring closes, then release.';
+    return mcNext();
+  }
+  /* strobe not recycled: the frame comes back black */
+  if(tier.recycle&&performance.now()-mc.lastFire<tier.recycle){
+    penalize();
+    $('macroCoach').textContent='Black frame — the strobe had not recycled. One good shot beats three panicked ones.';
+    mc.lastFire=performance.now();
+    return mcNext();
+  }
+  mc.lastFire=performance.now();
+
+  var rel=mcRelNorm(mc.t);
+  var sharp=Math.max(0,1-rel/0.55);
+  /* framing: where the animal's head sat relative to the focus box */
+  var fr=mc.frame||{dx:0,dy:0,dw:mc.w,dh:mc.h};
+  var headX=fr.dx+fr.dw*mc.cur.hx, headY=fr.dy+fr.dh*mc.cur.hy;
+  var d=Math.hypot(headX-mc.w/2,headY-mc.h*0.46)/(Math.min(mc.w,mc.h)*0.5);
+  var framing=Math.max(0,1-d*0.8);
+  var score=sharp*0.72+framing*0.28;
+  mc.scoreSum+=score;
+
+  var pts=Math.round(score*24);
+  if(pts>=MIN_REWARD)award(pts);else penalize();
+
+  mcShowResult(rel,score);
+  $('macroCoach').textContent=
+    (rel<tier.tol? '✅ Sharp. '+mc.cur.coach
+     : rel<0.4  ? '➖ Slight blur — you fired just off the pause. '+mc.cur.coach
+                : '❌ You fired on the push. Wait for the water to stop moving you.');
+  setTimeout(mcNext,2100);
+}
+
+/* three-ghost alpha composite: cheap, fast and reads as motion blur */
+function mcShowResult(rel,score){
+  var c=$('macroCanvas').getContext('2d'),w=mc.w,h=mc.h;
+  var im=mcImgs[mc.cur.key];if(!im||!im.complete||!mc.frame)return;
+  var fr=mc.frame;
+  var spread=rel*w*0.055;
+  c.fillStyle='#04161f';c.fillRect(0,0,w,h);
+  c.save();c.beginPath();c.rect(0,0,w,h);c.clip();
+  for(var i=-1;i<=1;i++){
+    c.globalAlpha=i===0?1:0.42;
+    c.drawImage(im,fr.dx+i*spread,fr.dy,fr.dw,fr.dh);
+  }
+  c.globalAlpha=1;c.restore();
+  var pct=Math.round(score*100);
+  c.fillStyle='rgba(3,20,28,.78)';c.fillRect(0,h/2-34,w,68);
+  c.textAlign='center';c.fillStyle=pct>75?'#4fd28a':(pct>45?'#f3c64f':'#ef6b6b');
+  c.font='800 30px system-ui,sans-serif';c.fillText(pct+'%',w/2,h/2-2);
+  c.fillStyle='#eaf6fb';c.font='600 13px system-ui,sans-serif';
+  c.fillText(mc.cur.name,w/2,h/2+22);
+}
+
+function mcNext(){
+  mc.shot++;
+  if(mc.shot>=mc.total)return mcEnd();
+  mcRound();
+}
+function mcEnd(){
+  if(mc.done)return;
+  mc.done=true;mcStop();
+  $('macroBtn').disabled=true;
+  var avg=mc.scoreSum/Math.max(1,mc.total);
+  $('macroNotice').textContent=(avg>0.75?'A folder of keepers. 📷 '
+    :avg>0.45?'A few you would actually post. 📷 '
+    :'Mostly blurry green — welcome to Sydney surge. 📷 ')+'Back to the menu…';
+  setTimeout(advanceGame,3000);
+}
+
+$('macroStart').onclick=function(){
+  $('macroIntro').classList.add('gone');
+  $('macroBtn').disabled=false;
+  mc.started=true;mc.t=0;mc.last=performance.now();
+  if(!mcRAF)mcRAF=requestAnimationFrame(mcStep);
+};
+
+holdButton($('macroBtn'),function(on){
+  if(!mc||mc.done||!mc.started)return;
+  if(on){mc.holding=true;mc.holdT=0;mc.locked=false;}
+  else if(mc.holding){mc.holding=false;mcFire(false);}
+});
 
 /* ════════════════════════════════════════════════════════════════
    MIGRATION HIGHWAY — which way is it heading, and is it going
