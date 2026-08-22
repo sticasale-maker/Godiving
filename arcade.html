@@ -540,13 +540,40 @@
   .nu-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
     border:1px solid var(--line);background:#062a3d}
   .nu-stage canvas{display:block;width:100%;height:100%}
-  .nu-hud{position:absolute;left:0;right:0;top:0;padding:7px 10px;font-size:12px;color:var(--text);
-    background:linear-gradient(180deg,rgba(4,20,30,.8),rgba(4,20,30,0));pointer-events:none}
+  /* live coaching over the cave — this is the read-while-playing
+     line, so it has to survive a glance from arm's length */
+  .nu-hud{position:absolute;left:0;right:0;top:0;padding:9px 12px;
+    font-size:clamp(14px,3.4vw,19px);font-weight:700;line-height:1.3;color:#eaf6fb;
+    text-shadow:0 2px 6px rgba(0,0,0,.85);
+    background:linear-gradient(180deg,rgba(4,20,30,.86),rgba(4,20,30,0));pointer-events:none}
+
+  /* Neutral scrolls sideways, so unlike Safe Ascent it wants a
+     LANDSCAPE box. Left uncapped on a 27" screen the stage went
+     1800px wide and the cave barely moved; capped to 640 it went
+     taller than it was wide. Both dimensions are bounded so the
+     shape stays close to what a phone gives you. */
+  #p-neutral>*{width:100%;max-width:760px;margin-left:auto;margin-right:auto}
+  .nu-stage{max-height:min(58vh,520px)}
+
+  /* same treatment as Safe Ascent: a real title and a brief that
+     states the control and the goal before the swim starts */
+  .game-header .game-label.nu-title{
+    font-size:clamp(16px,4vw,22px);font-weight:800;color:var(--text);letter-spacing:.3px}
+  .nu-brief{flex-shrink:0;margin:0 0 8px;padding:8px 11px;border-radius:11px;
+    background:var(--surface);border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:3px;
+    font-size:clamp(12px,2.9vw,15px);line-height:1.4;color:var(--text)}
+  .nu-brief i{font-style:normal;font-weight:800;color:var(--accent)}
+  .nu-brief .warn{color:var(--muted)}
+  .nu-brief .warn b{color:var(--gold)}
+  @media(max-height:720px){
+    .nu-brief{padding:6px 9px;gap:2px;font-size:11.5px;line-height:1.32;margin-bottom:6px}
+  }
   .nu-btn{width:100%;margin-top:8px;padding:16px 8px;border-radius:14px;cursor:pointer;flex-shrink:0;
     background:#0d3b46;color:#9fe8e2;border:2px solid var(--accent);
     font-family:'Press Start 2P',monospace;font-size:clamp(10px,2.5vw,13px);letter-spacing:1px;
     display:flex;flex-direction:column;align-items:center;gap:5px;touch-action:none;user-select:none}
-  .nu-btn small{font-family:inherit;font-size:9px;opacity:.65;letter-spacing:0}
+  .nu-btn small{font-family:inherit;font-size:10px;opacity:.7;letter-spacing:0}
   .nu-btn.on{transform:translateY(2px);filter:brightness(1.45)}
 
   /* ── NAV TRAINER ── */
@@ -586,8 +613,12 @@
     display:flex;align-items:center;justify-content:flex-end;pointer-events:none}
   .asc-stopzone span{font-size:9px;color:var(--gold);padding-right:5px;letter-spacing:.5px}
   .asc-stopzone.hit{background:rgba(243,198,79,.26)}
+  /* the column runs the full height of the panel, so on a 1440p
+     screen it is ~1000px deep — a fixed 58px diver disappears in it.
+     Scale with the viewport, keeping the 58:86 silhouette ratio. */
   .asc-diver{position:absolute;left:50%;transform:translate(-50%,-50%);
-    width:58px;height:86px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));pointer-events:none}
+    height:clamp(74px,9.5vh,140px);width:auto;aspect-ratio:58/86;
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));pointer-events:none}
   .asc-diver svg{width:100%;height:100%;display:block}
   .asc-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
   /* On a 27" screen the old 3-8px, 55%-opaque dots were invisible.
@@ -598,6 +629,12 @@
       rgba(120,200,235,.16) 100%);
     border:1.5px solid rgba(255,255,255,.9);
     box-shadow:0 0 7px rgba(180,240,255,.6)}
+
+  /* On a 27" iMac the panel is ~1800px wide and the diver is 58px, so
+     the column read as an empty pool. Cap the whole game to a portrait
+     width and centre it — everything below the water (readouts,
+     buttons) lines up with the column instead of running past it. */
+  #p-ascent>*{width:100%;max-width:640px;margin-left:auto;margin-right:auto}
 
   /* the brief: what to press and what the limit is, stated up front */
   .game-header .game-label.asc-title{
@@ -689,7 +726,7 @@
   @media(max-width:430px){
     .asc-vbar{width:44px}
     .asc-gauges{gap:4px}
-    .asc-diver{width:50px;height:74px}
+    .asc-diver{height:74px;width:auto}
     .asc-readout b{font-size:21px}
   }
 
@@ -1261,14 +1298,20 @@
     <!-- NEUTRAL — buoyancy hover -->
     <div class="panel" id="p-neutral">
       <div class="game-header">
-        <span class="game-label">Neutral</span>
+        <span class="game-label nu-title">Neutral</span>
         <span class="score">+<b id="nuScore">0</b> · bumps <b id="nuHits">0</b> · <b id="nuLeft">0</b>s</span>
+      </div>
+      <div class="nu-brief">
+        <span>Hold <i>🫁 BREATHE IN</i> below to rise, release to sink.<em class="keyhint">
+          On a computer the <i>&uarr;</i> arrow or the <i>space bar</i> does the same.</em></span>
+        <span class="warn">Your lungs are slow &mdash; you rise a moment <b>after</b> you breathe in.
+          Fly the cave without scraping the rock.</span>
       </div>
       <div class="nu-stage" id="nuStage">
         <canvas id="nuCanvas"></canvas>
         <div class="nu-hud"><span id="nuHud">Hold to breathe in — rise. Release — sink.</span></div>
       </div>
-      <button class="nu-btn" id="nuBreath">🫁 HOLD TO BREATHE IN<small>release to exhale and sink</small></button>
+      <button class="nu-btn" id="nuBreath">🫁 HOLD TO BREATHE IN<small>release to exhale and sink<em class="keyhint"> · ↑ or space</em></small></button>
       <p class="auto-notice" id="nuNotice"></p>
     </div>
 
@@ -4414,6 +4457,13 @@ function initNeutral(){
     w:cv.width,h:cv.height,
     y:cv.height/2, v:0, lung:0, x:0,
     half:cv.height*(NU.OPEN[USER.group]||0.56)/2,
+    /* Everything drawn in fixed pixels (diver, collision radius) is
+       scaled by this. The tunnel half-height is a fraction of the
+       canvas height, so without it the diver shrinks relative to the
+       gap on a big screen and the game quietly gets easier. Scaling
+       r with k holds r/half constant on every device. 330 is the
+       reference canvas height, clamped so it never gets silly. */
+    k:Math.max(0.85,Math.min(1.7,cv.height/330)),
     a1:cv.height*NU.ROAM1, a2:cv.height*NU.ROAM2,
     hits:0, pts:0, t:0, sinceTick:0, cool:0,
     breathing:false, done:false
@@ -4442,7 +4492,7 @@ function nuStep(now){
   nu.y-=nu.v*NU.PXM*dt;
 
   /* the rock */
-  var dx=72, mid=nuMid(nu.x+dx), half=nuHalf(nu.x+dx), r=11;
+  var dx=72, mid=nuMid(nu.x+dx), half=nuHalf(nu.x+dx), r=11*nu.k;
   var ceil=mid-half+r, floor=mid+half-r, scraped=false;
   if(nu.y<ceil){nu.y=ceil;nu.v=Math.min(0,nu.v);scraped=true;}
   if(nu.y>floor){nu.y=floor;nu.v=Math.max(0,nu.v);scraped=true;}
@@ -4498,7 +4548,7 @@ function nuDraw(dx,scraped){
 
   /* diver, side on, finning to the right */
   var y=nu.y;
-  c.save();c.translate(dx,y);
+  c.save();c.translate(dx,y);c.scale(nu.k,nu.k);
   if(scraped){c.shadowColor='#ef6b6b';c.shadowBlur=16;}
   c.fillStyle='#0d2b38';c.strokeStyle='#8fd8e8';c.lineWidth=1.6;
   c.beginPath();c.ellipse(0,0,15,7,0,0,7);c.fill();c.stroke();
@@ -4515,10 +4565,10 @@ function nuDraw(dx,scraped){
   c.restore();
 
   /* lung / buoyancy indicator on the body */
-  var f=nu.lung/NU.LUNG_MAX;
+  var f=nu.lung/NU.LUNG_MAX,bw=32*nu.k,bh=4*nu.k;
   c.fillStyle=Math.abs(f)<0.22?'#4fd28a':(f>0?'#36c9c0':'#ef6b6b');
-  c.fillRect(dx-16,y+14,32*Math.abs(f),4);
-  c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.strokeRect(dx-16,y+14,32,4);
+  c.fillRect(dx-bw/2,y+14*nu.k,bw*Math.abs(f),bh);
+  c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.strokeRect(dx-bw/2,y+14*nu.k,bw,bh);
 
   var hud=$('nuHud');
   if(hud)hud.textContent=scraped?'Scraping the rock — ease off'
@@ -4534,7 +4584,8 @@ function nuEnd(){
   $('nuNotice').textContent=msg+' Back to the menu…';
   setTimeout(advanceGame,2900);
 }
-holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;});
+holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;},
+  ['ArrowUp','Up',' ','Spacebar','w','W']);
 
 /* ═══════════════════════════════════════════════════════════════
    NAV TRAINER — set the bezel, then hold the bearing.
