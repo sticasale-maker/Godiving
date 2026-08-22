@@ -590,8 +590,34 @@
     width:58px;height:86px;filter:drop-shadow(0 3px 6px rgba(0,0,0,.55));pointer-events:none}
   .asc-diver svg{width:100%;height:100%;display:block}
   .asc-bubbles{position:absolute;inset:0;pointer-events:none;overflow:hidden}
-  .asc-bub{position:absolute;border-radius:50%;background:rgba(200,240,255,.55);
-    border:1px solid rgba(255,255,255,.5)}
+  /* On a 27" screen the old 3-8px, 55%-opaque dots were invisible.
+     Bigger, brighter, with a specular highlight so they read as air. */
+  .asc-bub{position:absolute;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%,
+      rgba(255,255,255,.98) 0%,rgba(215,246,255,.72) 42%,rgba(150,220,245,.34) 72%,
+      rgba(120,200,235,.16) 100%);
+    border:1.5px solid rgba(255,255,255,.9);
+    box-shadow:0 0 7px rgba(180,240,255,.6)}
+
+  /* the brief: what to press and what the limit is, stated up front */
+  .game-header .game-label.asc-title{
+    font-size:clamp(16px,4vw,22px);font-weight:800;color:var(--text);letter-spacing:.3px}
+  .asc-brief{flex-shrink:0;margin:0 0 8px;padding:8px 11px;border-radius:11px;
+    background:var(--surface);border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:3px;
+    font-size:clamp(12px,2.9vw,15px);line-height:1.4;color:var(--text)}
+  .asc-brief i{font-style:normal;font-weight:800;color:var(--accent)}
+  .asc-brief .warn{color:var(--muted)}
+  .asc-brief .warn b{color:var(--gold);font-size:1.08em}
+  /* the arrow-key wording is dead weight on a touch screen, and it
+     costs a whole line of water column on a short phone */
+  .keyhint{display:none;font-style:normal}
+  @media(hover:hover) and (pointer:fine){.keyhint{display:inline}}
+  /* short phones: the water column is the game, so give the brief
+     back as much height as it can spare */
+  @media(max-height:720px){
+    .asc-brief{padding:6px 9px;gap:2px;font-size:11.5px;line-height:1.32;margin-bottom:6px}
+  }
 
   /* both gauges together in one column beside the water */
   .asc-gauges{display:flex;gap:6px;flex-shrink:0}
@@ -1270,8 +1296,13 @@
     <!-- SAFE ASCENT -->
     <div class="panel" id="p-ascent">
       <div class="game-header">
-        <span class="game-label">Return to the surface</span>
+        <span class="game-label asc-title">Return to the surface</span>
         <span class="score">Attempt <b id="ascTry">1</b> / <b id="ascTries">3</b></span>
+      </div>
+      <div class="asc-brief">
+        <span>Hold <i>&#9650; INFLATE</i> / <i>&#9660; DEFLATE</i> below to put air into your BCD or dump
+          it.<em class="keyhint"> On a computer the <i>&uarr;</i> and <i>&darr;</i> arrow keys do the same.</em></span>
+        <span class="warn">Keep your ascent speed under <b>18 m/min</b>, and pause at the 5 m safety stop.</span>
       </div>
       <div class="asc-wrap">
         <div class="asc-col" id="ascCol">
@@ -1311,8 +1342,8 @@
         <div class="asc-readout"><span class="lab">BCD</span><b id="ascBcd">0.0</b><span class="unit">L</span></div>
       </div>
       <div class="asc-buttons">
-        <button class="asc-btn asc-in" id="ascInflate">▲ INFLATE<small>hold</small></button>
-        <button class="asc-btn asc-out" id="ascDeflate">▼ DEFLATE<small>hold</small></button>
+        <button class="asc-btn asc-in" id="ascInflate">▲ INFLATE<small>hold<em class="keyhint"> · ↑ key</em></small></button>
+        <button class="asc-btn asc-out" id="ascDeflate">▼ DEFLATE<small>hold<em class="keyhint"> · ↓ key</em></small></button>
       </div>
       <p class="auto-notice" id="ascNotice"></p>
     </div>
@@ -3639,7 +3670,11 @@ function wireSharkId(){
    Anything that must respond to being held should go through here
    rather than wiring pointerdown itself.
    ════════════════════════════════════════════════════════════════ */
-function holdButton(el,onChange){
+/* keys: optional array of KeyboardEvent.key values that actuate the
+   same hold, so a desktop player never has to hold a mouse button
+   down. Only fires while the button's panel is on screen and the
+   button is live, so one game's keys cannot drive another's. */
+function holdButton(el,onChange,keys){
   if(!el)return;
   var down=false;
   function set(on,ev){
@@ -3666,6 +3701,22 @@ function holdButton(el,onChange){
   /* releasing anywhere at all is a release */
   window.addEventListener('pointerup',function(){set(false);});
   window.addEventListener('blur',function(){set(false);});
+
+  if(keys&&keys.length){
+    /* offsetParent is null whenever an ancestor is display:none — the
+       cheapest reliable "is this panel showing" test we have */
+    function live(){return !el.disabled&&el.offsetParent!==null;}
+    window.addEventListener('keydown',function(ev){
+      if(ev.repeat||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+      if(keys.indexOf(ev.key)<0||!live())return;
+      ev.preventDefault();          /* stop the arrow scrolling the page */
+      set(true);
+    });
+    window.addEventListener('keyup',function(ev){
+      if(keys.indexOf(ev.key)<0)return;
+      set(false);
+    });
+  }
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -4818,6 +4869,7 @@ function ascStart(){
   asc.stop=0;               /* safety-stop seconds banked   */
   asc.done=false;
   asc.inflate=false;asc.deflate=false;
+  asc.dumpT=0;asc.breathT=0;   /* bubble emitter accumulators, dive-seconds */
   /* diver starts on the bottom, so the coaching starts up top */
   asc.msgLow=false;
   var _m0=$('ascMsg');
@@ -4840,6 +4892,16 @@ function ascStep(now){
   if(!asc||asc.done)return;
   var dt=Math.min(0.05,(now-asc.last)/1000)*ASC.TIMESCALE;
   asc.last=now;
+
+  /* ---- bubbles ---- emitted on dive-time accumulators rather than
+     per-frame chance, so the stream looks the same at any frame rate.
+     Breathing runs the whole dive; the dump valve adds a hard burst. */
+  asc.breathT+=dt;
+  if(asc.breathT>=3.2){asc.breathT=0;ascBreath();}
+  if(asc.deflate){
+    asc.dumpT+=dt;
+    while(asc.dumpT>=0.07){asc.dumpT-=0.07;ascBubble('dump');}
+  } else asc.dumpT=0;
 
   /* ---- BCD: inflating adds gas at ambient pressure ---- */
   if(asc.inflate)asc.bcd+=ASC.INFLATE*dt;
@@ -4923,8 +4985,6 @@ function ascRender(rate,B,inZone){
   var _m=$('ascMsg');
   if(_m){_m.classList.toggle('low',asc.msgLow);_m.classList.toggle('high',!asc.msgLow);}
 
-  if(asc.deflate&&Math.random()<0.5)ascBubble();
-
   if(asc.done)return;
   if(inZone&&asc.stop<ASC.STOP_SECS){
     ascMsg('Safety stop: hold here — '+Math.ceil(ASC.STOP_SECS-asc.stop)+'s to go',
@@ -4942,27 +5002,37 @@ function ascRender(rate,B,inZone){
   }
 }
 
-function ascBubble(){
-  var box=$('ascBubbles');if(!box)return;
+/* kind 'dump' = off the BCD valve on the left shoulder,
+   kind 'breath' = off the regulator, beside the diver's head. */
+function ascBubble(kind){
+  var box=$('ascBubbles');if(!box||!asc)return;
   var b=document.createElement('div');
   b.className='asc-bub';
-  var sz=3+Math.random()*5;
+  var dump=kind!=='breath';
+  var sz=dump?(8+Math.random()*9):(5+Math.random()*6);
   b.style.width=b.style.height=sz+'px';
-  /* leave from the BCD dump valve: the diver is centred in the column
-     and the valve sits high on their left shoulder */
-  b.style.left='calc(50% - '+(9+Math.random()*9)+'px)';
-  b.style.top=(ascYPct(asc.d)-2.4)+'%';
+  var offX=dump?-(10+Math.random()*10):(4+Math.random()*9);
+  b.style.left='calc(50% + '+offX.toFixed(1)+'px)';
+  b.style.top=(ascYPct(asc.d)-(dump?2.4:3.6))+'%';
   box.appendChild(b);
   var top=parseFloat(b.style.top),drift=(Math.random()-0.5)*3;
+  var dur=dump?1500:1900;
   var t0=performance.now();
   (function rise(now){
-    var p=(now-t0)/1400;
+    var p=(now-t0)/dur;
     if(p>=1||!b.parentNode){if(b.parentNode)b.parentNode.removeChild(b);return;}
     b.style.top=(top-p*top)+'%';
-    b.style.transform='translateX('+(drift*p*10)+'px)';
-    b.style.opacity=String(1-p*0.85);
+    /* wobble as they rise, and swell as the pressure drops (Boyle
+       applies to the bubble too, not just the BCD) */
+    b.style.transform='translateX('+(drift*p*12+Math.sin(p*11)*2.5).toFixed(1)+'px) '+
+                      'scale('+(1+p*0.9).toFixed(2)+')';
+    b.style.opacity=String(1-p*0.7);
     requestAnimationFrame(rise);
   })(t0);
+}
+/* one exhaled breath: a tight cloud, not a single dot */
+function ascBreath(){
+  for(var i=0;i<5;i++)setTimeout(function(){ascBubble('breath');},i*55);
 }
 
 function ascFail(rate){
@@ -4997,11 +5067,11 @@ function ascSurface(){
 
 /* hold-to-actuate, pointer events so mouse and touch behave the same */
 (function(){
-  function hold(id,key){
-    holdButton($(id),function(on){if(asc&&!asc.done)asc[key]=on;});
+  function hold(id,key,keys){
+    holdButton($(id),function(on){if(asc&&!asc.done)asc[key]=on;},keys);
   }
-  hold('ascInflate','inflate');
-  hold('ascDeflate','deflate');
+  hold('ascInflate','inflate',['ArrowUp','Up','w','W']);
+  hold('ascDeflate','deflate',['ArrowDown','Down','s','S']);
 })();
 
 /* ════════════════════════════════════════════════════════════════
