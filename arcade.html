@@ -399,21 +399,28 @@
   .depth-track{position:relative;height:230px;max-height:34vh;width:100%;border-radius:12px;overflow:hidden;
     border:1px solid var(--line);
     background:linear-gradient(to bottom,#1aa7c4 0%,#0c5570 40%,#06303f 75%,#021a24 100%)}
-  .depth-needle{position:absolute;left:0;right:0;height:3px;background:var(--gold);
-    box-shadow:0 0 10px rgba(243,198,79,.8);pointer-events:none;z-index:3}
+  /* the line IS the control — a range input underneath meant looking
+     in one place and dragging in another */
+  .depth-track{cursor:ns-resize;touch-action:none;user-select:none}
+  .depth-track:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .depth-needle{position:absolute;left:0;right:0;height:4px;background:var(--gold);
+    box-shadow:0 0 10px rgba(243,198,79,.8);pointer-events:none;z-index:3;
+    transition:top .06s linear}
+  .depth-needle.grabbed{transition:none;height:5px;box-shadow:0 0 18px rgba(243,198,79,1)}
   .depth-needle::after{content:'';position:absolute;right:8px;top:-7px;border:8px solid transparent;
     border-right-color:var(--gold)}
+  .depth-needle .dn-grip{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+    width:38px;height:26px;border-radius:8px;background:var(--gold);color:#04282a;
+    display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;
+    box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  .depth-how{font-size:13px;color:var(--muted);text-align:center;margin:0;flex-shrink:0}
+  @media(min-width:1000px){
+    .depth-how{font-size:17px}
+    .depth-needle .dn-grip{width:48px;height:32px;font-size:19px}
+  }
   .depth-marks{position:absolute;inset:0;z-index:1}
   .depth-marks span{position:absolute;left:8px;font-size:10px;color:rgba(255,255,255,.6);transform:translateY(-50%)}
   .depth-marks i{position:absolute;left:0;right:0;height:1px;background:rgba(255,255,255,.12)}
-  .depth-slider{width:100%;-webkit-appearance:none;appearance:none;height:30px;background:transparent;cursor:pointer}
-  .depth-slider::-webkit-slider-runnable-track{height:8px;border-radius:999px;
-    background:linear-gradient(to right,#0c5570,var(--accent))}
-  .depth-slider::-moz-range-track{height:8px;border-radius:999px;background:#0c5570}
-  .depth-slider::-webkit-slider-thumb{-webkit-appearance:none;width:30px;height:30px;border-radius:50%;
-    background:var(--gold);border:3px solid #04282a;margin-top:-11px;box-shadow:0 0 10px rgba(243,198,79,.6)}
-  .depth-slider::-moz-range-thumb{width:26px;height:26px;border-radius:50%;background:var(--gold);
-    border:3px solid #04282a;box-shadow:0 0 10px rgba(243,198,79,.6)}
   .depth-zone{position:absolute;left:0;right:0;background:rgba(79,210,138,.28);
     border-top:2px solid var(--good);border-bottom:2px solid var(--good);display:none;z-index:2}
 
@@ -444,6 +451,7 @@
   .tf-btn.tfno{background:var(--badd);color:#f7cfcf;border-color:var(--bad)}
   .tf-btn:active{transform:translateY(2px)}
   .tf-btn:disabled{opacity:.5;cursor:default}
+  .tf-hint{font-size:13px;color:var(--muted);text-align:center;margin:-4px 0 0;letter-spacing:.3px}
   .tf-reveal{font-size:14px;color:var(--muted);text-align:center;min-height:40px;line-height:1.4}
   .tf-reveal b{color:var(--accent)}
 
@@ -747,6 +755,10 @@
   .lu-task{font-size:15px;text-align:center;color:var(--text);background:var(--surface);
     border:1px solid var(--line);border-radius:12px;padding:12px;margin:0 0 10px;flex-shrink:0}
   .lu-task b{color:var(--accent)}
+  /* the how-to is what people skipped, so it is the biggest thing
+     on the line rather than a trailing clause */
+  .lu-task .lu-how{display:block;margin:6px 0 4px;font-size:1.28em;letter-spacing:.4px}
+  .lu-task .lu-order{color:var(--gold);font-weight:800}
   .lu-slots{display:flex;gap:6px;margin-bottom:10px;flex-shrink:0}
   .lu-slot{flex:1;min-width:0;aspect-ratio:1/1.25;border-radius:10px;border:2px dashed var(--line);
     background:var(--bg2);display:flex;flex-direction:column;align-items:center;justify-content:center;
@@ -868,6 +880,147 @@
     .logobar{display:none}
     .arcade-insert{display:none}
     .wcard{padding:14px}
+  }
+
+  /* ════════════════════════════════════════════════════════════════
+     DESKTOP / BIG SCREEN
+
+     Everything above is tuned for a phone held at 30 cm. On a 27"
+     iMac at arm's length the same numbers are tiny: the instruction
+     that tells you what the game even IS was a 13px grey caption,
+     and the artwork stayed at its phone size while the panel grew to
+     2400px wide. This layer scales the reading matter and the art up
+     with the screen. It is additive — nothing here applies to a
+     phone, so the phone layouts stay exactly as tuned.
+     ════════════════════════════════════════════════════════════════ */
+  /* wording that has to differ between a mouse and a finger */
+  .mouseword{display:none}
+  .touchword{display:inline}
+  @media(hover:hover) and (pointer:fine){
+    .mouseword{display:inline}
+    .touchword{display:none}
+  }
+
+  @media(min-width:1000px){
+    :root{--artH:480px}
+
+    /* THE instruction line — first thing to read, so it leads */
+    .game-header .game-label{font-size:26px;font-weight:800;color:var(--text);letter-spacing:.2px}
+    .game-header .game-tagline{font-size:16px}
+    .score{font-size:18px}
+
+    /* answers fill their boxes instead of floating in them */
+    button.opt{font-size:20px;padding:16px 20px;border-radius:12px}
+    .opts-grid{gap:10px}
+    .chip{font-size:19px;padding:15px 18px}
+    .chips-grid{gap:10px}
+    .swatch{font-size:19px;padding:13px 16px}
+    .swatch .dot{width:30px;height:30px}
+    .odd-prompt{font-size:20px;margin-bottom:12px}
+    .odd-card{font-size:22px;min-height:130px}
+    .odd-card .oc-emoji{font-size:42px}
+    .fact,.qfact{font-size:18px;line-height:1.5}
+    .qcat{font-size:17px}
+    .qlevel{font-size:16px;padding:10px 8px}
+    .btn{font-size:17px;padding:12px 20px}
+    .auto-notice{font-size:15px}
+
+    /* art gets the screen it now has */
+    .sil-stage,.colour-stage{max-height:56vh}
+    .sil-bonus{font-size:17px}
+
+    /* Guess Who / Where Am I / Spotter Log: these were object-fit
+       cover inside a 340px letterbox, which on a wide panel threw
+       away most of the photo. Contain, and let them use --artH. */
+    .logsceneimg{object-fit:contain;max-height:none;height:var(--artH);background:#071e29}
+    #gart img{object-fit:contain!important;max-height:none!important;
+      height:var(--artH);background:#071e29}
+
+    /* Zoom In is a crop game, so it keeps object-fit:cover — but the
+       stage itself has to stop being a 2400x480 slot or the "zoomed
+       out" frame is still a savage crop. Photo-shaped and centred. */
+    .zoom-stage{width:100%;max-width:900px;margin-left:auto;margin-right:auto;
+      height:auto;aspect-ratio:3/2;max-height:56vh}
+    .zoom-hint{font-size:18px}
+    .zoom-meter{height:12px}
+
+    /* Breath Hold: the orb is the button, so it leads the panel */
+    .breath-orb{width:min(38vw,340px);height:min(38vw,340px)}
+    .breath-orb .bo-emoji{font-size:58px}
+    .breath-orb .bo-hint{font-size:18px;max-width:86%}
+    .breath-result{font-size:22px;min-height:30px}
+    .breath-pb{font-size:17px}
+    .breath-records{max-width:560px}
+    .breath-records .rrow{font-size:17px;padding:10px 16px}
+
+    /* Stat Battle */
+    .tcards{gap:16px;max-width:1000px;margin-left:auto;margin-right:auto}
+    .tcard{padding:14px}
+    .tcard .tt{font-size:22px;margin:6px 0 6px}
+    .tcard .cap{font-size:15px;margin-bottom:8px}
+    .statbtn,.statrow{font-size:18px;padding:12px 15px;border-radius:10px}
+    .statbtn .note{font-size:14px}
+    .tres{font-size:22px;min-height:28px}
+
+    /* Shark ID */
+    .si-target{font-size:17px;min-height:52px;padding:10px 12px}
+    .si-token{font-size:18px;padding:13px 20px;border-radius:10px}
+    .si-tray{gap:12px}
+
+    /* Migration */
+    .mig-coast{height:min(40vh,340px)}
+    .mig-animal{font-size:60px}
+    .mig-end{font-size:18px}
+    .mig-end small{font-size:13px}
+    .mig-here{font-size:18px}
+    .mig-q{font-size:21px;padding:16px;line-height:1.5}
+
+    /* Wreck Detective / When To See */
+    .wreck-clue{font-size:21px;padding:18px}
+
+    /* True/False + Speed Round */
+    .tf-statement{font-size:30px;padding:30px 26px}
+    .tf-btn{padding:28px 12px;font-size:22px}
+    .tf-reveal{font-size:19px}
+    .tf-hint{font-size:16px}
+    .speed-meta{font-size:17px}
+
+    /* Depth Gauge */
+    .depth-fact{font-size:24px}
+    .depth-track{height:min(46vh,430px);max-height:none}
+    .depth-marks span{font-size:14px;left:12px}
+
+    /* Bubble Pop */
+    .bubble-hud{font-size:18px}
+
+    /* Size Line-Up — the instruction is the thing people misread */
+    .lu-task{font-size:22px;padding:18px;line-height:1.45}
+    .lu-card .nm{font-size:16px}
+    .lu-slot .nm{font-size:14px}
+    .lu-slot .pos{font-size:14px}
+    .lu-pool{grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:12px}
+
+    /* Memory */
+    .mem-hint{font-size:19px}
+    .mem-front .nm{font-size:15px}
+  }
+
+  /* an iMac at 2560 has room for another step up */
+  @media(min-width:1700px){
+    :root{--artH:560px}
+    /* .wrap deliberately goes full-bleed at this size for the menu
+       grid, but a two-column answer row 1200px per button is not
+       "big", it is unreadable. Rein the game panels back in. */
+    .panel:not(#p-menu):not(#p-hof):not(#p-admin){
+      width:100%;max-width:1280px;margin-left:auto;margin-right:auto}
+    .game-header .game-label{font-size:30px}
+    button.opt{font-size:22px;padding:18px 22px}
+    .chip{font-size:21px}
+    .tf-statement{font-size:34px}
+    .lu-task{font-size:24px}
+    .mig-q{font-size:23px}
+    .wreck-clue{font-size:23px}
+    .depth-fact{font-size:27px}
   }
 </style>
 </head>
@@ -1085,12 +1238,15 @@
       <p class="depth-fact" id="depthFact"></p>
       <div class="depth-wrap">
         <div class="depth-readout"><span id="depthReadout">0</span> m</div>
-        <div class="depth-track" id="depthTrack">
+        <div class="depth-track" id="depthTrack" tabindex="0" role="slider"
+             aria-label="Depth guess" aria-valuemin="0" aria-valuemax="300" aria-valuenow="0">
           <div class="depth-marks" id="depthMarks"></div>
           <div class="depth-zone" id="depthZone"></div>
-          <div class="depth-needle" id="depthNeedle" style="top:0%"></div>
+          <div class="depth-needle" id="depthNeedle" style="top:0%"><span class="dn-grip">⇕</span></div>
         </div>
-        <input type="range" class="depth-slider" id="depthSlider" min="0" max="100" value="0">
+        <p class="depth-how"><span class="mouseword">Click or drag the gold line</span><span
+          class="touchword">Drag the gold line</span> up and down to set your depth<span
+          class="keyhint">, or use the ↑ / ↓ arrow keys</span>.</p>
       </div>
       <button class="btn" id="depthLock">Lock in depth ✓</button>
       <p class="fact" id="depthMsg"></p>
@@ -1110,6 +1266,7 @@
           <button class="tf-btn tfyes" id="tfTrue">TRUE</button>
           <button class="tf-btn tfno" id="tfFalse">FALSE</button>
         </div>
+        <p class="tf-hint keyhint">← left arrow for TRUE · right arrow for FALSE →</p>
         <div class="tf-reveal" id="tfReveal"></div>
       </div>
       <button class="btn" id="tfNext" style="display:none">Next myth →</button>
@@ -2870,6 +3027,10 @@ var TRUMPS_ROUNDS=3,tWin=0,tLose=0,tRound=0,tQueue=[];
 var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10'],['migrate','Migration','km']];
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
 function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
+/* Shark ID photos were a flat 110px regardless of screen. Tie them to
+   the same art scale as everything else, floored at the old value so
+   the phone grid is untouched. */
+function siCardH(){return Math.max(110,Math.round(artHeight(180)*0.42));}
 function cardHtml(key,who,hide,lenLocked){var c=CR[key];
   return '<p class="cap">'+who+'</p><p class="tt">'+c.n+'</p><div style="margin-bottom:6px">'+ART_html(key,trumpsArtH())+'</div>'+
     STATS.map(function(s){var lk=(s[0]==='len'&&lenLocked);if(hide)return '<div class="statrow"><span>'+s[1]+'</span><span style="color:var(--muted)">—</span></div>';var lbl=s[1]+(lk?' <span class="note">lopsided</span>':'');var val=fmtVal(s[0],c[s[0]])+(s[2]?' '+s[2]:'');return '<button class="statbtn'+(lk?' locked':'')+'" data-s="'+s[0]+'"'+(lk?' disabled':'')+'><span>'+lbl+'</span><span style="font-weight:600">'+val+'</span></button>';}).join('');}
@@ -3076,8 +3237,20 @@ $('silNext').onclick=silRound;
 var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Bluespotted ray','Old wife','Mado','Sea tulip'];
 var BUBBLE_FAKE=['Clownfish','Great white… reef','Piranha','Lionfish','Coral trout','Mandarinfish','Anaconda','Pufferfish','Manatee','Parrotfish'];
 var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:[],raf:null};
+/* Reading a species name off a bubble that is already halfway up the
+   screen is a reading-speed test as much as a knowledge one, and the
+   youngest divers were losing on the reading. Younger = fewer bubbles
+   in the air, drifting more slowly, drawn bigger. */
+var BUBBLE_CFG={
+  'Young Explorer':{every:1500,rise:0.55,size:76,extra:30,start:2},
+  'Teen Explorer' :{every:1000,rise:0.85,size:64,extra:32,start:3},
+  'Adult Explorer':{every:820, rise:1.00,size:58,extra:34,start:3}
+};
+function bubbleCfg(){return BUBBLE_CFG[USER.group]||BUBBLE_CFG['Teen Explorer'];}
+
 function initBubble(){
   var f=$('bubbleField');f.innerHTML='';
+  var cfg=bubbleCfg();
   bubbleState={time:15,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
   $('bubbleTime').textContent='20';$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
   $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';$('bubbleNotice').textContent='';
@@ -3085,8 +3258,8 @@ function initBubble(){
     bubbleState.time--;$('bubbleTime').textContent=bubbleState.time;
     if(bubbleState.time<=0)endBubble();
   },1000);
-  bubbleState.spawn=setInterval(spawnBubble,820);
-  for(var i=0;i<3;i++)setTimeout(spawnBubble,i*260);
+  bubbleState.spawn=setInterval(spawnBubble,cfg.every);
+  for(var i=0;i<cfg.start;i++)setTimeout(spawnBubble,i*320);
   animateBubbles();
 }
 function spawnBubble(){
@@ -3095,13 +3268,15 @@ function spawnBubble(){
   var real=Math.random()<0.55;
   var name=real?BUBBLE_REAL[Math.floor(Math.random()*BUBBLE_REAL.length)]
                 :BUBBLE_FAKE[Math.floor(Math.random()*BUBBLE_FAKE.length)];
-  var size=Math.round(58+Math.random()*34);
+  var cfg=bubbleCfg();
+  var size=Math.round(cfg.size+Math.random()*cfg.extra);
   var b=document.createElement('div');b.className='bubble';
-  b.style.width=size+'px';b.style.height=size+'px';b.style.fontSize=(size>78?12:11)+'px';
+  b.style.width=size+'px';b.style.height=size+'px';
+  b.style.fontSize=Math.max(11,Math.round(size*0.165))+'px';
   var x=Math.random()*(W-size-8)+4;
   b.style.left=x+'px';
   b._y=(f.clientHeight||320);b.style.top=b._y+'px';
-  b._speed=0.5+Math.random()*0.7;b._real=real;b.textContent=name;
+  b._speed=(0.5+Math.random()*0.7)*cfg.rise;b._real=real;b.textContent=name;
   b.addEventListener('click',function(ev){
     ev.stopPropagation();
     if(!bubbleState.active||b._popped)return;b._popped=true;
@@ -3141,7 +3316,7 @@ var DEPTH_ROUNDS=[
   {fact:'The giant cuttlefish breeds in shallows near ___ m',answer:5,tol:6},
   {fact:'Blue gropers patrol rocky reefs at about ___ m',answer:20,tol:15}
 ];
-var depthQueue=[],depthRoundN=0,depthLocked=false,depthCur=null;
+var depthQueue=[],depthRoundN=0,depthLocked=false,depthCur=null,depthPct=0;
 function initDepth(){
   depthQueue=shuffle(DEPTH_ROUNDS.slice()).slice(0,3);depthRoundN=0;
   $('depthTotal').textContent=depthQueue.length;$('depthNotice').textContent='';
@@ -3158,19 +3333,57 @@ function depthRound(){
   $('depthFact').textContent=depthCur.fact.replace('___','?');
   $('depthMsg').textContent='';$('depthNext').style.display='none';$('depthLock').style.display='inline-block';
   $('depthZone').style.display='none';
-  var sl=$('depthSlider');sl.value=0;sl.disabled=false;updateDepthNeedle(0);
+  updateDepthNeedle(0);
   startTimer();
 }
 function sliderToM(v){return Math.round(v/100*DEPTH_MAX);}
 function updateDepthNeedle(v){
-  var m=sliderToM(v);$('depthReadout').textContent=m;
+  depthPct=Math.max(0,Math.min(100,+v));
+  var m=sliderToM(depthPct);
+  $('depthReadout').textContent=m;
   $('depthNeedle').style.top=(m/DEPTH_MAX*100)+'%';
+  $('depthTrack').setAttribute('aria-valuenow',m);
 }
-$('depthSlider').addEventListener('input',function(){if(!depthLocked)updateDepthNeedle(this.value);});
+
+/* Drag the line itself. Pointer events so mouse, pen and touch all
+   take the same path, with capture so the drag survives the pointer
+   leaving the track — otherwise a fast drag past the top or bottom
+   edge silently drops the grab. */
+(function(){
+  var tr=$('depthTrack'),nd=$('depthNeedle'),dragging=false;
+  function fromEvent(ev){
+    var r=tr.getBoundingClientRect();
+    if(!r.height)return;
+    updateDepthNeedle((ev.clientY-r.top)/r.height*100);
+  }
+  tr.addEventListener('pointerdown',function(ev){
+    if(depthLocked)return;
+    ev.preventDefault();
+    dragging=true;nd.classList.add('grabbed');
+    try{tr.setPointerCapture(ev.pointerId);}catch(e){}
+    fromEvent(ev);
+  });
+  tr.addEventListener('pointermove',function(ev){
+    if(!dragging||depthLocked)return;
+    ev.preventDefault();fromEvent(ev);
+  });
+  ['pointerup','pointercancel','lostpointercapture'].forEach(function(t){
+    tr.addEventListener(t,function(){dragging=false;nd.classList.remove('grabbed');});
+  });
+  /* arrow keys: 5 m a press, 25 m with shift */
+  window.addEventListener('keydown',function(ev){
+    if(depthLocked||tr.offsetParent===null)return;
+    var step=ev.key==='ArrowUp'?-1:(ev.key==='ArrowDown'?1:0);
+    if(!step)return;
+    ev.preventDefault();
+    updateDepthNeedle(depthPct+step*(ev.shiftKey?25:5)/DEPTH_MAX*100);
+  });
+})();
 $('depthLock').onclick=function(){
   if(depthLocked)return;depthLocked=true;
-  $('depthSlider').disabled=true;$('depthLock').style.display='none';
-  var guess=sliderToM($('depthSlider').value);
+  $('depthLock').style.display='none';
+  $('depthNeedle').classList.remove('grabbed');
+  var guess=sliderToM(depthPct);
   var ans=depthCur.answer,tol=depthCur.tol;
   var diff=Math.abs(guess-ans);
   /* show the correct zone */
@@ -3251,6 +3464,15 @@ function tfAnswer(val){
 }
 $('tfTrue').onclick=function(){tfAnswer(true);};
 $('tfFalse').onclick=function(){tfAnswer(false);};
+/* keyboard: the two buttons sit left and right, so the left and right
+   arrows map onto them without anyone having to be told twice. Only
+   while the panel is on screen and the buttons are still live. */
+window.addEventListener('keydown',function(ev){
+  var t=$('tfTrue');
+  if(!t||t.disabled||t.offsetParent===null)return;
+  if(ev.key==='ArrowLeft'){ev.preventDefault();tfAnswer(true);}
+  else if(ev.key==='ArrowRight'){ev.preventDefault();tfAnswer(false);}
+});
 $('tfNext').onclick=tfRound;
 
 /* ════════ 8. COLOUR THE CREATURE ════════ */
@@ -3428,7 +3650,8 @@ function initSeason(){
 }
 function seasonRound(){
   seasonAnswered=false;seasonCur=seasonQueue.shift();
-  $('seasonArt').innerHTML=ART_html(seasonCur.key,Math.round(artHeight(180)*0.7));
+  $('seasonArt').innerHTML=ART_html(seasonCur.key,
+    Math.round(artHeight(180)*(window.innerWidth>=1000?0.92:0.7)));
   $('seasonName').textContent=CR[seasonCur.key].n;
   $('seasonFact').textContent='';$('seasonNext').style.display='none';
   $('seasonOpts').innerHTML=SEASON_OPTS.map(function(o){return '<button class="opt" data-o="'+o+'">'+o+'</button>';}).join('');
@@ -3633,7 +3856,7 @@ function initSharkId(){
   $('sharkidPlaced').textContent=0;$('sharkidTotal').textContent=keys.length;
   $('sharkidMsg').textContent='';$('sharkidNotice').textContent='';
   $('sharkidGrid').innerHTML=keys.map(function(k){
-    return '<div class="si-card">'+ART_html(k,110)+
+    return '<div class="si-card">'+ART_html(k,siCardH())+
       '<div class="si-target" data-key="'+k+'">Drop name here</div></div>';
   }).join('');
   $('sharkidTray').innerHTML=shuffle(keys.slice()).map(function(k){
@@ -4438,8 +4661,11 @@ var NU={
      that keeps rock on screen is
         0.5 - (ROAM1+ROAM2) - OPEN/2*(1+PINCH/2) > 0                */
   ROAM1:0.060, L1:600, ROAM2:0.020, L2:280,
-  OPEN:{'Young Explorer':0.68,'Teen Explorer':0.56,'Adult Explorer':0.46},
-  PINCH:0.20,                  /* how much the tunnel narrows      */
+  /* Tightened after the diver was made to scale with the canvas:
+     with a correctly-sized diver these openings left far too much
+     room. The reach budget still passes comfortably at all three. */
+  OPEN:{'Young Explorer':0.54,'Teen Explorer':0.42,'Adult Explorer':0.33},
+  PINCH:0.28,                  /* how much the tunnel narrows      */
   TICK:2,                      /* award every N seconds survived   */
   TICK_PTS:3,
   HIT_COOLDOWN:0.7             /* stops one scrape draining points */
@@ -5281,7 +5507,13 @@ function luNextRound(){
     seen[v]=true;chosen.push(pool[i]);
   }
   luCur={task:task,keys:shuffle(chosen)};
-  $('luTask').innerHTML=esc(task.q)+'<br>Tap them in order — <b>'+esc(task.label)+'</b>';
+  /* "Tap" reads as "drag" to anyone on a mouse, and people were
+     trying to drag the cards. Say CLICK on a pointer device, and say
+     it as the loudest thing on the line. */
+  $('luTask').innerHTML=esc(task.q)+
+    '<br><b class="lu-how"><span class="mouseword">CLICK</span>'+
+    '<span class="touchword">TAP</span> them one by one, in order</b>'+
+    '<br><span class="lu-order">'+esc(task.label)+'</span>';
   luRender();
 }
 function luRender(){
