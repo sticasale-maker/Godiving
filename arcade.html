@@ -73,6 +73,19 @@
   .pts .fl{display:inline-block;margin-left:7px;font-size:12px;opacity:0;transition:opacity .2s;font-weight:600}
   .pts .fl.up{color:var(--good)}
   .pts .fl.down{color:var(--bad)}
+  /* Every game leaves by the same door. Shown whenever a game panel
+     is up, hidden on the menu / hall of fame / admin. */
+  .game-back{order:-1;background:var(--bg2);color:var(--text);border:1px solid var(--line);
+    border-radius:9px;padding:8px 14px;font-size:14px;font-weight:600;cursor:pointer;
+    font-family:inherit;transition:.12s;display:none}
+  .game-back:hover{border-color:var(--accent);color:var(--accent)}
+  .game-back.show{display:inline-block}
+  /* when a game has been played out, the way on is the loud thing */
+  .game-back.done{background:var(--accent);color:#04282a;border-color:var(--accent);
+    animation:gbPulse 1.6s ease-in-out infinite}
+  @keyframes gbPulse{0%,100%{box-shadow:0 0 0 0 rgba(54,201,192,.55)}
+    50%{box-shadow:0 0 0 7px rgba(54,201,192,0)}}
+  @media(min-width:1000px){.game-back{font-size:18px;padding:11px 20px}}
 
   /* ── GAME SUB-HEADER (replaces removed h1/sub) ── */
   .game-header{
@@ -102,6 +115,59 @@
   .qlevel.on{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
   .qcat{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--gold);text-align:center;
     letter-spacing:.3px;flex-shrink:0}
+
+  /* ── WRECK FINDER ── */
+  /* The chart is very nearly square (the frame is 9.7 x 9.4 km), so
+     left to fill a 1280px panel it would be 1245px tall and push the
+     pins off the bottom of the screen. Bound it by viewport height
+     and let the width follow; the phone is bounded by width instead. */
+  .wf-layout{display:flex;flex-direction:column;flex:1;min-height:0}
+  #wreckfindWrap{position:relative;width:100%;max-width:min(100%,52vh);
+    margin:0 auto;border-radius:12px;overflow:hidden;
+    border:1px solid var(--line);background:#06222c}
+  #wreckfindMap{position:relative;width:100%}
+  #wreckfindTray{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center}
+  /* On a wide screen the chart is height-bound and the tray was
+     eating the height it needed, while 600px of panel sat empty
+     beside it. Put the wrecks in a column alongside instead: the map
+     gets the full panel height and the two Bradleys Head pins move
+     far enough apart to tell apart. */
+  @media(min-width:1000px){
+    .wf-layout{flex-direction:row;gap:22px;align-items:stretch}
+    #wreckfindWrap{max-width:min(100%,82vh);margin:0}
+    #wreckfindTray{flex-direction:column;flex-wrap:nowrap;justify-content:flex-start;
+      margin-top:0;width:330px;flex-shrink:0;overflow-y:auto}
+    .wf-token{max-width:none;width:100%}
+  }
+  /* The Currajong and the Centennial genuinely lie ~600 m apart off
+     Bradleys Head, so the pins are close together on a chart that has
+     to reach North Harbour for the Centurion. Targets scale with the
+     map so they stay distinguishable rather than being fixed px. */
+  .wf-target{position:absolute;transform:translate(-50%,-50%);
+    width:clamp(26px,4.4%,54px);aspect-ratio:1;
+    border:2px dashed rgba(255,255,255,.8);border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    color:#fff;font-size:clamp(12px,1.9vw,20px);font-weight:700;
+    background:rgba(4,22,31,.45);box-shadow:0 0 0 2px rgba(4,22,31,.5);
+    z-index:2;transition:.12s}
+  .wf-target.wf-hot{border-color:var(--accent);background:rgba(54,201,192,.3);transform:translate(-50%,-50%) scale(1.12)}
+  /* the true position, when the marker had to be led away from it */
+  .wf-dot{position:absolute;width:7px;height:7px;border-radius:50%;background:var(--gold);
+    transform:translate(-50%,-50%);z-index:3;box-shadow:0 0 6px rgba(243,198,79,.9)}
+  .wf-leader{position:absolute;height:2px;background:rgba(243,198,79,.7);
+    transform-origin:0 50%;z-index:2;pointer-events:none}
+  .wf-target.wf-set{border-style:solid;border-color:var(--good);
+    color:var(--good);background:rgba(79,210,138,.22)}
+  .wf-token{cursor:grab;background:var(--surface);border:1px solid var(--accent);
+    color:var(--text);border-radius:10px;padding:9px 13px;touch-action:none;
+    display:flex;flex-direction:column;gap:2px;align-items:flex-start;max-width:280px}
+  .wf-token b{font-size:14px;font-weight:700}
+  .wf-token small{font-size:11.5px;color:var(--muted);line-height:1.3}
+  @media(min-width:1000px){
+    .wf-token{padding:12px 18px}
+    .wf-token b{font-size:18px}
+    .wf-token small{font-size:14px}
+  }
 
   /* ── SHARK ID (drag names onto photos) ── */
   .si-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
@@ -1073,6 +1139,7 @@
 
     <!-- Points bar -->
     <div class="pointsbar">
+      <button class="game-back" id="gameBack">← Back to games</button>
       <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
       <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
     </div>
@@ -1372,10 +1439,12 @@
         <span class="game-label">Drag each wreck to its real spot on the map</span>
         <span class="score">Placed <b id="wreckfindPlaced">0</b> / <b id="wreckfindTotal">0</b></span>
       </div>
-      <div id="wreckfindWrap" style="position:relative;width:100%;border-radius:12px;overflow:hidden;border:1px solid var(--line);background:#06222c">
-        <div id="wreckfindMap" style="position:relative;width:100%"></div>
+      <div class="wf-layout">
+        <div id="wreckfindWrap">
+          <div id="wreckfindMap"></div>
+        </div>
+        <div id="wreckfindTray"></div>
       </div>
-      <div id="wreckfindTray" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;justify-content:center"></div>
       <p class="qfact" id="wreckfindMsg" style="margin-top:10px"></p>
       <p class="auto-notice" id="wreckfindNotice"></p>
     </div>
@@ -2731,9 +2800,16 @@ function showPanel(id){
 }
 /* Called at the end of every mini-game. Now returns the diver to the menu hub
    (and remembers the game as played) instead of forcing the next game. */
+/* Called when a game has been played out. It used to jump straight
+   back to the menu on a 2-3 second timer, which read as the app
+   throwing you out mid-thought — there was never an idle timeout,
+   this was it. Now it only marks the game done and lights up the
+   Back button; leaving is always the player's decision. */
 function advanceGame(){
   if(activeGame)playedGames[activeGame]=true;
-  showMenu();
+  updateStrip(activeGame);
+  var gb=$('gameBack');
+  if(gb){gb.classList.add('done');gb.textContent='← Back to games';}
 }
 function startGame(name){
   activeGame=(name==='hof'||name==='menu')?null:name;
@@ -2741,6 +2817,12 @@ function startGame(name){
   if(name==='hof'||name==='menu'){strip.style.display='none';}
   else{strip.style.display='flex';}
   updateStrip(name);showPanel('p-'+name);
+  var gb=$('gameBack');
+  if(gb){
+    gb.classList.toggle('show',!!activeGame);
+    gb.classList.remove('done');
+    gb.textContent='← Back to games';
+  }
   Cloud.updateSession({game:name,points:POINTS});
   if(name==='quiz')initQuiz();
   else if(name==='breath')initBreath();
@@ -2972,7 +3054,7 @@ function quizRound(){
     if(btn.dataset.k===key){qScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('qscore').textContent=qScore;$('qtotal').textContent=qTotal;$('qfact').textContent=QD(key).f;
     if(qQueue.length>0)$('qnext').style.display='inline-block';
-    else{$('qnotice').textContent='All creatures done! 🐠 Back to the menu…';setTimeout(advanceGame,2200);}
+    else{$('qnotice').textContent='All creatures done! 🐠 Pick another game when you are ready →';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -2997,7 +3079,7 @@ function initLog(){
 }
 function renderLog(){
   var n=Object.keys(logFound).length;$('logn').textContent=n;$('logbar').style.width=(n/3*100)+'%';
-  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Back to the menu…';setTimeout(advanceGame,2200);}
+  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Pick another game when you are ready →';setTimeout(advanceGame,2200);}
 }
 
 /* ════════ GUESS ════════ */
@@ -3016,7 +3098,7 @@ function guessRound(){
     if(btn.dataset.n===correctName){gScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('gscore').textContent=gScore;$('gtotal').textContent=gTotal;
     if(gQueue.length>0)$('gnext').style.display='inline-block';
-    else{$('gnotice').textContent='All sites guessed! 🗺️ Back to the menu…';setTimeout(advanceGame,2200);}
+    else{$('gnotice').textContent='All sites guessed! 🗺️ Pick another game when you are ready →';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -3059,7 +3141,7 @@ function dealRound(){
     else{$('tresult').textContent='A tie!';$('tresult').style.color='var(--muted)';}
     $('twin').textContent=tWin;$('tlose').textContent=tLose;
     if(tRound<TRUMPS_ROUNDS)$('tdeal').style.display='inline-block';
-    else{$('tnotice').textContent='Battle complete! 🃏 Back to the menu…';setTimeout(advanceGame,2400);}
+    else{$('tnotice').textContent='Battle complete! 🃏 Pick another game when you are ready →';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -3181,7 +3263,7 @@ function breathEnd(){
   orb.addEventListener('touchend',breathEnd);
   orb.addEventListener('touchcancel',breathEnd);
 })();
-$('breathNext').onclick=function(){$('breathNotice').textContent='Surfacing — on to Silhouette Match…';setTimeout(advanceGame,1400);};
+$('breathNext').onclick=function(){$('breathNotice').textContent='Surfacing — nice hold.';advanceGame();};
 
 /* ════════ 2. SILHOUETTE MATCH ════════ */
 var SIL_ROUNDS=[
@@ -3227,7 +3309,7 @@ function silRound(){
     else{btn.classList.add('wrong');penalize();$('silBonus').textContent='';}
     $('silScore').textContent=silScore;$('silTotal').textContent=silTotal;$('silFact').textContent=r.f;
     if(silQueue.length>0)$('silNext').style.display='inline-block';
-    else{$('silNotice').textContent='Shadows solved! 🧩 Back to the menu…';setTimeout(advanceGame,2200);}
+    else{$('silNotice').textContent='Shadows solved! 🧩 Pick another game when you are ready →';setTimeout(advanceGame,2200);}
   };});
   startTimer();
 }
@@ -3303,7 +3385,7 @@ function endBubble(){
   if(bubbleState.raf)cancelAnimationFrame(bubbleState.raf);
   $('bubbleField').innerHTML='';
   $('bubbleMsg').textContent='Time! You caught '+bubbleState.hit+' real species ('+bubbleState.miss+' slip-ups).';
-  $('bubbleNotice').textContent='Back to the menu…';
+  $('bubbleNotice').textContent='Pick another game when you are ready →';
   setTimeout(advanceGame,2200);
 }
 
@@ -3394,7 +3476,7 @@ $('depthLock').onclick=function(){
   else{penalize();$('depthMsg').textContent='Actual depth: ~'+ans+'m. You guessed '+guess+'m.';}
   depthRoundN++;
   if(depthRoundN<depthQueue.length)$('depthNext').style.display='inline-block';
-  else{$('depthNotice').textContent='Gauge mastered! 📏 Back to the menu…';setTimeout(advanceGame,2300);}
+  else{$('depthNotice').textContent='Gauge mastered! 📏 Pick another game when you are ready →';setTimeout(advanceGame,2300);}
 };
 $('depthNext').onclick=depthRound;
 
@@ -3460,7 +3542,7 @@ function tfAnswer(val){
   else{penalize();$('tfReveal').innerHTML='❌ <b>Not quite.</b> '+esc(tfCur.f);}
   $('tfScore').textContent=tfScore;$('tfTotal').textContent=tfTotal;
   if(tfQueue.length>0)$('tfNext').style.display='inline-block';
-  else{$('tfNotice').textContent='Myths busted! 📖 Back to the menu…';setTimeout(advanceGame,2300);}
+  else{$('tfNotice').textContent='Myths busted! 📖 Pick another game when you are ready →';setTimeout(advanceGame,2300);}
 }
 $('tfTrue').onclick=function(){tfAnswer(true);};
 $('tfFalse').onclick=function(){tfAnswer(false);};
@@ -3511,7 +3593,7 @@ function colRound(){
     else{btn.style.borderColor='var(--bad)';btn.style.background='var(--badd)';penalize();}
     $('colScore').textContent=colScore;$('colTotal').textContent=colTotal;$('colFact').textContent=r.f;
     if(colQueue.length>0)$('colNext').style.display='inline-block';
-    else{$('colNotice').textContent='Beautifully done! 🎨 Back to the menu…';setTimeout(advanceGame,2300);}
+    else{$('colNotice').textContent='Beautifully done! 🎨 Pick another game when you are ready →';setTimeout(advanceGame,2300);}
   };});
   startTimer();
 }
@@ -3547,7 +3629,7 @@ function oddRound(){
     else{btn.classList.add('wrong');penalize();}
     $('oddScore').textContent=oddScore;$('oddTotal').textContent=oddTotal;$('oddFact').textContent=r.f;
     if(oddQueue.length>0)$('oddNext').style.display='inline-block';
-    else{$('oddNotice').textContent='Impostors caught! 🔍 Back to the menu…';setTimeout(advanceGame,2300);}
+    else{$('oddNotice').textContent='Impostors caught! 🔍 Pick another game when you are ready →';setTimeout(advanceGame,2300);}
   };});
   startTimer();
 }
@@ -3626,7 +3708,7 @@ function endSpeed(){
   $('speedYes').disabled=true;$('speedNo').disabled=true;
   $('speedStatement').textContent='⏱️ Time! '+speedState.score+' correct.';
   $('speedReveal').textContent='';
-  $('speedNotice').textContent='Nice work — back to the menu…';
+  $('speedNotice').textContent='Nice work — — pick another game when you are ready →';
   setTimeout(advanceGame,2400);
 }
 
@@ -3661,7 +3743,7 @@ function seasonRound(){
     if(btn.dataset.o===seasonCur.ans){seasonScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('seasonScore').textContent=seasonScore;$('seasonTotal').textContent=seasonTotal;$('seasonFact').textContent=seasonCur.f;
     if(seasonQueue.length>0)$('seasonNext').style.display='inline-block';
-    else{$('seasonNotice').textContent='Seasons mastered! 📅 Back to the menu…';setTimeout(advanceGame,2400);}
+    else{$('seasonNotice').textContent='Seasons mastered! 📅 Pick another game when you are ready →';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -3700,7 +3782,7 @@ function wreckidRound(){
     else{btn.classList.add('wrong');penalize();$('wreckidFact').textContent='The answer was '+wreckidCur.name+'.';}
     $('wreckidScore').textContent=wreckidScore;$('wreckidTotal').textContent=wreckidTotal;
     if(wreckidQueue.length>0)$('wreckidNext').style.display='inline-block';
-    else{$('wreckidNotice').textContent='Case closed! 🔱 Back to the menu…';setTimeout(advanceGame,2400);}
+    else{$('wreckidNotice').textContent='Case closed! 🔱 Pick another game when you are ready →';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -3742,7 +3824,7 @@ function waveRound(){
     if(btn.dataset.o===waveCur.ans){waveScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
     $('waveScore').textContent=waveScore;$('waveTotal').textContent=waveTotal;$('waveFact').textContent=waveCur.f;
     if(waveQueue.length>0)$('waveNext').style.display='inline-block';
-    else{$('waveNotice').textContent='Forecast nailed! 🌊 Back to the menu…';setTimeout(advanceGame,2400);}
+    else{$('waveNotice').textContent='Forecast nailed! 🌊 Pick another game when you are ready →';setTimeout(advanceGame,2400);}
   };});
   startTimer();
 }
@@ -3760,12 +3842,103 @@ function waveSVG(r){
 /* ════════════════════════════════════════════════════════
    16. WRECK FINDER — drag wrecks onto the Sydney map
    ════════════════════════════════════════════════════════ */
-/* Positions are % coordinates on a stylised Sydney coast map (x:left, y:top) */
+/* ----------------------------------------------------------------
+   The map is drawn from real latitude/longitude, not eyeballed, so
+   the wreck pins land where the wrecks actually are. Everything is
+   projected through wfX/wfY: change the bounds and the coast, the
+   labels and the pins all move together and stay consistent.
+
+   Equirectangular is fine at this scale - the frame is under 10 km
+   across, so the error against a proper projection is sub-pixel.
+   The longitude axis is squeezed by cos(latitude) so the harbour
+   keeps its true shape instead of stretching east-west.
+   ---------------------------------------------------------------- */
+var WF_MAP={
+  lonW:151.195, lonE:151.300,      /* Balmain-ish out past the Heads */
+  latN:-33.790, latS:-33.875,      /* Manly down to Vaucluse         */
+  W:660
+};
+WF_MAP.H=Math.round(WF_MAP.W*((WF_MAP.latN-WF_MAP.latS)/
+  ((WF_MAP.lonE-WF_MAP.lonW)*Math.cos(-33.84*Math.PI/180))));
+function wfX(lon){return (lon-WF_MAP.lonW)/(WF_MAP.lonE-WF_MAP.lonW)*WF_MAP.W;}
+function wfY(lat){return (WF_MAP.latN-lat)/(WF_MAP.latN-WF_MAP.latS)*WF_MAP.H;}
+/* percentage position for the HTML drop targets layered over the SVG */
+function wfPctX(lon){return wfX(lon)/WF_MAP.W*100;}
+function wfPctY(lat){return wfY(lat)/WF_MAP.H*100;}
+
+/* The water, traced as one ring: out at sea, in through the Heads,
+   west along the southern shore to the Bridge, back east along the
+   northern shore, up Middle Harbour and out again, round North
+   Harbour and North Head, then north up the ocean coast to Manly.
+   [lat, lon] pairs, following the real shoreline. */
+var WF_WATER=[
+  [-33.790,151.300],[-33.875,151.300],                              /* open sea */
+  [-33.8750,151.2848],[-33.8700,151.2844],[-33.8620,151.2836],      /* Macquarie Lt, Diamond Bay */
+  [-33.8550,151.2824],[-33.8505,151.2812],                          /* Dover Hts cliffs (Dunbar) */
+  [-33.8468,151.2802],[-33.8428,151.2826],                          /* THE GAP, Gap Bluff */
+  [-33.8388,151.2842],[-33.8355,151.2836],                          /* Outer South Head, Hornby */
+  [-33.8370,151.2802],[-33.8398,151.2792],                          /* Camp Cove */
+  [-33.8424,151.2800],[-33.8455,151.2776],                          /* Watsons Bay */
+  [-33.8480,151.2760],[-33.8535,151.2748],[-33.8558,151.2716],      /* Parsley Bay, Nielsen Park */
+  [-33.8582,151.2692],[-33.8628,151.2686],[-33.8700,151.2678],      /* Vaucluse Bay */
+  [-33.8742,151.2650],[-33.8720,151.2570],[-33.8672,151.2530],      /* Rose Bay */
+  [-33.8640,151.2508],[-33.8658,151.2482],[-33.8700,151.2462],      /* Point Piper */
+  [-33.8762,151.2452],                                              /* Double Bay */
+  [-33.8724,151.2412],[-33.8695,151.2385],[-33.8730,151.2340],      /* Darling Point */
+  [-33.8760,151.2312],[-33.8700,151.2286],[-33.8680,151.2264],      /* Rushcutters, Garden I. */
+  [-33.8722,151.2222],[-33.8700,151.2196],[-33.8628,151.2202],      /* Woolloomooloo, Mrs Macquaries */
+  [-33.8652,151.2170],[-33.8600,151.2160],[-33.8570,151.2154],      /* Farm Cove, Bennelong Pt */
+  [-33.8600,151.2126],[-33.8615,151.2108],[-33.8578,151.2094],      /* Circular Quay */
+  [-33.8555,151.2085],[-33.8562,151.2000],[-33.8560,151.195],       /* Dawes Pt, out west */
+  [-33.8480,151.195],[-33.8462,151.1990],[-33.8455,151.2022],       /* Balls Head */
+  [-33.8496,151.2048],[-33.8502,151.2078],[-33.8520,151.2126],      /* Lavender Bay, Milsons Pt */
+  [-33.8528,151.2186],[-33.8492,151.2196],[-33.8460,151.2210],      /* Kirribilli, Careening Cove */
+  [-33.8396,151.2226],[-33.8430,151.2252],[-33.8456,151.2266],      /* Neutral Bay, Kurraba Pt */
+  [-33.8490,151.2292],[-33.8452,151.2306],[-33.8376,151.2322],      /* Cremorne Pt, Mosman Bay */
+  [-33.8420,151.2350],[-33.8446,151.2366],[-33.8416,151.2392],      /* Little Sirius Pt, Sirius Cove */
+  [-33.8420,151.2406],[-33.8462,151.2400],[-33.8500,151.2402],      /* Athol Bay */
+  [-33.8532,151.2416],[-33.8506,151.2440],[-33.8470,151.2466],      /* BRADLEYS HEAD, Taylors Bay */
+  [-33.8438,151.2482],[-33.8404,151.2496],[-33.8386,151.2522],      /* Taylors & Chowder Bay */
+  [-33.8352,151.2528],[-33.8330,151.2556],[-33.8300,151.2622],      /* Georges Head, Obelisk Bay */
+  [-33.8286,151.2650],[-33.8272,151.2690],                          /* MIDDLE HEAD */
+  [-33.8250,151.2640],[-33.8236,151.2586],[-33.8226,151.2542],      /* Hunters Bay, Balmoral */
+  [-33.8196,151.2520],[-33.8155,151.2496],[-33.8100,151.2478],      /* Chinamans Beach */
+  [-33.8045,151.2458],[-33.7975,151.2392],[-33.790,151.2330],       /* The Spit, up Middle Hbr */
+  [-33.790,151.2404],[-33.7968,151.2436],[-33.8030,151.2472],       /* and back down the far bank */
+  [-33.8022,151.2502],[-33.8058,151.2528],[-33.8078,151.2550],      /* Fisher Bay, Clontarf */
+  [-33.8096,151.2572],[-33.8072,151.2612],[-33.8060,151.2660],      /* Grotto Pt, Reef Beach */
+  [-33.8046,151.2744],[-33.8012,151.2776],[-33.7990,151.2832],      /* Dobroyd Hd, Forty Baskets */
+  [-33.7976,151.2874],[-33.8026,151.2892],[-33.8058,151.2880],      /* Manly Cove, Little Manly */
+  [-33.8078,151.2864],[-33.8112,151.2842],[-33.8134,151.2828],      /* Collins & Store Beach */
+  [-33.8166,151.2852],[-33.8206,151.2892],[-33.8244,151.2944],      /* Spring Cove, NORTH HEAD */
+  [-33.8200,151.2942],[-33.8160,151.2936],[-33.8080,151.2948],      /* Old Mans Hat, Blue Fish Pt */
+  [-33.7992,151.2932],[-33.7952,151.2898],[-33.790,151.2890]        /* Shelly Beach, Manly Beach */
+];
+/* islands sit in the water, so they are drawn back over it */
+var WF_ISLANDS=[
+  {lat:-33.8600,lon:151.2556,rx:9,  ry:5},    /* Shark Island   */
+  {lat:-33.8632,lon:151.2340,rx:6,  ry:4},    /* Clark Island   */
+  {lat:-33.8590,lon:151.2256,rx:4.5,ry:3.5},  /* Fort Denison   */
+  {lat:-33.8520,lon:151.1985,rx:9,  ry:5}     /* Goat Island    */
+];
+
+/* ----------------------------------------------------------------
+   16. WRECK FINDER - drag wrecks onto the Sydney Harbour chart
+
+   Every position below is the published wreck location, not a
+   guess. HMAS Adelaide was dropped: she is scuttled off Avoca, 80 km
+   up the Central Coast, and was the only pin forcing this map to
+   cover far more water than Sydney Harbour.
+   ---------------------------------------------------------------- */
 var WRECK_SPOTS=[
-  {name:'TSS Currajong',x:46,y:40,hint:'Off Bradleys Head, inner harbour'},
-  {name:'SS Dunbar',x:62,y:34,hint:'The Gap, South Head'},
-  {name:'SS Centennial',x:66,y:28,hint:'Off the Sydney Heads'},
-  {name:'HMAS Adelaide',x:40,y:8,hint:'Avoca Beach, Central Coast'}
+  {name:'TSS Currajong', lat:-33.854794, lon:151.249064,
+   hint:'230 m off Bradleys Head, under the shipping lane · 26 m'},
+  {name:'SS Centennial', lat:-33.849444, lon:151.248889,
+   hint:'Just outside Taylors Bay · 13 m'},
+  {name:'Centurion',     lat:-33.817611, lon:151.281056,
+   hint:'Off Quarantine Point, Spring Cove · 18 m'},
+  {name:'SS Dunbar',     lat:-33.850500, lon:151.282200,
+   hint:'Foot of the South Head cliffs, just south of The Gap · 5 m'}
 ];
 var wreckfindState=null;
 function initWreckFind(){
@@ -3773,26 +3946,121 @@ function initWreckFind(){
   wreckfindState={spots:spots,placed:0,total:spots.length};
   $('wreckfindPlaced').textContent=0;$('wreckfindTotal').textContent=spots.length;
   $('wreckfindMsg').textContent='';$('wreckfindNotice').textContent='';
-  $('wreckfindMap').innerHTML=wreckMapSVG()+spots.map(function(s){
-    return '<div class="wf-target" data-name="'+esc(s.name)+'" style="position:absolute;left:'+s.x+'%;top:'+s.y+'%;transform:translate(-50%,-50%);width:34px;height:34px;border:2px dashed rgba(127,214,224,.7);border-radius:50%;display:flex;align-items:center;justify-content:center;color:rgba(127,214,224,.7);font-size:12px">?</div>';
+  /* The Currajong and the Centennial lie ~600 m apart off Bradleys
+     Head, which on a phone-sized chart is closer together than a
+     fingertip. Rather than move the wrecks — they are real positions
+     — push apart only the markers that would collide, leave a dot on
+     the true spot and run a leader line out to it, the way a chart
+     handles a crowded label. */
+  var pts=spots.map(function(sp){
+    return {s:sp,x:wfPctX(sp.lon),y:wfPctY(sp.lat),ox:0,oy:0};
+  });
+  var MIN=12;                       /* % of the chart, centre to centre */
+  for(var pass=0;pass<3;pass++){
+    for(var i=0;i<pts.length;i++)for(var j=i+1;j<pts.length;j++){
+      var a=pts[i],b=pts[j];
+      var dx=(b.x+b.ox)-(a.x+a.ox), dy=(b.y+b.oy)-(a.y+a.oy);
+      var d=Math.sqrt(dx*dx+dy*dy)||0.001;
+      if(d>=MIN)continue;
+      var push=(MIN-d)/2, ux=dx/d, uy=dy/d;
+      a.ox-=ux*push;a.oy-=uy*push;
+      b.ox+=ux*push;b.oy+=uy*push;
+    }
+  }
+  $('wreckfindMap').innerHTML=wreckMapSVG()+pts.map(function(pt){
+    var out='';
+    if(pt.ox||pt.oy){
+      var len=Math.sqrt(pt.ox*pt.ox+pt.oy*pt.oy);
+      var ang=Math.atan2(pt.oy,pt.ox)*180/Math.PI;
+      out+='<i class="wf-dot" style="left:'+pt.x.toFixed(2)+'%;top:'+pt.y.toFixed(2)+'%"></i>'+
+           '<i class="wf-leader" style="left:'+pt.x.toFixed(2)+'%;top:'+pt.y.toFixed(2)+
+           '%;width:'+len.toFixed(2)+'%;transform:rotate('+ang.toFixed(1)+'deg)"></i>';
+    }
+    return out+'<div class="wf-target" data-name="'+esc(pt.s.name)+'" style="left:'+
+      (pt.x+pt.ox).toFixed(2)+'%;top:'+(pt.y+pt.oy).toFixed(2)+'%">?</div>';
   }).join('');
   $('wreckfindTray').innerHTML=shuffle(spots.slice()).map(function(s){
-    return '<div class="wf-token" draggable="true" data-name="'+esc(s.name)+'" style="cursor:grab;background:var(--surface);border:1px solid var(--accent);color:var(--text);border-radius:8px;padding:7px 10px;font-size:12px;touch-action:none">🔱 '+esc(s.name)+'</div>';
+    return '<div class="wf-token" draggable="true" data-name="'+esc(s.name)+'">'+
+      '<b>&#128305; '+esc(s.name)+'</b><small>'+esc(s.hint)+'</small></div>';
   }).join('');
   wireWreckFind();
   startTimer();
 }
+
 function wreckMapSVG(){
-  return '<svg viewBox="0 0 660 420" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
-    '<rect width="660" height="420" fill="#0b3340"/>'+
-    /* ocean right side */
-    '<rect x="380" width="280" height="420" fill="#0e4256"/>'+
-    /* simplified land mass (Sydney) */
-    '<path d="M0 0 H420 Q400 40 430 70 Q470 100 430 130 L470 150 Q430 175 470 200 L420 230 Q470 260 430 300 Q470 340 420 360 L440 420 H0 Z" fill="#10463a"/>'+
-    /* harbour inlet */
-    '<path d="M300 150 Q360 160 440 150 L440 200 Q360 210 300 200 Z" fill="#0e4256"/>'+
-    '<g fill="#7fd6e0" opacity="0.5" font-family="monospace" font-size="14"><text x="20" y="30">SYDNEY</text><text x="500" y="40">TASMAN SEA</text></g>'+
-    '</svg>';
+  var W=WF_MAP.W,H=WF_MAP.H;
+  var water=WF_WATER.map(function(pp){
+    return wfX(pp[1]).toFixed(1)+','+wfY(pp[0]).toFixed(1);}).join(' ');
+
+  /* a label anchored at a real place */
+  function lab(lat,lon,txt,size,fill,anchor){
+    return '<text x="'+wfX(lon).toFixed(1)+'" y="'+wfY(lat).toFixed(1)+'" '+
+      'text-anchor="'+(anchor||'middle')+'" font-size="'+size+'" fill="'+fill+'" '+
+      'font-family="system-ui,sans-serif" font-weight="600">'+txt+'</text>';
+  }
+  var islands=WF_ISLANDS.map(function(i){
+    return '<ellipse cx="'+wfX(i.lon).toFixed(1)+'" cy="'+wfY(i.lat).toFixed(1)+'" '+
+      'rx="'+i.rx+'" ry="'+i.ry+'" fill="url(#wfLand)" stroke="#2f7f6a" stroke-width="1"/>';
+  }).join('');
+
+  /* the Bridge, drawn between its real pylons */
+  var bx1=wfX(151.2085),by1=wfY(-33.8555),bx2=wfX(151.2126),by2=wfY(-33.8520);
+  /* 1 km through the same projection, for the scale bar */
+  var kmPx=wfX(WF_MAP.lonW+1/(111.32*Math.cos(-33.84*Math.PI/180)))-wfX(WF_MAP.lonW);
+
+  var hatch='';
+  for(var hy=40;hy<H;hy+=50){
+    hatch+='<path d="M0 '+hy+' Q '+(W/2)+' '+(hy-14)+' '+W+' '+hy+'" fill="none"/>';
+  }
+
+  return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
+    '<defs>'+
+      '<linearGradient id="wfLand" x1="0" y1="0" x2="0" y2="1">'+
+        '<stop offset="0" stop-color="#15503f"/><stop offset="1" stop-color="#0e3b30"/></linearGradient>'+
+      '<linearGradient id="wfSea" x1="0" y1="0" x2="1" y2="1">'+
+        '<stop offset="0" stop-color="#0d4a61"/><stop offset="1" stop-color="#08334a"/></linearGradient>'+
+    '</defs>'+
+    '<rect width="'+W+'" height="'+H+'" fill="url(#wfLand)"/>'+
+    '<g stroke="#1b5f4b" stroke-width="1" opacity=".5">'+hatch+'</g>'+
+    '<polygon points="'+water+'" fill="url(#wfSea)" stroke="#7fd6e0" stroke-width="1.6" stroke-opacity=".55"/>'+
+    islands+
+    /* Harbour Bridge and Opera House: the two shapes everyone reads first */
+    '<line x1="'+bx1.toFixed(1)+'" y1="'+by1.toFixed(1)+'" x2="'+bx2.toFixed(1)+'" y2="'+by2.toFixed(1)+'" '+
+      'stroke="#cfe9f2" stroke-width="3.2" stroke-linecap="round"/>'+
+    '<path d="M'+(wfX(151.2152)-7).toFixed(1)+' '+(wfY(-33.8570)+4).toFixed(1)+
+      ' q3.5 -9 7 0 q3.5 -9 7 0 z" fill="#eaf6fb"/>'+
+    '<g opacity=".92">'+
+      lab(-33.7952,151.2860,'MANLY',12,'#dff1f6','middle')+
+      lab(-33.8252,151.2910,'NORTH HEAD',11,'#dff1f6','start')+
+      lab(-33.8342,151.2872,'SOUTH HEAD',11,'#dff1f6','start')+
+      lab(-33.8292,151.2702,'MIDDLE HEAD',10.5,'#dff1f6','start')+
+      lab(-33.8556,151.2400,'BRADLEYS HD',10.5,'#dff1f6','end')+
+      lab(-33.8452,151.2818,'THE GAP',10.5,'#f3c64f','start')+
+      lab(-33.8104,151.2556,'GROTTO PT',10,'#dff1f6','end')+
+      lab(-33.8408,151.2450,'MOSMAN',11,'#bcdccf','middle')+
+      lab(-33.8660,151.2400,'EASTERN SUBURBS',11,'#bcdccf','middle')+
+      lab(-33.8628,151.2050,'CBD',12,'#bcdccf','middle')+
+    '</g>'+
+    '<g opacity=".62" font-style="italic">'+
+      lab(-33.8478,151.2610,'SYDNEY HARBOUR',13,'#9fe8e2','middle')+
+      lab(-33.8046,151.2402,'MIDDLE HBR',11,'#9fe8e2','middle')+
+      lab(-33.8016,151.2700,'NORTH HBR',11,'#9fe8e2','middle')+
+      lab(-33.8180,151.2975,'TASMAN SEA',13,'#9fe8e2','middle')+
+      lab(-33.8724,151.2620,'Rose Bay',10,'#9fe8e2','middle')+
+      lab(-33.8418,151.2836,'Watsons Bay',10,'#9fe8e2','start')+
+      lab(-33.8392,151.2536,'Chowder Bay',10,'#9fe8e2','end')+
+    '</g>'+
+    /* north arrow and scale bar, because it is a chart */
+    '<g transform="translate('+(W-42)+',24)" opacity=".8">'+
+      '<path d="M0 24 L0 -4 M0 -9 l-5 9 h10 z" stroke="#dff1f6" stroke-width="2" fill="#dff1f6"/>'+
+      '<text x="0" y="38" text-anchor="middle" font-size="11" fill="#dff1f6" '+
+      'font-family="system-ui,sans-serif">N</text></g>'+
+    '<g transform="translate(18,'+(H-20)+')" opacity=".75">'+
+      '<path d="M0 0 h'+kmPx.toFixed(1)+' M0 -4 v8 M'+kmPx.toFixed(1)+' -4 v8" '+
+      'stroke="#dff1f6" stroke-width="1.6" fill="none"/>'+
+      '<text x="'+(kmPx/2).toFixed(1)+'" y="-8" text-anchor="middle" font-size="10" '+
+      'fill="#dff1f6" font-family="system-ui,sans-serif">1 km</text></g>'+
+  '</svg>';
 }
 function wireWreckFind(){
   var tokens=$('wreckfindTray').querySelectorAll('.wf-token');
@@ -3800,8 +4068,8 @@ function wireWreckFind(){
   var dragName=null,ghost=null;
   function place(name,target){
     if(target.dataset.name===name){
-      target.style.borderStyle='solid';target.style.borderColor='var(--good)';
-      target.style.color='var(--good)';target.textContent='🔱';
+      target.classList.remove('wf-hot');target.classList.add('wf-set');
+      target.textContent='🔱';
       target.dataset.filled='1';
       var tok=$('wreckfindTray').querySelector('.wf-token[data-name="'+cssEsc(name)+'"]');
       if(tok)tok.remove();
@@ -3809,7 +4077,7 @@ function wireWreckFind(){
       award(Math.max(MIN_REWARD,8));
       if(wreckfindState.placed>=wreckfindState.total){
         $('wreckfindMsg').textContent='🏆 All wrecks charted!';
-        $('wreckfindNotice').textContent='All wrecks charted! 🗺️ Back to the menu…';
+        $('wreckfindNotice').textContent='All wrecks charted! 🗺️ Pick another game when you are ready →';
         setTimeout(advanceGame,2400);
       }
       return true;
@@ -3822,10 +4090,20 @@ function wireWreckFind(){
   tokens.forEach(function(tok){
     tok.addEventListener('dragstart',function(e){dragName=tok.dataset.name;try{e.dataTransfer.setData('text/plain',dragName);}catch(_){}});
   });
+  /* The Currajong and the Centennial really do lie ~600 m apart off
+     Bradleys Head, so light up whichever pin you are actually over —
+     you should never have to guess which one you are about to drop
+     on. The same highlight is driven from elementFromPoint on touch. */
+  function hot(t){
+    targets.forEach(function(x){x.classList.toggle('wf-hot',x===t&&!x.dataset.filled);});
+  }
   targets.forEach(function(t){
-    t.addEventListener('dragover',function(e){if(!t.dataset.filled)e.preventDefault();});
-    t.addEventListener('drop',function(e){e.preventDefault();if(t.dataset.filled||!dragName)return;place(dragName,t);dragName=null;});
+    t.addEventListener('dragover',function(e){if(!t.dataset.filled){e.preventDefault();hot(t);}});
+    t.addEventListener('dragleave',function(){hot(null);});
+    t.addEventListener('drop',function(e){e.preventDefault();hot(null);
+      if(t.dataset.filled||!dragName)return;place(dragName,t);dragName=null;});
   });
+  tokens.forEach(function(tok){tok.addEventListener('dragend',function(){hot(null);});});
   /* Touch drag (phones/tablets) */
   tokens.forEach(function(tok){
     tok.addEventListener('touchstart',function(e){
@@ -3833,9 +4111,15 @@ function wireWreckFind(){
       ghost=tok.cloneNode(true);ghost.style.position='fixed';ghost.style.zIndex='9999';ghost.style.opacity='0.85';ghost.style.pointerEvents='none';
       document.body.appendChild(ghost);moveGhost(e.touches[0]);
     },{passive:true});
-    tok.addEventListener('touchmove',function(e){if(ghost){moveGhost(e.touches[0]);}},{passive:true});
+    tok.addEventListener('touchmove',function(e){
+      if(!ghost)return;
+      var tp=e.touches[0];moveGhost(tp);
+      var over=document.elementFromPoint(tp.clientX,tp.clientY);
+      hot(over&&over.closest?over.closest('.wf-target'):null);
+    },{passive:true});
     tok.addEventListener('touchend',function(e){
       if(ghost){ghost.remove();ghost=null;}
+      hot(null);
       if(!dragName)return;
       var t=e.changedTouches[0];var el=document.elementFromPoint(t.clientX,t.clientY);
       var target=el&&el.closest?el.closest('.wf-target'):null;
@@ -3879,7 +4163,7 @@ function wireSharkId(){
       award(Math.max(MIN_REWARD,8));
       if(sharkidState.placed>=sharkidState.total){
         $('sharkidMsg').textContent='🏆 All sharks matched!';
-        $('sharkidNotice').textContent='All sharks matched! 🦈 Back to the menu…';
+        $('sharkidNotice').textContent='All sharks matched! 🦈 Pick another game when you are ready →';
         setTimeout(advanceGame,2400);
       }
       return true;
@@ -4259,7 +4543,7 @@ function lgEnd(){
   var clean=lg.slams===0&&lg.washes===0;
   $('ledgeNotice').textContent=(clean?'Not one bad wave. That is how it is done. 🌊 '
     :(lg.slams+lg.washes<=3?'Solid — you read most of it. 🌊 '
-    :'Rock entries take practice. Watch the sets next time. 🌊 '))+'Back to the menu…';
+    :'Rock entries take practice. Watch the sets next time. 🌊 '))+'Pick another game when you are ready →';
   setTimeout(advanceGame,3000);
 }
 
@@ -4292,9 +4576,9 @@ holdButton($('ledgeBtn'),function(on){
    ════════════════════════════════════════════════════════════════ */
 var MACRO={
   SUBJECTS:[
-    {key:'weedy',        hx:0.17, hy:0.31, name:'Weedy seadragon',
+    {key:'seadragon',    hx:0.17, hy:0.31, name:'Weedy seadragon',
      coach:'Seadragons sway with the surge — never chase one, wait for the pause.'},
-    {key:'portjackson',  hx:0.70, hy:0.45, name:'Port Jackson shark',
+    {key:'pjshark',      hx:0.70, hy:0.45, name:'Port Jackson shark',
      coach:'Resting sharks are easy: it is YOUR movement that ruins the frame.'},
     {key:'groper',       hx:0.42, hy:0.34, name:'Eastern blue groper',
      coach:'Gropers come to you. Brace, pre-focus, and wait for the lull.'},
@@ -4323,7 +4607,8 @@ function initMacro(){
   cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
   mc={
     w:cv.width,h:cv.height,tier:tier,
-    queue:shuffle(MACRO.SUBJECTS.slice()).slice(0,tier.shots),
+    queue:shuffle(MACRO.SUBJECTS.filter(function(sb){return !!PHOTOS[sb.key];}))
+            .slice(0,tier.shots),
     shot:0,total:tier.shots,done:false,started:false,
     holding:false,holdT:0,locked:false,lastFire:-9999,scoreSum:0
   };
@@ -4339,6 +4624,10 @@ function initMacro(){
 function mcStop(){if(mcRAF){cancelAnimationFrame(mcRAF);mcRAF=null;}}
 
 function mcRound(){
+  /* a round callback left over from a previous visit can land after
+     initMacro has rebuilt the state; without this it shifts an empty
+     queue and dies on the next property read */
+  if(!mc||!mc.queue||!mc.queue.length)return;
   mc.cur=mc.queue.shift();
   mc.t=0;mc.holding=false;mc.holdT=0;mc.locked=false;mc.fired=false;
   $('macroShot').textContent=mc.shot+1;
@@ -4518,7 +4807,7 @@ function mcEnd(){
   var avg=mc.scoreSum/Math.max(1,mc.total);
   $('macroNotice').textContent=(avg>0.75?'A folder of keepers. 📷 '
     :avg>0.45?'A few you would actually post. 📷 '
-    :'Mostly blurry green — welcome to Sydney surge. 📷 ')+'Back to the menu…';
+    :'Mostly blurry green — welcome to Sydney surge. 📷 ')+'Pick another game when you are ready →';
   setTimeout(advanceGame,3000);
 }
 
@@ -4608,7 +4897,7 @@ function migAnswer(btn){
   $('migScore').textContent=migScore;$('migTotal').textContent=migTotal;
   $('migFact').textContent=migCur.f;
   if(migQueue.length>0)$('migNext').style.display='inline-block';
-  else{$('migNotice').textContent='You know the highway! 🐋 Back to the menu…';setTimeout(advanceGame,3000);}
+  else{$('migNotice').textContent='You know the highway! 🐋 Pick another game when you are ready →';setTimeout(advanceGame,3000);}
 }
 $('migNext').onclick=migRound;
 
@@ -4645,7 +4934,11 @@ $('migNext').onclick=migRound;
    Now ~1.0 s and ~43 px. Keep both in range if these are ever
    retuned; the lag should be felt, not fought. */
 var NU={
-  LUNG_IN:12.0, LUNG_OUT:13.0, /* litres per second                */
+  /* At 12 L/s the tidal range filled in a tenth of a second, so the
+     lungs were effectively a switch and the only lag you felt was
+     the physics. A real breath takes a couple of seconds; these give
+     a ~0.6 s swing, which you can feel without it becoming a fight. */
+  LUNG_IN:4.0, LUNG_OUT:4.4,   /* litres per second                */
   LUNG_MAX:1.2,                /* usable tidal range               */
   MASS:6, DRAG:13, G:9.81,
   PXM:62,                      /* px per metre of travel           */
@@ -4807,7 +5100,7 @@ function nuEnd(){
   var msg=nu.hits===0?'Flawless — not one touch on the rock.'
     :(nu.hits<=3?'Nicely held: only '+nu.hits+' scrape'+(nu.hits>1?'s':'')+'.'
     :'Through the cave, with '+nu.hits+' scrapes. Real divers spend years on this.');
-  $('nuNotice').textContent=msg+' Back to the menu…';
+  $('nuNotice').textContent=msg+' Pick another game when you are ready →';
   setTimeout(advanceGame,2900);
 }
 holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;},
@@ -4984,7 +5277,7 @@ function navEnd(){
   if(navRAF){cancelAnimationFrame(navRAF);navRAF=null;}
   var avg=nav.score/Math.max(1,nav.legs);
   $('navNotice').textContent=(avg>0.8?'Navigator! 🧭 ':'Good effort 🧭 ')+
-    'Average '+Math.round(avg*100)+'% on course. Back to the menu…';
+    'Average '+Math.round(avg*100)+'% on course. Pick another game when you are ready →';
   setTimeout(advanceGame,3000);
 }
 (function(){
@@ -5050,10 +5343,12 @@ var ASC={
      TIMESCALE so the player always gets ~0.75s of REAL time to
      catch an overshoot, whatever the playback speed. */
   GRACE:3.0,
-  /* small, slow valves: a press has to be held to do anything, which
-     is how a real inflator behaves and stops twitchy over-correction */
-  INFLATE:0.85,         /* L/s at ambient pressure   */
-  DEFLATE:1.15,
+  /* Small, slow valves: a press has to be held to do anything, which
+     is how a real inflator behaves and stops twitchy over-correction.
+     Halved again — at 0.85 L/s a short press already overshot, and
+     the lesson here is patience with the button, not reflexes. */
+  INFLATE:0.42,         /* L/s at ambient pressure   */
+  DEFLATE:0.58,
   TIMESCALE:4,
   STOP_DEPTH:5, STOP_BAND:1.5, STOP_SECS:20,   /* compressed from the real 3 min */
   /* "holding" the stop means drifting no faster than ~9.6 m/min. With
@@ -5319,7 +5614,7 @@ function ascFail(rate){
   ascMsg('💥 '+Math.abs(rate).toFixed(0)+' m/min — way over 18. That is how you get a lung '+
     'overexpansion injury. Expanding gas has to come out of the BCD as you rise.','bad');
   if(asc.tries>=ASC.TRIES){
-    $('ascNotice').textContent='Tough one — that is exactly why it is a skill. Back to the menu…';
+    $('ascNotice').textContent='Tough one — that is exactly why it is a skill. Pick another game when you are ready →';
     setTimeout(advanceGame,3400);
   } else {
     $('ascNotice').textContent='Resetting to 30 m…';
@@ -5338,7 +5633,7 @@ function ascSurface(){
     ? '🎉 Surfaced clean, safety stop complete. That is a textbook ascent.'
     : '🙂 Surfaced safely — but you skipped the safety stop at 5 m. Worth three minutes every time.',
     'good');
-  $('ascNotice').textContent='+'+pts+' points · back to the menu…';
+  $('ascNotice').textContent='+'+pts+' points · — pick another game when you are ready →';
   setTimeout(advanceGame,3200);
 }
 
@@ -5466,7 +5761,7 @@ function zoomAnswer(btn,key){
   $('zoomScore').textContent=zoomScore;$('zoomTotal').textContent=zoomTotal;
   $('zoomFact').textContent=QD(key).f||'';
   if(zoomQueue.length>0)$('zoomNext').style.display='inline-block';
-  else{$('zoomNotice').textContent='Sharp eyes! 🔍 Back to the menu…';setTimeout(advanceGame,2200);}
+  else{$('zoomNotice').textContent='Sharp eyes! 🔍 Pick another game when you are ready →';setTimeout(advanceGame,2200);}
 }
 $('zoomNext').onclick=zoomRound;
 
@@ -5561,7 +5856,7 @@ $('luCheck').onclick=function(){
     correct.map(function(k){return esc(CR[k].n)+' ('+CR[k][task.k]+esc(task.unit)+')';}).join(' → ');
   $('luUndo').style.display='none';$('luCheck').style.display='none';
   if(luRoundN<LU_ROUNDS)$('luNext').style.display='inline-block';
-  else{$('luNotice').textContent='Good sense of scale! 🃏 Back to the menu…';setTimeout(advanceGame,3000);}
+  else{$('luNotice').textContent='Good sense of scale! 🃏 Pick another game when you are ready →';setTimeout(advanceGame,3000);}
 };
 $('luNext').onclick=luNextRound;
 
@@ -5620,7 +5915,7 @@ function memFlip(i,el){
       memFlipped=[];memLock=false;
       if(memFound>=memPairs){
         $('memHint').textContent='All matched! 🧠';
-        $('memNotice').textContent='Sharp memory! Back to the menu…';
+        $('memNotice').textContent='Sharp memory! Pick another game when you are ready →';
         setTimeout(advanceGame,2400);
       } else startTimer();
     },420);
@@ -5739,6 +6034,7 @@ function renderTicket(code){
 
 /* ════════ PLAY AGAIN ════════ */
 (function(){var bm=$('hofBackMenu');if(bm)bm.onclick=function(){showApp();showMenu();};})();
+$('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;showMenu();};
 $('hofPlayAgain').onclick=function(){
   POINTS=0;syncPoints();currentGame=0;window._hofSubmitted=false;qStartTime=0;
   USER.code='';var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
