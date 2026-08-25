@@ -547,7 +547,7 @@
     font-size:clamp(13px,3vw,17px);cursor:pointer;transition:.12s;letter-spacing:1px}
   .tf-btn.tfyes{background:var(--goodd);color:#cdf3df;border-color:var(--good)}
   .tf-btn.tfno{background:var(--badd);color:#f7cfcf;border-color:var(--bad)}
-  .tf-btn:active{transform:translateY(2px)}
+  .tf-btn:active,.tf-btn.on{transform:translateY(2px);filter:brightness(1.3)}
   .tf-btn:disabled{opacity:.5;cursor:default}
   .tf-hint{font-size:13px;color:var(--muted);text-align:center;margin:-4px 0 0;letter-spacing:.3px}
   .tf-reveal{font-size:14px;color:var(--muted);text-align:center;min-height:40px;line-height:1.4}
@@ -559,6 +559,13 @@
   .speed-bar i{display:block;height:100%;background:linear-gradient(90deg,var(--good),var(--gold));
     width:100%;transition:width .25s linear}
   .speed-bar i.low{background:var(--bad)}
+  /* Both only render where there is a real pointer and keyboard — .keyhint
+     is already gated on (hover:hover) and (pointer:fine). */
+  .tf-btn .speed-key{display:block;font-size:11px;font-family:system-ui,sans-serif;
+    font-weight:700;opacity:.75;margin-top:6px;letter-spacing:1px}
+  .speed-keyline{text-align:center;font-size:13px;color:var(--muted);
+    margin:10px 0 0;flex-shrink:0}
+  .speed-keyline b{color:var(--gold);font-family:'Press Start 2P',monospace;font-size:12px}
   .speed-meta{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px}
   .speed-meta b{color:var(--gold)}
   .speed-countin{font-family:'Press Start 2P',monospace;font-size:clamp(40px,16vw,90px);
@@ -1425,12 +1432,13 @@
       <div class="tf-stage" id="speedStage">
         <div class="tf-statement" id="speedStatement">Get ready…</div>
         <div class="tf-buttons">
-          <button class="tf-btn tfyes" id="speedYes">YES</button>
-          <button class="tf-btn tfno" id="speedNo">NO</button>
+          <button class="tf-btn tfyes" id="speedYes">YES<em class="keyhint speed-key">&larr;</em></button>
+          <button class="tf-btn tfno" id="speedNo">NO<em class="keyhint speed-key">&rarr;</em></button>
         </div>
         <div class="tf-reveal" id="speedReveal"></div>
       </div>
       <div id="speedCountIn" class="speed-countin" style="display:none">3</div>
+      <p class="speed-keyline keyhint">Keyboard: press <b>&larr;</b> for YES and <b>&rarr;</b> for NO — faster than reaching for the mouse.</p>
       <p class="auto-notice" id="speedNotice"></p>
     </div>
 
@@ -3818,6 +3826,18 @@ function speedAnswer(val){
 }
 $('speedYes').onclick=function(){speedAnswer(true);};
 $('speedNo').onclick=function(){speedAnswer(false);};
+window.addEventListener('keydown',function(ev){
+  if(ev.repeat||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+  if(!speedState||!speedState.active)return;
+  if($('p-speed').offsetParent===null)return;      /* panel not on screen */
+  var yes=ev.key==='ArrowLeft'||ev.key==='Left';
+  var no =ev.key==='ArrowRight'||ev.key==='Right';
+  if(!yes&&!no)return;
+  ev.preventDefault();                              /* do not scroll the page */
+  var btn=$(yes?'speedYes':'speedNo');
+  btn.classList.add('on');setTimeout(function(){btn.classList.remove('on');},120);
+  speedAnswer(yes);
+});
 function endSpeed(){
   speedState.active=false;clearInterval(speedState.timer);
   $('speedYes').disabled=true;$('speedNo').disabled=true;
@@ -5064,7 +5084,7 @@ function navNextLeg(){
 }
 function navSetTask(){
   var fin=navDiff(nav.target,nav.heading)>0?'LEFT':'RIGHT';
-  var cur=nav.tier.current?(' A current is running from the <b>'+(nav.curDir>0?'right':'left')+'</b> once you set off.'):'';
+  var cur=nav.tier.current?(' Once you set off a current will push you to the <b>'+(nav.curDir>0?'right':'left')+'</b>.'):'';
   $('navTask').innerHTML='Leg '+nav.leg+' — swing onto <b>'+navFmt(nav.target)+'</b> using the <b>'+fin+
     '</b> fin only.'+cur;
 }
@@ -5120,8 +5140,8 @@ function navStartSwim(){
   var pushed=nav.curDir>0?'right':'left';
   $('navTask').innerHTML=(oneFin?'On the bearing with one fin — textbook. ':'On the bearing. ')+
     'Now <b>left, right, left, right</b> to swim it straight'+
-    (nav.tier.current?' — the current is pushing you, so slip in extra kicks on the <b>'+
-      (nav.curDir>0?'left':'right')+'</b> fin to hold it.':'.');
+    (nav.tier.current?' — the current is pushing you '+(nav.curDir>0?'right':'left')+
+      ', so slip in extra kicks on the <b>'+(nav.curDir>0?'right':'left')+'</b> fin to hold it.':'.');
   $('navGo').textContent='SWIM';
   $('navDistLab').textContent='Distance';
 }
@@ -5194,17 +5214,21 @@ function navDraw(){
 
   /* cross-current: streaks blowing across the face while you swim */
   if(nav.phase==='swim'&&nav.tier.current){
-    var dir=nav.curDir;
+    /* vx is the way the water actually runs, and it is the same way the
+       current shoves your heading: curDir>0 pushes you right. hx is the
+       LEADING point of each streak, so the head sits at the front and the
+       tail and barbs trail behind it. */
+    var vx=nav.curDir;
     c.save();
     c.beginPath();c.arc(cx,cy,R*0.775,0,7);c.clip();
     for(var s=0;s<7;s++){
       var ph=(nav.elapsed*0.34+s/7)%1;
-      var sx=dir>0?(S*1.05-ph*S*1.45):(-S*0.05+ph*S*1.45);
+      var hx=vx>0?(-S*0.05+ph*S*1.45):(S*1.05-ph*S*1.45);
       var sy=S*0.15+s*(S*0.105);
-      c.beginPath();c.moveTo(sx,sy);c.lineTo(sx-dir*S*0.10,sy);
+      c.beginPath();c.moveTo(hx,sy);c.lineTo(hx-vx*S*0.10,sy);
       c.strokeStyle='rgba(143,232,255,.32)';c.lineWidth=2;c.stroke();
-      c.beginPath();c.moveTo(sx,sy);
-      c.lineTo(sx-dir*S*0.028,sy-S*0.016);c.lineTo(sx-dir*S*0.028,sy+S*0.016);
+      c.beginPath();c.moveTo(hx,sy);
+      c.lineTo(hx-vx*S*0.028,sy-S*0.016);c.lineTo(hx-vx*S*0.028,sy+S*0.016);
       c.closePath();c.fillStyle='rgba(143,232,255,.32)';c.fill();
     }
     c.restore();
