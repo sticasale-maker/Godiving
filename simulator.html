@@ -1823,6 +1823,9 @@ function tileChrome(){
    maps are. Every 3 px taken off the panel is 1 px onto each tile, until
    the column height becomes the limit instead. */
 var DIVER_FRAC = 0.22;
+/* ...and the widest it may ever get, for when the stage hands back more than
+   that share — a surge tank wider than this is just a big empty tank. */
+var DIVER_MAX = 760;
 
 function layout(){
   var st=stageEl.getBoundingClientRect();
@@ -1848,16 +1851,13 @@ function layout(){
   appEl.style.setProperty('--rig-w',
     Math.max(340, Math.ceil(rigTtl.scrollWidth+rigPad))+'px');
 
-  // Give the surge panel its share of what is left after the rig; the stage
-  // takes the rest.
+  // How much width the stage could have if it wanted it. This only bounds the
+  // tile width below — what the stage actually CLAIMS is settled further down,
+  // once the tiles have been sized and it is known how much of it is needed.
   var appW=appEl.clientWidth-20-20;                 // app padding + the two gaps
   var rigW=rigEl.getBoundingClientRect().width;
   var free=Math.max(360, appW-rigW);
-  var diverW=clamp(Math.round(free*DIVER_FRAC), 320, 760);
-  var stageW=Math.max(360, free-diverW);
-  appEl.style.setProperty('--stage-w', Math.round(stageW)+'px');
-  st=stageEl.getBoundingClientRect();               // the grid has resized us
-  stageW=st.width;
+  var stageW=Math.max(360, free-clamp(Math.round(free*DIVER_FRAC), 320, DIVER_MAX));
 
   // Tile width is whichever runs out first: the tallest column's height budget,
   // or the width left once the map and its leaders have taken theirs. The three
@@ -1874,8 +1874,20 @@ function layout(){
   Object.keys(MAPS).forEach(function(k){ if(MAPS[k].fit) MAPS[k].fit(); });
   TH=Math.max(TILE[ORDER[0].key].el.offsetHeight, Math.round(TW*0.6)+chrome);
 
-  // Lay the assembly out from its left edge, then centre it in the stage.
   var span=(1-INLAND_FRAC)*mw+lead+3*TW+colGap;
+
+  // Whichever of the two limits set the tile width, the stage now claims only
+  // the width the assembly actually occupies. When the COLUMN HEIGHT is what
+  // capped the tiles — which is most short windows — the leftover used to sit
+  // as blank margin either side of the map; it goes to the surge panel instead,
+  // and not one tile gets smaller for it, because TW is already decided here.
+  var needStage=Math.ceil(span+pad*2);
+  var finalStage=Math.max(needStage, free-DIVER_MAX);
+  appEl.style.setProperty('--stage-w', Math.round(finalStage)+'px');
+  st=stageEl.getBoundingClientRect();               // the grid has resized us
+  stageW=st.width;
+
+  // Lay the assembly out from its left edge, then centre it in what is left.
   var originX=Math.max(pad,(stageW-span)/2);
   var colX=[ originX, originX+TW+colGap, 0 ];
   var mapX=colX[1]+TW-INLAND_FRAC*mw;
