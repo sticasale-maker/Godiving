@@ -183,6 +183,11 @@
     border-radius:8px;padding:8px 12px;font-size:12.5px;touch-action:none}
 
   /* ── CHOICE BUTTONS — 2-col grid ── */
+  /* Quiz stage: photo on the left, "Next creature" parked to its right. */
+  .qstage{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .qstage>#qart{flex:1 1 auto;min-width:0}
+  .qstage>#qnext{flex:0 0 auto;white-space:normal;max-width:9em;line-height:1.25}
+  @media(max-width:480px){.qstage{gap:8px}.qstage>#qnext{max-width:6.5em;font-size:14px;padding:10px 12px}}
   .opts-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -1200,10 +1205,12 @@
         <button class="qlevel" data-lv="adult">Adult</button>
       </div>
       <p class="qcat" id="qCatLabel" style="display:none"></p>
-      <div id="qart" style="border-radius:12px;overflow:hidden;flex-shrink:0"></div>
+      <div class="qstage">
+        <div id="qart" style="border-radius:12px;overflow:hidden;flex:1 1 auto;min-width:0"></div>
+        <button class="btn" id="qnext" style="display:none">Next creature →</button>
+      </div>
       <div class="opts-grid" id="qopts"></div>
       <p class="fact" id="qfact"></p>
-      <button class="btn" id="qnext" style="display:none">Next creature →</button>
       <p class="auto-notice" id="qnotice"></p>
     </div>
 
