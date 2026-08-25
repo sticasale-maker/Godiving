@@ -863,6 +863,14 @@
     background:linear-gradient(90deg,var(--gold),var(--good));transition:width .1s linear}
   .zoom-meter i.low{background:var(--bad)}
   .zoom-hint{font-size:12px;color:var(--muted);text-align:center;margin:0 0 8px}
+  /* Next sits beside the picture, as in Guess Who — answering should not push
+     the way onward below the fold. The descendant selectors outrank the
+     desktop .zoom-stage rule that centres it with auto margins. */
+  .zstage{display:flex;align-items:center;gap:12px;flex-shrink:0}
+  .zstage>.zoom-stage{flex:1 1 auto;min-width:0;margin-left:0;margin-right:0}
+  .zstage>#zoomNext{flex:0 0 auto;max-width:9em;white-space:normal;line-height:1.25}
+  @media(min-width:1000px){.zstage{max-width:1120px;margin-left:auto;margin-right:auto}}
+  @media(max-width:480px){.zstage{gap:8px}.zstage>#zoomNext{max-width:6.5em;font-size:14px;padding:10px 12px}}
 
   /* ── FISH OR KIT? ── */
   /* ── SIZE LINE-UP ── */
@@ -1656,12 +1664,14 @@
         <span class="game-label">Zoom in</span>
         <span class="score">Score <b id="zoomScore">0</b> / <b id="zoomTotal">0</b></span>
       </div>
-      <div class="zoom-stage" id="zoomStage"><img id="zoomImg" alt=""></div>
+      <div class="zstage">
+        <div class="zoom-stage" id="zoomStage"><img id="zoomImg" alt=""></div>
+        <button class="btn ghost" id="zoomNext" style="display:none">Next →</button>
+      </div>
       <div class="zoom-meter"><i id="zoomBar"></i></div>
       <p class="zoom-hint" id="zoomHint">Buzz in early — the longer you wait, the fewer points</p>
       <div class="opts-grid" id="zoomOpts"></div>
       <p class="qfact" id="zoomFact"></p>
-      <div style="text-align:center"><button class="btn ghost" id="zoomNext" style="display:none">Next →</button></div>
       <p class="auto-notice" id="zoomNotice"></p>
     </div>
 
@@ -4501,7 +4511,11 @@ function mcStep(now){
     if(mc.holdT>=mc.tier.focus)mc.locked=true;
   }
   mcDraw();
-  if(mc.t>MACRO.CAPS&&!mc.fired)return mcFire(true);
+  /* Timing out is the one early exit that CONTINUES the game rather than
+     ending it, so the frame handle has to be dropped: mcRound only restarts
+     the loop when mcRAF is null, and a stale id from the frame we are inside
+     froze the whole game on the first missed shot. */
+  if(mc.t>MACRO.CAPS&&!mc.fired){mcRAF=null;return mcFire(true);}
   mcRAF=requestAnimationFrame(mcStep);
 }
 
@@ -4791,7 +4805,7 @@ var NU={
      0.96 s reversal that still only commits ~23 px of tunnel. */
   MASS:9, DRAG:22, G:9.81,
   PXM:62,                      /* px per metre of travel           */
-  SPEED:44,                    /* px/s the cave scrolls past       */
+  SPEED:57,                    /* px/s the cave scrolls past       */
   SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
@@ -4810,6 +4824,7 @@ var NU={
      the diver's own scale factor is anchored to: past that the cave gets
      taller without getting steeper. */
   ROAM_H:330,
+  REACH_MIN:2.0,   /* the diver must out-descend the steepest slope by this much */
   /* Tightened after the diver was made to scale with the canvas:
      with a correctly-sized diver these openings left far too much
      room. The reach budget still passes comfortably at all three. */
@@ -4820,6 +4835,17 @@ var NU={
   HIT_COOLDOWN:0.7             /* stops one scrape draining points */
 };
 var nu=null,nuRAF=null;
+
+/* The height the centreline's wander is scaled from. Capped twice: at the
+   reference height, so a tall screen gets a taller cave rather than a steeper
+   one, and at whatever the reach budget allows, so winding the scroll speed up
+   cannot quietly make the course unsurvivable. Descending is the binding case
+   — the diver is trimmed positive, so it sinks slower than it climbs. */
+function nuRoamH(h){
+  var sink=Math.sqrt(Math.abs(NU.LUNG_MIN*1.03)*NU.G/NU.DRAG)*NU.PXM;   /* px/s   */
+  var perPx=NU.ROAM1*6.283/NU.L1+NU.ROAM2*6.283/NU.L2;                  /* slope per px of amplitude */
+  return Math.min(h, NU.ROAM_H, (sink/NU.SPEED)/NU.REACH_MIN/perPx);
+}
 
 /* tunnel centreline and half-height at a given world x */
 function nuMid(x){return nu.h/2+nu.a1*Math.sin(x/NU.L1*6.283)+nu.a2*Math.sin(x/NU.L2*6.283+1.7);}
@@ -4839,8 +4865,8 @@ function initNeutral(){
        r with k holds r/half constant on every device. 330 is the
        reference canvas height, clamped so it never gets silly. */
     k:Math.max(0.85,Math.min(1.7,cv.height/330)),
-    a1:Math.min(cv.height,NU.ROAM_H)*NU.ROAM1,
-    a2:Math.min(cv.height,NU.ROAM_H)*NU.ROAM2,
+    a1:nuRoamH(cv.height)*NU.ROAM1,
+    a2:nuRoamH(cv.height)*NU.ROAM2,
     hits:0, pts:0, t:0, sinceTick:0, cool:0,
     breathing:false, done:false
   };
@@ -5301,6 +5327,7 @@ var ASC={
      a heavy, high-inertia diver you never truly stop dead, so demanding
      near-zero speed made the stop unbankable. */
   STOP_STILL:0.16,
+  BREATH_EVERY:5,              /* seconds between exhales — a resting diver */
   TRIES:3,
   RATE_SEGS:9           /* segments per half of the rate gauge       */
 };
@@ -5408,14 +5435,18 @@ function ascMsg(t,cls){var m=$('ascMsg');if(!m)return;m.textContent=t;
 
 function ascStep(now){
   if(!asc||asc.done)return;
-  var dt=Math.min(0.05,(now-asc.last)/1000)*ASC.TIMESCALE;
+  var wdt=Math.min(0.05,(now-asc.last)/1000);   /* real seconds  */
+  var dt=wdt*ASC.TIMESCALE;                     /* dive seconds  */
   asc.last=now;
 
-  /* ---- bubbles ---- emitted on dive-time accumulators rather than
-     per-frame chance, so the stream looks the same at any frame rate.
-     Breathing runs the whole dive; the dump valve adds a hard burst. */
-  asc.breathT+=dt;
-  if(asc.breathT>=3.2){asc.breathT=0;ascBreath();}
+  /* ---- bubbles ---- emitted on accumulators rather than per-frame chance,
+     so the stream looks the same at any frame rate. Breathing is deliberately
+     on the WALL clock: the dive itself runs four times compressed, and a
+     resting breath every five dive-seconds would fire every 1.25s on screen,
+     which reads as panting. The dump valve stays on dive time — it is tied to
+     how long the button is held. */
+  asc.breathT+=wdt;
+  if(asc.breathT>=ASC.BREATH_EVERY){asc.breathT=0;ascBreath();}
   if(asc.deflate){
     asc.dumpT+=dt;
     while(asc.dumpT>=0.07){asc.dumpT-=0.07;ascBubble('dump');}
@@ -5522,12 +5553,12 @@ function ascRender(rate,B,inZone){
 
 /* kind 'dump' = off the BCD valve on the left shoulder,
    kind 'breath' = off the regulator, beside the diver's head. */
-function ascBubble(kind){
+function ascBubble(kind,scale){
   var box=$('ascBubbles');if(!box||!asc)return;
   var b=document.createElement('div');
   b.className='asc-bub';
   var dump=kind!=='breath';
-  var sz=dump?(8+Math.random()*9):(5+Math.random()*6);
+  var sz=dump?(8+Math.random()*9):(5+Math.random()*6)*(scale||1);
   b.style.width=b.style.height=sz+'px';
   var offX=dump?-(10+Math.random()*10):(4+Math.random()*9);
   b.style.left='calc(50% + '+offX.toFixed(1)+'px)';
@@ -5552,9 +5583,16 @@ function ascBubble(kind){
     requestAnimationFrame(rise);
   })(t0);
 }
-/* one exhaled breath: a tight cloud, not a single dot */
+/* One exhaled breath. A diver at rest breathes about twelve times a minute,
+   and the exhale itself takes a second and a half — so this is a stream that
+   starts small, swells through the middle of the breath and tapers off, not
+   the instant puff of five dots it used to be. */
 function ascBreath(){
-  for(var i=0;i<5;i++)setTimeout(function(){ascBubble('breath');},i*55);
+  var n=7;
+  for(var i=0;i<n;i++)(function(i){
+    var fullness=0.6+Math.sin(Math.PI*(i+0.5)/n)*0.8;
+    setTimeout(function(){ascBubble('breath',fullness);},i*210+Math.random()*60);
+  })(i);
 }
 
 function ascFail(rate){
