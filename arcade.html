@@ -2967,7 +2967,7 @@ GAME_ORDER.forEach(function(g){
 
 
 var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
-var QUIZ_LEVELS={junior:{n:4},kid:{n:3},adult:{n:5}};
+var QUIZ_LEVELS={junior:{n:4},kid:{n:3},adult:{n:4}};
 var quizLevel=(function(){try{return localStorage.getItem('gds_quiz_level')||'junior';}catch(e){return 'junior';}})();
 if(!QUIZ_LEVELS[quizLevel])quizLevel='junior';
 function qDistractors(key,count){
