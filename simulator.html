@@ -32,10 +32,10 @@ body{
    a 2560-wide iMac. */
 #app{
   display:grid; height:100dvh; gap:10px; padding:10px;
-  /* Replaced by layout(), which measures the title and asks for exactly the
-     width that keeps it on one line. This is only the value used before the
-     first measurement. */
-  --rig-w:452px;
+  /* Sized to its controls, not to its heading. Holding "Set the conditions" on
+     one line cost 112 px of width, and width here is width off the tiles —
+     the heading is allowed to wrap instead. */
+  --rig-w:clamp(330px,17.2vw,392px);
   grid-template-columns:var(--rig-w) var(--stage-w,1fr) minmax(320px,1fr);
   grid-template-rows:100%;
   grid-template-areas:"rig stage diver";
@@ -51,8 +51,6 @@ body{
 
 .ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:54px;letter-spacing:3px;
   color:var(--teal);font-weight:400;line-height:1.1;text-align:center}
-/* The rig is sized to this, so it must never wrap — see layout(). */
-#rig .ttl{white-space:nowrap}
 .sub{font-size:10.5px;color:var(--dim);line-height:1.45}
 
 /* ─────────────── map stage ─────────────── */
@@ -68,18 +66,27 @@ body{
   overflow:visible;z-index:3}
 
 .tile{position:absolute;background:rgba(6,20,38,0.88);
-  border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:4px 4px 5px;
+  border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:3px 3px 4px;
   box-shadow:0 5px 18px rgba(0,0,0,0.6);pointer-events:auto;cursor:pointer;
   transition:left .3s cubic-bezier(.16,1,.3,1),top .3s cubic-bezier(.16,1,.3,1),
              border-color .15s,box-shadow .15s,transform .15s}
 .tile:hover{border-color:rgba(0,194,168,.75);box-shadow:0 6px 22px rgba(0,0,0,.7);transform:scale(1.04)}
 .tile:active{transform:scale(.99)}
 .tile canvas{width:100%;display:block;border-radius:6px}
-.tile .nm{font-size:11px;font-weight:700;letter-spacing:.2px;color:#fff;line-height:1.1;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 1px 2px}
-/* the familiar dashboard bar: 0–60 track with the amber(20)/green(40) thresholds */
-.trk{position:relative;height:19px;border-radius:4px;overflow:hidden;
+/* The familiar dashboard bar: 0-60 track with the amber(20)/green(40) marks.
+   The name sits ON the bar rather than on its own line above it — which is what
+   the forecast app does anyway — because a tile is only ever as wide as its
+   height budget allows, so a row of chrome removed goes straight into how big
+   the site map can be. Worth about 14 px of chrome, and chrome buys tile at
+   1 : 1.67. */
+.trk{position:relative;height:22px;border-radius:4px;overflow:hidden;margin-top:3px;
   background:rgba(2,10,22,0.9);border:1px solid rgba(255,255,255,0.18)}
+.tile .nm{position:absolute;left:7px;right:42px;top:50%;transform:translateY(-50%);
+  z-index:3;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+  font-size:11.5px;font-weight:700;letter-spacing:.2px;color:#fff;line-height:1;
+  text-shadow:-1px -1px 0 rgba(0,0,0,.75),1px -1px 0 rgba(0,0,0,.75),
+              -1px 1px 0 rgba(0,0,0,.75),1px 1px 0 rgba(0,0,0,.75),
+              0 0 3px rgba(0,0,0,.6)}
 .fil{position:absolute;left:0;top:0;bottom:0;border-radius:3px;
   transition:width .35s cubic-bezier(.16,1,.3,1),background .3s}
 .tk{position:absolute;top:0;bottom:0;width:2px;background:rgba(255,255,255,0.34);z-index:2}
@@ -1496,6 +1503,22 @@ var WEST_OUT = ['Chowder','Gordons','BIW','Oak'];
 var COLS = [WEST_OUT, WEST_IN, COL_EAST];
 /* How much of the basemap's width the inner-west column may cover. */
 var INLAND_FRAC = 0.30;
+/* ...and how much of its eastern edge the east column may cover. Tiles are
+   allowed onto the map as long as they do not sit on a site marker, so this is
+   derived from the data rather than picked: it is whatever lies east of the
+   easternmost site (Freshwater), plus a small margin. Nothing but open ocean is
+   out there, and no marker can ever fall under the column because none is
+   further east than the one that set the number. */
+var EAST_FRAC = (function(){
+  var maxU = 0;
+  for (var k in SITE_LL) {
+    var u = (SITE_LL[k].lon - MAP.X0) / (MAP.X1 - MAP.X0);
+    if (u > maxU) maxU = u;
+  }
+  return Math.max(0, 1 - (maxU + 0.022));
+})();
+/* What is left of the map once both overlaps are taken off it. */
+var MAP_OPEN = 1 - INLAND_FRAC - EAST_FRAC;
 
 function el(id){ return document.getElementById(id); }
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
@@ -1797,10 +1820,10 @@ var ORDER=SITES.filter(function(s){ return SITE_COAST[s.key] && SITE_COAST[s.key
 ORDER.forEach(function(s){
   var d=document.createElement('div');
   d.className='tile';
-  d.innerHTML='<canvas></canvas><div class="nm">'+s.name+'</div>'+
+  d.innerHTML='<canvas></canvas>'+
     '<div class="trk"><div class="fil"></div>'+
     '<div class="tk" style="left:33.33%"></div><div class="tk" style="left:66.67%"></div>'+
-    '<div class="pc">–</div></div>';
+    '<span class="nm">'+s.name+'</span><div class="pc">–</div></div>';
   d.addEventListener('click',function(){ openZoom(s.key); });
   tilesEl.appendChild(d);
   TILE[s.key]={el:d, fil:d.querySelector('.fil'), pc:d.querySelector('.pc')};
@@ -1826,30 +1849,27 @@ var DIVER_FRAC = 0.22;
 /* ...and the widest it may ever get, for when the stage hands back more than
    that share — a surge tank wider than this is just a big empty tank. */
 var DIVER_MAX = 760;
+/* Floor on the basemap, as a share of the stage height it could have. Below
+   this it stops reading as the Sydney coast and starts reading as a logo. */
+var MAP_MIN_H = 0.58;
 
 function layout(){
   var st=stageEl.getBoundingClientRect();
   if(!st.width||!st.height) return;
-  var pad=14, lead=24, colGap=6, gap=5;
+  var pad=10, lead=16, colGap=5, gap=4;
   var chrome=tileChrome();
   var nMax=Math.max(COLS[0].length,COLS[1].length,COLS[2].length);
   // The title strip owns the top of the stage; the map and the columns start
   // under it, so nothing on the map can ever be covered by the heading.
-  var headTop=pad+el('stageHead').offsetHeight+8;
+  var headTop=pad+el('stageHead').offsetHeight+4;
   var avail=st.height-headTop-pad;
 
-  // Column widths cannot change the stage HEIGHT, so the map size and the
-  // height budget are both settled before anything gets resized.
-  var mh=avail, mw=mh*(MAP.VW/MAP.VH);
+  // Column widths cannot change the stage HEIGHT, so the height budget is
+  // settled here; the map's own size is solved further down, once it is known
+  // which of the two limits is holding the tiles back.
+  var ASPECT=MAP.VW/MAP.VH, mh=avail, mw=mh*ASPECT;
 
-  // The control column is exactly as wide as its own heading needs to stay on
-  // one line — measured, not guessed, so it survives the webfont loading late
-  // or not at all.
-  var rigEl=el('rig'), rigTtl=rigEl.querySelector('.ttl');
-  var rigCss=getComputedStyle(rigEl);
-  var rigPad=parseFloat(rigCss.paddingLeft)+parseFloat(rigCss.paddingRight)+2;
-  appEl.style.setProperty('--rig-w',
-    Math.max(340, Math.ceil(rigTtl.scrollWidth+rigPad))+'px');
+  var rigEl=el('rig');
 
   // How much width the stage could have if it wanted it. This only bounds the
   // tile width below — what the stage actually CLAIMS is settled further down,
@@ -1864,8 +1884,14 @@ function layout(){
   // columns span (1-INLAND_FRAC)*map + lead + 3*TW + colGap, because the
   // inner-west column overlaps the map's inland third.
   var twH=Math.floor(((avail-(nMax-1)*gap)/nMax-chrome)/0.6);
-  var twW=Math.floor((stageW-pad*2-(1-INLAND_FRAC)*mw-lead-colGap)/3);
-  TW=clamp(Math.min(twH,twW),54,360);
+  // The map is context; the tiles are the content. Where WIDTH is what would
+  // cap the tiles, the map is the only thing on the stage that can hand width
+  // back — so shrink it until the two limits meet and neither is wasted. It
+  // never drops below MAP_MIN_H of the height available to it.
+  mh=clamp((stageW-pad*2-colGap*2-3*twH)/(MAP_OPEN*ASPECT), avail*MAP_MIN_H, avail);
+  mw=mh*ASPECT;
+  var twW=Math.floor((stageW-pad*2-MAP_OPEN*mw-colGap*2)/3);
+  TW=clamp(Math.min(twH,twW),54,420);
 
   // Size the tiles, let the site renderer set its own canvas height, then take
   // the real tile height off the page. De-colliding against a computed guess is
@@ -1874,7 +1900,7 @@ function layout(){
   Object.keys(MAPS).forEach(function(k){ if(MAPS[k].fit) MAPS[k].fit(); });
   TH=Math.max(TILE[ORDER[0].key].el.offsetHeight, Math.round(TW*0.6)+chrome);
 
-  var span=(1-INLAND_FRAC)*mw+lead+3*TW+colGap;
+  var span=MAP_OPEN*mw+3*TW+colGap*2;
 
   // Whichever of the two limits set the tile width, the stage now claims only
   // the width the assembly actually occupies. When the COLUMN HEIGHT is what
@@ -1891,7 +1917,7 @@ function layout(){
   var originX=Math.max(pad,(stageW-span)/2);
   var colX=[ originX, originX+TW+colGap, 0 ];
   var mapX=colX[1]+TW-INLAND_FRAC*mw;
-  colX[2]=mapX+mw+lead;
+  colX[2]=mapX+(1-EAST_FRAC)*mw;
   var box={ x:Math.round(mapX), y:Math.round(headTop+(avail-mh)/2),
             w:Math.round(mw), h:Math.round(mh) };
   fitMap(box);
@@ -1901,6 +1927,15 @@ function layout(){
     sv.setAttribute('width',st.width); sv.setAttribute('height',st.height);
   });
   var svg='', dotSvg='';
+
+  // Tiles are allowed onto the basemap, but never onto a site marker — a marker
+  // under a tile takes its own leader's end point with it, and the tile then
+  // points at nothing. Every marker's position, so each column can be told
+  // which ones fall in its lane.
+  var DOTS=ORDER.map(function(s){
+    var q=project(SITE_LL[s.key].lat,SITE_LL[s.key].lon);
+    return {k:s.key,x:q.x,y:q.y};
+  });
 
   COLS.forEach(function(keys,ci){
     var side=(ci===2)?'R':'L';
@@ -1916,6 +1951,20 @@ function layout(){
     var need=items.length*TH+(items.length-1)*gap;
     var top=headTop, bot=st.height-pad-TH;
     if(need>avail){ top=Math.round(headTop+(avail-need)/2); bot=top+need-TH; }
+
+    // Markers belonging to OTHER columns that fall in this column's lane. Oak
+    // Park is the one that matters: it sits far enough west that the inner-west
+    // column runs over it. Nudging the one offending tile off it does not hold
+    // — the stack separation immediately puts it back — so pull in the range
+    // the whole stack may occupy, and nothing can reach the marker at all.
+    DOTS.forEach(function(d){
+      if(keys.indexOf(d.k)>=0) return;
+      if(d.x<cx-3 || d.x>cx+TW+3) return;
+      if(items.every(function(it){ return it.p.y < d.y; }))      bot=Math.min(bot, d.y-TH-5);
+      else if(items.every(function(it){ return it.p.y > d.y; })) top=Math.max(top, d.y+5);
+    });
+    if(bot<top) bot=top;
+
     for(var i=0;i<items.length;i++){
       items[i].y=clamp(items[i].y,top,bot);
       if(i) items[i].y=Math.max(items[i].y, items[i-1].y+TH+gap);
@@ -1925,6 +1974,7 @@ function layout(){
       if(j<items.length-1) items[j].y=Math.min(items[j].y, items[j+1].y-TH-gap);
       items[j].y=Math.max(items[j].y, top);
     }
+
     items.forEach(function(it){
       var t=TILE[it.k];
       t.el.style.width=TW+'px';
