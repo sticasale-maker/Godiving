@@ -108,11 +108,6 @@
   @keyframes fade{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
 
   /* ── QUIZ LEVEL TABS ── */
-  .qlevels{display:flex;gap:6px;margin:0 0 8px;flex-shrink:0}
-  .qlevel{flex:1;background:var(--bg2);color:var(--muted);border:1px solid var(--line);
-    border-radius:8px;padding:7px 6px;font-size:12.5px;font-weight:600;cursor:pointer;transition:.12s}
-  .qlevel:hover{border-color:var(--accent);color:var(--text)}
-  .qlevel.on{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
   .qcat{margin:0 0 6px;font-size:12.5px;font-weight:700;color:var(--gold);text-align:center;
     letter-spacing:.3px;flex-shrink:0}
 
@@ -183,11 +178,21 @@
     border-radius:8px;padding:8px 12px;font-size:12.5px;touch-action:none}
 
   /* ── CHOICE BUTTONS — 2-col grid ── */
-  /* Quiz stage: photo on the left, "Next creature" parked to its right. */
-  .qstage{display:flex;align-items:center;gap:12px;flex-shrink:0}
-  .qstage>#qart{flex:1 1 auto;min-width:0}
-  .qstage>#qnext{flex:0 0 auto;white-space:normal;max-width:9em;line-height:1.25}
-  @media(max-width:480px){.qstage{gap:8px}.qstage>#qnext{max-width:6.5em;font-size:14px;padding:10px 12px}}
+  /* Quiz stage: from tablet width up, "Next creature" is parked to the right of
+     the photo. On a phone there is no room beside it, and squeezing it there
+     narrows the picture and puts the way onward ABOVE the answers. So the
+     stage dissolves (display:contents) and its two children join the panel's
+     own column, with the button ordered last — full width, at the bottom,
+     under the fact where a thumb expects it. */
+  .qstage{display:contents}
+  .qstage>#qart{flex:0 0 auto;min-width:0}
+  .qstage>#qnext{order:9;width:100%;margin-top:8px}
+  @media(min-width:760px){
+    .qstage{display:flex;align-items:center;gap:12px;flex-shrink:0}
+    .qstage>#qart{flex:1 1 auto;min-width:0}
+    .qstage>#qnext{order:0;width:auto;margin-top:0;
+      flex:0 0 auto;white-space:normal;max-width:9em;line-height:1.25}
+  }
   .opts-grid{
     display:grid;
     grid-template-columns:1fr 1fr;
@@ -268,7 +273,8 @@
   .next-challenge{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:60;
     width:150px;background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;border:0;
     border-radius:14px;padding:18px 14px;font-size:18px;font-weight:800;line-height:1.25;
-    letter-spacing:.3px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+    letter-spacing:.3px;cursor:pointer;touch-action:manipulation;
+    box-shadow:0 8px 24px rgba(0,0,0,.45)}
   .next-challenge:active{transform:translateY(-50%) translateY(1px)}
   @media(max-width:520px){
     .next-challenge{width:112px;right:8px;padding:14px 10px;font-size:15px}
@@ -1049,7 +1055,6 @@
     .odd-card .oc-emoji{font-size:42px}
     .fact,.qfact{font-size:18px;line-height:1.5}
     .qcat{font-size:17px}
-    .qlevel{font-size:16px;padding:10px 8px}
     .btn{font-size:17px;padding:12px 20px}
     .auto-notice{font-size:15px}
 
@@ -1254,14 +1259,9 @@
         <span class="game-tagline">Sydney Dive Challenge</span>
         <span class="score" style="flex:none">Score <b id="qscore">0</b> / <b id="qtotal">0</b></span>
       </div>
-      <div class="qlevels" id="qlevels">
-        <button class="qlevel" data-lv="junior">Junior</button>
-        <button class="qlevel" data-lv="kid">Kid</button>
-        <button class="qlevel" data-lv="adult">Adult</button>
-      </div>
       <p class="qcat" id="qCatLabel" style="display:none"></p>
       <div class="qstage">
-        <div id="qart" style="border-radius:12px;overflow:hidden;flex:1 1 auto;min-width:0"></div>
+        <div id="qart" style="border-radius:12px;overflow:hidden"></div>
         <button class="btn" id="qnext" style="display:none">Next creature →</button>
       </div>
       <div class="opts-grid" id="qopts"></div>
@@ -1316,11 +1316,6 @@
       <div class="game-header">
         <span class="game-label">Hold your breath like a freediver</span>
         <span class="score">Best <b id="breathPB">0.0</b>s</span>
-      </div>
-      <div class="qlevels" id="breathLevels">
-        <button class="qlevel" data-lv="junior">Junior</button>
-        <button class="qlevel" data-lv="kid">Kid</button>
-        <button class="qlevel" data-lv="adult">Adult</button>
       </div>
       <div class="breath-stage">
         <div class="breath-orb" id="breathOrb">
@@ -2877,6 +2872,11 @@ function advanceGame(){
 /* One shared button, moved under whichever auto-notice is currently showing. */
 var nextChallengeBtn=null;
 function showNextChallenge(){
+  /* Games call advanceGame() on a two-second delay. A player who taps through
+     before it fires is already back on the menu when it lands, and the button
+     used to reappear over the menu — where tapping it just re-showed the menu
+     and read as a dead button. No game running, no button. */
+  if(!activeGame)return;
   if(!nextChallengeBtn){
     nextChallengeBtn=document.createElement('button');
     nextChallengeBtn.className='next-challenge';
@@ -2977,6 +2977,7 @@ var GAME_META={
 };
 function showMenu(){
   activeGame=null;
+  hideNextChallenge();
   $('gamesstrip').style.display='flex';
   updateStrip(null);
   buildMenu();
@@ -3062,8 +3063,15 @@ GAME_ORDER.forEach(function(g){
 
 var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
 var QUIZ_LEVELS={junior:{n:4},kid:{n:3},adult:{n:4}};
-var quizLevel=(function(){try{return localStorage.getItem('gds_quiz_level')||'junior';}catch(e){return 'junior';}})();
-if(!QUIZ_LEVELS[quizLevel])quizLevel='junior';
+/* The player already told us their age on the way in, so asking again with a
+   Junior/Kid/Adult picker was both redundant and gameable — a nine-year-old
+   could tap Adult and be handed five confusable options. */
+function levelForGroup(){
+  if(USER.group==='Young Explorer')return 'junior';
+  if(USER.group==='Teen Explorer')return 'kid';
+  return 'adult';
+}
+var quizLevel='junior';
 function qDistractors(key,count){
   var pool=KEYS.concat(JUNIOR_EXTRA_KEYS);
   return shuffle(pool.filter(function(k){return k!==key;})).slice(0,count);
@@ -3110,18 +3118,8 @@ function buildThemedRounds(){
     return {key:key,opts:shuffle(opts),cat:cat.title||''};
   });
 }
-function setQuizLevel(lv){
-  if(!QUIZ_LEVELS[lv])return;
-  quizLevel=lv;
-  try{localStorage.setItem('gds_quiz_level',lv);}catch(e){}
-  $('qlevels').querySelectorAll('.qlevel').forEach(function(b){b.classList.toggle('on',b.dataset.lv===lv);});
-  initQuiz();
-}
-$('qlevels').querySelectorAll('.qlevel').forEach(function(b){
-  b.classList.toggle('on',b.dataset.lv===quizLevel);
-  b.onclick=function(){setQuizLevel(b.dataset.lv);};
-});
 function initQuiz(){
+  quizLevel=levelForGroup();
   qScore=0;qTotal=0;
   qQueue=(quizLevel==='junior')?shuffle(FIXED_ROUNDS.junior.slice()):buildThemedRounds();
   $('qscore').textContent=0;$('qtotal').textContent=0;$('qnotice').textContent='';
@@ -3324,29 +3322,17 @@ var BREATH_LADDERS={
     {who:'Elite static apnea',t:360}
   ]
 };
-function breathDefaultLevel(){
-  if(USER.group==='Young Explorer')return 'junior';
-  if(USER.group==='Teen Explorer')return 'kid';
-  return 'adult';
-}
-var breathLevel=(function(){try{return localStorage.getItem('gds_breath_level')||'';}catch(e){return '';}})();
-if(!BREATH_LADDERS[breathLevel])breathLevel='';
+var breathLevel='adult';
 var BREATH_RECORDS=BREATH_LADDERS.adult;
 function breathMax(){return BREATH_RECORDS[BREATH_RECORDS.length-1].t;}
-function setBreathLevel(lv,skipInit){
+function setBreathLevel(lv){
   if(!BREATH_LADDERS[lv])return;
   breathLevel=lv;BREATH_RECORDS=BREATH_LADDERS[lv];
-  try{localStorage.setItem('gds_breath_level',lv);}catch(e){}
-  $('breathLevels').querySelectorAll('.qlevel').forEach(function(b){b.classList.toggle('on',b.dataset.lv===lv);});
-  if(!skipInit)initBreath();
 }
-$('breathLevels').querySelectorAll('.qlevel').forEach(function(b){
-  b.onclick=function(){setBreathLevel(b.dataset.lv);};
-});
 var breathState={holding:false,start:0,timer:null,pb:0,done:false,tries:0};
 function fmtSecs(s){return s.toFixed(1);}
 function initBreath(){
-  setBreathLevel(breathLevel||breathDefaultLevel(),true);
+  setBreathLevel(levelForGroup());
   breathState.holding=false;breathState.done=false;breathState.tries=0;
   try{breathState.pb=parseFloat(localStorage.getItem('gds_breath_pb'))||0;}catch(e){breathState.pb=0;}
   $('breathPB').textContent=fmtSecs(breathState.pb);
