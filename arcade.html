@@ -5175,9 +5175,11 @@ holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;},
    ════════════════════════════════════════════════════════════════ */
 var NAV={
   TIERS:{
-    'Young Explorer':{legs:1,kick:26,gate:26,current:0,  secs:12},
+    /* Two legs for everyone. Difficulty is carried by the kick, the gate and
+       the current, not by making an adult swim the same drill three times. */
+    'Young Explorer':{legs:2,kick:26,gate:26,current:0,  secs:12},
     'Teen Explorer' :{legs:2,kick:20,gate:19,current:3.2,secs:12},
-    'Adult Explorer':{legs:3,kick:16,gate:14,current:6.0,secs:14}
+    'Adult Explorer':{legs:2,kick:16,gate:14,current:6.0,secs:14}
   },
   TAU:0.45,        /* seconds for a kick's push to bleed away    */
   SETTLE:0.6,      /* seconds inside the gate that ends aligning */
