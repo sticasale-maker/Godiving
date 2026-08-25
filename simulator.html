@@ -46,6 +46,12 @@ body{
   background:var(--card);border:1px solid var(--border);border-radius:16px}
 #diver{grid-area:diver;display:flex;flex-direction:column;min-height:0;
   background:var(--card);border:1px solid var(--border);border-radius:16px;padding:12px}
+/* Only the wave tank may flex. Everything else keeps its content height: a
+   .pod squashed below its dial's minimum does not shrink the dial with it, it
+   just lets the dial spill out over the panel above — which is what a short
+   window used to do to the wind dial. When it genuinely will not fit, the rig
+   scrolls instead. */
+#rig > *{flex:0 0 auto}
 #rig::-webkit-scrollbar{width:5px}
 #rig::-webkit-scrollbar-thumb{background:rgba(0,194,168,.3);border-radius:3px}
 
@@ -231,6 +237,15 @@ input[type=range].kn-on::-moz-range-thumb{
   color:var(--dim);margin-top:10px}
 
 /* ─────────────── diver ─────────────── */
+/* Two readings of "sway at depth", and both are real, so it is a switch rather
+   than a decision. On: the seabed follows the slider — a diver standing on the
+   bottom of a site that deep, which is the shore-diving case and what the big
+   readout has always meant. Off: the seabed stays at 50 m and the slider walks
+   the diver down the column, which is the case where the orbits visibly decay. */
+#botToggle{display:flex;align-items:center;gap:7px;margin-top:7px;cursor:pointer;
+  font-size:10.5px;color:var(--dim);line-height:1.3;user-select:none}
+#botToggle input{width:15px;height:15px;accent-color:var(--teal);cursor:pointer;flex:none}
+#botToggle:hover span{color:var(--text)}
 #diverBody{flex:1;display:flex;gap:8px;min-height:0;margin-top:9px}
 #depthWrap{display:flex;flex-direction:column;align-items:center;width:50px;flex:none}
 #diverStage{flex:1;position:relative;border-radius:12px;overflow:hidden;background:#04101f;min-width:0}
@@ -330,11 +345,12 @@ input[type=range].kn-on::-moz-range-thumb{
   <!-- ══════════ DIVER SURGE ══════════ -->
   <aside id="diver">
     <div class="ttl">Surge at depth</div>
-    <div class="sub">Drag the depth slider &mdash; see how far this swell still throws a diver on the bottom.</div>
+    <div class="sub">Drag the diver down the water column &mdash; watch the orbits shrink under him.</div>
+    <label id="botToggle"><input type="checkbox" id="onBottom"><span>Keep the diver on the bottom</span></label>
     <div id="diverBody">
       <div id="depthWrap">
         <div class="pod-lab">Depth</div>
-        <input type="range" class="v-range" id="depth" min="2" max="30" step="0.5" value="8">
+        <input type="range" class="v-range" id="depth" min="1" max="50" step="1" value="8">
         <div class="pod-read" style="font-size:20px;margin-top:2px" id="depthV">8<i>m</i></div>
       </div>
       <div id="diverStage"><canvas id="diverCv"></canvas></div>
@@ -1529,7 +1545,7 @@ function bearing16(d){
 function scoreColor(pct){ return pct>=67?'#2ecc71':pct>=33?'#f5c842':'#e83d3d'; }
 
 /* ── model inputs ────────────────────────────────────────────────────────── */
-var ST = { dir:135, per:10, hgt:1.6, wdir:45, wspd:18, tide:1, depth:8 };
+var ST = { dir:135, per:10, hgt:1.6, wdir:45, wspd:18, tide:1, depth:8, onBottom:false };
 
 /* The same hour object the workbench feeds calcScore, with the same derived
    wind wave (height from wind speed, direction from the wind, period falling
@@ -2019,13 +2035,28 @@ function waveNumber(T,d){
   }
   return k;
 }
+/* Deepest the panel ever draws, and the seabed depth when the diver is free to
+   move up and down the column. */
+var SITE_MAX = 50;
+/* Where the seabed is. With the toggle on it follows the slider — every notch
+   is a different site and the diver is standing on the bottom of it, which is
+   the shore-diving case. With it off the bed is fixed and the slider moves the
+   diver instead, which is the case where the orbits overhead visibly decay:
+   a Sydney-shallow column makes horizontal motion near-uniform top to bottom,
+   so with the bed following the diver the orbits barely change size at all. */
+function siteDepth(){ return ST.onBottom ? clamp(ST.depth,1,SITE_MAX) : SITE_MAX; }
+
 function surge(){
-  var T=ST.per, d=ST.depth, H=ST.hgt;
+  var T=ST.per, d=siteDepth(), H=ST.hgt;
+  var z=clamp(ST.depth,0,d), hab=d-z;              // hab = height above the bed
   var k=waveNumber(T,d), w=2*Math.PI/T;
-  var sh=Math.sinh(k*d);
-  var xi = sh>1e-6 ? (H/2)/sh : (H/2)/1e-6;        // semi-excursion on the bottom
-  xi=Math.min(xi,40);
-  return { xi:xi, sway:2*xi, speed:w*xi, T:T, k:k };
+  var sh=Math.sinh(k*d)||1e-6;
+  /* Airy orbit at this depth: a across, b up. On the bed b is exactly zero —
+     pure surge — and near the surface the two converge on a circle. With the
+     toggle on, z === d, so this reduces to (H/2)/sinh(kd): the old number. */
+  var a=Math.min((H/2)*Math.cosh(k*hab)/sh, 40);
+  var b=Math.min((H/2)*Math.sinh(k*hab)/sh, 40);
+  return { a:a, b:b, xi:a, sway:2*a, speed:w*a, T:T, k:k, d:d, z:z, hab:hab };
 }
 
 var dCv=el('diverCv'), dCtx=dCv.getContext('2d'), dW=0,dH=0,dDpr=1;
@@ -2081,8 +2112,12 @@ function diverGlyph(ctx,x,y,L,tilt,kick){
   ctx.restore();
 }
 
+/* Exhaust bubbles. Each one remembers the x it was released at rather than
+   tracking the diver, so the rising column traces where the diver actually WAS
+   — which makes the surge legible a second way, in the water above them. */
 var BUB=[];
-for(var _b=0;_b<14;_b++) BUB.push([Math.random(),Math.random(),0.4+Math.random()]);
+for(var _b=0;_b<14;_b++)
+  BUB.push({p:Math.random(), s:0.55+Math.random()*0.7, w:Math.random(), x:null, last:null});
 
 function renderDiver(t){
   if(!dW && !fitDiver()) return;
@@ -2094,8 +2129,8 @@ function renderDiver(t){
   var g=ctx.createLinearGradient(0,seaTop,0,bed);
   g.addColorStop(0,'#12557a'); g.addColorStop(1,'#04182c');
   ctx.fillStyle=g; ctx.fillRect(0,seaTop,W,bed-seaTop);
-  // surface, at the real height against the depth scale
-  var mPerPx=(bed-seaTop)/ST.depth;
+  // surface, against the depth axis for whichever seabed is in play
+  var mPerPx=(bed-seaTop)/S.d;
   var surfAmp=clamp(ST.hgt/2*mPerPx,2,seaTop*0.85);
   var lam=clamp(W*0.18+1.56*ST.per*ST.per/156*W*0.5,40,W*2.2);
   ctx.beginPath(); ctx.moveTo(0,seaTop-surfAmp*2);
@@ -2131,51 +2166,84 @@ function renderDiver(t){
      particle goes round forward-at-the-crest, back-in-the-trough. Taking PHI
      from the same x and lam as the drawn surface keeps the top particle
      riding with the wave over its head rather than drifting against it. */
-  var d=ST.depth, k=S.k, amp=ST.hgt/2;
+  var d=S.d, k=S.k, amp=ST.hgt/2;
   var shkd=Math.sinh(k*d)||1e-6;
-  var cx=W/2, cy=bed-Math.max(15,H*0.09);
+  var cx=W/2;
+  // the diver sits where his depth puts him on the axis
+  var cy=clamp(seaTop+S.z*mPerPx, seaTop+16, bed-Math.max(13,H*0.075));
   var PHI=(cx/lam-t/ST.per)*Math.PI*2+Math.PI/2;
 
   function semi(hab){
     return { a:amp*Math.cosh(k*hab)/shkd, b:amp*Math.sinh(k*hab)/shkd };
   }
-  var FR=[0.90,0.77,0.64,0.51,0.38,0.25];          // heights above the bed, as d
-  var parts=FR.map(function(f){
-    var sm=semi(f*d);
-    return { y:seaTop+(1-f)*d*mPerPx, a:sm.a, b:sm.b };
-  });
-  var bot=semi(Math.max(0.4,0.02*d));              // the one the diver is on
-  var aMax=Math.max(bot.a,Math.max.apply(null,parts.map(function(q){return q.a;})));
-  var bMax=Math.max(0.001,Math.max.apply(null,parts.map(function(q){return q.b;})));
+  // Fixed depths down the whole column, so the profile is the same picture
+  // whatever the diver does, and he descends through it.
+  var ZS=[0.05,0.20,0.36,0.53,0.71,0.90].map(function(f){ return f*d; });
+  var parts=ZS.map(function(dep){
+    var sm=semi(d-dep);
+    return { y:seaTop+dep*mPerPx, a:sm.a, b:sm.b, dep:dep,
+             lab:{ d:(dep<10?dep.toFixed(1):Math.round(dep))+' m',
+                   s:(2*sm.a).toFixed(1)+' m' } };
+  }).filter(function(q){ return Math.abs(q.y-cy)>24; });   // clear of the diver
+  var bot={ a:S.a, b:S.b };                        // the orbit the diver is on
+  var allOrb=parts.concat([bot]);
+  var aMax=Math.max.apply(null,allOrb.map(function(q){return q.a;}));
+  var bMax=Math.max(0.001,Math.max.apply(null,allOrb.map(function(q){return q.b;})));
   /* One scale for every orbit AND for the diver, so the ellipses stay true to
      one another. Capped twice: on width so the widest cannot run off the panel,
      and on height so neighbouring orbits cannot grow into each other. */
-  var gapM=(FR[0]-FR[1])*d;
-  var orbScale=Math.min(mPerPx,
-                        (W*0.33)/Math.max(aMax,0.01),
-                        (gapM*mPerPx*0.42)/bMax);
+  var gapM=ZS[1]-ZS[0];
+  /* Not capped at the depth axis' own scale any more: over 50 m of water that
+     would draw a 1.6 m swell's orbits a few pixels across. Width, and the
+     clearance between neighbours, are the limits that matter. */
+  var orbScale=Math.min((W*0.34)/Math.max(aMax,0.01),
+                        (gapM*mPerPx*0.80)/bMax);
 
-  function drawOrbit(x,y,a,b,head){
+  var labFont=clamp(Math.round(W*0.026),8,13)+'px DM Mono,monospace';
+  function drawOrbit(x,y,a,b,head,lab){
     var A=Math.max(a*orbScale,0.6), B=Math.max(b*orbScale,0.6);
     if(A<1.6&&B<1.6) return;
-    ctx.strokeStyle='rgba(159,208,245,0.20)'; ctx.lineWidth=1;
-    ctx.setLineDash([3,3]);
-    ctx.beginPath(); ctx.ellipse(x,y,A,B,0,0,Math.PI*2); ctx.stroke();
-    ctx.setLineDash([]);
-    // the comet tail — where it has just been. PHI grows going back in time.
-    var N=16, span=Math.PI*0.95;
+    /* Nothing but the comet. No wash inside the orbit and no drawn path — the
+       tail is long enough to lay out most of the ellipse on its own, so the
+       trajectory reads from the trace the particle leaves rather than from a
+       line drawn round it. */
+    // Which depth this one belongs to. Without it the reader has to infer that
+    // the shrinking ellipses are the same water at different depths, which is
+    // the one thing the picture exists to say.
+    if(lab){
+      ctx.font=labFont;
+      if(x-A-6>2){
+        ctx.textAlign='right'; ctx.fillStyle='rgba(200,221,245,0.55)';
+        ctx.fillText(lab.d, x-A-6, y+3);
+      }
+      // The sway this orbit is, said in metres. The width difference between
+      // orbits is small in shallow water — genuinely, the bed makes the flow
+      // near-uniform — so the figure has to carry what the eye cannot.
+      if(x+A+6<W-2){
+        ctx.textAlign='left'; ctx.fillStyle='rgba(159,208,245,0.75)';
+        ctx.fillText(lab.s, x+A+6, y+3);
+      }
+      ctx.textAlign='left';
+    }
+    // The comet tail — where it has just been. PHI grows going back in time.
+    // Long enough to describe the whole loop now that no path is drawn under it.
+    var N=30, span=Math.PI*1.7;
     ctx.fillStyle='#9fd0f5';
     for(var i=N;i>=1;i--){
       var ph=PHI+span*(i/N), f=1-i/N;
-      ctx.globalAlpha=0.06+f*0.50;
+      ctx.globalAlpha=0.03+f*f*0.60;
       ctx.beginPath();
       ctx.arc(x-A*Math.sin(ph), y-B*Math.cos(ph), 0.6+f*1.9, 0, Math.PI*2);
       ctx.fill();
     }
     ctx.globalAlpha=1;
     if(head===false) return;
+    // Peak speed goes as omega*a, so sizing the marker on a/aMax lets the
+    // marker carry the decay too — which matters in shallow water, where the
+    // ellipses barely narrow with depth and only flatten.
+    var r=2.2+1.8*clamp(a/Math.max(aMax,1e-6),0,1);
     ctx.beginPath();
-    ctx.arc(x-A*Math.sin(PHI), y-B*Math.cos(PHI), 3.4, 0, Math.PI*2);
+    ctx.arc(x-A*Math.sin(PHI), y-B*Math.cos(PHI), r, 0, Math.PI*2);
     ctx.fillStyle='#eaf4ff'; ctx.fill();
     ctx.strokeStyle='rgba(6,28,38,0.85)'; ctx.lineWidth=1.1; ctx.stroke();
   }
@@ -2192,23 +2260,41 @@ function renderDiver(t){
   ctx.lineTo(W,bed);
   ctx.closePath();
   ctx.clip();
-  parts.forEach(function(q){ drawOrbit(cx,q.y,q.a,q.b,true); });
+  parts.forEach(function(q){ drawOrbit(cx,q.y,q.a,q.b,true,q.lab); });
   drawOrbit(cx,cy,bot.a,bot.b,false);   // the diver's own orbit, no marker on it
   ctx.restore();
 
-  // the diver rides the bottom orbit — same scale, same phase as the particles
+  // the diver rides his own orbit — same scale and phase as the particles, and
+  // mid-water that orbit has real vertical travel, so he bobs as well as sways
   var off=-bot.a*orbScale*Math.sin(PHI);
+  var offY=-bot.b*orbScale*Math.cos(PHI);
   var L=clamp(W*0.30,56,230);
   var tilt=Math.cos(PHI)*0.16;
-  diverGlyph(ctx,cx+off,cy,L,tilt,t*4.2);
-  // bubbles
-  ctx.fillStyle='rgba(210,236,255,0.42)';
+  /* Orbits are drawn at an exaggerated scale so they are legible over 50 m of
+     water, but the diver's POSITION is on the true depth axis — so near the
+     surface his own orbit would throw the figure clean out of the sea. He is
+     held in the column; the honest numbers are in the readouts under the panel. */
+  var dvx=clamp(cx+off, L*0.45, W-L*0.45);
+  // the ceiling has to clear the whole figure, fins included — they kick a
+  // good way above his centre line and were breaking the surface on a flat day
+  var dvy=clamp(cy+offY, seaTop+Math.max(16,L*0.27), bed-10);
+  diverGlyph(ctx,dvx,dvy,L,tilt,t*4.2);
+  // Bubbles, leaving the regulator at the diver's head and rising from there —
+  // not off the seabed. Each takes the diver's x at the moment it is released
+  // and keeps it, so the column drifts behind him as he is swept back and forth.
+  var mouthX=dvx+L*0.30, mouthY=dvy-L*0.05, ceil=seaTop+5;
   for(var i=0;i<BUB.length;i++){
     var b=BUB[i];
-    var by=bed-((t*22*b[2]+b[0]*600)%(bed-seaTop+20));
-    if(by<seaTop) continue;
-    var bx=cx+off+L*0.17+Math.sin(by*0.06+b[1]*6)*(L*0.07);
-    ctx.beginPath(); ctx.arc(bx,by,(1.2+b[1]*2.1)*clamp(L/110,0.8,2),0,Math.PI*2); ctx.fill();
+    var p=((t*0.20*b.s+b.p)%1+1)%1;
+    if(b.x===null || (b.last!==null && p<b.last)) b.x=mouthX;   // released now
+    b.last=p;
+    var by=mouthY-(mouthY-ceil)*p;
+    if(by>mouthY||by<ceil) continue;
+    var bx=b.x+Math.sin(p*9+b.w*6.3)*(L*0.045);
+    // they expand a little on the way up, as the pressure comes off
+    var rad=(0.9+b.w*1.5)*(0.75+p*0.6)*clamp(L/110,0.8,2);
+    ctx.fillStyle='rgba(210,236,255,'+(0.5-p*0.18).toFixed(3)+')';
+    ctx.beginPath(); ctx.arc(bx,by,rad,0,Math.PI*2); ctx.fill();
   }
   // depth scale
   ctx.fillStyle='rgba(200,221,245,0.45)';
@@ -2220,7 +2306,11 @@ function renderDiver(t){
   ctx.fillText('water particles', 6, seaTop+13);
   ctx.textAlign='right';
   ctx.fillStyle='rgba(200,221,245,0.45)';
-  ctx.fillText(ST.depth.toFixed(ST.depth%1?1:0)+' m',W-5,bed-5);
+  ctx.fillText(Math.round(S.d)+' m',W-5,bed-5);
+  if(Math.abs(dvy-bed)>18){                        // where the diver is on the axis
+    ctx.fillStyle='rgba(159,208,245,0.9)';
+    ctx.fillText(Math.round(S.z)+' m',W-5,dvy+4);
+  }
   ctx.textAlign='left';
 }
 
@@ -2264,7 +2354,7 @@ function paint(){
   el('perV').innerHTML  = h.swell1P+'<i>s</i>';
   el('wspdV').innerHTML = Math.round(h.windKmh)+'<i>km/h</i>';
   el('tideV').innerHTML = h.tideM.toFixed(2)+'<i>m</i>';
-  el('depthV').innerHTML= ST.depth.toFixed(ST.depth%1?1:0)+'<i>m</i>';
+  el('depthV').innerHTML= Math.round(ST.depth)+'<i>m</i>';
 
   var sig=[ST.dir,ST.per,ST.hgt,ST.wdir,ST.wspd,ST.tide].join('|');
   if(sig!==_sitesSig){
@@ -2285,8 +2375,8 @@ function paint(){
   el('sgCycle').innerHTML = ST.per+'<i>s</i>';
   var kn=S.speed*1.944;
   el('diverNote').innerHTML =
-    'A '+ST.hgt.toFixed(1)+' m, '+ST.per+' s swell still moves the water on the bottom at '+
-    ST.depth.toFixed(ST.depth%1?1:0)+' m by <b>'+S.sway.toFixed(1)+' m</b> each cycle, peaking at '+
+    'A '+ST.hgt.toFixed(1)+' m, '+ST.per+' s swell moves the water at '+
+    Math.round(ST.depth)+' m by <b>'+S.sway.toFixed(1)+' m</b> each cycle, peaking at '+
     kn.toFixed(1)+' knots. '+
     (S.speed>0.8?'Hard work to hold position — and worse in a gutter.'
      :S.speed>0.35?'Noticeable push; easy to fin against in the open.'
@@ -2440,6 +2530,10 @@ drawSwellDial(); drawWindDial();
     var input=el(pair[0]);
     input.addEventListener('input',function(){ ST[pair[1]]=+input.value; schedulePaint(); });
   });
+
+el('onBottom').addEventListener('change',function(){
+  ST.onBottom=this.checked; schedulePaint();
+});
 
 var PRESETS=[
   {n:'Big S<br>groundswell', s:{dir:180,per:14,hgt:3.2,wdir:200,wspd:22,tide:1.2}},
