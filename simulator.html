@@ -37,7 +37,7 @@ body{
   grid-template-rows:100%;
   grid-template-areas:"rig stage diver";
 }
-#rig{grid-area:rig;display:flex;flex-direction:column;gap:9px;min-height:0;overflow-y:auto;
+#rig{grid-area:rig;display:flex;flex-direction:column;gap:8px;min-height:0;overflow-y:auto;
   background:var(--card);border:1px solid var(--border);border-radius:16px;padding:11px}
 #stage{grid-area:stage;position:relative;overflow:hidden;
   background:var(--card);border:1px solid var(--border);border-radius:16px}
@@ -46,7 +46,7 @@ body{
 #rig::-webkit-scrollbar{width:5px}
 #rig::-webkit-scrollbar-thumb{background:rgba(0,194,168,.3);border-radius:3px}
 
-.ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:27px;letter-spacing:3px;
+.ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:54px;letter-spacing:3px;
   color:var(--teal);font-weight:400;line-height:1.1}
 .sub{font-size:10.5px;color:var(--dim);line-height:1.45}
 
@@ -85,15 +85,12 @@ body{
 .dot{fill:#fff;stroke:rgba(0,0,0,.85);stroke-width:2}
 .lead{stroke:rgba(255,255,255,0.40);stroke-width:1.3;fill:none}
 
-/* Both of these are positioned onto the map itself in layout() — pinned to the
-   stage corners they sat underneath the flanking tile columns. */
-#stageHead{position:absolute;z-index:5;pointer-events:none;
-  background:rgba(6,16,32,.78);border:1px solid var(--border);border-radius:11px;padding:7px 12px 8px}
-#legend{position:absolute;z-index:5;display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-  font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
-  background:rgba(6,16,32,.78);border:1px solid var(--border);border-radius:9px;padding:5px 10px}
-.lgR{color:var(--red)}.lgY{color:var(--yellow)}.lgG{color:var(--green)}
-#legend em{font-style:normal;color:var(--dim);letter-spacing:.3px;text-transform:none;font-size:10px}
+/* The title had been a chip sitting on the map. At 54px it grew wide enough to
+   cover the CTB and Freshwater markers in the map's north-east, and no corner of
+   this map is both big enough to hold it and empty. So it gets a plain strip
+   along the top of the stage and the map starts underneath it — layout()
+   measures the strip and takes it off the height budget. */
+#stageHead{position:absolute;left:14px;top:11px;right:14px;z-index:5;pointer-events:none}
 
 /* ─────────────── rig (controls) ─────────────── */
 .pod{display:flex;flex-direction:column;align-items:center;
@@ -301,17 +298,12 @@ input[type=range].kn-on::-moz-range-thumb{
   <section id="stage">
     <div id="stageHead">
       <div class="ttl">Sydney dive sites</div>
-      <div class="sub" id="stageSub"></div>
     </div>
     <div id="mapWrap">
       <canvas id="mapCv"></canvas>
       <svg id="leaders"></svg>
       <div id="tiles"></div>
       <svg id="dots"></svg>
-    </div>
-    <div id="legend">
-      <b class="lgR">Avoid</b><b class="lgY">Caution</b><b class="lgG">Easy</b>
-      <em>&mdash; same 0&ndash;60 score bar as the forecast app &middot; click a site to enlarge it</em>
     </div>
   </section>
 
@@ -1820,7 +1812,10 @@ function layout(){
   var pad=14, lead=24, colGap=6, gap=5;
   var chrome=tileChrome();
   var nMax=Math.max(COLS[0].length,COLS[1].length,COLS[2].length);
-  var avail=st.height-pad*2;
+  // The title strip owns the top of the stage; the map and the columns start
+  // under it, so nothing on the map can ever be covered by the heading.
+  var headTop=pad+el('stageHead').offsetHeight+8;
+  var avail=st.height-headTop-pad;
 
   // Column widths cannot change the stage HEIGHT, so the map size and the
   // height budget are both settled before anything gets resized.
@@ -1858,7 +1853,7 @@ function layout(){
   var colX=[ originX, originX+TW+colGap, 0 ];
   var mapX=colX[1]+TW-INLAND_FRAC*mw;
   colX[2]=mapX+mw+lead;
-  var box={ x:Math.round(mapX), y:Math.round((st.height-mh)/2),
+  var box={ x:Math.round(mapX), y:Math.round(headTop+(avail-mh)/2),
             w:Math.round(mw), h:Math.round(mh) };
   fitMap(box);
 
@@ -1880,8 +1875,8 @@ function layout(){
     // space it actually needs, so a stack that cannot fit still separates
     // evenly instead of piling two tiles onto the last clamp.
     var need=items.length*TH+(items.length-1)*gap;
-    var top=pad, bot=st.height-pad-TH;
-    if(need>st.height-pad*2){ top=Math.round((st.height-need)/2); bot=top+need-TH; }
+    var top=headTop, bot=st.height-pad-TH;
+    if(need>avail){ top=Math.round(headTop+(avail-need)/2); bot=top+need-TH; }
     for(var i=0;i<items.length;i++){
       items[i].y=clamp(items[i].y,top,bot);
       if(i) items[i].y=Math.max(items[i].y, items[i-1].y+TH+gap);
@@ -1908,13 +1903,6 @@ function layout(){
   });
   leadersEl.innerHTML=svg;
   dotsEl.innerHTML=dotSvg;
-  // Title and legend ride on the map, not on the stage corners, so they can
-  // never end up under a tile column.
-  var hd=el('stageHead'), lg=el('legend');
-  hd.style.left=(box.x+9)+'px'; hd.style.top=(box.y+9)+'px';
-  hd.style.maxWidth=(box.w-18)+'px';
-  lg.style.left=(box.x+9)+'px'; lg.style.maxWidth=(box.w-18)+'px';
-  lg.style.top=(box.y+box.h-9-lg.offsetHeight)+'px'; lg.style.bottom='auto';
   Object.keys(MAPS).forEach(function(k){ if(MAPS[k].fit) MAPS[k].fit(); });
 }
 
@@ -2111,10 +2099,6 @@ function paint(){
   el('wspdV').innerHTML = Math.round(h.windKmh)+'<i>km/h</i>';
   el('tideV').innerHTML = h.tideM.toFixed(2)+'<i>m</i>';
   el('depthV').innerHTML= ST.depth.toFixed(ST.depth%1?1:0)+'<i>m</i>';
-
-  el('stageSub').textContent =
-    h.swell1H.toFixed(1)+' m '+bearing16(h.swell1Dir)+' swell at '+h.swell1P+' s  ·  '+
-    Math.round(h.windKmh)+' km/h '+bearing16(h.windDir)+' wind  ·  tide '+h.tideM.toFixed(2)+' m';
 
   var sig=[ST.dir,ST.per,ST.hgt,ST.wdir,ST.wspd,ST.tide].join('|');
   if(sig!==_sitesSig){
