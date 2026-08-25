@@ -517,6 +517,19 @@
     width:38px;height:26px;border-radius:8px;background:var(--gold);color:#04282a;
     display:flex;align-items:center;justify-content:center;font-size:15px;font-weight:800;
     box-shadow:0 2px 8px rgba(0,0,0,.5)}
+  /* Bubble Pop rules: the same weight as the Safe Ascent and Neutral briefs,
+     because it is the only place the scoring is explained. */
+  .bubble-brief{flex-shrink:0;margin:0 0 9px;padding:11px 14px;border-radius:11px;
+    background:var(--surface);border:1px solid var(--line);
+    display:flex;flex-direction:column;gap:5px;
+    font-size:clamp(14px,3.5vw,19px);line-height:1.45;color:var(--text)}
+  .bubble-brief i{font-style:normal;font-weight:800;color:var(--accent)}
+  .bubble-brief .warn{color:var(--muted)}
+  @media(min-width:1000px){.bubble-brief{font-size:21px;padding:15px 18px;gap:7px;margin-bottom:12px}}
+  @media(max-height:720px){
+    .bubble-brief{padding:8px 11px;gap:3px;font-size:13.5px;line-height:1.35;margin-bottom:7px}
+  }
+  #bubbleStart{width:100%;margin-top:10px;flex-shrink:0}
   .depth-how{font-size:13px;color:var(--muted);text-align:center;margin:0;flex-shrink:0}
   @media(min-width:1000px){
     .depth-how{font-size:17px}
@@ -1212,32 +1225,7 @@
     </div>
 
     <!-- Game strip -->
-    <div class="gamesstrip" id="gamesstrip">
-      <div class="gstep active" id="gs-quiz"><div class="icon">🐠</div><div class="label">Guess who</div></div>
-      <div class="gstep" id="gs-breath"><div class="icon">🫧</div><div class="label">Breath hold</div></div>
-      <div class="gstep" id="gs-silhouette"><div class="icon">🧩</div><div class="label">Silhouette</div></div>
-      <div class="gstep" id="gs-log"><div class="icon">✅</div><div class="label">Spotter log</div></div>
-      <div class="gstep" id="gs-bubble"><div class="icon">🎯</div><div class="label">Bubble pop</div></div>
-      <div class="gstep" id="gs-depth"><div class="icon">🗺️</div><div class="label">Depth gauge</div></div>
-      <div class="gstep" id="gs-guess"><div class="icon">🔎</div><div class="label">Where am I?</div></div>
-      <div class="gstep" id="gs-truefalse"><div class="icon">📖</div><div class="label">True/false</div></div>
-      <div class="gstep" id="gs-colour"><div class="icon">🎨</div><div class="label">Colour it</div></div>
-      <div class="gstep" id="gs-trumps"><div class="icon">🃏</div><div class="label">Stat battle</div></div>
-      <div class="gstep" id="gs-oddone"><div class="icon">🔍</div><div class="label">Odd one out</div></div>
-      <div class="gstep" id="gs-speed"><div class="icon">⏱️</div><div class="label">Speed round</div></div>
-      <div class="gstep" id="gs-season"><div class="icon">📅</div><div class="label">When to see</div></div>
-      <div class="gstep" id="gs-wreckid"><div class="icon">🔱</div><div class="label">Wreck detective</div></div>
-      <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
-      <div class="gstep" id="gs-sharkid"><div class="icon">🦈</div><div class="label">Shark ID</div></div>
-      <div class="gstep" id="gs-zoom"><div class="icon">🔍</div><div class="label">Zoom in</div></div>
-      <div class="gstep" id="gs-ascent"><div class="icon">⬆️</div><div class="label">Safe ascent</div></div>
-      <div class="gstep" id="gs-nav"><div class="icon">🧭</div><div class="label">Nav trainer</div></div>
-      <div class="gstep" id="gs-neutral"><div class="icon">🫁</div><div class="label">Neutral</div></div>
-      <div class="gstep" id="gs-migrate"><div class="icon">🐋</div><div class="label">Migration</div></div>
-      <div class="gstep" id="gs-macro"><div class="icon">📷</div><div class="label">Macro shot</div></div>
-      <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
-      <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
-    </div>
+    <div class="gamesstrip" id="gamesstrip"></div>
 
     <!-- ═══ MENU HUB: pick any game ═══ -->
     <div class="panel" id="p-menu">
@@ -1351,11 +1339,17 @@
         <span class="game-label">Pop only the real Sydney species!</span>
         <span class="score">Time <b id="bubbleTime">20</b>s</span>
       </div>
+      <div class="bubble-brief" id="bubbleBrief">
+        <span>Tap the bubbles with a <i>real Sydney species</i> in them as they rise.</span>
+        <span class="warn">Leave the impostors alone — tropicals, freshwater fish and invented
+          names are all in there, and a wrong pop costs you points.</span>
+      </div>
       <div class="bubble-hud">
         <span>Caught <b id="bubbleHit">0</b></span>
         <span>Misses <b id="bubbleMiss">0</b></span>
       </div>
       <div class="bubble-field" id="bubbleField"></div>
+      <button class="btn" id="bubbleStart">START →</button>
       <p class="fact" id="bubbleMsg"></p>
       <p class="auto-notice" id="bubbleNotice"></p>
     </div>
@@ -2863,7 +2857,16 @@ function showPanel(id){
    this was it. Now it only marks the game done and lights up the
    Back button; leaving is always the player's decision. */
 function advanceGame(){
-  if(activeGame)playedGames[activeGame]=true;
+  /* Almost every game calls this on a ~2 second delay after showing its finish
+     line. Tap through faster than that and the timer lands while a DIFFERENT
+     game is on screen, which is how "Next challenge" ended up sitting there
+     from the first moment of the next game. A stale call is one whose game is
+     no longer showing a finish line, so check for it. */
+  if(!activeGame)return;
+  var panel=$('p-'+activeGame);
+  var notice=panel&&panel.querySelector('.auto-notice');
+  if(!notice||!notice.textContent.trim())return;
+  playedGames[activeGame]=true;
   updateStrip(activeGame);
   var gb=$('gameBack');
   if(gb){gb.classList.add('done');gb.textContent='← Back to games';}
@@ -2901,7 +2904,15 @@ function hideNextChallenge(){
       var el=muts[i].target;
       while(el&&el.nodeType!==1)el=el.parentNode;
       if(!el||!el.classList||!el.classList.contains('auto-notice'))continue;
-      if(el.textContent.trim()&&$('p-'+activeGame)&&$('p-'+activeGame).contains(el))showNextChallenge();
+      if(!el.textContent.trim())continue;
+      if(!activeGame||!$('p-'+activeGame)||!$('p-'+activeGame).contains(el))continue;
+      /* The finish line IS the game being over, so bank it here. Games call
+         advanceGame() on a two-second delay, and a player who taps through
+         before it lands leaves activeGame null — so the delayed call marked
+         nothing and the tile never greyed out. */
+      playedGames[activeGame]=true;
+      updateStrip(activeGame);
+      showNextChallenge();
     }
   });
   document.querySelectorAll('.auto-notice').forEach(function(n){
@@ -2978,6 +2989,7 @@ var GAME_META={
 function showMenu(){
   activeGame=null;
   hideNextChallenge();
+  buildStrip();
   $('gamesstrip').style.display='flex';
   updateStrip(null);
   buildMenu();
@@ -3015,6 +3027,31 @@ function buildMenu(){
     b.onclick=function(){startGame(b.dataset.g);};
   });
 }
+/* Compact labels for the strip; the menu shows the full names. */
+var STRIP_SHORT={quiz:'Guess who',breath:'Breath hold',silhouette:'Silhouette',log:'Spotter log',
+  bubble:'Bubble pop',depth:'Depth gauge',guess:'Where am I?',truefalse:'True/false',
+  colour:'Colour it',trumps:'Stat battle',oddone:'Odd one out',speed:'Speed round',
+  season:'When to see',wreckid:'Wreck detective',wreckfind:'Wreck finder',sharkid:'Shark ID',
+  zoom:'Zoom in',ascent:'Safe ascent',nav:'Nav trainer',neutral:'Neutral',migrate:'Migration',
+  macro:'Macro shot',lineup:'Line-up',memory:'Memory'};
+/* The strip used to be hand-written markup listing every game in its own
+   order. That made it disagree with the menu twice over: a different sequence,
+   and no age-group filtering at all — so a game switched off for adults still
+   appeared up top, and could be tapped straight into. Both now come off
+   gamesForGroup(), so they cannot drift apart. */
+function buildStrip(){
+  var shown=gamesForGroup(USER.group);
+  $('gamesstrip').innerHTML=shown.map(function(g){
+    var m=GAME_META[g]||{icon:'🎮',name:g};
+    return '<div class="gstep'+(playedGames[g]?' done':'')+'" id="gs-'+g+'" data-g="'+g+'">'+
+      '<div class="icon">'+m.icon+'</div>'+
+      '<div class="label">'+esc(STRIP_SHORT[g]||m.name)+'</div></div>';
+  }).join('');
+  $('gamesstrip').querySelectorAll('.gstep').forEach(function(el){
+    el.style.cursor='pointer';
+    el.onclick=function(){startGame(el.dataset.g);};
+  });
+}
 function buildAdminGrid(){
   var html=GAME_ORDER.map(function(g){
     var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
@@ -3050,13 +3087,10 @@ function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('
       }
     });
     saveGameAgeGroups();saveGameExp();
+    buildStrip();
     $('adminSaved').textContent='Saved ✓';
   };
 })();
-/* Strip tiles jump straight to a game during play */
-GAME_ORDER.forEach(function(g){
-  var el=$('gs-'+g);if(el){el.style.cursor='pointer';el.onclick=function(){startGame(g);};}
-});
 /* Menu → Hall of Fame */
 (function(){var mf=$('menuFinish');if(mf)mf.onclick=function(){showHallOfFame();};})();
 
@@ -3457,11 +3491,28 @@ var BUBBLE_CFG={
 function bubbleCfg(){return BUBBLE_CFG[USER.group]||BUBBLE_CFG['Teen Explorer'];}
 
 function initBubble(){
+  /* leaving mid-round used to leave the timers running, so coming back ran two
+     spawners at once */
+  bubbleStop();
   var f=$('bubbleField');f.innerHTML='';
   var cfg=bubbleCfg();
-  bubbleState={time:cfg.secs,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
+  bubbleState={time:cfg.secs,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:[],raf:null};
   $('bubbleTime').textContent=cfg.secs;$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
-  $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';$('bubbleNotice').textContent='';
+  $('bubbleMsg').textContent='';$('bubbleNotice').textContent='';
+  $('bubbleStart').style.display='block';
+  $('bubbleStart').disabled=false;
+}
+function bubbleStop(){
+  if(!bubbleState)return;
+  bubbleState.active=false;
+  clearInterval(bubbleState.timer);clearInterval(bubbleState.spawn);
+  if(bubbleState.raf)cancelAnimationFrame(bubbleState.raf);
+}
+function startBubble(){
+  var cfg=bubbleCfg();
+  bubbleState.active=true;
+  $('bubbleStart').style.display='none';
+  $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';
   bubbleState.timer=setInterval(function(){
     bubbleState.time--;$('bubbleTime').textContent=bubbleState.time;
     if(bubbleState.time<=0)endBubble();
@@ -3470,6 +3521,7 @@ function initBubble(){
   for(var i=0;i<cfg.start;i++)setTimeout(spawnBubble,i*320);
   animateBubbles();
 }
+$('bubbleStart').onclick=startBubble;
 function spawnBubble(){
   if(!bubbleState.active)return;
   var f=$('bubbleField');var W=f.clientWidth||320;
@@ -3507,9 +3559,7 @@ function animateBubbles(){
   bubbleState.raf=requestAnimationFrame(animateBubbles);
 }
 function endBubble(){
-  bubbleState.active=false;
-  clearInterval(bubbleState.timer);clearInterval(bubbleState.spawn);
-  if(bubbleState.raf)cancelAnimationFrame(bubbleState.raf);
+  bubbleStop();
   $('bubbleField').innerHTML='';
   $('bubbleMsg').textContent='Time! You caught '+bubbleState.hit+' real species ('+bubbleState.miss+' slip-ups).';
   $('bubbleNotice').textContent='Pick another game when you are ready →';
@@ -6102,7 +6152,8 @@ function encourageMsg(rank,total){
 }
 function showHallOfFame(){
   $('gamesstrip').style.display='none';
-  GAME_ORDER.forEach(function(g){var el=$('gs-'+g);el.classList.remove('active');el.classList.add('done');});
+  $('gamesstrip').querySelectorAll('.gstep').forEach(function(el){
+    el.classList.remove('active');el.classList.add('done');});
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
   $('p-hof').classList.add('show');
   window.scrollTo(0,0);
