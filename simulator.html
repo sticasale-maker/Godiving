@@ -110,10 +110,15 @@ body{
 
 /* wave shaper */
 #shaper{display:flex;flex-direction:column;background:rgba(0,0,0,.24);
-  border:1px solid var(--border);border-radius:14px;padding:7px 9px 6px}
-#shaperTop{display:flex;gap:8px;height:clamp(96px,13.8vh,210px)}
+  border:1px solid var(--border);border-radius:14px;padding:7px 9px 6px;
+  flex:1 1 auto;min-height:0}
+/* The tank takes whatever height the rig has spare, between a floor that keeps
+   the wave legible and a ceiling that stops it swallowing the column on a tall
+   screen. Everything else in the rig is fixed height, so this is the one item
+   that flexes. */
+#shaperTop{display:flex;gap:8px;flex:1 1 auto;min-height:118px;max-height:430px}
 #hgtCol{display:flex;flex-direction:column;align-items:center;width:52px;flex:none}
-#waveCv{flex:1;min-width:0;height:100%;border-radius:9px;
+#waveCv{flex:1;min-width:0;height:auto;align-self:stretch;border-radius:9px;
   background:rgba(2,12,26,.6);border:1px solid var(--border);display:block}
 #perRow{display:flex;justify-content:space-between;align-items:baseline;margin-top:1px}
 
@@ -147,10 +152,13 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
   color:#fff;line-height:1;font-weight:400}
 .mini-val i{font-style:normal;font-family:'DM Sans',sans-serif;font-size:10px;color:var(--dim);margin-left:2px}
 
-#presets{display:grid;grid-template-columns:1fr 1fr;gap:6px}
-.preset{padding:8px 6px;border-radius:10px;border:1px solid var(--border);
+/* One compact row rather than a 2x2 block. At 1920 the rig has no spare
+   height at all — the 54px title wraps to two lines there — and the ~50px
+   this saves is the only slack going, so it goes to the wave tank. */
+#presets{display:grid;grid-template-columns:repeat(4,1fr);gap:5px}
+.preset{padding:7px 3px;border-radius:10px;border:1px solid var(--border);
   background:rgba(0,194,168,.08);color:var(--text);font-family:'DM Sans',sans-serif;
-  font-size:11px;cursor:pointer;text-align:center;line-height:1.25}
+  font-size:10.5px;cursor:pointer;text-align:center;line-height:1.2}
 .preset:active{background:rgba(0,194,168,.3);color:#fff}
 
 /* Keyboard ring: Tab walks the six knobs, the highlighted one takes the arrows.
@@ -223,8 +231,7 @@ input[type=range].kn-on::-moz-range-thumb{
    optional furniture so the rig still fits without becoming a scrolling column. */
 @media (max-height:880px){
   #rig{gap:7px}
-  #presets{grid-template-columns:1fr 1fr 1fr 1fr;gap:5px}
-  .preset{padding:7px 3px;font-size:10px}
+  .preset{padding:6px 2px;font-size:9.5px}
   .mini{padding:4px 9px 0}
   .pod{padding:5px 8px 6px}
 }
@@ -2328,6 +2335,8 @@ document.addEventListener('visibilitychange',function(){
 if(typeof ResizeObserver!=='undefined'){
   new ResizeObserver(debouncedRelayout).observe(stageEl);
   new ResizeObserver(debouncedRelayout).observe(el('diverStage'));
+  // The tank flexes with the rig, and a rig reflow need not resize the stage.
+  new ResizeObserver(function(){ if(fitWave()) drawWave(0); }).observe(waveCv);
 }
 if(document.readyState==='complete') boot();
 else window.addEventListener('load',boot);
