@@ -2762,13 +2762,15 @@ function saveGameAgeGroups(){try{localStorage.setItem('gds_game_agegroups',JSON.
    Defaults are "everyone" because most of the arcade is marine life,
    which anyone can enjoy. Only genuinely diving-specific games are
    narrowed here; the rest is the operator's call in the admin panel. */
-var GAME_EXP_DEFAULTS={
-  wreckid:  ['snorkel','scuba','freedive'],   /* Sydney wrecks are a diving subject */
-  wreckfind:['snorkel','scuba','freedive'],
-  ascent:   ['scuba'],                        /* return-to-surface: scuba only */
-  nav:      ['scuba','freedive'],
-  neutral:  ['snorkel','scuba','freedive']
-};
+/* Nothing is withheld from someone who has never dived. The wreck games, the
+   ascent, the compass and the buoyancy hover were once scuba-only on the
+   grounds that a non-diver would not know the subject — but not knowing the
+   subject is the reason they are at a dive show, and those four are the games
+   most likely to make someone want to learn. A stand that hides its best
+   material from newcomers has the filter backwards. */
+var GAME_EXP_DEFAULTS={};
+/* 'none' is not narrowable, so the admin does not offer a checkbox for it. */
+function expLevelsEditable(){return EXP_LEVELS.filter(function(e){return e.key!=='none';});}
 var GAME_EXP={};
 function loadGameExp(){
   var map={};
@@ -2779,6 +2781,26 @@ function loadGameExp(){
     if(!map[g]){var o={};EXP_LEVELS.forEach(function(e){o[e.key]=def.indexOf(e.key)>-1;});map[g]=o;}
     else EXP_LEVELS.forEach(function(e){if(typeof map[g][e.key]!=='boolean')map[g][e.key]=def.indexOf(e.key)>-1;});
   });
+  return letNonDiversIn(map);
+}
+/* Applied to every source — this browser's copy and the shared row — because
+   a stand configured before this change still has the old narrowing stored.
+
+   It clears the WHOLE diver axis once, not just 'none'. Opening the wreck and
+   scuba games to people who have never dived while leaving them shut to
+   snorkellers left snorkellers with fewer games than beginners, which is worse
+   than the thing being fixed. The axis still exists and the admin can narrow
+   it deliberately; the flag means a later choice sticks. */
+var EXP_OPEN_V='gds_exp_open_v1';
+function letNonDiversIn(map){
+  var done=false;
+  try{done=localStorage.getItem(EXP_OPEN_V)==='1';}catch(e){}
+  GAME_ORDER.forEach(function(g){
+    if(!map[g])return;
+    if(done){map[g].none=true;return;}
+    EXP_LEVELS.forEach(function(e){map[g][e.key]=true;});
+  });
+  if(!done){try{localStorage.setItem(EXP_OPEN_V,'1');}catch(e){}}
   return map;
 }
 function saveGameExp(){try{localStorage.setItem('gds_game_exp',JSON.stringify(GAME_EXP));}catch(e){}}
@@ -3065,7 +3087,7 @@ function adoptSharedGameConfig(cb){
       saveGameAgeGroups();
     }
     if(st&&st.game_exp){
-      GAME_EXP=pruneRetired(st.game_exp);
+      GAME_EXP=letNonDiversIn(pruneRetired(st.game_exp));
       saveGameExp();
     }
     if(cb)cb();
@@ -3319,7 +3341,7 @@ function buildAdminGrid(){
       return '<label><input type="checkbox" data-g="'+g+'" data-ag="'+esc(ag)+'"'+checked+'>'+esc(AGE_GROUP_SHORT[ag])+'</label>';
     }).join('');
     var exs=GAME_EXP[g]||{};
-    var ebox=EXP_LEVELS.map(function(e){
+    var ebox=expLevelsEditable().map(function(e){
       return '<label><input type="checkbox" data-g="'+g+'" data-exp="'+esc(e.key)+'"'+(exs[e.key]?' checked':'')+'>'+
              e.icon+' '+esc(e.label)+'</label>';
     }).join('');
@@ -3351,6 +3373,7 @@ function showAdmin(){
         GAME_EXP[g][cb.dataset.exp]=cb.checked;
       }
     });
+    letNonDiversIn(GAME_EXP);
     saveGameAgeGroups();saveGameExp();
     buildStrip();
     /* localStorage is per browser. At the stand that means the laptop the
