@@ -141,8 +141,18 @@ body{
    that flexes. */
 #shaperTop{display:flex;gap:8px;flex:1 1 auto;min-height:118px;max-height:430px}
 #hgtCol{display:flex;flex-direction:column;align-items:center;width:52px;flex:none}
-#waveCv{flex:1;min-width:0;height:auto;align-self:stretch;border-radius:9px;
-  background:rgba(2,12,26,.6);border:1px solid var(--border);display:block}
+/* The canvas is taken right out of the layout, inside a wrapper it fills
+   absolutely. It used to be a flex item with height:auto, which means its used
+   height came from its own height ATTRIBUTE — the backing store. fitWave() sets
+   that attribute from the measured height, so wherever the container's height
+   was content-derived (the narrow single-column layout) each pass multiplied it
+   by the device pixel ratio and ran away: the rig measured 33 million pixels
+   wide and every panel below the tank was drawn on top of the one above it.
+   Absolutely positioned, the canvas cannot feed its own size back into
+   anything. #mapCv and #diverCv were always done this way. */
+#waveWrap{flex:1;min-width:0;align-self:stretch;position:relative;overflow:hidden;
+  border-radius:9px;background:rgba(2,12,26,.6);border:1px solid var(--border)}
+#waveCv{position:absolute;inset:0;width:100%;height:100%;display:block}
 #perRow{display:flex;justify-content:space-between;align-items:baseline;margin-top:1px}
 
 /* range inputs */
@@ -299,7 +309,7 @@ input[type=range].kn-on::-moz-range-thumb{
           <input type="range" class="v-range swellTrk" id="hgt" min="0.2" max="6" step="0.1" value="1.6">
           <div class="pod-read" style="font-size:20px;margin-top:2px" id="hgtV">1.6<i>m</i></div>
         </div>
-        <canvas id="waveCv"></canvas>
+        <div id="waveWrap"><canvas id="waveCv"></canvas></div>
       </div>
       <input type="range" class="h-range swellTrk" id="per" min="4" max="20" step="0.5" value="10">
       <div id="perRow">
@@ -345,8 +355,8 @@ input[type=range].kn-on::-moz-range-thumb{
   <!-- ══════════ DIVER SURGE ══════════ -->
   <aside id="diver">
     <div class="ttl">Surge at depth</div>
-    <div class="sub">Drag the diver down the water column &mdash; watch the orbits shrink under him.</div>
-    <label id="botToggle"><input type="checkbox" id="onBottom"><span>Keep the diver on the bottom</span></label>
+    <div class="sub">Drag the depth slider &mdash; see how hard this swell still works a diver down there.</div>
+    <label id="botToggle"><input type="checkbox" id="onBottom" checked><span>Keep the diver on the bottom</span></label>
     <div id="diverBody">
       <div id="depthWrap">
         <div class="pod-lab">Depth</div>
@@ -1545,7 +1555,11 @@ function bearing16(d){
 function scoreColor(pct){ return pct>=67?'#2ecc71':pct>=33?'#f5c842':'#e83d3d'; }
 
 /* ── model inputs ────────────────────────────────────────────────────────── */
-var ST = { dir:135, per:10, hgt:1.6, wdir:45, wspd:18, tide:1, depth:8, onBottom:false };
+/* onBottom defaults ON so the surge figures describe the actual dive sites on
+   the map — a diver on the bottom of a site that deep. Turning it off swaps to
+   a fixed 50 m wall with the diver moving down it, which is where the orbits
+   visibly decay; see siteDepth(). */
+var ST = { dir:135, per:10, hgt:1.6, wdir:45, wspd:18, tide:1, depth:8, onBottom:true };
 
 /* The same hour object the workbench feeds calcScore, with the same derived
    wind wave (height from wind speed, direction from the wind, period falling
