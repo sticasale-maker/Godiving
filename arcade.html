@@ -4795,6 +4795,13 @@ var NU={
      that keeps rock on screen is
         0.5 - (ROAM1+ROAM2) - OPEN/2*(1+PINCH/2) > 0                */
   ROAM1:0.060, L1:600, ROAM2:0.020, L2:280,
+  /* ROAM is a fraction of canvas height, but the diver's vertical speed is
+     fixed in px/s — so on a 1440p screen the centreline got steeper while the
+     diver did not get faster, and reach quietly tightened towards 1. The
+     amplitudes stop growing past the reference height, which is the same 330
+     the diver's own scale factor is anchored to: past that the cave gets
+     taller without getting steeper. */
+  ROAM_H:330,
   /* Tightened after the diver was made to scale with the canvas:
      with a correctly-sized diver these openings left far too much
      room. The reach budget still passes comfortably at all three. */
@@ -4824,7 +4831,8 @@ function initNeutral(){
        r with k holds r/half constant on every device. 330 is the
        reference canvas height, clamped so it never gets silly. */
     k:Math.max(0.85,Math.min(1.7,cv.height/330)),
-    a1:cv.height*NU.ROAM1, a2:cv.height*NU.ROAM2,
+    a1:Math.min(cv.height,NU.ROAM_H)*NU.ROAM1,
+    a2:Math.min(cv.height,NU.ROAM_H)*NU.ROAM2,
     hits:0, pts:0, t:0, sinceTick:0, cool:0,
     breathing:false, done:false
   };
