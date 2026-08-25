@@ -1225,7 +1225,7 @@
     <div class="panel" id="p-log">
       <div class="game-header">
         <span class="game-label">Spot the species</span>
-        <span class="score"><b id="logn">0</b> / 3 found</span>
+        <span class="score"><b id="logn">0</b> / <b id="logtotal">3</b> found</span>
       </div>
       <div class="bar"><i id="logbar"></i></div>
       <div id="logscene"></div>
@@ -3120,12 +3120,15 @@ function quizRound(){
 $('qnext').onclick=quizRound;
 
 /* ════════ SPOTTER LOG ════════ */
-var LOG_PRESENT=['Port Jackson shark','Eastern blue groper','Weedy seadragon'];
-var LOG_DECOYS=['Giant cuttlefish','Eastern blue devil','Maori octopus','Bluespotted ray','Sea urchin','Moray eel','Striped catfish','Thornback cowfish','Old wife','Maori wrasse'];
+/* Seven species are genuinely in images/scenes/spotter2.jpg. Keep the decoys
+   free of anything visible in the shot — a correct sighting must never be
+   scored wrong. */
+var LOG_PRESENT=['Weedy seadragon','Eastern blue groper','Port Jackson shark','Giant cuttlefish','Old wife','Sea urchin','Tubular sponge'];
+var LOG_DECOYS=['Eastern blue devil','Maori octopus','Bluespotted ray','Moray eel','Wobbegong'];
 var logFound={},logDone=false;
 function initLog(){
-  logFound={};logDone=false;$('logn').textContent=0;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
-  $('logscene').innerHTML='<img src="images/scenes/spotter1.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy" onerror="this.outerHTML=siteSVG(\'Spotter scene\',\'#1d7d72\',\'#0c4a44\',\'kelp\')">';
+  logFound={};logDone=false;$('logn').textContent=0;$('logtotal').textContent=LOG_PRESENT.length;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
+  $('logscene').innerHTML='<img src="images/scenes/spotter2.jpg" alt="Underwater scene" class="logsceneimg" loading="lazy" onerror="this.outerHTML=siteSVG(\'Spotter scene\',\'#1d7d72\',\'#0c4a44\',\'kelp\')">';
   var opts=shuffle(LOG_PRESENT.concat(LOG_DECOYS));
   $('logchips').innerHTML=opts.map(function(sp){return '<button class="chip" data-sp="'+sp+'">'+sp+'</button>';}).join('');
   $('logchips').querySelectorAll('.chip').forEach(function(b){b.onclick=function(){
@@ -3137,8 +3140,9 @@ function initLog(){
   startTimer();
 }
 function renderLog(){
-  var n=Object.keys(logFound).length;$('logn').textContent=n;$('logbar').style.width=(n/3*100)+'%';
-  if(n===3){logDone=true;$('logmsg').textContent='Nice eye — you spotted all three! 🏆';$('lognotice').textContent='Pick another game when you are ready →';setTimeout(advanceGame,2200);}
+  var n=Object.keys(logFound).length,total=LOG_PRESENT.length;
+  $('logn').textContent=n;$('logbar').style.width=(n/total*100)+'%';
+  if(n===total){logDone=true;$('logmsg').textContent='Nice eye — you spotted all '+total+'! 🏆';$('lognotice').textContent='Pick another game when you are ready →';setTimeout(advanceGame,2200);}
 }
 
 /* ════════ GUESS ════════ */
