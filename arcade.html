@@ -4253,7 +4253,11 @@ function wireWreckFind(){
 function cssEsc(s){return String(s).replace(/["\\]/g,'\\$&');}
 
 /* ════════ SHARK ID (drag each name onto its matching photo) ════════ */
-var SHARK_ID_KEYS=['white','bull','bronzewhaler','greynurse','crestedhorn','pjshark','duskywhaler'];
+/* The spotted wobbegong is the shark a Sydney diver actually meets — resident
+   on the rocky reefs at Shelly Beach, Bare Island and Kurnell — and its flat
+   carpet outline is the one shape here that is not another grey torpedo.
+   The tasselled and northern wobbegongs are tropical, so they stay out. */
+var SHARK_ID_KEYS=['white','bull','bronzewhaler','greynurse','crestedhorn','pjshark','duskywhaler','wobbegong_spotted'];
 var sharkidState=null;
 function initSharkId(){
   var keys=shuffle(SHARK_ID_KEYS.slice());
