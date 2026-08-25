@@ -1435,7 +1435,7 @@
       </div>
       <div id="seasonArt" style="margin-bottom:8px"></div>
       <p class="tt" id="seasonName" style="text-align:center;margin:2px 0 8px"></p>
-      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Pick the time of year you're most likely to see it:</p>
+      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Pick the months you're most likely to see it:</p>
       <div class="opts-grid" id="seasonOpts"></div>
       <p class="qfact" id="seasonFact" style="margin-top:10px"></p>
       <div style="text-align:center"><button class="btn ghost" id="seasonNext" style="display:none">Next →</button></div>
@@ -2930,7 +2930,7 @@ var GAME_META={
   trumps:{icon:'🃏',name:'Stat Battle',desc:'Top-trumps with sea life'},
   oddone:{icon:'🔍',name:'Odd One Out',desc:'Find the one that doesn\'t fit'},
   speed:{icon:'⏱️',name:'Speed Round',desc:'60-second quick-fire'},
-  season:{icon:'📅',name:'When Will I See It?',desc:'Match species to season'},
+  season:{icon:'📅',name:'When Will I See It?',desc:'Match species to the months'},
   wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
   wave:{icon:'🌊',name:'Wave Lab',desc:'Predict the visibility'},
   wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'},
@@ -3822,14 +3822,27 @@ function endSpeed(){
 /* ════════════════════════════════════════════════════════
    13. WHEN WILL I SEE IT? — SEASON MATCH
    ════════════════════════════════════════════════════════ */
-var SEASON_OPTS=['Summer (Dec–Feb)','Autumn (Mar–May)','Winter (Jun–Aug)','Spring (Sep–Nov)'];
+/* Calendar seasons were too coarse to be true: a Port Jackson aggregation
+   running July to October is half winter and half spring, and forcing it into
+   one of four season buttons taught the wrong answer. Rounds now name the
+   actual months, and each carries its own distractors so no wrong option
+   overlaps the real window. */
 var SEASON_ROUNDS=[
-  {key:'pjshark',ans:'Winter (Jun–Aug)',f:'Port Jackson sharks aggregate in Sydney\'s shallows to breed from July to October, then vanish south for the rest of the year.'},
-  {key:'duskywhaler',ans:'Summer (Dec–Feb)',f:'Dusky whalers visit Cabbage Tree Bay every summer, when the water climbs above 22°C.'},
-  {key:'cuttle',ans:'Autumn (Mar–May)',f:'Giant cuttlefish leave deep water at the end of autumn to breed on the coastal reefs — then they die after laying.'},
-  {key:'angler',ans:'Spring (Sep–Nov)',f:'Anglerfish gather in the shallows by the Chowder Bay jetty to mate in spring — up to 5–6 on a single dive.'},
-  {key:'greynurse',ans:'Winter (Jun–Aug)',f:'Grey nurse sharks have shown more residency at Cabbage Tree Bay in the cooler months.'},
-  {key:'pjshark',ans:'Spring (Sep–Nov)',f:'Females linger into spring to lay their eggs after the males have already left — a clever way to reduce egg predation.'}
+  {key:'pjshark',ans:'July – October',
+   wrong:['December – February','February – April','All year round'],
+   f:'Port Jackson sharks aggregate in the Sydney shallows to breed from July to October. The females linger longest, laying their spiral egg cases before heading south.'},
+  {key:'cuttle',ans:'May – August',
+   wrong:['December – February','September – November','February – April'],
+   f:'Giant cuttlefish move onto the coastal reefs to breed from May through August — then they die after laying.'},
+  {key:'angler',ans:'January – March',
+   wrong:['June – August','September – November','April – July'],
+   f:'Anglerfish gather in the shallows by the Chowder Bay jetty from January to March — up to 5–6 on a single dive.'},
+  {key:'duskywhaler',ans:'December – February',
+   wrong:['May – August','July – October','September – November'],
+   f:'Dusky whalers visit Cabbage Tree Bay every summer, when the water climbs above 22°C.'},
+  {key:'greynurse',ans:'All year round',
+   wrong:['January – March','April – June','October – December'],
+   f:'Grey nurse sharks are at Magic Point all year — but the numbers build through the cooler months.'}
 ];
 var seasonQueue=[],seasonScore=0,seasonTotal=0,seasonAnswered=false,seasonCur=null;
 function initSeason(){
@@ -3843,7 +3856,8 @@ function seasonRound(){
     Math.round(artHeight(180)*(window.innerWidth>=1000?0.92:0.7)));
   $('seasonName').textContent=CR[seasonCur.key].n;
   $('seasonFact').textContent='';$('seasonNext').style.display='none';
-  $('seasonOpts').innerHTML=SEASON_OPTS.map(function(o){return '<button class="opt" data-o="'+o+'">'+o+'</button>';}).join('');
+  $('seasonOpts').innerHTML=shuffle([seasonCur.ans].concat(seasonCur.wrong))
+    .map(function(o){return '<button class="opt" data-o="'+o+'">'+o+'</button>';}).join('');
   $('seasonOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(seasonAnswered)return;seasonAnswered=true;seasonTotal++;
     $('seasonOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.o===seasonCur.ans)x.classList.add('right');});
@@ -5080,7 +5094,7 @@ function navStep(now){
   } else if(nav.phase==='swim'){
     nav.elapsed+=dt;
     if(err<=nav.tier.gate)nav.onCourse+=dt;
-    if(nav.elapsed>=nav.tier.secs)return navFinishLeg();
+    if(nav.elapsed>=nav.tier.secs){navRAF=null;return navFinishLeg();}
   }
   navDraw();
   navRAF=requestAnimationFrame(navStep);
@@ -5213,7 +5227,9 @@ function navFinishLeg(){
     (acc>0.85?'That is a bearing you could actually dive.'
      :acc>0.6?'The current was winning some of the time — slip in more kicks on the fin that fights it.'
      :'Small kicks, kept alternating. Chase it and you swing straight past.');
-  nav.phase='wait';nav.rate=0;
+  /* the frame loop stops here, so drop the handle — navNextLeg only restarts
+     it when navRAF is null, and a stale id left the next leg frozen */
+  nav.phase='wait';nav.rate=0;navRAF=null;
   $('navGo').textContent=nav.leg>=nav.legs?'FINISH':'NEXT LEG';
   $('navGo').disabled=false;
   $('navTask').innerHTML='Leg complete.';
