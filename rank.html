@@ -106,12 +106,19 @@
 var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 
-var PODIUM = 3;        /* top three in each age group collect a compass */
+var PODIUM = 3;        /* top three in each age group win a prize */
+/* The prize is deliberately never named. What is actually handed over depends
+   on what is left in the box by that hour, and a screen that promises a
+   specific thing to someone who ends up with something else is worse than one
+   that promised nothing. */
 var STAND  = '440';
 
 var q       = new URLSearchParams(location.search);
+/* start and end both come from the app, because the first session of each day
+   runs 09:30–11:00 rather than a clean hour. Falling back to +1h only matters
+   for a hand-typed URL. */
 var START   = Number(q.get('s')) || sessionStart(Date.now());
-var END     = START + 3600000;
+var END     = Number(q.get('e')) || (START + 3600000);
 var GROUP   = q.get('g') || '';
 var MYCODE  = q.get('me') || '';
 
@@ -219,7 +226,7 @@ function renderPrize(meIdx){
       card.style.display='block';
       document.getElementById('prizeTitle').textContent='You are '+rank+(['st','nd','rd'][rank-1])+' — hold on to it';
       document.getElementById('prizeBody').innerHTML=
-        'The top <b>'+PODIUM+'</b> in '+esc(GROUP)+' collect a compass when this session freezes at <b>'+
+        'The top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize when this session freezes at <b>'+
         hhmm(END)+'</b>. Keep this page open and refresh it then.';
     } else {
       card.style.display='none';
@@ -228,14 +235,14 @@ function renderPrize(meIdx){
   }
   card.style.display='block';
   if(rank<=PODIUM){
-    document.getElementById('prizeTitle').textContent='🧭 '+rank+(['st','nd','rd'][rank-1])+' place — you have won a compass';
+    document.getElementById('prizeTitle').textContent='🏆 '+rank+(['st','nd','rd'][rank-1])+' place — you have won a prize';
     document.getElementById('prizeBody').innerHTML=
       'You finished <b>'+rank+'</b> of '+rows.length+' in '+esc(GROUP)+' for the '+
       hhmm(START)+'–'+hhmm(END)+' session. Come back to the VIZ stand to collect it.';
   } else {
     document.getElementById('prizeTitle').textContent='Finished '+rank+' of '+rows.length;
     document.getElementById('prizeBody').innerHTML=
-      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' collect a compass this hour. '+
+      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize this hour. '+
       'Come and play again in the next session — the board resets every hour.';
     card.className='card';
     document.querySelector('#prizeCard .stand').style.display='none';

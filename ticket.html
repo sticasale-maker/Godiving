@@ -249,7 +249,7 @@ function render() {
       card('', head) +
       card('', '<div class="eyebrow">After the last draw</div>' +
         '<p class="muted">You played after the final draw of the day, so this score is not in ' +
-        'an hourly prize round. Come to <b>stand 440</b> anyway — we keep compasses aside and ' +
+        'an hourly prize round. Come to <b>stand 440</b> anyway — we keep prizes aside and ' +
         'we would love to talk to you about diving Sydney.</p>');
     return;
   }
@@ -285,7 +285,7 @@ function render() {
         '<div class="countlabel">Your draw is at <b>' + esc(draw.label) + '</b></div>' +
         '<div class="countdown" id="cd">' + fmtClock(remaining) + '</div>' +
         '<div class="countlabel">Top ' + cfg.winnersPerGroup + ' in ' + esc(entry.group) +
-          ' win a compass</div>') +
+          ' win a prize</div>') +
       card('',
         '<div class="rankbig">' + pv.rank +
           '<small>of ' + pv.fieldSize + ' in this round</small></div>' +
@@ -314,7 +314,7 @@ function render() {
     content.innerHTML =
       card('won',
         '<div class="compass">🧭</div>' +
-        '<div class="big">YOU WON<br>A COMPASS</div>' +
+        '<div class="big">YOU WON<br>A PRIZE</div>' +
         '<div class="muted" style="color:#cdf3df">' + esc(entry.name) + ' · ' +
           esc(entry.group) + ' · ' + entry.score + ' pts · ' +
           (res.rank === 1 ? '🥇 1st' : res.rank === 2 ? '🥈 2nd' : res.rank + 'th') +
@@ -344,7 +344,7 @@ function renderLost(res, head, draw, next) {
       '<div class="big">Not this time</div>' +
       '<div class="muted">You finished <b>' + ord(res.rank) + ' of ' + res.fieldSize +
         '</b> in the ' + esc(draw.label) + ' draw' +
-        (res.cutoff != null ? ', where <b>' + res.cutoff + '</b> took the last compass' : '') +
+        (res.cutoff != null ? ', where <b>' + res.cutoff + '</b> took the last prize' : '') +
         '.</div>' +
       (next
         ? '<div class="muted" style="margin-top:12px">Next draw is at <b>' + esc(next.label) +

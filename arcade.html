@@ -1694,7 +1694,7 @@
         <div class="ticket-sub" id="hofRankSub"></div>
       </div>
       <div class="ticket-box" id="hofTicket" style="display:none">
-        <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a compass</div>
+        <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a prize</div>
         <div class="ticket-qr" id="hofQR"></div>
         <div class="ticket-code" id="hofCode">—</div>
         <div class="ticket-sub" id="hofDrawInfo"></div>
@@ -1965,8 +1965,37 @@ var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette 
    timestamp. A snapshot with no snapshot, and two devices reading the
    same rows can never disagree about a past hour — the same reason
    the prize draw computes winners rather than storing them. */
-function sessionStart(ts){var d=new Date(ts||Date.now());d.setMinutes(0,0,0);return d.getTime();}
-function sessionEnd(ts){return sessionStart(ts)+3600000;}
+/* The real timetable, not a naive clock hour. Doors open at 09:30 and the
+   first session runs long, to 11:00; after that it is hourly to close.
+   Saturday closes at 17:00, Sunday at 16:00.
+
+   Any other date — a rehearsal on a Tuesday night — falls back to plain clock
+   hours so the whole thing is still testable out of show week. */
+var SESSION_DAYS={
+  '2026-09-05':['09:30','11:00','12:00','13:00','14:00','15:00','16:00','17:00'],
+  '2026-09-06':['09:30','11:00','12:00','13:00','14:00','15:00','16:00']
+};
+function atLocal(dayk,hm){
+  var d=dayk.split('-'),t=hm.split(':');
+  return new Date(+d[0],+d[1]-1,+d[2],+t[0],+t[1],0,0).getTime();
+}
+function sessionBounds(ts){
+  var t=ts||Date.now(), marks=SESSION_DAYS[dayKey(t)];
+  if(marks){
+    var k=dayKey(t),i,a,b;
+    for(i=0;i<marks.length-1;i++){
+      a=atLocal(k,marks[i]);b=atLocal(k,marks[i+1]);
+      if(t>=a&&t<b)return {start:a,end:b};
+    }
+    /* early birds join the first session; anyone after close stays in the last */
+    if(t<atLocal(k,marks[0]))return {start:atLocal(k,marks[0]),end:atLocal(k,marks[1])};
+    return {start:atLocal(k,marks[marks.length-2]),end:atLocal(k,marks[marks.length-1])};
+  }
+  var h=new Date(t);h.setMinutes(0,0,0);
+  return {start:h.getTime(),end:h.getTime()+3600000};
+}
+function sessionStart(ts){return sessionBounds(ts).start;}
+function sessionEnd(ts){return sessionBounds(ts).end;}
 function hhmm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 function sessionLabel(ts){return hhmm(sessionStart(ts))+'–'+hhmm(sessionEnd(ts));}
 function sameSession(a,b){return sessionStart(a)===sessionStart(b);}
@@ -2326,7 +2355,7 @@ function renderSessionBrowser(){
   var live=sessionStart(Date.now())===ADM_SESSION;
   h+='<span class="badge">'+(live?'● LIVE — still open':'○ Frozen')+'</span></div>';
   h+='<p class="muted" style="margin:0 0 10px">The player shows you the identifier on their screen. '+
-     'It must match the code in this table before you hand over a compass.</p>';
+     'It must match the code in this table before you hand a prize over.</p>';
   AGE_GROUPS.forEach(function(grp){
     var list=buckets[ADM_SESSION].filter(function(e){return e.group===grp;})
       .sort(function(a,b){return b.score-a.score||a.ts-b.ts;});
@@ -2343,7 +2372,7 @@ function renderSessionBrowser(){
         '<td>'+(!podium?'<span class="muted">—</span>'
           :(e.claimed_at
             ? '<span class="on-dot">✓ awarded</span> <button onclick="admClaim(\''+e.id+'\',false)">undo</button>'
-            : '<button class="acc" onclick="admClaim(\''+e.id+'\',true)">Award compass</button>'))+
+            : '<button class="acc" onclick="admClaim(\''+e.id+'\',true)">Award prize</button>'))+
         '</td></tr>';
     });
     h+='</table>';
@@ -2383,7 +2412,7 @@ function renderPrizeConsole(){
 
   h+='<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
      '<span style="font-size:26px;font-weight:800;color:'+(remaining<10?'var(--bad)':'var(--gold)')+'">'+remaining+'</span>'+
-     '<span class="muted">compasses left of '+cfg.stock+'</span>'+
+     '<span class="muted">prizes left of '+cfg.stock+'</span>'+
      '<span class="badge">'+issued+' won on draws</span>'+
      '<span class="badge">'+goldenIssued+' golden</span>'+
      '<span class="badge">'+claimed+' collected</span>'+
@@ -2488,7 +2517,7 @@ function admLookup(){
     ADM.claimMsg='<div style="background:var(--goodd);border:1px solid var(--good);border-radius:8px;padding:10px">'+
       '🧭 <b>'+esc(e.name)+'</b> WON — '+esc(e.group)+' · '+e.score+' pts · '+esc(r.draw.label)+' draw'+
       (e.claimed_at?' <span class="on-dot">· already collected</span>'
-        :' <button class="acc" onclick="admClaim(\''+e.id+'\',true)">Hand over a compass</button>')+'</div>';
+        :' <button class="acc" onclick="admClaim(\''+e.id+'\',true)">Hand over a prize</button>')+'</div>';
   }
   out.innerHTML=ADM.claimMsg;
 }
@@ -6137,7 +6166,8 @@ function renderRankQR(){
 }
 function rankURL(){
   var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
-  return base+'rank.html?s='+sessionStart(Date.now())+
+  var b=sessionBounds(FINISH_TS||Date.now());
+  return base+'rank.html?s='+b.start+'&e='+b.end+
          '&g='+encodeURIComponent(USER.group)+
          (USER.code?'&me='+encodeURIComponent(USER.code):'');
 }
@@ -6183,7 +6213,10 @@ function renderHof(board){
 /* ── the session clock in the app ──────────────────────────────────
    Same rules as rank.html: count down while the hour runs, and the
    moment it turns, say plainly whether the player is collecting a
-   compass or coming back for the next hour. */
+   prize or coming back for the next hour. The prize itself is never named:
+   what is on the table depends on what is left by then, and a screen that
+   promises a compass to someone who ends up with something else is worse
+   than one that promised nothing. */
 var PODIUM=3;
 var hofBoard=[],hofTimer=null;
 function startHofClock(){
@@ -6209,7 +6242,7 @@ function hofTick(){
       verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
       if(rank&&rank<=PODIUM)verdict.innerHTML='You are <b>'+rank+ordinal(rank)+
         '</b> right now. The top '+PODIUM+' in '+esc(USER.group)+
-        ' collect a compass when the hour turns — stay on this page.';
+        ' win a prize when the hour turns — stay on this page.';
     }
     return;
   }
@@ -6223,7 +6256,7 @@ function hofTick(){
   if(verdict){
     verdict.style.display='block';
     verdict.innerHTML=(rank&&rank<=PODIUM)
-      ? '🧭 <b>'+rank+ordinal(rank)+' place — you have won a compass.</b><br>'+
+      ? '🏆 <b>'+rank+ordinal(rank)+' place — you have won a prize.</b><br>'+
         'Come to the VIZ stand, <b>stand '+PRIZE_STAND+'</b>, and show this screen to staff.'
       : 'This hour is done. The board resets on the hour — come back and play the next session.';
   }
@@ -6255,7 +6288,7 @@ function renderTicket(code){
   var draw=PRIZE.drawFor(Date.now());
   var when=draw
     ? 'Your draw is at <b style="color:var(--gold)">'+esc(draw.label)+'</b> — top '+
-      PRIZE.DEFAULTS.winnersPerGroup+' in '+esc(USER.group)+' win a compass.'
+      PRIZE.DEFAULTS.winnersPerGroup+' in '+esc(USER.group)+' win a prize.'
     : 'The last draw has passed — come to <b style="color:var(--gold)">stand 440</b> anyway.';
 
   $('hofTicketLead').textContent=booth
