@@ -274,8 +274,14 @@
     color:rgba(255,255,255,.78);background:rgba(0,0,0,.45);
     padding:2px 6px;border-radius:5px;pointer-events:none}
   @media(min-width:1000px){.photocredit{font-size:11px;padding:3px 8px}}
-  .hof-clock{text-align:center;font-size:15px;color:var(--muted);margin:0 0 10px}
+  .hof-clock{text-align:center;font-size:15px;line-height:1.6;color:var(--muted);margin:0 0 10px}
   .hof-clock b{font-family:'Press Start 2P',monospace;font-size:18px;color:var(--gold);letter-spacing:1px}
+  .hof-clock .hof-rule{display:inline-block;margin-top:4px;font-size:13.5px}
+  .hof-clock .hof-rule b{font-family:inherit;font-size:inherit;color:var(--accent)}
+  @media(min-width:1000px){
+    .hof-clock{font-size:18px}
+    .hof-clock .hof-rule{font-size:16px}
+  }
   .hof-verdict{border:2px solid var(--gold);background:rgba(243,198,79,.12);border-radius:12px;
     padding:12px 14px;margin:0 0 12px;font-size:15px;line-height:1.55;text-align:center}
   .hof-verdict b{color:var(--gold)}
@@ -6310,7 +6316,9 @@ function hofTick(){
   var rank=hofMyRank(), verdict=$('hofVerdict');
   if(left>0){
     var m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
-    el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes';
+    el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes '+
+      'and you can check if you have won a prize.<br>'+
+      '<span class="hof-rule">Only the first <b>'+PODIUM+'</b> of each age group qualify for a prize.</span>';
     if(verdict){
       verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
       if(rank&&rank<=PODIUM)verdict.innerHTML='You are <b>'+rank+ordinal(rank)+
