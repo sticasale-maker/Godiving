@@ -246,13 +246,17 @@
   .trumps-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2px;flex-shrink:0}
   svg{display:block}
   .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
-  /* Shared "Next challenge" button — parked under whichever end-of-game
-     notice just fired, so finishing a game always has one obvious exit. */
-  .next-challenge{display:block;width:100%;max-width:420px;margin:10px auto 4px;
-    background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;border:0;
-    border-radius:12px;padding:16px 20px;font-size:19px;font-weight:800;
-    letter-spacing:.3px;cursor:pointer;box-shadow:0 6px 18px rgba(18,144,124,.35)}
-  .next-challenge:active{transform:translateY(1px)}
+  /* Shared "Next challenge" button. Pinned to the right edge rather than left
+     in the page flow: the end-of-game notice can sit below the fold, and the
+     player should never have to scroll to find the way out. */
+  .next-challenge{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:60;
+    width:150px;background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;border:0;
+    border-radius:14px;padding:18px 14px;font-size:18px;font-weight:800;line-height:1.25;
+    letter-spacing:.3px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.45)}
+  .next-challenge:active{transform:translateY(-50%) translateY(1px)}
+  @media(max-width:520px){
+    .next-challenge{width:112px;right:8px;padding:14px 10px;font-size:15px}
+  }
 
   /* ── HOF: no header clutter ── */
   .hof-header{
@@ -555,22 +559,7 @@
   .hb-sub{font-size:10px;opacity:.65}
   .hold-btn.on{transform:translateY(2px);filter:brightness(1.45)}
   .hold-btn:disabled{opacity:.45}
-  .ledge-btn{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
-  .ledge-btn.grip{background:#3a3010;color:var(--gold);border-color:var(--gold)}
   .macro-btn{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
-
-  /* ── LEDGE ── */
-  .ledge-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
-    border:1px solid var(--line);background:#052232}
-  .ledge-stage canvas{display:block;width:100%;height:100%}
-  .ledge-call{position:absolute;left:4%;right:4%;top:50%;transform:translateY(-50%);
-    text-align:center;font-size:clamp(16px,4.4vw,24px);font-weight:800;line-height:1.3;
-    color:#eaf6fb;text-shadow:0 2px 8px rgba(0,0,0,.9);background:rgba(4,20,30,.62);
-    border-radius:14px;padding:11px 10px;pointer-events:none;opacity:0;transition:opacity .18s}
-  .ledge-call.show{opacity:1}
-  .ledge-call.good{color:#9ff0c4}
-  .ledge-call.bad{color:#ffb3b3}
-  .ledge-call.wait{color:var(--gold)}
 
   /* ── BETWEEN THE SURGES ── */
   .macro-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
@@ -1180,7 +1169,6 @@
       <div class="gstep" id="gs-nav"><div class="icon">🧭</div><div class="label">Nav trainer</div></div>
       <div class="gstep" id="gs-neutral"><div class="icon">🫁</div><div class="label">Neutral</div></div>
       <div class="gstep" id="gs-migrate"><div class="icon">🐋</div><div class="label">Migration</div></div>
-      <div class="gstep" id="gs-ledge"><div class="icon">🌊</div><div class="label">Rock entry</div></div>
       <div class="gstep" id="gs-macro"><div class="icon">📷</div><div class="label">Macro shot</div></div>
       <div class="gstep" id="gs-lineup"><div class="icon">📏</div><div class="label">Line-up</div></div>
       <div class="gstep" id="gs-memory"><div class="icon">🧠</div><div class="label">Memory</div></div>
@@ -1481,20 +1469,6 @@
     </div>
 
     <!-- HALL OF FAME -->
-    <!-- LEDGE — rock entry timing -->
-    <div class="panel" id="p-ledge">
-      <div class="game-header">
-        <span class="game-label" id="ledgeLabel">Rock entry</span>
-        <span class="score">Phase <b id="ledgePhase">1</b>/3 · <b id="ledgeLeft">0</b>s</span>
-      </div>
-      <div class="ledge-stage" id="ledgeStage">
-        <canvas id="ledgeCanvas"></canvas>
-        <div class="ledge-call" id="ledgeCall"></div>
-      </div>
-      <button class="hold-btn ledge-btn" id="ledgeBtn"><span class="hb-main" id="ledgeBtnMain">GO</span><span class="hb-sub" id="ledgeBtnSub">tap when it drops</span></button>
-      <p class="auto-notice" id="ledgeNotice"></p>
-    </div>
-
     <!-- BETWEEN THE SURGES — the macro shot -->
     <div class="panel" id="p-macro">
       <div class="game-header">
@@ -1916,7 +1890,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',ledge:'Rock Entry',macro:'Between the Surges',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',macro:'Between the Surges',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -2517,7 +2491,6 @@ var GAME_EXP_DEFAULTS={
   ascent:   ['scuba'],                        /* return-to-surface: scuba only */
   nav:      ['scuba','freedive'],
   neutral:  ['snorkel','scuba','freedive'],
-  ledge:    ['snorkel','scuba','freedive'],
   macro:    ['snorkel','scuba','freedive']
 };
 var GAME_EXP={};
@@ -2796,7 +2769,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ledge','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate','macro'];
+var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate','macro'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2833,20 +2806,16 @@ function advanceGame(){
 }
 /* One shared button, moved under whichever auto-notice is currently showing. */
 var nextChallengeBtn=null;
-function showNextChallenge(notice){
-  if(!notice){
-    var panel=$('p-'+activeGame);
-    if(!panel)return;
-    notice=panel.querySelector('.auto-notice');
-  }
-  if(!notice)return;
+function showNextChallenge(){
   if(!nextChallengeBtn){
     nextChallengeBtn=document.createElement('button');
     nextChallengeBtn.className='next-challenge';
     nextChallengeBtn.textContent='Next challenge →';
     nextChallengeBtn.onclick=function(){hideNextChallenge();showMenu();};
+    /* Lives on <body>: panels carry a slide-in transform, which would make
+       them the containing block and break position:fixed. */
+    document.body.appendChild(nextChallengeBtn);
   }
-  if(notice.nextSibling!==nextChallengeBtn)notice.parentNode.insertBefore(nextChallengeBtn,notice.nextSibling);
   nextChallengeBtn.style.display='block';
 }
 function hideNextChallenge(){
@@ -2862,7 +2831,7 @@ function hideNextChallenge(){
       var el=muts[i].target;
       while(el&&el.nodeType!==1)el=el.parentNode;
       if(!el||!el.classList||!el.classList.contains('auto-notice'))continue;
-      if(el.textContent.trim()&&$('p-'+activeGame)&&$('p-'+activeGame).contains(el))showNextChallenge(el);
+      if(el.textContent.trim()&&$('p-'+activeGame)&&$('p-'+activeGame).contains(el))showNextChallenge();
     }
   });
   document.querySelectorAll('.auto-notice').forEach(function(n){
@@ -2905,7 +2874,6 @@ function startGame(name){
   else if(name==='memory')initMemory();
   else if(name==='ascent')initAscent();
   else if(name==='migrate')initMigrate();
-  else if(name==='ledge')initLedge();
   else if(name==='macro')initMacro();
   else if(name==='neutral')initNeutral();
   else if(name==='nav')initNav();
@@ -2935,7 +2903,6 @@ var GAME_META={
   memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'},
   ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'},
   migrate:{icon:'🐋',name:'Migration Highway',desc:'Which way is it heading?'},
-  ledge:{icon:'🌊',name:'Rock Entry',desc:'Time the surge, get in and out'},
   macro:{icon:'📷',name:'Between the Surges',desc:'Shoot it in the pause'},
   neutral:{icon:'🫁',name:'Neutral',desc:'Hover through the gully on your lungs'},
   nav:{icon:'🧭',name:'Nav Trainer',desc:'Set the bezel and hold the bearing'}
@@ -4370,290 +4337,6 @@ function holdButton(el,onChange,keys){
     });
   }
 }
-
-/* ════════════════════════════════════════════════════════════════
-   LEDGE — timing a rock-platform entry.
-
-   The one skill in the arcade that is pure TEMPORAL ANTICIPATION.
-   Safe Ascent, Neutral and Nav Trainer are all closed-loop: steer a
-   position against a force and correct continuously. Here you commit
-   to a discrete action ahead of your own reaction time, against a
-   signal that is periodic but not simple.
-
-   The water is a deterministic sum of sines with a set envelope, NOT
-   random. That matters: if the surface reads as random the game is
-   unfair and players can feel it. A watchful player can genuinely
-   learn the rhythm off the trace strip, which is the whole point.
-
-   Three phases, and the third one INVERTS the rule: you exit on the
-   TOP of a surge, not the bottom. That is the real Sydney lesson —
-   trying to climb out in the trough is how people get hurt — so the
-   first phase-3 failure is explicitly forgiven and explained rather
-   than punished, or it reads as a gotcha.
-   ════════════════════════════════════════════════════════════════ */
-var LEDGE={
-  TIERS:{
-    'Young Explorer' :{comps:1, env:0.00, lull:0.42, wash:0.30, phase3:false, trace:true,  clear:1.2},
-    'Teen Explorer'  :{comps:2, env:0.35, lull:0.30, wash:0.18, phase3:true,  trace:true,  clear:1.6},
-    'Adult Explorer' :{comps:3, env:0.55, lull:0.22, wash:0.08, phase3:true,  trace:true,  clear:2.0}
-  },
-  T1:9.0, T2:3.4, T3:5.7,      /* wave periods, seconds            */
-  A1:1.00, A2:0.42, A3:0.24,
-  SET:18.0,                    /* a bigger set every ~18 s         */
-  P1:22, P2:38, P3:16,         /* phase budgets, seconds           */
-  CAP:82,                      /* hard round cap, seconds          */
-  CRAWL:0.135,                 /* progress per second when moving  */
-  SHAKE_MAX:7,                 /* px, capped for motion sensitivity*/
-  PATIENCE:2                   /* points per set correctly sat out */
-};
-var lg=null,lgRAF=null;
-
-function lgTier(){return LEDGE.TIERS[USER.group]||LEDGE.TIERS['Teen Explorer'];}
-
-/* Water level at time t, normalised to about -1..+1. Deterministic
-   and periodic on purpose — see the note above. */
-function lgLevel(t){
-  var c=lg.tier,v=LEDGE.A1*Math.sin(6.28318*t/LEDGE.T1);
-  if(c.comps>1)v+=LEDGE.A2*Math.sin(6.28318*t/LEDGE.T2+1.1);
-  if(c.comps>2)v+=LEDGE.A3*Math.sin(6.28318*t/LEDGE.T3+2.3);
-  var norm=LEDGE.A1+(c.comps>1?LEDGE.A2:0)+(c.comps>2?LEDGE.A3:0);
-  var env=1+c.env*Math.sin(6.28318*t/LEDGE.SET);
-  return (v/norm)*env;
-}
-/* is a big set running right now? drives the SET COMING call and the
-   patience credit for correctly refusing to go */
-function lgSetting(t){
-  var c=lg.tier;
-  if(c.env<=0)return false;
-  return Math.sin(6.28318*t/LEDGE.SET)>0.55;
-}
-/* seconds until the level next climbs back above the lull threshold */
-function lgClear(t){
-  for(var k=0.1;k<6;k+=0.1){if(lgLevel(t+k)>lg.tier.lull)return k;}
-  return 6;
-}
-
-function initLedge(){
-  var cv=$('ledgeCanvas'),st=$('ledgeStage');
-  cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
-  lg={
-    w:cv.width,h:cv.height,tier:lgTier(),
-    t:0,phase:1,progress:0,held:false,done:false,
-    shake:0,trace:[],slams:0,washes:0,forgiven:false,
-    setCredited:-1,lastSetCall:-99,pts:0,phaseEnd:LEDGE.P1,msg:'',msgCls:'',msgUntil:0
-  };
-  $('ledgePhase').textContent=1;$('ledgeNotice').textContent='';
-  lgSetBtn('GO','tap when the water drops',false);
-  lgCall('Watch a few waves first','wait',2.6);
-  lg.last=performance.now();
-  lgRAF=requestAnimationFrame(lgStep);
-}
-function lgStop(){if(lgRAF){cancelAnimationFrame(lgRAF);lgRAF=null;}}
-function lgSetBtn(main,sub,grip){
-  $('ledgeBtnMain').textContent=main;$('ledgeBtnSub').textContent=sub;
-  $('ledgeBtn').classList.toggle('grip',!!grip);
-}
-function lgCall(text,cls,secs){
-  lg.msg=text;lg.msgCls=cls||'';lg.msgUntil=lg.t+(secs||1.8);
-  var el=$('ledgeCall');el.textContent=text;
-  el.className='ledge-call show'+(cls?' '+cls:'');
-}
-
-function lgStep(now){
-  if(!lg||lg.done)return;
-  /* the strip lets you jump games mid-round; do not keep simulating
-     a panel nobody is looking at */
-  if(!document.getElementById('p-ledge').classList.contains('show')){lgStop();return;}
-  var dt=Math.min(0.05,(now-lg.last)/1000);lg.last=now;
-  lg.t+=dt;
-  if(lg.shake>0)lg.shake=Math.max(0,lg.shake-dt*22);
-
-  var lvl=lgLevel(lg.t);
-  lg.trace.push({t:lg.t,v:lvl});
-  while(lg.trace.length&&lg.trace[0].t<lg.t-8)lg.trace.shift();
-
-  if(lg.t>lg.msgUntil)$('ledgeCall').className='ledge-call';
-
-  /* patience credit: sitting out a set is a skill, and it must pay,
-     or players learn that hesitating is always punished */
-  if(lg.phase===1&&lgSetting(lg.t)){
-    var setIdx=Math.floor(lg.t/LEDGE.SET);
-    if(lg.setCredited!==setIdx&&lg.t-lg.lastSetCall>2){
-      lg.lastSetCall=lg.t;lgCall('SET COMING — hold off','wait',1.8);
-    }
-    if(lg.setCredited!==setIdx&&!lgSetting(lg.t+0.6)){
-      lg.setCredited=setIdx;award(LEDGE.PATIENCE);
-      lgCall('+'+LEDGE.PATIENCE+' for waiting it out','good',1.6);
-    }
-  }
-
-  /* phase 2 movement */
-  if(lg.phase===2){
-    var washAt=lg.tier.wash+(0.34*lg.progress);   /* windows shrink as you go out */
-    if(!lg.held){
-      lg.progress+=LEDGE.CRAWL*dt;
-      if(lvl>washAt){
-        lg.progress=Math.max(0,lg.progress-0.16);
-        lg.shake=LEDGE.SHAKE_MAX;lg.washes++;penalize();
-        lgCall('Washed back — grip when it surges','bad',1.7);
-      }
-    }
-    if(lg.progress>=1)lgNextPhase();
-  }
-
-  /* time budget */
-  var left=Math.max(0,lg.phaseEnd-lg.t);
-  $('ledgeLeft').textContent=Math.ceil(left);
-  if(left<=0)lgTimeout();
-  if(lg.t>=LEDGE.CAP)return lgEnd();
-
-  lgDraw(lvl);
-  lgRAF=requestAnimationFrame(lgStep);
-}
-
-function lgDraw(lvl){
-  var c=$('ledgeCanvas').getContext('2d'),w=lg.w,h=lg.h;
-  var sh=lg.shake>0?(Math.random()-0.5)*lg.shake:0;
-  c.save();c.translate(sh,sh*0.6);
-
-  var g=c.createLinearGradient(0,0,0,h);
-  g.addColorStop(0,'#0a4a63');g.addColorStop(1,'#03161f');
-  c.fillStyle=g;c.fillRect(-10,-10,w+20,h+20);
-
-  var mid=h*0.56, amp=h*0.20;
-  var surf=function(x){
-    /* the surface advances a little across the frame so it reads as
-       travelling water rather than a rising bathtub */
-    return mid-lgLevel(lg.t-x/w*0.55)*amp;
-  };
-
-  /* water body */
-  c.beginPath();c.moveTo(0,h);
-  for(var x=0;x<=w;x+=6)c.lineTo(x,surf(x));
-  c.lineTo(w,h);c.closePath();
-  var wg=c.createLinearGradient(0,mid-amp,0,h);
-  wg.addColorStop(0,'rgba(90,200,230,.42)');wg.addColorStop(1,'rgba(10,70,95,.85)');
-  c.fillStyle=wg;c.fill();
-  c.beginPath();
-  for(var x2=0;x2<=w;x2+=6){if(x2===0)c.moveTo(0,surf(0));else c.lineTo(x2,surf(x2));}
-  c.strokeStyle='#bfefff';c.lineWidth=3;c.stroke();
-
-  /* the ledge: a blocky shelf on the left */
-  var lx=w*0.42, ly=mid+amp*0.30;
-  c.fillStyle='#08222e';c.strokeStyle='rgba(160,220,240,.28)';c.lineWidth=2;
-  c.beginPath();c.moveTo(-10,h);c.lineTo(-10,ly-30);c.lineTo(lx*0.45,ly-22);
-  c.lineTo(lx,ly);c.lineTo(lx+14,h);c.closePath();c.fill();c.stroke();
-
-  /* the diver marker */
-  var px,py;
-  if(lg.phase===1){px=lx-26;py=ly-26;}
-  else if(lg.phase===2){px=lx+10+(w-lx-40)*lg.progress;py=surf(px)+16;}
-  else {px=w*0.80;py=surf(px)+14;}
-  c.font='22px serif';c.textAlign='center';c.textBaseline='middle';
-  c.fillText('🤿',px,py);
-  if(lg.phase===2&&lg.held){
-    c.strokeStyle='#f3c64f';c.lineWidth=3;
-    c.beginPath();c.arc(px,py,17,0,6.283);c.stroke();
-  }
-
-  /* level bar with the live threshold marked */
-  var bx=w-26,bt=18,bh=h-70;
-  c.fillStyle='rgba(0,0,0,.30)';c.fillRect(bx,bt,16,bh);
-  c.strokeStyle='rgba(255,255,255,.25)';c.lineWidth=1;c.strokeRect(bx,bt,16,bh);
-  var lvlY=bt+bh*(1-(lvl+1)/2);
-  var thr=(lg.phase===2)?lg.tier.wash+0.34*lg.progress:(lg.phase===3?0.45:lg.tier.lull);
-  var thrY=bt+bh*(1-(thr+1)/2);
-  c.fillStyle=lg.phase===3?'#4fd28a':'#ef6b6b';
-  c.fillRect(bx-4,thrY-1,24,3);
-  c.fillStyle=(lg.phase===3?(lvl>thr):(lvl<thr))?'#4fd28a':'#f3c64f';
-  c.fillRect(bx+2,lvlY-3,12,6);
-
-  /* 8-second trace: this is what makes the rhythm learnable */
-  if(lg.tier.trace&&lg.trace.length>1){
-    var th=34;
-    c.fillStyle='rgba(3,20,28,.62)';c.fillRect(0,0,w,th);
-    c.beginPath();
-    for(var i=0;i<lg.trace.length;i++){
-      var p=lg.trace[i];
-      var tx=(p.t-(lg.t-8))/8*w, ty=th/2-p.v*(th/2-4);
-      if(i===0)c.moveTo(tx,ty);else c.lineTo(tx,ty);
-    }
-    c.strokeStyle='#7fd6e0';c.lineWidth=2;c.stroke();
-    c.fillStyle='rgba(255,255,255,.45)';c.font='9px system-ui,sans-serif';
-    c.textAlign='left';c.fillText('last 8s',5,th-5);
-  }
-  c.restore();
-}
-
-/* ── the three commits ──────────────────────────────────────────── */
-function lgCommit(){
-  if(!lg||lg.done)return;
-  var lvl=lgLevel(lg.t);
-
-  if(lg.phase===1){
-    var falling=lgLevel(lg.t+0.15)<lvl;
-    var clear=lgClear(lg.t);
-    if(lvl<lg.tier.lull&&falling&&clear>=lg.tier.clear){
-      award(REWARD+4);lgCall('In clean — now hold on','good',1.6);lgNextPhase();
-    } else {
-      lg.shake=LEDGE.SHAKE_MAX;lg.slams++;penalize();
-      lgCall(lvl>=lg.tier.lull?'Slammed — you went on the surge'
-        :(falling?'Too tight — the next one was on you':'You went on the rise'),'bad',1.8);
-    }
-    return;
-  }
-  if(lg.phase===3){
-    /* the rule is INVERTED here: you want the top of the surge */
-    var rising=lgLevel(lg.t+0.15)>lvl;
-    if(lvl>0.45&&rising){
-      award(REWARD+8);lgCall('Lifted onto the ledge — textbook','good',2.2);
-      return lgEnd();
-    }
-    if(!lg.forgiven){
-      lg.forgiven=true;
-      lgCall('No — on the TOP of the surge, not the bottom','wait',3.0);
-      return;   /* explicitly free: the inversion is the lesson */
-    }
-    lg.shake=LEDGE.SHAKE_MAX;penalize();
-    lgCall('Too low — let it lift you up','bad',1.8);
-  }
-}
-
-function lgNextPhase(){
-  if(lg.phase===1){
-    lg.phase=2;lg.progress=0;lg.phaseEnd=lg.t+LEDGE.P2;
-    $('ledgePhase').textContent=2;
-    lgSetBtn('HOLD ON','release to move, hold when it surges',true);
-    lgCall('Hold when it surges, move in the lulls','wait',2.6);
-  } else if(lg.phase===2){
-    if(!lg.tier.phase3){award(REWARD+6);return lgEnd();}
-    lg.phase=3;lg.phaseEnd=lg.t+LEDGE.P3;
-    $('ledgePhase').textContent=3;
-    lgSetBtn('GO','now the rule changes',false);
-    lgCall('Getting OUT — ride the surge UP onto the ledge','wait',3.2);
-  }
-}
-function lgTimeout(){
-  if(lg.phase===1){lgCall('Out of time on the entry','bad',1.6);lg.phase=1;lgNextPhase();}
-  else if(lg.phase===2){lgCall('Out of time on the traverse','bad',1.6);lg.progress=1;lgNextPhase();}
-  else lgEnd();
-}
-function lgEnd(){
-  if(lg.done)return;
-  lg.done=true;lgStop();
-  $('ledgeBtn').disabled=true;
-  var clean=lg.slams===0&&lg.washes===0;
-  $('ledgeNotice').textContent=(clean?'Not one bad wave. That is how it is done. 🌊 '
-    :(lg.slams+lg.washes<=3?'Solid — you read most of it. 🌊 '
-    :'Rock entries take practice. Watch the sets next time. 🌊 '))+'Pick another game when you are ready →';
-  setTimeout(advanceGame,3000);
-}
-
-holdButton($('ledgeBtn'),function(on){
-  if(!lg||lg.done)return;
-  if(lg.phase===2){lg.held=on;return;}
-  if(on)lgCommit();
-});
 
 /* ════════════════════════════════════════════════════════════════
    BETWEEN THE SURGES — the macro shot.
