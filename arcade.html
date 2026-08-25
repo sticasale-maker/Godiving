@@ -3181,7 +3181,7 @@ function guessRound(){
 $('gnext').onclick=guessRound;
 
 /* ════════ TRUMPS ════════ */
-var TRUMPS_ROUNDS=3,tWin=0,tLose=0,tRound=0,tQueue=[];
+var TRUMPS_ROUNDS=6,tWin=0,tLose=0,tRound=0,tQueue=[];
 var STATS=[['len','Length','cm'],['depth','Max depth','m'],['speed','Speed','km/h'],['life','Lifespan','yrs'],['eggs','Eggs/season',''],['camo','Camouflage','/10'],['migrate','Migration','km']];
 function fmtVal(s,v){if(s==='eggs')return v>=1000?(v/1000).toFixed(0)+'k':String(v);if(s==='speed')return v<1?v.toFixed(2):String(v);return String(v);}
 function trumpsArtH(){return Math.round(artHeight(180)*0.50);}
