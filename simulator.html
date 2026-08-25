@@ -32,7 +32,10 @@ body{
    a 2560-wide iMac. */
 #app{
   display:grid; height:100dvh; gap:10px; padding:10px;
-  --rig-w:clamp(340px,18vw,430px);
+  /* Replaced by layout(), which measures the title and asks for exactly the
+     width that keeps it on one line. This is only the value used before the
+     first measurement. */
+  --rig-w:452px;
   grid-template-columns:var(--rig-w) var(--stage-w,1fr) minmax(320px,1fr);
   grid-template-rows:100%;
   grid-template-areas:"rig stage diver";
@@ -47,7 +50,9 @@ body{
 #rig::-webkit-scrollbar-thumb{background:rgba(0,194,168,.3);border-radius:3px}
 
 .ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:54px;letter-spacing:3px;
-  color:var(--teal);font-weight:400;line-height:1.1}
+  color:var(--teal);font-weight:400;line-height:1.1;text-align:center}
+/* The rig is sized to this, so it must never wrap — see layout(). */
+#rig .ttl{white-space:nowrap}
 .sub{font-size:10.5px;color:var(--dim);line-height:1.45}
 
 /* ─────────────── map stage ─────────────── */
@@ -93,8 +98,13 @@ body{
 #stageHead{position:absolute;left:14px;top:11px;right:14px;z-index:5;pointer-events:none}
 
 /* ─────────────── rig (controls) ─────────────── */
-.pod{display:flex;flex-direction:column;align-items:center;
-  background:rgba(0,0,0,.24);border:1px solid var(--border);border-radius:14px;padding:7px 9px 8px}
+/* The bearing used to sit on its own line under the dial. At 1920 the rig has
+   no spare height, so every pixel the dial gains has to come from somewhere —
+   putting the value up beside its label instead frees that whole line, twice,
+   and pays for a bigger dial without taking it back off the wave tank. */
+.pod{display:flex;flex-direction:column;align-items:stretch;
+  background:rgba(0,0,0,.24);border:1px solid var(--border);border-radius:14px;padding:6px 9px 7px}
+.pod-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .pod-lab{font-size:9.5px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase;
   text-align:center;line-height:1.25}
 .pod-read{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:27px;letter-spacing:1.4px;
@@ -103,9 +113,9 @@ body{
 
 /* Dials and the wave tank scale with the screen so the rig never has to scroll —
    a booth control you must scroll is a control nobody finds. */
-.dial{touch-action:none;cursor:grab;display:block;margin:2px auto 3px;
-  width:min(100%,228px);height:auto;aspect-ratio:1/1;
-  max-height:clamp(92px,13.6vh,228px)}
+.dial{touch-action:none;cursor:grab;display:block;margin:3px auto 0;
+  width:min(100%,300px);height:auto;aspect-ratio:1/1;
+  max-height:clamp(104px,17.2vh,300px)}
 .dial:active{cursor:grabbing}
 
 /* wave shaper */
@@ -255,9 +265,9 @@ input[type=range].kn-on::-moz-range-thumb{
     <div><div class="ttl">Set the conditions</div></div>
 
     <div class="pod">
-      <div class="pod-lab">Swell coming from</div>
+      <div class="pod-head"><span class="pod-lab">Swell from</span>
+        <span class="pod-read" id="dirV">SE<i>135&deg;</i></span></div>
       <svg class="dial" id="dialSwell" viewBox="0 0 100 100"></svg>
-      <div class="pod-read" id="dirV">SE<i>135&deg;</i></div>
     </div>
 
     <div id="shaper">
@@ -277,9 +287,9 @@ input[type=range].kn-on::-moz-range-thumb{
     </div>
 
     <div class="pod">
-      <div class="pod-lab">Wind coming from</div>
+      <div class="pod-head"><span class="pod-lab">Wind from</span>
+        <span class="pod-read" id="wdirV">NE<i>45&deg;</i></span></div>
       <svg class="dial" id="dialWind" viewBox="0 0 100 100"></svg>
-      <div class="pod-read" id="wdirV">NE<i>45&deg;</i></div>
     </div>
 
     <div class="mini">
@@ -1824,10 +1834,19 @@ function layout(){
   // height budget are both settled before anything gets resized.
   var mh=avail, mw=mh*(MAP.VW/MAP.VH);
 
+  // The control column is exactly as wide as its own heading needs to stay on
+  // one line — measured, not guessed, so it survives the webfont loading late
+  // or not at all.
+  var rigEl=el('rig'), rigTtl=rigEl.querySelector('.ttl');
+  var rigCss=getComputedStyle(rigEl);
+  var rigPad=parseFloat(rigCss.paddingLeft)+parseFloat(rigCss.paddingRight)+2;
+  appEl.style.setProperty('--rig-w',
+    Math.max(340, Math.ceil(rigTtl.scrollWidth+rigPad))+'px');
+
   // Give the surge panel its share of what is left after the rig; the stage
   // takes the rest.
   var appW=appEl.clientWidth-20-20;                 // app padding + the two gaps
-  var rigW=el('rig').getBoundingClientRect().width;
+  var rigW=rigEl.getBoundingClientRect().width;
   var free=Math.max(360, appW-rigW);
   var diverW=clamp(Math.round(free*DIVER_FRAC), 320, 760);
   var stageW=Math.max(360, free-diverW);
@@ -2340,6 +2359,9 @@ if(typeof ResizeObserver!=='undefined'){
 }
 if(document.readyState==='complete') boot();
 else window.addEventListener('load',boot);
+// Bebas Neue arrives after first paint and is far narrower than the fallback,
+// so the column would otherwise stay sized for the wrong font.
+if(document.fonts && document.fonts.ready) document.fonts.ready.then(relayout);
 
 </script>
 </body>
