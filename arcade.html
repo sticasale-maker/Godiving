@@ -3029,6 +3029,23 @@ var $=function(id){return document.getElementById(id);};
 /* ════════ GAME FLOW ════════ */
 var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wreckfind','sharkid','migrate'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
+/* The shared row wins over whatever this browser happens to remember. */
+function adoptSharedGameConfig(cb){
+  Cloud.getSettings(function(st){
+    if(st&&st.game_age_groups){
+      GAME_AGE_GROUPS=pruneRetired(st.game_age_groups);
+      GAME_ORDER.forEach(function(g){
+        if(!GAME_AGE_GROUPS[g]){var o={};AGE_GROUPS.forEach(function(a){o[a]=true;});GAME_AGE_GROUPS[g]=o;}
+      });
+      saveGameAgeGroups();
+    }
+    if(st&&st.game_exp){
+      GAME_EXP=pruneRetired(st.game_exp);
+      saveGameExp();
+    }
+    if(cb)cb();
+  });
+}
 GAME_EXP=loadGameExp();
 var currentGame=0;
 var playedGames={};      /* games the diver has completed at least once */
@@ -3130,6 +3147,11 @@ function hideNextChallenge(){
 })();
 function startGame(name){
   if(FINISHED&&name!=='hof'&&name!=='menu')return showHallOfFame();
+  /* Hiding a game from the menu and the strip is not the same as switching it
+     off. Anything that can still call startGame — a stale strip tile, a queued
+     handler, a rebuilt panel — walked straight past both lists. This is the
+     only gate that actually holds. */
+  if(name!=='hof'&&name!=='menu'&&USER.group&&gamesForGroup(USER.group).indexOf(name)<0)return showMenu();
   activeGame=(name==='hof'||name==='menu')?null:name;
   var strip=$('gamesstrip');
   if(name==='hof'||name==='menu'){strip.style.display='none';}
@@ -3299,7 +3321,14 @@ function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('
     });
     saveGameAgeGroups();saveGameExp();
     buildStrip();
-    $('adminSaved').textContent='Saved ✓';
+    /* localStorage is per browser. At the stand that means the laptop the
+       operator set up and the four machines people actually play on disagree,
+       which is exactly how a game switched off for adults kept turning up.
+       Push it to the same shared settings row the prize rules already use. */
+    $('adminSaved').textContent='Saving…';
+    Cloud.saveSettings({game_age_groups:GAME_AGE_GROUPS,game_exp:GAME_EXP},function(){
+      $('adminSaved').textContent='Saved ✓ · applies to every device';
+    });
   };
 })();
 /* Menu → Hall of Fame */
@@ -3751,6 +3780,16 @@ function startBubble(){
   animateBubbles();
 }
 $('bubbleStart').onclick=startBubble;
+/* Bubbles used to be dropped at a random x with a random speed, so they
+   overlapped and a name in the back was unreadable and unpoppable. They now
+   rise in fixed lanes, one column each, and a lane only accepts a new bubble
+   once its last one has climbed clear. Speed is constant within a tier for the
+   same reason: a fast bubble must never catch a slow one in its own lane. */
+function bubbleLanes(f,size){
+  var W=f.clientWidth||320, lane=size+10;
+  return {n:Math.max(1,Math.floor(W/lane)), w:lane,
+          pad:Math.max(0,(W-Math.floor(W/lane)*lane)/2)};
+}
 function spawnBubble(){
   if(!bubbleState.active)return;
   var f=$('bubbleField');var W=f.clientWidth||320;
@@ -3760,13 +3799,25 @@ function spawnBubble(){
                 :BUBBLE_FAKE[Math.floor(Math.random()*BUBBLE_FAKE.length)];
   var cfg=bubbleCfg();
   var size=Math.round(cfg.size+Math.random()*cfg.extra);
+  var L=bubbleLanes(f,cfg.size+cfg.extra);
+  var H=f.clientHeight||320;
+  /* a lane is free once its lowest bubble has cleared its own height plus a gap */
+  var free=[];
+  for(var i=0;i<L.n;i++){
+    var lowest=-1;
+    bubbleState.bubbles.forEach(function(o){if(o._lane===i&&o._y>lowest)lowest=o._y;});
+    if(lowest<0||lowest<=H-size-12)free.push(i);
+  }
+  if(!free.length)return;                      /* every lane still busy — wait */
+  var lane=free[Math.floor(Math.random()*free.length)];
   var b=document.createElement('div');b.className='bubble';
   b.style.width=size+'px';b.style.height=size+'px';
   b.style.fontSize=Math.max(11,Math.round(size*0.165))+'px';
-  var x=Math.random()*(W-size-8)+4;
-  b.style.left=x+'px';
-  b._y=(f.clientHeight||320);b.style.top=b._y+'px';
-  b._speed=(0.5+Math.random()*0.7)*cfg.rise;b._real=real;b.textContent=name;
+  b._lane=lane;
+  b.style.left=Math.round(L.pad+lane*L.w+(L.w-size)/2)+'px';
+  b._y=H;b.style.top=b._y+'px';
+  b._speed=cfg.rise*0.8;   /* was 0.5-1.2x random; 0.8 keeps the old average pace */
+  b._real=real;b.textContent=name;
   b.addEventListener('click',function(ev){
     ev.stopPropagation();
     if(!bubbleState.active||b._popped)return;b._popped=true;
@@ -3796,7 +3847,23 @@ function endBubble(){
 }
 
 /* ════════ 3. DEPTH GAUGE ════════ */
-var DEPTH_MAX=300; /* metres represented by the track */
+/* The track was linear to 300 m, so everything a Sydney diver actually sees
+   — 5, 8, 15, 20 m — was crushed into the top 7% and unselectable. It is now
+   piecewise: the upper HALF of the track covers 0-30 m, the lower half covers
+   30-300 m. Same range, but a metre in the shallows is now worth ten down
+   deep, which is also the only part of the scale anyone is guessing in. */
+var DEPTH_MAX=300;      /* metres represented by the track */
+var DEPTH_KNEE=30;      /* metres at the halfway mark      */
+function pctToM(p){
+  p=Math.max(0,Math.min(100,p));
+  return p<=50 ? p/50*DEPTH_KNEE
+               : DEPTH_KNEE+(p-50)/50*(DEPTH_MAX-DEPTH_KNEE);
+}
+function mToPct(m){
+  m=Math.max(0,Math.min(DEPTH_MAX,m));
+  return m<=DEPTH_KNEE ? m/DEPTH_KNEE*50
+                       : 50+(m-DEPTH_KNEE)/(DEPTH_MAX-DEPTH_KNEE)*50;
+}
 var DEPTH_ROUNDS=[
   {fact:'Wobbegong sharks usually rest at around ___ m',answer:15,tol:12},
   {fact:'Weedy seadragons are most often seen at about ___ m',answer:8,tol:8},
@@ -3811,8 +3878,8 @@ function initDepth(){
   buildDepthMarks();depthRound();
 }
 function buildDepthMarks(){
-  var marks=[0,50,100,150,200,250,300],html='';
-  marks.forEach(function(m){var pct=m/DEPTH_MAX*100;html+='<i style="top:'+pct+'%"></i><span style="top:'+pct+'%">'+m+'m</span>';});
+  var marks=[0,5,10,15,20,30,60,100,200,300],html='';
+  marks.forEach(function(m){var pct=mToPct(m);html+='<i style="top:'+pct+'%"></i><span style="top:'+pct+'%">'+m+'m</span>';});
   $('depthMarks').innerHTML=html;
 }
 function depthRound(){
@@ -3824,12 +3891,12 @@ function depthRound(){
   updateDepthNeedle(0);
   startTimer();
 }
-function sliderToM(v){return Math.round(v/100*DEPTH_MAX);}
+function sliderToM(v){var m=pctToM(v);return m<DEPTH_KNEE?Math.round(m):Math.round(m/5)*5;}
 function updateDepthNeedle(v){
   depthPct=Math.max(0,Math.min(100,+v));
   var m=sliderToM(depthPct);
   $('depthReadout').textContent=m;
-  $('depthNeedle').style.top=(m/DEPTH_MAX*100)+'%';
+  $('depthNeedle').style.top=depthPct+'%';
   $('depthTrack').setAttribute('aria-valuenow',m);
 }
 
@@ -3864,7 +3931,9 @@ function updateDepthNeedle(v){
     var step=ev.key==='ArrowUp'?-1:(ev.key==='ArrowDown'?1:0);
     if(!step)return;
     ev.preventDefault();
-    updateDepthNeedle(depthPct+step*(ev.shiftKey?25:5)/DEPTH_MAX*100);
+    /* arrow keys step in METRES now, not in track percent, so a nudge means
+       the same thing at 5 m as it does at 200 m */
+    updateDepthNeedle(mToPct(sliderToM(depthPct)+step*(ev.shiftKey?10:1)));
   });
 })();
 $('depthLock').onclick=function(){
@@ -3875,7 +3944,7 @@ $('depthLock').onclick=function(){
   var ans=depthCur.answer,tol=depthCur.tol;
   var diff=Math.abs(guess-ans);
   /* show the correct zone */
-  var z=$('depthZone');var topPct=Math.max(0,(ans-tol)/DEPTH_MAX*100);var botPct=Math.min(100,(ans+tol)/DEPTH_MAX*100);
+  var z=$('depthZone');var topPct=mToPct(ans-tol),botPct=mToPct(ans+tol);
   z.style.top=topPct+'%';z.style.height=(botPct-topPct)+'%';z.style.display='block';
   if(diff<=tol){var pts=Math.max(MIN_REWARD,Math.round(REWARD*(1-diff/(tol*2))));award(pts);$('depthMsg').textContent='🎯 Spot on! Actual: ~'+ans+'m (you guessed '+guess+'m).';}
   else if(diff<=tol*2.2){award(MIN_REWARD);$('depthMsg').textContent='Close! Actual: ~'+ans+'m (you guessed '+guess+'m).';}
@@ -4988,7 +5057,10 @@ var NU={
      0.96 s reversal that still only commits ~23 px of tunnel. */
   MASS:9, DRAG:22, G:9.81,
   PXM:62,                      /* px per metre of travel           */
-  SPEED:74,                    /* px/s the cave scrolls past       */
+  /* Per group: the young keep the gentler pace, the other two swim 30%
+     faster. Everything downstream reads nuSpeed(), including the wander cap,
+     so a faster cave is automatically a flatter one and reach still holds. */
+  SPEEDS:{'Young Explorer':74,'Teen Explorer':96,'Adult Explorer':96},
   SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
@@ -5024,10 +5096,11 @@ var nu=null,nuRAF=null;
    one, and at whatever the reach budget allows, so winding the scroll speed up
    cannot quietly make the course unsurvivable. Descending is the binding case
    — the diver is trimmed positive, so it sinks slower than it climbs. */
+function nuSpeed(){return NU.SPEEDS[USER.group]||NU.SPEEDS['Teen Explorer'];}
 function nuRoamH(h){
   var sink=Math.sqrt(Math.abs(NU.LUNG_MIN*1.03)*NU.G/NU.DRAG)*NU.PXM;   /* px/s   */
   var perPx=NU.ROAM1*6.283/NU.L1+NU.ROAM2*6.283/NU.L2;                  /* slope per px of amplitude */
-  return Math.min(h, NU.ROAM_H, (sink/NU.SPEED)/NU.REACH_MIN/perPx);
+  return Math.min(h, NU.ROAM_H, (sink/nuSpeed())/NU.REACH_MIN/perPx);
 }
 
 /* tunnel centreline and half-height at a given world x */
@@ -5065,7 +5138,7 @@ function nuStop(){if(nuRAF){cancelAnimationFrame(nuRAF);nuRAF=null;}}
 function nuStep(now){
   if(!nu||nu.done)return;
   var dt=Math.min(0.05,(now-nu.last)/1000);nu.last=now;
-  nu.t+=dt;nu.x+=NU.SPEED*dt;
+  nu.t+=dt;nu.x+=nuSpeed()*dt;
   if(nu.cool>0)nu.cool-=dt;
 
   /* lungs -> buoyancy -> velocity -> position. Two integrations, and
@@ -6341,6 +6414,12 @@ $('hofPlayAgain').onclick=function(){
 
 /* ════════ STARTUP: cloud + remote screensaver listener ════════ */
 Cloud.init(function(){
+  /* Pick up the shared game/age-group config before the menu is built, so a
+     machine that has never been configured still honours what the operator
+     set on another one. */
+  adoptSharedGameConfig(function(){
+    if(document.getElementById('p-menu').classList.contains('show'))showMenu();
+  });
   Cloud.onMyCommand(function(c){
     var on=!!(c&&c.screensaver);
     ssRemote=on;

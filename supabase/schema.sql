@@ -127,3 +127,13 @@ select privilege_type, column_name
 from information_schema.column_privileges
 where table_name = 'scores' and grantee = 'anon'
 order by privilege_type, column_name;
+
+-- ── Shared game availability (added after the 2026 rehearsals) ────
+-- Which games are offered to which age group, and to which kind of
+-- diver, used to live in localStorage. That meant the laptop an
+-- operator configured and the machines people actually played on
+-- disagreed: a game switched off for adults kept appearing, because
+-- "off" had only ever been recorded on one browser. It belongs in the
+-- same shared row as the prize rules, for the same reason.
+alter table public.settings add column if not exists game_age_groups jsonb;
+alter table public.settings add column if not exists game_exp        jsonb;
