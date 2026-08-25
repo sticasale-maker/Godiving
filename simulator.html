@@ -55,8 +55,15 @@ body{
 #rig::-webkit-scrollbar{width:5px}
 #rig::-webkit-scrollbar-thumb{background:rgba(0,194,168,.3);border-radius:3px}
 
-.ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:54px;letter-spacing:3px;
-  color:var(--teal);font-weight:400;line-height:1.1;text-align:center}
+/* Never wraps. fitTitles() sets the size each one can actually take on a single
+   line — 54px where it fits, smaller where the column is too narrow. A wrapped
+   heading costs a whole extra line of column height, and in the narrow layout
+   that is what pushed the wind dial down onto the wave tank.
+   Letter-spacing is in em, not px, so scaling the font scales the tracking with
+   it and the fitted size is exact rather than an estimate. */
+.ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:54px;letter-spacing:0.055em;
+  color:var(--teal);font-weight:400;line-height:1.1;text-align:center;
+  white-space:nowrap;overflow:hidden}
 .sub{font-size:10.5px;color:var(--dim);line-height:1.45}
 
 /* ─────────────── map stage ─────────────── */
@@ -1883,9 +1890,24 @@ var DIVER_MAX = 760;
    this it stops reading as the Sydney coast and starts reading as a logo. */
 var MAP_MIN_H = 0.58;
 
+/* Largest single-line size for each heading, and the floor below which it is
+   not worth shrinking. */
+var TTL_MAX=54, TTL_MIN=22;
+function fitTitles(){
+  var list=document.querySelectorAll('.ttl');
+  for(var i=0;i<list.length;i++){
+    var t=list[i];
+    t.style.fontSize=TTL_MAX+'px';
+    var avail=t.clientWidth, need=t.scrollWidth;
+    if(avail>0 && need>avail)
+      t.style.fontSize=Math.max(TTL_MIN,Math.floor(TTL_MAX*avail/need))+'px';
+  }
+}
+
 function layout(){
   var st=stageEl.getBoundingClientRect();
   if(!st.width||!st.height) return;
+  fitTitles();                       // before anything measures the title strip
   var pad=10, lead=16, colGap=5, gap=4;
   var chrome=tileChrome();
   var nMax=Math.max(COLS[0].length,COLS[1].length,COLS[2].length);
