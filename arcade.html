@@ -244,6 +244,15 @@
     border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:12.5px}
   .tres{text-align:center;font-size:15px;font-weight:600;min-height:20px;margin:8px 0 3px;flex-shrink:0}
   .trumps-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2px;flex-shrink:0}
+  /* On a phone the deal button sits under the cards as it always has; from
+     tablet width up it moves alongside them, so finishing a round never
+     means scrolling past two full-height cards to find the way on. */
+  .tstage{display:flex;flex-direction:column;gap:8px;flex-shrink:0}
+  .tstage>.tcards{flex:1 1 auto;min-width:0}
+  @media(min-width:760px){
+    .tstage{flex-direction:row;align-items:center;gap:14px}
+    .tstage>#tdeal{flex:0 0 auto;max-width:9em;white-space:normal;line-height:1.25}
+  }
   svg{display:block}
   .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
   /* Shared "Next challenge" button. Pinned to the right edge rather than left
@@ -671,6 +680,26 @@
   .nav-btn.on{transform:translateY(2px);filter:brightness(1.4)}
   .nav-go{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
   .nav-btn:disabled{opacity:.4}
+  /* The two side buttons are the diver's feet. Pressing one kicks that
+     fin, and the kick pushes you the other way — so the labels say so. */
+  .nav-fin{display:flex;flex-direction:column;align-items:center;gap:4px;padding:8px 4px;
+    background:#08303b;border-color:#14586a}
+  .nav-fin .fin{display:block;width:clamp(26px,7vw,38px);transform-origin:50% 12%}
+  /* the blade shape is symmetric, so left and right read as a pair only
+     because each is splayed outward the way feet actually sit */
+  .nav-fin .fin svg{display:block;width:100%;height:auto;transform:rotate(-9deg)}
+  .nav-fin.right .fin svg{transform:rotate(9deg)}
+  .nav-fin .pocket{fill:#0f4a58}
+  .nav-fin .blade{fill:#36c9c0}
+  .nav-fin .rib{stroke:#0b3742;stroke-width:1.6;fill:none}
+  .nav-fin .finlab{font-family:system-ui,sans-serif;font-size:10px;font-weight:800;
+    letter-spacing:.6px;color:#9fe8e2;line-height:1.25}
+  .nav-fin .finlab em{display:block;font-style:normal;font-weight:600;font-size:9px;
+    letter-spacing:0;color:var(--muted)}
+  .nav-fin.kick .fin{animation:finKick .26s ease-out}
+  .nav-fin.right.kick .fin{animation:finKickR .26s ease-out}
+  @keyframes finKick{40%{transform:rotate(-26deg) translateY(-3px)}100%{transform:rotate(0)}}
+  @keyframes finKickR{40%{transform:rotate(26deg) translateY(-3px)}100%{transform:rotate(0)}}
 
   /* ── SAFE ASCENT ── */
   .asc-wrap{display:flex;gap:10px;flex:1;min-height:0}
@@ -1240,11 +1269,13 @@
         <span class="game-label">Pick a stat — highest wins</span>
         <span class="score">Round <b id="tround">1</b> / <b id="troundtotal">5</b></span>
       </div>
-      <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
+      <div class="tstage">
+        <div class="tcards"><div class="tcard" id="pcard"></div><div class="tcard" id="ccard"></div></div>
+        <button class="btn ghost" id="tdeal" style="display:none">Next round →</button>
+      </div>
       <p class="tres" id="tresult"></p>
       <div class="trumps-footer">
         <span class="score">You <b id="twin">0</b> · Reef <b id="tlose">0</b></span>
-        <button class="btn ghost" id="tdeal" style="display:none">Next round →</button>
       </div>
       <p class="auto-notice" id="tnotice"></p>
     </div>
@@ -1544,12 +1575,18 @@
       <div class="nav-stage"><canvas id="navCanvas"></canvas></div>
       <div class="nav-meters">
         <div class="nav-meter"><span class="lab">On course</span><div class="nav-bar"><i id="navAccFill"></i></div></div>
-        <div class="nav-meter"><span class="lab">Distance</span><div class="nav-bar"><i id="navDistFill" class="dist"></i></div></div>
+        <div class="nav-meter"><span class="lab" id="navDistLab">Distance</span><div class="nav-bar"><i id="navDistFill" class="dist"></i></div></div>
       </div>
       <div class="nav-controls">
-        <button class="nav-btn" id="navLeft">◀</button>
-        <button class="nav-btn nav-go" id="navGo">SET BEZEL</button>
-        <button class="nav-btn" id="navRight">▶</button>
+        <button class="nav-btn nav-fin" id="navLeft">
+          <span class="fin"><svg viewBox="0 0 40 64" aria-hidden="true"><path class="pocket" d="M13 3h14a5 5 0 0 1 5 5v9a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V8a5 5 0 0 1 5-5z"/><path class="blade" d="M11 20h18l5 35q0 5-5 5H11q-5 0-5-5z"/><path class="rib" d="M20 23v34"/></svg></span>
+          <span class="finlab">LEFT FIN<em>turns you right</em></span>
+        </button>
+        <button class="nav-btn nav-go" id="navGo">KICK TO TURN</button>
+        <button class="nav-btn nav-fin right" id="navRight">
+          <span class="fin"><svg viewBox="0 0 40 64" aria-hidden="true"><path class="pocket" d="M13 3h14a5 5 0 0 1 5 5v9a4 4 0 0 1-4 4H12a4 4 0 0 1-4-4V8a5 5 0 0 1 5-5z"/><path class="blade" d="M11 20h18l5 35q0 5-5 5H11q-5 0-5-5z"/><path class="rib" d="M20 23v34"/></svg></span>
+          <span class="finlab">RIGHT FIN<em>turns you left</em></span>
+        </button>
       </div>
       <p class="qfact" id="navFact"></p>
       <p class="auto-notice" id="navNotice"></p>
@@ -2905,7 +2942,7 @@ var GAME_META={
   migrate:{icon:'🐋',name:'Migration Highway',desc:'Which way is it heading?'},
   macro:{icon:'📷',name:'Between the Surges',desc:'Shoot it in the pause'},
   neutral:{icon:'🫁',name:'Neutral',desc:'Hover through the gully on your lungs'},
-  nav:{icon:'🧭',name:'Nav Trainer',desc:'Set the bezel and hold the bearing'}
+  nav:{icon:'🧭',name:'Nav Trainer',desc:'Kick your fins to hold a bearing'}
 };
 function showMenu(){
   activeGame=null;
@@ -4339,6 +4376,29 @@ function holdButton(el,onChange,keys){
   }
 }
 
+/* Like holdButton, but discrete: one press is one event. Auto-repeat is
+   ignored so a held-down arrow key cannot out-kick honest tapping. */
+function tapButton(el,onTap,keys){
+  if(!el)return;
+  function fire(ev){
+    if(ev&&ev.preventDefault)ev.preventDefault();
+    if(el.disabled)return;
+    try{onTap();}catch(e){}
+  }
+  el.addEventListener('pointerdown',fire);
+  ['selectstart','contextmenu','dragstart'].forEach(function(t){
+    el.addEventListener(t,function(ev){ev.preventDefault();return false;});
+  });
+  if(keys&&keys.length){
+    var live=function(){return !el.disabled&&el.offsetParent!==null;};
+    window.addEventListener('keydown',function(ev){
+      if(ev.repeat||ev.metaKey||ev.ctrlKey||ev.altKey)return;
+      if(keys.indexOf(ev.key)<0||!live())return;
+      fire(ev);
+    });
+  }
+}
+
 /* ════════════════════════════════════════════════════════════════
    BETWEEN THE SURGES — the macro shot.
 
@@ -4717,16 +4777,23 @@ $('migNext').onclick=migRound;
               At mass 45 / drag 60 this was 2.5 s and 145 px of
               committed tunnel — you could see the mistake coming and
               had no way to undo it, which reads as dead weight.
-   Now ~1.0 s and ~43 px. Keep both in range if these are ever
-   retuned; the lag should be felt, not fought. */
+   Now ~0.96 s and ~23 px. Keep both in range if these are ever
+   retuned; the lag should be felt, not fought. Reach still passes
+   with room to spare: 1.08 px of climb per px of scroll against a
+   tunnel whose steepest slope is 0.32. */
 var NU={
   /* At 12 L/s the tidal range filled in a tenth of a second, so the
      lungs were effectively a switch and the only lag you felt was
      the physics. A real breath takes a couple of seconds; these give
-     a ~0.6 s swing, which you can feel without it becoming a fight. */
-  LUNG_IN:4.0, LUNG_OUT:4.4,   /* litres per second                */
-  LUNG_MAX:1.2,                /* usable tidal range               */
-  MASS:6, DRAG:13, G:9.81,
+     a ~1.2 s swing, which you can feel without it becoming a fight.
+     Halved again from 4.0/4.4 because the diver still darted: a
+     twitch of the button should lean you, not launch you. */
+  LUNG_IN:2.0, LUNG_OUT:2.2,   /* litres per second                */
+  LUNG_MAX:0.85,               /* usable tidal range               */
+  /* Heavier and draggier so vertical speed builds and bleeds slowly:
+     top speed 39 px/s (was 60), 1.4 s to reach it (was 1.0), and a
+     0.96 s reversal that still only commits ~23 px of tunnel. */
+  MASS:9, DRAG:22, G:9.81,
   PXM:62,                      /* px per metre of travel           */
   SPEED:36,                    /* px/s the cave scrolls past       */
   SECS:38,                     /* length of the swim               */
@@ -4893,25 +4960,35 @@ holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;},
   ['ArrowUp','Up',' ','Spacebar','w','W']);
 
 /* ═══════════════════════════════════════════════════════════════
-   NAV TRAINER — set the bezel, then hold the bearing.
+   NAV TRAINER — fin steering on a bearing.
 
-   Two phases, exactly as underwater: rotate the bezel until the
-   index gate sits on the bearing you were given, then swim it,
-   correcting for a cross-current you cannot see directly — you only
-   notice the needle drifting out of the gate.
+   The controls are the diver's two feet, not a steering wheel.
+   Every press is one kick, and a kick from one fin pushes the
+   opposite way: kick the LEFT fin and you swing RIGHT. So the
+   drill is the real one — swing onto the bearing with one fin,
+   then alternate left-right-left-right to track straight.
 
-   The instrument is the photographed brass housing from the prize
-   compass with the working parts generated over it: illustration for
-   the body, trigonometry for everything that moves.
+   A kick is an impulse, not a rate: it dumps angular velocity in
+   and drag bleeds it off over ~0.45 s, which is why a hurried
+   double-kick overshoots and a patient one does not.
+
+   The cross-current turns you at a constant rate for the whole
+   leg, so holding the bearing means kicking more often on one
+   side than the other — the arithmetic a diver does by feel.
    ════════════════════════════════════════════════════════════════ */
 var NAV={
-  LEGS:{'Young Explorer':1,'Teen Explorer':2,'Adult Explorer':3},
-  CURRENT:{'Young Explorer':0,'Teen Explorer':3.5,'Adult Explorer':7},  /* deg/s push */
-  GATE:15,          /* half-width of the index gate, degrees          */
-  TURN:42,          /* deg/s the diver can turn                       */
-  LEGSECS:11
+  TIERS:{
+    'Young Explorer':{legs:1,kick:26,gate:26,current:0,  secs:12},
+    'Teen Explorer' :{legs:2,kick:20,gate:19,current:3.2,secs:12},
+    'Adult Explorer':{legs:3,kick:16,gate:14,current:6.0,secs:14}
+  },
+  TAU:0.45,        /* seconds for a kick's push to bleed away    */
+  SETTLE:0.6,      /* seconds inside the gate that ends aligning */
+  COOLDOWN:110     /* ms — stops a mashed button out-kicking a rhythm */
 };
 var nav=null,navRAF=null,navImg=null,navImgOK=false;
+
+function navTier(){return NAV.TIERS[USER.group]||NAV.TIERS['Teen Explorer'];}
 
 function navLoadHousing(){
   if(navImg)return;
@@ -4928,48 +5005,97 @@ function initNav(){
   cv.width=side*dpr;cv.height=side*dpr;cv.style.width=cv.style.height=side+'px';
   cv.getContext('2d').setTransform(dpr,0,0,dpr,0,0);
 
-  var legs=NAV.LEGS[USER.group]||2;
+  var t=navTier();
   nav={
-    legs:legs, leg:0, side:side,
-    phase:'set', heading:0, bezel:0, target:0,
-    current:NAV.CURRENT[USER.group]||3.5, curDir:1,
-    onCourse:0, elapsed:0, turn:0, score:0, done:false
+    tier:t, legs:t.legs, leg:0, side:side,
+    phase:'align', heading:0, target:0,
+    rate:0,                    /* deg/s of turn still in the water */
+    curDir:1, settled:0,
+    onCourse:0, elapsed:0, score:0, done:false,
+    kicksL:0, kicksR:0, lastKickAt:0, wash:[]
   };
-  $('navLegs').textContent=legs;$('navNotice').textContent='';$('navFact').textContent='';
+  $('navLegs').textContent=t.legs;$('navNotice').textContent='';$('navFact').textContent='';
   navNextLeg();
 }
 function navNextLeg(){
   nav.leg++;
   if(nav.leg>nav.legs)return navEnd();
   $('navLeg').textContent=nav.leg;
-  nav.target=Math.floor(Math.random()*24)*15;         /* whole 15° steps */
-  nav.heading=(nav.target+120+Math.random()*120)%360; /* start well off  */
-  nav.bezel=nav.heading;
-  nav.phase='set';nav.onCourse=0;nav.elapsed=0;
+  nav.target=Math.floor(Math.random()*24)*15;                /* whole 15° steps */
+  var off=(50+Math.random()*60)*(Math.random()<0.5?-1:1);    /* start well off  */
+  nav.heading=(nav.target+off+360)%360;
+  nav.phase='align';nav.rate=0;nav.settled=0;nav.onCourse=0;nav.elapsed=0;
+  nav.kicksL=0;nav.kicksR=0;nav.wash=[];
   nav.curDir=Math.random()<0.5?-1:1;
-  $('navTask').innerHTML='Leg '+nav.leg+' — turn the bezel to <b>'+navFmt(nav.target)+'</b>, then press GO.';
-  $('navGo').textContent='SET BEZEL';
-  $('navGo').disabled=false;
+  navSetTask();
+  $('navGo').textContent='KICK TO TURN';
+  $('navGo').disabled=true;
+  $('navDistLab').textContent='Hold it there';
   nav.last=performance.now();
   if(!navRAF)navRAF=requestAnimationFrame(navStep);
 }
+function navSetTask(){
+  var fin=navDiff(nav.target,nav.heading)>0?'LEFT':'RIGHT';
+  var cur=nav.tier.current?(' A current is running from the <b>'+(nav.curDir>0?'right':'left')+'</b> once you set off.'):'';
+  $('navTask').innerHTML='Leg '+nav.leg+' — swing onto <b>'+navFmt(nav.target)+'</b> using the <b>'+fin+
+    '</b> fin only.'+cur;
+}
 function navFmt(d){return ('00'+Math.round((d%360+360)%360)).slice(-3)+'°';}
 function navDiff(a,b){return ((a-b+540)%360)-180;}
+
+/* One kick. side is -1 for the left fin, +1 for the right; a kick from
+   one fin pushes the diver the other way, hence the sign flip. */
+function navKick(side){
+  if(!nav||nav.done||nav.phase==='wait')return;
+  var now=(window.performance&&performance.now)?performance.now():Date.now();
+  if(now-nav.lastKickAt<NAV.COOLDOWN)return;
+  nav.lastKickAt=now;
+  nav.rate+=-side*nav.tier.kick;
+  if(side<0)nav.kicksL++;else nav.kicksR++;
+  nav.wash.push({side:side,age:0});
+  var btn=$(side<0?'navLeft':'navRight');
+  if(btn){btn.classList.remove('kick');void btn.offsetWidth;btn.classList.add('kick');}
+}
 
 function navStep(now){
   if(!nav||nav.done){navRAF=null;return;}
   var dt=Math.min(0.05,(now-nav.last)/1000);nav.last=now;
 
-  if(nav.phase==='set'){
-    nav.bezel=(nav.bezel+nav.turn*NAV.TURN*dt+360)%360;
+  /* drag bleeds the kick away; the current only bites once you are swimming */
+  nav.heading=(nav.heading+nav.rate*dt+
+    (nav.phase==='swim'?nav.curDir*nav.tier.current*dt:0)+360)%360;
+  nav.rate*=Math.exp(-dt/NAV.TAU);
+  if(Math.abs(nav.rate)<0.05)nav.rate=0;
+  for(var i=nav.wash.length-1;i>=0;i--){nav.wash[i].age+=dt;if(nav.wash[i].age>0.7)nav.wash.splice(i,1);}
+
+  var err=Math.abs(navDiff(nav.heading,nav.target));
+  if(nav.phase==='align'){
+    /* Time inside the gate, and it BLEEDS rather than resets when you slip
+       out. Requiring stillness instead ("not still swinging") deadlocked the
+       leg: a diver alternating fins the way the game asks never drops below
+       a kick's worth of turn rate, so aligning could only be finished by
+       stopping — which nothing on screen tells you to do. */
+    if(err<=nav.tier.gate)nav.settled+=dt;else nav.settled=Math.max(0,nav.settled-dt*2);
+    if(nav.settled>=NAV.SETTLE)navStartSwim();
   } else if(nav.phase==='swim'){
     nav.elapsed+=dt;
-    nav.heading=(nav.heading+nav.turn*NAV.TURN*dt+nav.curDir*nav.current*dt+360)%360;
-    if(Math.abs(navDiff(nav.heading,nav.bezel))<=NAV.GATE)nav.onCourse+=dt;
-    if(nav.elapsed>=NAV.LEGSECS)return navFinishLeg();
+    if(err<=nav.tier.gate)nav.onCourse+=dt;
+    if(nav.elapsed>=nav.tier.secs)return navFinishLeg();
   }
   navDraw();
   navRAF=requestAnimationFrame(navStep);
+}
+
+function navStartSwim(){
+  nav.phase='swim';nav.elapsed=0;nav.onCourse=0;
+  var oneFin=(nav.kicksL===0||nav.kicksR===0);
+  var pushed=nav.curDir>0?'right':'left';
+  $('navTask').innerHTML=(oneFin?'On the bearing with one fin — textbook. ':'On the bearing. ')+
+    'Now <b>left, right, left, right</b> to swim it straight'+
+    (nav.tier.current?' — the current is pushing you, so slip in extra kicks on the <b>'+
+      (nav.curDir>0?'left':'right')+'</b> fin to hold it.':'.');
+  $('navGo').textContent='SWIM';
+  $('navDistLab').textContent='Distance';
 }
 
 function navDraw(){
@@ -4997,17 +5123,19 @@ function navDraw(){
   c.beginPath();c.arc(cx,cy,R*0.775,0,7);c.fillStyle='#061a24';c.fill();
   c.beginPath();c.arc(cx,cy,R*0.63,0,7);c.fillStyle='#0c3142';c.fill();
 
-  /* rotating bezel + index gate */
-  for(var d=0;d<360;d+=10)line(d+nav.bezel,0.769,0.65,d%30===0?'#9fc3d2':'#5a7885',d%30===0?2.4:1.4);
-  line(nav.bezel-NAV.GATE,0.771,0.634,'#f3c64f',5);
-  line(nav.bezel+NAV.GATE,0.771,0.634,'#f3c64f',5);
-  var t=pol(nav.bezel,0.66),l=pol(nav.bezel-6,0.762),r=pol(nav.bezel+6,0.762);
+  /* the bearing you were given, and the gate you have to hold it in */
+  var G=nav.tier.gate;
+  c.beginPath();c.moveTo(cx,cy);
+  c.arc(cx,cy,R*0.769,(nav.target-G-nav.heading-90)*Math.PI/180,(nav.target+G-nav.heading-90)*Math.PI/180);
+  c.closePath();c.fillStyle='rgba(243,198,79,.13)';c.fill();
+  line(nav.target-G,0.771,0.634,'#f3c64f',5);
+  line(nav.target+G,0.771,0.634,'#f3c64f',5);
+  var t=pol(nav.target,0.66),l=pol(nav.target-6,0.762),r=pol(nav.target+6,0.762);
   c.beginPath();c.moveTo(t[0],t[1]);c.lineTo(l[0],l[1]);c.lineTo(r[0],r[1]);c.closePath();
   c.fillStyle='#f3c64f';c.fill();
 
   /* degree dial */
   for(var e=0;e<360;e+=5)line(e,0.60,e%10===0?0.566:0.582,e%10===0?'#eaf6fb':'#9fc3d2',e%10===0?1.8:1.2);
-  c.font='700 '+Math.round(S*0.048)+'px system-ui,sans-serif';
   c.textAlign='center';c.textBaseline='middle';
   for(var g=0;g<360;g+=30){
     var lab={0:'N',90:'E',180:'S',270:'W'}[g];
@@ -5026,6 +5154,34 @@ function navDraw(){
   nd(0,'#ef6b6b');nd(180,'#c8d6de');
   c.beginPath();c.arc(cx,cy,R*0.05,0,7);c.fillStyle='#bdccd6';c.fill();
 
+  /* the wash off each kick, on the side the fin actually swept */
+  for(var w=0;w<nav.wash.length;w++){
+    var k=nav.wash[w],fade=1-k.age/0.7;
+    c.beginPath();
+    c.arc(cx,cy,R*(0.80+k.age*0.10),
+      (k.side<0?Math.PI*0.60:Math.PI*0.16),(k.side<0?Math.PI*0.84:Math.PI*0.40));
+    c.strokeStyle='rgba(54,201,192,'+(fade*0.8).toFixed(3)+')';
+    c.lineWidth=Math.max(1,R*0.05*fade);c.stroke();
+  }
+
+  /* cross-current: streaks blowing across the face while you swim */
+  if(nav.phase==='swim'&&nav.tier.current){
+    var dir=nav.curDir;
+    c.save();
+    c.beginPath();c.arc(cx,cy,R*0.775,0,7);c.clip();
+    for(var s=0;s<7;s++){
+      var ph=(nav.elapsed*0.34+s/7)%1;
+      var sx=dir>0?(S*1.05-ph*S*1.45):(-S*0.05+ph*S*1.45);
+      var sy=S*0.15+s*(S*0.105);
+      c.beginPath();c.moveTo(sx,sy);c.lineTo(sx-dir*S*0.10,sy);
+      c.strokeStyle='rgba(143,232,255,.32)';c.lineWidth=2;c.stroke();
+      c.beginPath();c.moveTo(sx,sy);
+      c.lineTo(sx-dir*S*0.028,sy-S*0.016);c.lineTo(sx-dir*S*0.028,sy+S*0.016);
+      c.closePath();c.fillStyle='rgba(143,232,255,.32)';c.fill();
+    }
+    c.restore();
+  }
+
   /* lubber line — where the diver is actually pointing */
   c.beginPath();c.moveTo(cx,cy-R*0.79);c.lineTo(cx,cy-R*0.60);
   c.strokeStyle='#36c9c0';c.lineWidth=4;c.stroke();
@@ -5033,16 +5189,18 @@ function navDraw(){
   /* readout */
   c.fillStyle='#eaf6fb';c.font='800 '+Math.round(S*0.11)+'px system-ui,sans-serif';
   c.fillText(navFmt(nav.heading),cx,cy+R*0.30);
-  var err=Math.abs(navDiff(nav.heading,nav.bezel));
+  var d=navDiff(nav.target,nav.heading),err=Math.abs(d);
   c.font='600 '+Math.round(S*0.042)+'px system-ui,sans-serif';
-  c.fillStyle=err<=NAV.GATE?'#4fd28a':'#f3c64f';
-  c.fillText(nav.phase==='set'?'bezel '+navFmt(nav.bezel)
-    :(err<=NAV.GATE?'ON COURSE':Math.round(err)+'° OFF'),cx,cy+R*0.44);
+  c.fillStyle=err<=nav.tier.gate?'#4fd28a':'#f3c64f';
+  c.fillText(err<=nav.tier.gate?(nav.phase==='align'?'ON THE BEARING':'ON COURSE')
+    :Math.round(err)+'° off · kick '+(d>0?'LEFT':'RIGHT')+' fin',cx,cy+R*0.44);
 
-  var acc=nav.elapsed?nav.onCourse/nav.elapsed:0;
+  var acc=(nav.phase==='swim'&&nav.elapsed)?nav.onCourse/nav.elapsed:0;
   var af=$('navAccFill');af.style.width=Math.round(acc*100)+'%';
   af.className=acc<0.5?'low':'';
-  $('navDistFill').style.width=Math.round(Math.min(1,nav.elapsed/NAV.LEGSECS)*100)+'%';
+  /* while aligning the distance bar doubles as the "hold it there" meter */
+  $('navDistFill').style.width=Math.round((nav.phase==='swim'?Math.min(1,nav.elapsed/nav.tier.secs)
+    :nav.phase==='align'?Math.min(1,nav.settled/NAV.SETTLE):0)*100)+'%';
 }
 
 function navFinishLeg(){
@@ -5050,12 +5208,14 @@ function navFinishLeg(){
   nav.score+=acc;
   var pts=Math.round(acc*22);
   if(pts>=MIN_REWARD)award(pts);else penalize();
-  $('navFact').textContent='Leg '+nav.leg+': on course '+Math.round(acc*100)+'% of the way. '+
+  $('navFact').textContent='Leg '+nav.leg+': on course '+Math.round(acc*100)+'% of the way ('+
+    nav.kicksL+' left kicks, '+nav.kicksR+' right). '+
     (acc>0.85?'That is a bearing you could actually dive.'
-     :acc>0.6?'The current was winning some of the time — lead into it.'
-     :'Watch the needle, not the numbers. Small corrections, held.');
-  nav.phase='wait';
+     :acc>0.6?'The current was winning some of the time — slip in more kicks on the fin that fights it.'
+     :'Small kicks, kept alternating. Chase it and you swing straight past.');
+  nav.phase='wait';nav.rate=0;
   $('navGo').textContent=nav.leg>=nav.legs?'FINISH':'NEXT LEG';
+  $('navGo').disabled=false;
   $('navTask').innerHTML='Leg complete.';
 }
 function navEnd(){
@@ -5067,22 +5227,12 @@ function navEnd(){
   setTimeout(advanceGame,3000);
 }
 (function(){
-  function turnBtn(id,dir){
-    holdButton($(id),function(on){if(nav&&!nav.done)nav.turn=on?dir:0;});
-  }
-  turnBtn('navLeft',-1);turnBtn('navRight',1);
+  tapButton($('navLeft'),function(){navKick(-1);},['ArrowLeft','Left','a','A']);
+  tapButton($('navRight'),function(){navKick(1);},['ArrowRight','Right','d','D']);
   var go=$('navGo');if(!go)return;
   go.onclick=function(){
     if(!nav||nav.done)return;
-    if(nav.phase==='set'){
-      var off=Math.abs(navDiff(nav.bezel,nav.target));
-      if(off>4){$('navTask').innerHTML='Bezel is <b>'+Math.round(off)+'°</b> out — line the gate up with '+navFmt(nav.target)+' first.';return;}
-      nav.bezel=nav.target;nav.phase='swim';nav.elapsed=0;nav.onCourse=0;nav.turn=0;
-      $('navTask').innerHTML='Swim it — hold the needle inside the gold gate. There is a current.';
-      $('navGo').disabled=true;
-    } else if(nav.phase==='wait'){
-      $('navGo').disabled=false;$('navFact').textContent='';navNextLeg();
-    }
+    if(nav.phase==='wait'){$('navFact').textContent='';navNextLeg();}
   };
 })();
 
