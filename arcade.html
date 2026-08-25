@@ -174,8 +174,16 @@
     padding:6px 8px;font-size:12px;color:var(--muted);border-top:2px dashed var(--line)}
   .si-target.si-filled{border-top-style:solid;border-top-color:var(--good);color:var(--good);font-weight:600}
   .si-tray{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px;justify-content:center}
-  .si-token{cursor:grab;background:var(--surface);border:1px solid var(--accent);color:var(--text);
-    border-radius:8px;padding:8px 12px;font-size:12.5px;touch-action:none}
+  .si-token{cursor:pointer;background:var(--surface);border:1px solid var(--accent);color:var(--text);
+    border-radius:8px;padding:8px 12px;font-size:12.5px;touch-action:manipulation}
+  .si-token.si-sel{background:var(--accentd);border-color:var(--accent);color:var(--accent);
+    font-weight:700;box-shadow:0 0 0 2px rgba(54,201,192,.35)}
+  /* once a name is armed, show the drop zones as live targets */
+  .si-arming .si-target:not(.si-filled){border-top-color:var(--accent);color:var(--accent)}
+  /* The names have to stay reachable while you scroll a column of nine
+     sharks, so they ride the bottom of the screen. */
+  .si-tray{position:sticky;bottom:0;z-index:5;padding:8px 4px 4px;
+    background:linear-gradient(180deg,rgba(6,26,36,0),var(--bg) 35%)}
 
   /* ── CHOICE BUTTONS — 2-col grid ── */
   /* Quiz stage: from tablet width up, "Next creature" is parked to the right of
@@ -601,35 +609,7 @@
   .hb-sub{font-size:10px;opacity:.65}
   .hold-btn.on{transform:translateY(2px);filter:brightness(1.45)}
   .hold-btn:disabled{opacity:.45}
-  .macro-btn{background:#0d3b46;color:#9fe8e2;border-color:var(--accent)}
 
-  /* ── BETWEEN THE SURGES ── */
-  .macro-stage{position:relative;flex:1;min-height:0;border-radius:12px;overflow:hidden;
-    border:1px solid var(--line);background:#04161f}
-  .macro-stage canvas{display:block;width:100%;height:100%}
-  .macro-intro{position:absolute;inset:0;background:rgba(4,22,31,.94);display:flex;
-    flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px;text-align:center}
-  .macro-intro.gone{display:none}
-  .mi-title{font-size:clamp(16px,4.4vw,22px);font-weight:800;color:var(--text)}
-  .mi-steps{font-size:clamp(12px,3.2vw,15px);line-height:1.7;color:var(--muted)}
-  .mi-steps b{color:var(--accent)}
-  .mi-demo{position:relative;width:88px;height:88px;display:flex;align-items:center;justify-content:center}
-  .mi-demo i{position:absolute;inset:0;border-radius:50%;border:3px solid var(--accent);
-    transform:scale(1.5);opacity:.25}
-  .mi-demo i.closing{animation:miClose 3s ease-in-out infinite}
-  @keyframes miClose{
-    0%{transform:scale(1.5);opacity:.25}
-    45%{transform:scale(1);opacity:1}
-    62%{transform:scale(1);opacity:1}
-    70%{transform:scale(1.15);opacity:0}
-    100%{transform:scale(1.5);opacity:0}
-  }
-  .mi-demo span{font-size:34px;animation:miPress 3s ease-in-out infinite}
-  @keyframes miPress{
-    0%,8%{transform:translateY(-10px)}
-    18%,62%{transform:translateY(2px)}
-    70%,100%{transform:translateY(-10px)}
-  }
 
   /* ── MIGRATION HIGHWAY ── */
   .mig-stage{flex-shrink:0;margin-bottom:10px}
@@ -1496,7 +1476,7 @@
     <!-- 17. SHARK ID (drag each name onto its matching shark photo) -->
     <div class="panel" id="p-sharkid">
       <div class="game-header">
-        <span class="game-label">Drag each name onto its shark</span>
+        <span class="game-label">Tap a name, then tap its shark</span>
         <span class="score">Matched <b id="sharkidPlaced">0</b> / <b id="sharkidTotal">0</b></span>
       </div>
       <div class="si-grid" id="sharkidGrid"></div>
@@ -1506,29 +1486,6 @@
     </div>
 
     <!-- HALL OF FAME -->
-    <!-- BETWEEN THE SURGES — the macro shot -->
-    <div class="panel" id="p-macro">
-      <div class="game-header">
-        <span class="game-label">Between the surges</span>
-        <span class="score">Shot <b id="macroShot">1</b>/<b id="macroShots">4</b></span>
-      </div>
-      <div class="macro-stage" id="macroStage">
-        <canvas id="macroCanvas"></canvas>
-        <div class="macro-intro" id="macroIntro">
-          <div class="mi-title">Photograph it in the surge</div>
-          <div class="mi-demo"><i id="miRing"></i><span id="miHand">✋</span></div>
-          <div class="mi-steps">
-            <b>HOLD</b> to focus — the ring must close<br>
-            <b>RELEASE</b> at the still moment between surges
-          </div>
-          <button class="btn" id="macroStart">I'm ready →</button>
-        </div>
-      </div>
-      <button class="hold-btn macro-btn" id="macroBtn"><span class="hb-main" id="macroBtnMain">HOLD TO FOCUS</span><span class="hb-sub">release to shoot</span></button>
-      <p class="qfact" id="macroCoach"></p>
-      <p class="auto-notice" id="macroNotice"></p>
-    </div>
-
     <!-- MIGRATION HIGHWAY -->
     <div class="panel" id="p-migrate">
       <div class="game-header">
@@ -1935,7 +1892,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',macro:'Between the Surges',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -2542,8 +2499,7 @@ var GAME_EXP_DEFAULTS={
   wreckfind:['snorkel','scuba','freedive'],
   ascent:   ['scuba'],                        /* return-to-surface: scuba only */
   nav:      ['scuba','freedive'],
-  neutral:  ['snorkel','scuba','freedive'],
-  macro:    ['snorkel','scuba','freedive']
+  neutral:  ['snorkel','scuba','freedive']
 };
 var GAME_EXP={};
 function loadGameExp(){
@@ -2828,7 +2784,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wreckfind','sharkid','migrate','macro'];
+var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wreckfind','sharkid','migrate'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2954,7 +2910,6 @@ function startGame(name){
   else if(name==='memory')initMemory();
   else if(name==='ascent')initAscent();
   else if(name==='migrate')initMigrate();
-  else if(name==='macro')initMacro();
   else if(name==='neutral')initNeutral();
   else if(name==='nav')initNav();
 }
@@ -2976,13 +2931,12 @@ var GAME_META={
   season:{icon:'📅',name:'When Will I See It?',desc:'Match species to the months'},
   wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
   wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'},
-  sharkid:{icon:'🦈',name:'Shark ID',desc:'Drag each name onto its shark'},
+  sharkid:{icon:'🦈',name:'Shark ID',desc:'Tap a name, then tap its shark'},
   zoom:{icon:'🔍',name:'Zoom In',desc:'Name it before it zooms out'},
   lineup:{icon:'📏',name:'Size Line-Up',desc:'Tap them into the right order'},
   memory:{icon:'🧠',name:'Dive Log Memory',desc:'Match the photo to the name'},
   ascent:{icon:'⬆️',name:'Safe Ascent',desc:'Return to the surface without hurting yourself'},
   migrate:{icon:'🐋',name:'Migration Highway',desc:'Which way is it heading?'},
-  macro:{icon:'📷',name:'Between the Surges',desc:'Shoot it in the pause'},
   neutral:{icon:'🫁',name:'Neutral',desc:'Hover through the gully on your lungs'},
   nav:{icon:'🧭',name:'Nav Trainer',desc:'Kick your fins to hold a bearing'}
 };
@@ -3033,7 +2987,7 @@ var STRIP_SHORT={quiz:'Guess who',breath:'Breath hold',silhouette:'Silhouette',l
   colour:'Colour it',trumps:'Stat battle',oddone:'Odd one out',speed:'Speed round',
   season:'When to see',wreckid:'Wreck detective',wreckfind:'Wreck finder',sharkid:'Shark ID',
   zoom:'Zoom in',ascent:'Safe ascent',nav:'Nav trainer',neutral:'Neutral',migrate:'Migration',
-  macro:'Macro shot',lineup:'Line-up',memory:'Memory'};
+  lineup:'Line-up',memory:'Memory'};
 /* The strip used to be hand-written markup listing every game in its own
    order. That made it disagree with the menu twice over: a different sequence,
    and no age-group filtering at all — so a game switched off for adults still
@@ -4463,10 +4417,11 @@ function initSharkId(){
   var keys=shuffle(SHARK_ID_KEYS.slice());
   sharkidState={keys:keys,placed:0,total:keys.length};
   $('sharkidPlaced').textContent=0;$('sharkidTotal').textContent=keys.length;
-  $('sharkidMsg').textContent='';$('sharkidNotice').textContent='';
+  $('sharkidMsg').textContent='Tap a name below, then tap the shark it belongs to.';
+  $('sharkidNotice').textContent='';
   $('sharkidGrid').innerHTML=keys.map(function(k){
     return '<div class="si-card">'+ART_html(k,siCardH())+
-      '<div class="si-target" data-key="'+k+'">Drop name here</div></div>';
+      '<div class="si-target" data-key="'+k+'">Tap to name</div></div>';
   }).join('');
   $('sharkidTray').innerHTML=shuffle(keys.slice()).map(function(k){
     return '<div class="si-token" draggable="true" data-key="'+k+'">'+esc(QD(k).n)+'</div>';
@@ -4505,24 +4460,34 @@ function wireSharkId(){
     t.addEventListener('dragover',function(e){if(!t.classList.contains('si-filled'))e.preventDefault();});
     t.addEventListener('drop',function(e){e.preventDefault();if(t.classList.contains('si-filled')||!dragKey)return;place(dragKey,t);dragKey=null;});
   });
-  /* Touch drag (phones/tablets) */
+  /* Tap a name, then tap a shark. Dragging on a phone was unplayable: the
+     names sit below nine cards, so the target is always off-screen, and the
+     drag fought the page scroll the whole way. Tapping needs no reach and
+     survives scrolling, and it works with a mouse too. */
+  var picked=null;
+  function select(tok){
+    if(picked===tok){clearPick();return;}
+    clearPick();
+    picked=tok;tok.classList.add('si-sel');
+    $('sharkidMsg').textContent='Now tap the shark that is the '+QD(tok.dataset.key).n+'.';
+    $('sharkidGrid').classList.add('si-arming');
+  }
+  function clearPick(){
+    if(picked)picked.classList.remove('si-sel');
+    picked=null;$('sharkidGrid').classList.remove('si-arming');
+  }
   tokens.forEach(function(tok){
-    tok.addEventListener('touchstart',function(e){
-      dragKey=tok.dataset.key;
-      ghost=tok.cloneNode(true);ghost.style.position='fixed';ghost.style.zIndex='9999';ghost.style.opacity='0.85';ghost.style.pointerEvents='none';
-      document.body.appendChild(ghost);moveGhost(e.touches[0]);
-    },{passive:true});
-    tok.addEventListener('touchmove',function(e){if(ghost){moveGhost(e.touches[0]);}},{passive:true});
-    tok.addEventListener('touchend',function(e){
-      if(ghost){ghost.remove();ghost=null;}
-      if(!dragKey)return;
-      var t=e.changedTouches[0];var el=document.elementFromPoint(t.clientX,t.clientY);
-      var target=el&&el.closest?el.closest('.si-target'):null;
-      if(target&&!target.classList.contains('si-filled'))place(dragKey,target);
-      dragKey=null;
+    tok.addEventListener('click',function(e){e.preventDefault();select(tok);});
+  });
+  targets.forEach(function(t){
+    t.addEventListener('click',function(){
+      if(t.classList.contains('si-filled'))return;
+      if(!picked){$('sharkidMsg').textContent='Pick a name from the list first.';return;}
+      var key=picked.dataset.key;
+      clearPick();
+      place(key,t);
     });
   });
-  function moveGhost(t){if(ghost){ghost.style.left=(t.clientX-30)+'px';ghost.style.top=(t.clientY-14)+'px';}}
 }
 
 
@@ -4617,280 +4582,6 @@ function tapButton(el,onTap,keys){
   }
 }
 
-/* ════════════════════════════════════════════════════════════════
-   BETWEEN THE SURGES — the macro shot.
-
-   Every other timed game in the arcade is react-to-what-you-see.
-   This one is "press BEFORE, release ON": you must commit to holding
-   roughly 0.6 s before the still moment exists, because the focus
-   ring has to close first. Committing ahead of a moment that has not
-   happened yet is a different motor grammar entirely.
-
-   The physics: you and the subject are both moved by the same surge,
-   but you are on a different phase and amplitude because you are
-   bracing against rock and it is not. So RELATIVE velocity — the
-   thing that actually blurs a photograph — passes through zero twice
-   a cycle at a moment you have to feel rather than count.
-
-   Blur is drawn as a three-ghost alpha composite rather than a canvas
-   filter: filters are slow and inconsistent across the machines this
-   will run on, and the cheap version reads better anyway.
-
-   Head points below were placed by eye off the actual photographs.
-   ════════════════════════════════════════════════════════════════ */
-var MACRO={
-  SUBJECTS:[
-    {key:'seadragon',    hx:0.17, hy:0.31, name:'Weedy seadragon',
-     coach:'Seadragons sway with the surge — never chase one, wait for the pause.'},
-    {key:'pjshark',      hx:0.70, hy:0.45, name:'Port Jackson shark',
-     coach:'Resting sharks are easy: it is YOUR movement that ruins the frame.'},
-    {key:'groper',       hx:0.42, hy:0.34, name:'Eastern blue groper',
-     coach:'Gropers come to you. Brace, pre-focus, and wait for the lull.'},
-    {key:'cuttle',       hx:0.66, hy:0.35, name:'Giant cuttlefish',
-     coach:'Cuttlefish hover but the water still moves you. Steady beats close.'},
-    {key:'sydneyoctopus',hx:0.52, hy:0.38, name:'Sydney octopus',
-     coach:'Low light means a slow shutter, so the still moment matters even more.'}
-  ],
-  TIERS:{
-    'Young Explorer' :{period:3.4, focus:420, shots:3, tol:0.20, recycle:0, label:'HOLD STEADY'},
-    'Teen Explorer'  :{period:2.7, focus:520, shots:4, tol:0.15, recycle:0, label:'HOLD TO FOCUS'},
-    'Adult Explorer' :{period:2.1, focus:620, shots:4, tol:0.11, recycle:2200, label:'HOLD TO FOCUS'}
-  },
-  SUBJ_AMP:0.055,     /* of frame width */
-  VIEW_AMP:0.038,
-  VIEW_PHASE:1.05,    /* radians of lag between you and the subject */
-  CAPS:12             /* seconds per shot */
-};
-var mc=null,mcRAF=null,mcImgs={};
-
-function mcTier(){return MACRO.TIERS[USER.group]||MACRO.TIERS['Teen Explorer'];}
-
-function initMacro(){
-  var tier=mcTier();
-  var cv=$('macroCanvas'),st=$('macroStage');
-  cv.width=st.clientWidth||360;cv.height=st.clientHeight||300;
-  mc={
-    w:cv.width,h:cv.height,tier:tier,
-    queue:shuffle(MACRO.SUBJECTS.filter(function(sb){return !!PHOTOS[sb.key];}))
-            .slice(0,tier.shots),
-    shot:0,total:tier.shots,done:false,started:false,
-    holding:false,holdT:0,locked:false,lastFire:-9999,scoreSum:0
-  };
-  $('macroShots').textContent=mc.total;$('macroShot').textContent=1;
-  $('macroCoach').textContent='';$('macroNotice').textContent='';
-  $('macroBtnMain').textContent=tier.label;
-  $('macroBtn').disabled=true;
-  var intro=$('macroIntro');
-  intro.classList.remove('gone');
-  $('miRing').className='closing';
-  mcRound();
-}
-function mcStop(){if(mcRAF){cancelAnimationFrame(mcRAF);mcRAF=null;}}
-
-function mcRound(){
-  /* a round callback left over from a previous visit can land after
-     initMacro has rebuilt the state; without this it shifts an empty
-     queue and dies on the next property read */
-  if(!mc||!mc.queue||!mc.queue.length)return;
-  mc.cur=mc.queue.shift();
-  mc.t=0;mc.holding=false;mc.holdT=0;mc.locked=false;mc.fired=false;
-  $('macroShot').textContent=mc.shot+1;
-  var k=mc.cur.key;
-  if(!mcImgs[k]){
-    var im=new Image();im.src=PHOTOS[k].src;mcImgs[k]=im;
-  }
-  if(mc.started){mc.last=performance.now();if(!mcRAF)mcRAF=requestAnimationFrame(mcStep);}
-}
-
-/* subject and viewfinder ride the same surge out of phase, so the
-   relative velocity — what actually blurs the shot — crosses zero */
-function mcOffsets(t){
-  var w=2*Math.PI/mc.tier.period;
-  var sx=MACRO.SUBJ_AMP*mc.w*Math.sin(w*t);
-  var vx=MACRO.VIEW_AMP*mc.w*Math.sin(w*t+MACRO.VIEW_PHASE);
-  var sv=MACRO.SUBJ_AMP*mc.w*w*Math.cos(w*t);
-  var vv=MACRO.VIEW_AMP*mc.w*w*Math.cos(w*t+MACRO.VIEW_PHASE);
-  return {off:sx-vx, rel:(sv-vv)};
-}
-function mcRelNorm(t){
-  var w=2*Math.PI/mc.tier.period;
-  var peak=(MACRO.SUBJ_AMP+MACRO.VIEW_AMP)*mc.w*w;
-  return Math.min(1,Math.abs(mcOffsets(t).rel)/peak);
-}
-
-function mcStep(now){
-  if(!mc||mc.done)return;
-  if(!document.getElementById('p-macro').classList.contains('show')){mcStop();return;}
-  var dt=Math.min(0.05,(now-mc.last)/1000);mc.last=now;
-  mc.t+=dt;
-  if(mc.holding&&!mc.locked){
-    mc.holdT+=dt*1000;
-    if(mc.holdT>=mc.tier.focus)mc.locked=true;
-  }
-  mcDraw();
-  /* Timing out is the one early exit that CONTINUES the game rather than
-     ending it, so the frame handle has to be dropped: mcRound only restarts
-     the loop when mcRAF is null, and a stale id from the frame we are inside
-     froze the whole game on the first missed shot. */
-  if(mc.t>MACRO.CAPS&&!mc.fired){mcRAF=null;return mcFire(true);}
-  mcRAF=requestAnimationFrame(mcStep);
-}
-
-function mcDraw(){
-  var c=$('macroCanvas').getContext('2d'),w=mc.w,h=mc.h;
-  c.fillStyle='#04161f';c.fillRect(0,0,w,h);
-  var im=mcImgs[mc.cur.key];
-  var o=mcOffsets(mc.t);
-
-  if(im&&im.complete&&im.naturalWidth){
-    var scale=Math.max(w/im.naturalWidth,h/im.naturalHeight)*1.25;
-    var dw=im.naturalWidth*scale,dh=im.naturalHeight*scale;
-    var dx=(w-dw)/2+o.off, dy=(h-dh)/2;
-    c.save();c.beginPath();c.rect(0,0,w,h);c.clip();
-    c.drawImage(im,dx,dy,dw,dh);
-    c.restore();
-    mc.frame={dx:dx,dy:dy,dw:dw,dh:dh};
-  } else {
-    c.fillStyle='#0b3040';c.fillRect(0,0,w,h);
-    c.fillStyle='#9fc3d2';c.font='13px system-ui,sans-serif';c.textAlign='center';
-    c.fillText('loading…',w/2,h/2);
-  }
-
-  /* viewfinder chrome */
-  var m=Math.min(w,h)*0.06;
-  c.strokeStyle='rgba(255,255,255,.55)';c.lineWidth=3;
-  [[m,m,1,1],[w-m,m,-1,1],[m,h-m,1,-1],[w-m,h-m,-1,-1]].forEach(function(k){
-    c.beginPath();c.moveTo(k[0]+k[2]*22,k[1]);c.lineTo(k[0],k[1]);c.lineTo(k[0],k[1]+k[3]*22);c.stroke();
-  });
-
-  /* focus box: fixed at frame centre, the subject moves through it */
-  var fx=w/2,fy=h*0.46,fr=Math.min(w,h)*0.13;
-  var prog=Math.min(1,mc.holdT/mc.tier.focus);
-  c.strokeStyle=mc.locked?'#4fd28a':'rgba(255,255,255,.6)';
-  c.lineWidth=mc.locked?3:2;
-  c.strokeRect(fx-fr,fy-fr,fr*2,fr*2);
-  if(mc.holding&&!mc.locked){
-    var r=fr*(1.9-0.9*prog);
-    c.strokeStyle='#36c9c0';c.lineWidth=3;
-    c.beginPath();c.arc(fx,fy,r,0,6.283);c.stroke();
-  }
-
-  /* sharpness needle: live relative velocity */
-  var rel=mcRelNorm(mc.t);
-  var bw=w*0.62,bx=(w-bw)/2,by=h-30;
-  c.fillStyle='rgba(3,20,28,.66)';c.fillRect(bx,by,bw,12);
-  c.fillStyle=rel<mc.tier.tol?'#4fd28a':(rel<0.4?'#f3c64f':'#ef6b6b');
-  c.fillRect(bx+2,by+2,(bw-4)*(1-rel),8);
-  c.fillStyle='rgba(255,255,255,.85)';
-  c.fillRect(bx+2+(bw-4)*(1-mc.tier.tol)-1,by-2,2,16);
-  c.font='10px system-ui,sans-serif';c.textAlign='center';c.fillStyle='#9fc3d2';
-  c.fillText(rel<mc.tier.tol?'STILL — SHOOT NOW':'moving',w/2,by-6);
-
-  /* strobe recycle, adult tier only */
-  if(mc.tier.recycle){
-    var since=performance.now()-mc.lastFire;
-    if(since<mc.tier.recycle){
-      c.fillStyle='rgba(239,107,107,.9)';
-      c.fillRect(bx,by+16,(bw)*(1-since/mc.tier.recycle),4);
-      c.fillStyle='#ef6b6b';c.fillText('strobe recycling',w/2,by+30);
-    }
-  }
-}
-
-function mcFire(timedOut){
-  if(!mc||mc.fired)return;
-  mc.fired=true;
-  var tier=mc.tier;
-
-  if(timedOut){
-    penalize();
-    $('macroCoach').textContent='Missed the shot — it swam off. Commit sooner.';
-    return mcNext();
-  }
-  if(!mc.locked){
-    penalize();
-    $('macroCoach').textContent='Out of focus — you have to HOLD until the ring closes, then release.';
-    return mcNext();
-  }
-  /* strobe not recycled: the frame comes back black */
-  if(tier.recycle&&performance.now()-mc.lastFire<tier.recycle){
-    penalize();
-    $('macroCoach').textContent='Black frame — the strobe had not recycled. One good shot beats three panicked ones.';
-    mc.lastFire=performance.now();
-    return mcNext();
-  }
-  mc.lastFire=performance.now();
-
-  var rel=mcRelNorm(mc.t);
-  var sharp=Math.max(0,1-rel/0.55);
-  /* framing: where the animal's head sat relative to the focus box */
-  var fr=mc.frame||{dx:0,dy:0,dw:mc.w,dh:mc.h};
-  var headX=fr.dx+fr.dw*mc.cur.hx, headY=fr.dy+fr.dh*mc.cur.hy;
-  var d=Math.hypot(headX-mc.w/2,headY-mc.h*0.46)/(Math.min(mc.w,mc.h)*0.5);
-  var framing=Math.max(0,1-d*0.8);
-  var score=sharp*0.72+framing*0.28;
-  mc.scoreSum+=score;
-
-  var pts=Math.round(score*24);
-  if(pts>=MIN_REWARD)award(pts);else penalize();
-
-  mcShowResult(rel,score);
-  $('macroCoach').textContent=
-    (rel<tier.tol? '✅ Sharp. '+mc.cur.coach
-     : rel<0.4  ? '➖ Slight blur — you fired just off the pause. '+mc.cur.coach
-                : '❌ You fired on the push. Wait for the water to stop moving you.');
-  setTimeout(mcNext,2100);
-}
-
-/* three-ghost alpha composite: cheap, fast and reads as motion blur */
-function mcShowResult(rel,score){
-  var c=$('macroCanvas').getContext('2d'),w=mc.w,h=mc.h;
-  var im=mcImgs[mc.cur.key];if(!im||!im.complete||!mc.frame)return;
-  var fr=mc.frame;
-  var spread=rel*w*0.055;
-  c.fillStyle='#04161f';c.fillRect(0,0,w,h);
-  c.save();c.beginPath();c.rect(0,0,w,h);c.clip();
-  for(var i=-1;i<=1;i++){
-    c.globalAlpha=i===0?1:0.42;
-    c.drawImage(im,fr.dx+i*spread,fr.dy,fr.dw,fr.dh);
-  }
-  c.globalAlpha=1;c.restore();
-  var pct=Math.round(score*100);
-  c.fillStyle='rgba(3,20,28,.78)';c.fillRect(0,h/2-34,w,68);
-  c.textAlign='center';c.fillStyle=pct>75?'#4fd28a':(pct>45?'#f3c64f':'#ef6b6b');
-  c.font='800 30px system-ui,sans-serif';c.fillText(pct+'%',w/2,h/2-2);
-  c.fillStyle='#eaf6fb';c.font='600 13px system-ui,sans-serif';
-  c.fillText(mc.cur.name,w/2,h/2+22);
-}
-
-function mcNext(){
-  mc.shot++;
-  if(mc.shot>=mc.total)return mcEnd();
-  mcRound();
-}
-function mcEnd(){
-  if(mc.done)return;
-  mc.done=true;mcStop();
-  $('macroBtn').disabled=true;
-  var avg=mc.scoreSum/Math.max(1,mc.total);
-  $('macroNotice').textContent=(avg>0.75?'A folder of keepers. 📷 '
-    :avg>0.45?'A few you would actually post. 📷 '
-    :'Mostly blurry green — welcome to Sydney surge. 📷 ')+'Pick another game when you are ready →';
-  setTimeout(advanceGame,3000);
-}
-
-$('macroStart').onclick=function(){
-  $('macroIntro').classList.add('gone');
-  $('macroBtn').disabled=false;
-  mc.started=true;mc.t=0;mc.last=performance.now();
-  if(!mcRAF)mcRAF=requestAnimationFrame(mcStep);
-};
-
-holdButton($('macroBtn'),function(on){
-  if(!mc||mc.done||!mc.started)return;
-  if(on){mc.holding=true;mc.holdT=0;mc.locked=false;}
-  else if(mc.holding){mc.holding=false;mcFire(false);}
-});
 
 /* ════════════════════════════════════════════════════════════════
    MIGRATION HIGHWAY — which way is it heading, and is it going
