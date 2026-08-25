@@ -254,6 +254,13 @@
     .tstage>#tdeal{flex:0 0 auto;max-width:9em;white-space:normal;line-height:1.25}
   }
   svg{display:block}
+  /* Licensed third-party photographs carry their credit on the frame itself,
+     wherever ART_html puts the picture. */
+  .photocredit{position:absolute;right:5px;bottom:5px;max-width:92%;
+    font-size:9px;line-height:1.25;font-weight:600;letter-spacing:.2px;
+    color:rgba(255,255,255,.78);background:rgba(0,0,0,.45);
+    padding:2px 6px;border-radius:5px;pointer-events:none}
+  @media(min-width:1000px){.photocredit{font-size:11px;padding:3px 8px}}
   .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
   /* Shared "Next challenge" button. Pinned to the right edge rather than left
      in the page flow: the end-of-game notice can sit below the fold, and the
@@ -2660,7 +2667,7 @@ var PHOTOS={
   sergeantbaker:{src:'images/creatures/sergeantbaker.jpg',alt:'Sergeant baker'},
   sydneyoctopus:{src:'images/creatures/sydneyoctopus.jpg',alt:'Sydney octopus'},
   pygmyleatherjacket:{src:'images/creatures/pygmyleatherjacket.jpg',alt:'Pygmy leatherjacket'},
-  blindshark:{src:'images/creatures/blindshark.jpg',alt:'Eastern blind shark'},
+  blindshark:{src:'images/creatures/blindshark.jpg',alt:'Eastern blind shark',credit:'© Andy Murch / sharksandrays.com'},
   fortescue:{src:'images/creatures/fortescue.jpg',alt:'Eastern fortescue'},
   sixspined:{src:'images/creatures/sixspined.jpg',alt:'Six-spined leatherjacket'},
   weedfish:{src:'images/creatures/weedfish.jpg',alt:'Weedfish'},
@@ -2681,7 +2688,8 @@ function creaturePlaceholder(key){
 var SIL_SHAPE={seadragon:'seadragon',pjshark:'pjshark',groper:'groper',cuttle:'cuttle',bluedevil:'bluedevil',duskywhaler:'pjshark',greynurse:'pjshark',hammeroct:'octopus',angler:'groper'};
 function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
   if(!ph){var sh=SIL_SHAPE[key]||'groper';return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px">'+silSVG(sh,'#15485a')+'</div>';}
-  return '<div style="border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px" data-k="'+key+'"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.parentNode.innerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'"></div>';}
+  return '<div style="position:relative;border-radius:10px;overflow:hidden;height:'+hh+'px;background:#071e29;display:flex;align-items:center;justify-content:center;padding:6px" data-k="'+key+'"><img src="'+ph.src+'" alt="'+ph.alt+'" style="width:100%;height:100%;object-fit:contain;display:block" loading="lazy" onerror="this.parentNode.innerHTML=creaturePlaceholder(this.dataset.k)" data-k="'+key+'">'+
+    (ph.credit?'<span class="photocredit">'+esc(ph.credit)+'</span>':'')+'</div>';}
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
 /* ════════ SITE DATA ════════ */
