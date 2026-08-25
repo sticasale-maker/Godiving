@@ -127,8 +127,10 @@ body{
 .pod-head{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
 .pod-lab{font-size:9.5px;letter-spacing:1.8px;color:var(--dim);text-transform:uppercase;
   text-align:center;line-height:1.25}
+/* line-height:1 is shorter than Bebas Neue's own ascenders, so the glyphs sat
+   3px outside their box and nudged into whatever was under them. */
 .pod-read{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:27px;letter-spacing:1.4px;
-  color:#fff;line-height:1;font-weight:400}
+  color:#fff;line-height:1.16;font-weight:400}
 .pod-read i{font-style:normal;font-family:'DM Mono',monospace;font-size:11px;color:var(--dim);margin-left:4px}
 
 /* Dials and the wave tank scale with the screen so the rig never has to scroll —
@@ -139,14 +141,23 @@ body{
 .dial:active{cursor:grabbing}
 
 /* wave shaper */
+/* flex:1 1 auto so the tank takes the rig's spare height — but NOT min-height:0.
+   That let the box shrink below its own content, and a flex item does not clip:
+   the period slider and its label spilled out under the border and were painted
+   over by the wind dial below, which is why the period could not be dragged.
+   min-height stays at its auto default, so the box can never be shorter than
+   what is in it; #shaperTop's own min-height is what lets the tank shrink. */
 #shaper{display:flex;flex-direction:column;background:rgba(0,0,0,.24);
   border:1px solid var(--border);border-radius:14px;padding:7px 9px 6px;
-  flex:1 1 auto;min-height:0}
+  flex:1 1 auto}
 /* The tank takes whatever height the rig has spare, between a floor that keeps
    the wave legible and a ceiling that stops it swallowing the column on a tall
    screen. Everything else in the rig is fixed height, so this is the one item
    that flexes. */
-#shaperTop{display:flex;gap:8px;flex:1 1 auto;min-height:118px;max-height:430px}
+/* The floor has to clear the HEIGHT column beside the tank — its label, slider
+   and readout need ~121px, and at 118 the readout was spilling 3px below the
+   tank's own border. */
+#shaperTop{display:flex;gap:8px;flex:1 1 auto;min-height:132px;max-height:430px}
 #hgtCol{display:flex;flex-direction:column;align-items:center;width:52px;flex:none}
 /* The canvas is taken right out of the layout, inside a wrapper it fills
    absolutely. It used to be a flex item with height:auto, which means its used
@@ -189,7 +200,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
   border:1px solid var(--border);border-radius:12px;padding:5px 10px 1px}
 .mini-head{display:flex;justify-content:space-between;align-items:baseline;gap:6px}
 .mini-val{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:21px;letter-spacing:1px;
-  color:#fff;line-height:1;font-weight:400}
+  color:#fff;line-height:1.16;font-weight:400}
 .mini-val i{font-style:normal;font-family:'DM Sans',sans-serif;font-size:10px;color:var(--dim);margin-left:2px}
 
 /* One compact row rather than a 2x2 block. At 1920 the rig has no spare
