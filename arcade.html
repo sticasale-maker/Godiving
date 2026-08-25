@@ -950,10 +950,16 @@
   .ticket-sub{font-size:12px;color:var(--muted);line-height:1.5}
 
   /* ── 8. COLOUR THE CREATURE ── */
-  .colour-stage{border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
+  .colour-stage{position:relative;border-radius:12px;overflow:hidden;flex-shrink:0;background:#0b2531;
     display:flex;align-items:center;justify-content:center;border:1px solid var(--line);
     height:var(--artH);max-height:42vh}
   .colour-stage svg{width:100%;height:100%}
+  /* Black and white until the answer lands, then it blooms into colour. One
+     file does both states, so there is nothing to preload or swap. */
+  .col-photo{width:100%;height:100%;object-fit:contain;display:block;
+    filter:grayscale(1) contrast(1.08) brightness(1.04);
+    transition:filter 1.1s cubic-bezier(.22,.8,.3,1)}
+  .col-photo.revealed{filter:none}
   .swatch-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin-top:8px}
   .swatch{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:10px;
     border:1.5px solid var(--line);background:var(--bg2);color:var(--text);cursor:pointer;
@@ -2521,10 +2527,18 @@ var AGE_GROUP_SHORT={'Young Explorer':'Young (≤12)','Teen Explorer':'Teen (13�
 function loadGameAgeGroups(){
   var map={};
   try{map=JSON.parse(localStorage.getItem('gds_game_agegroups')||'{}');}catch(e){map={};}
+  pruneRetired(map);
   GAME_ORDER.forEach(function(g){
     if(!map[g]){var o={};AGE_GROUPS.forEach(function(ag){o[ag]=true;});map[g]=o;}
     else{AGE_GROUPS.forEach(function(ag){if(typeof map[g][ag]!=='boolean')map[g][ag]=true;});}
   });
+  return map;
+}
+/* A retired game leaves its row behind in whatever an operator saved months
+   ago, and the old entry gets written straight back on the next save. Drop
+   anything that is no longer in GAME_ORDER on the way in. */
+function pruneRetired(map){
+  Object.keys(map).forEach(function(g){if(GAME_ORDER.indexOf(g)<0)delete map[g];});
   return map;
 }
 var GAME_AGE_GROUPS={};
@@ -2546,6 +2560,7 @@ var GAME_EXP={};
 function loadGameExp(){
   var map={};
   try{map=JSON.parse(localStorage.getItem('gds_game_exp')||'{}');}catch(e){map={};}
+  pruneRetired(map);
   GAME_ORDER.forEach(function(g){
     var def=GAME_EXP_DEFAULTS[g]||EXP_LEVELS.map(function(e){return e.key;});
     if(!map[g]){var o={};EXP_LEVELS.forEach(function(e){o[e.key]=def.indexOf(e.key)>-1;});map[g]=o;}
@@ -2672,7 +2687,7 @@ var PHOTOS={
   sergeantbaker:{src:'images/creatures/sergeantbaker.jpg',alt:'Sergeant baker'},
   sydneyoctopus:{src:'images/creatures/sydneyoctopus.jpg',alt:'Sydney octopus'},
   pygmyleatherjacket:{src:'images/creatures/pygmyleatherjacket.jpg',alt:'Pygmy leatherjacket'},
-  blindshark:{src:'images/creatures/blindshark.jpg',alt:'Eastern blind shark',credit:'© Andy Murch / sharksandrays.com'},
+  blindshark:{src:'images/creatures/blindshark.jpg',alt:'Eastern blind shark'},
   fortescue:{src:'images/creatures/fortescue.jpg',alt:'Eastern fortescue'},
   sixspined:{src:'images/creatures/sixspined.jpg',alt:'Six-spined leatherjacket'},
   weedfish:{src:'images/creatures/weedfish.jpg',alt:'Weedfish'},
@@ -3684,35 +3699,114 @@ window.addEventListener('keydown',function(ev){
 $('tfNext').onclick=tfRound;
 
 /* ════════ 8. COLOUR THE CREATURE ════════ */
+/* Nudibranchs, shown in black and white. You are guessing the colour scheme
+   from pattern and texture alone, and the reveal is the photograph coming back
+   to life — a CSS filter transition, so one file per animal does both jobs.
+   Rounds are named by their pattern rather than by species: the game is about
+   colour, and a confident species label on a photo of unknown provenance is a
+   claim this file cannot back up. */
 var COL_ROUNDS=[
-  {shape:'seadragon',name:'Weedy seadragon',correct:'Reddish-brown with yellow & purple-blue markings',
-   colors:['linear-gradient(135deg,#b14b2a,#f0c040 60%,#5566cc)','#2e7d32','#777777','#e84393'],
-   options:['Reddish-brown with yellow & purple-blue markings','Bright green all over','Plain grey','Hot pink'],f:'Their colours mimic the weed they drift among.'},
-  {shape:'groper',name:'Eastern blue groper (male)',correct:'Deep cobalt blue',
-   colors:['#1f5fd6','#e8b53a','#d33','#444'],options:['Deep cobalt blue','Golden yellow','Bright red','Charcoal black'],f:'Big males are vivid blue; females are reddish-brown.'},
-  {shape:'cuttle',name:'Giant cuttlefish',correct:'Shifting — any colour at all',
-   colors:['linear-gradient(135deg,#c0392b,#8e44ad,#16a085,#f1c40f)','#1f5fd6','#2e7d32','#9b6b3a'],
-   options:['Shifting — any colour at all','Always solid blue','Always green','Always brown'],f:'They flash through colours faster than almost any animal.'},
-  {shape:'bluedevil',name:'Eastern blue devil',correct:'Blue-grey with orange & blue stripes',
-   colors:['linear-gradient(135deg,#3a6ea5,#e67e22 50%,#3a6ea5)','#2e7d32','#000','#e84393'],
-   options:['Blue-grey with orange & blue stripes','Solid green','Jet black','Bubblegum pink'],f:'A shy, strikingly striped cave-dweller of NSW reefs.'}
+  {img:'images/nudi/yellow-spotted.jpg',
+   correct:'Egg-yolk yellow with dark brown spots',
+   options:[
+     ['Egg-yolk yellow with dark brown spots','linear-gradient(135deg,#ffc400 55%,#4a2c12)'],
+     ['Jet black with white stripes','linear-gradient(135deg,#111 50%,#f2f2f2)'],
+     ['Emerald green with pink tips','linear-gradient(135deg,#12a05a 55%,#ff5fa2)'],
+     ['Scarlet red with blue rings','linear-gradient(135deg,#d62828 55%,#2b6cd6)']],
+   f:'Bright is a warning, not a decoration — most boldly patterned nudibranchs are loaded with sponge toxins or stinging cells stolen from their prey.'},
+
+  {img:'images/nudi/white-orange.jpg',
+   correct:'Creamy white with orange blotches',
+   options:[
+     ['Creamy white with orange blotches','linear-gradient(135deg,#fdf6ee 52%,#ff8412)'],
+     ['Solid navy blue','#16305e'],
+     ['Lime green with black bands','linear-gradient(135deg,#8fd400 55%,#111)'],
+     ['Grey with silver speckles','linear-gradient(135deg,#8b949c 60%,#e8eef2)']],
+   f:'The feathery rosette on the back is the gill. Nudibranch means "naked gill" — it is carried outside the body, with nothing to hide behind.'},
+
+  {img:'images/nudi/blue-dragon.jpg',
+   correct:'Silver-blue with deep blue fingers',
+   options:[
+     ['Silver-blue with deep blue fingers','linear-gradient(135deg,#cfe4f5 45%,#1740b8)'],
+     ['Bright orange with white spots','linear-gradient(135deg,#ff7a00 58%,#fff)'],
+     ['Pale pink all over','#f4b8cd'],
+     ['Chocolate brown with yellow stripes','linear-gradient(135deg,#5a3a1c 55%,#f2c141)']],
+   f:'The blue dragon floats upside down at the surface: blue side up against the sea, silver side down against the sky. It eats bluebottles and keeps their stings.'},
+
+  {img:'images/nudi/blue-cream.jpg',
+   correct:'Deep blue with a cream edge and orange gills',
+   options:[
+     ['Deep blue with a cream edge and orange gills','linear-gradient(135deg,#1348c7 45%,#fff2cc 75%,#ff8a1f)'],
+     ['All-over lemon yellow','#ffd83d'],
+     ['Black with red spots','linear-gradient(135deg,#141414 58%,#d81f1f)'],
+     ['Translucent white','linear-gradient(135deg,#f7fbfd,#dfeaf0)']],
+   f:'Chromodorids feed on sponges and store the distasteful chemicals in the mantle rim — exactly the part they flare at anything that comes too close.'},
+
+  {img:'images/nudi/pale-red-spots.jpg',
+   correct:'Pale blue with a yellow rim and dark red spots',
+   options:[
+     ['Pale blue with a yellow rim and dark red spots','linear-gradient(135deg,#bcd9e8 40%,#ffc61a 70%,#8e0f22)'],
+     ['Chocolate brown with cream stripes','linear-gradient(135deg,#4a3320 55%,#efe1c8)'],
+     ['Neon green with purple dots','linear-gradient(135deg,#38e06a 55%,#7a1fd6)'],
+     ['Plain sandy beige','#d8c39c']],
+   f:'Two together usually means mating. Nudibranchs are hermaphrodites, so both animals crawl away able to lay eggs.'},
+
+  {img:'images/nudi/violet-cerata.jpg',
+   correct:'Violet cerata on a pale golden body',
+   options:[
+     ['Violet cerata on a pale golden body','linear-gradient(135deg,#8b6ad6 48%,#e8c98a)'],
+     ['Bright red with green spots','linear-gradient(135deg,#d81f1f 55%,#25b34a)'],
+     ['Pure white all over','linear-gradient(135deg,#fbfdfe,#e6eef3)'],
+     ['Black with orange bands','linear-gradient(135deg,#141414 55%,#ff8412)']],
+   f:'Those ranks of finger-like cerata are its gut and its armoury: it digests hydroids and parks their unfired stinging cells at the tips.'},
+
+  {img:'images/nudi/green-orange.jpg',
+   correct:'Green with orange bands and purple-blue spots',
+   options:[
+     ['Green with orange bands and purple-blue spots','linear-gradient(135deg,#2fa84f 40%,#ff8412 70%,#3b1fd6)'],
+     ['Silver-grey with black stripes','linear-gradient(135deg,#aeb6bd 55%,#111)'],
+     ['Pale yellow with brown freckles','linear-gradient(135deg,#f5e07a 55%,#7a5a2c)'],
+     ['Deep maroon all over','#5c1026']],
+   f:'Three clashing colours on one animal is not camouflage — it is a billboard saying do not eat me, and it works.'},
+
+  {img:'images/nudi/orange-cerata.jpg',
+   correct:'Flame orange with dark-tipped cerata',
+   options:[
+     ['Flame orange with dark-tipped cerata','linear-gradient(135deg,#ff8a00 55%,#3a1206)'],
+     ['Powder blue with white edges','linear-gradient(135deg,#a8d4ee 55%,#fff)'],
+     ['Olive green with red dots','linear-gradient(135deg,#6d7d29 55%,#d81f1f)'],
+     ['Grey-brown, almost colourless','linear-gradient(135deg,#8a7f70,#b3a898)']],
+   f:'On pale sand this one is impossible to miss. It does not need to hide: what it eats makes it taste appalling.'},
+
+  {img:'images/nudi/white-red-spots.jpg',
+   correct:'White with red spots and a yellow rim',
+   options:[
+     ['White with red spots and a yellow rim','linear-gradient(135deg,#fdfdfd 42%,#e01b1b 70%,#ffc61a)'],
+     ['Blue with green stripes','linear-gradient(135deg,#1740b8 55%,#25b34a)'],
+     ['Solid charcoal grey','#3d444a'],
+     ['Brown with cream blotches','linear-gradient(135deg,#5a3a1c 55%,#efe1c8)']],
+   f:'Same three colours turn up on nudibranchs oceans apart. Predators learn one warning pattern, so it pays to copy a design that already works.'}
 ];
+var COL_ROUNDS_N=6;
 var colQueue=[],colScore=0,colTotal=0,colAnswered=false;
 function initColour(){
-  colQueue=shuffle(COL_ROUNDS.slice()).slice(0,3);colScore=0;colTotal=0;colAnswered=false;
+  colQueue=shuffle(COL_ROUNDS.slice()).slice(0,Math.min(COL_ROUNDS_N,COL_ROUNDS.length));
+  colScore=0;colTotal=0;colAnswered=false;
   $('colScore').textContent=0;$('colTotal').textContent=0;$('colNotice').textContent='';
   colRound();
 }
 function colRound(){
   colAnswered=false;var r=colQueue.shift();
-  $('colStage').innerHTML=lineSVG(r.shape);
+  $('colStage').innerHTML='<img class="col-photo" id="colPhoto" src="'+r.img+'" alt="Nudibranch in black and white">'+
+    (r.credit?'<span class="photocredit">'+esc(r.credit)+'</span>':'');
   $('colFact').textContent='';$('colNext').style.display='none';
-  var idx=shuffle(r.options.map(function(_,i){return i;}));
-  $('colSwatches').innerHTML=idx.map(function(i){
-    return '<button class="swatch" data-opt="'+esc(r.options[i])+'"><span class="dot" style="background:'+r.colors[i]+'"></span><span>'+r.options[i]+'</span></button>';
+  $('colSwatches').innerHTML=shuffle(r.options.slice()).map(function(o){
+    return '<button class="swatch" data-opt="'+esc(o[0])+'"><span class="dot" style="background:'+o[1]+'"></span><span>'+esc(o[0])+'</span></button>';
   }).join('');
   $('colSwatches').querySelectorAll('.swatch').forEach(function(btn){btn.onclick=function(){
     if(colAnswered)return;colAnswered=true;colTotal++;
+    /* the answer IS the photograph coming back into colour */
+    var ph=$('colPhoto');if(ph)ph.classList.add('revealed');
     $('colSwatches').querySelectorAll('.swatch').forEach(function(x){x.disabled=true;
       if(x.dataset.opt===r.correct){x.style.borderColor='var(--good)';x.style.background='var(--goodd)';}});
     if(btn.dataset.opt===r.correct){colScore++;award(timedReward());}
