@@ -274,6 +274,16 @@
     color:rgba(255,255,255,.78);background:rgba(0,0,0,.45);
     padding:2px 6px;border-radius:5px;pointer-events:none}
   @media(min-width:1000px){.photocredit{font-size:11px;padding:3px 8px}}
+  .hof-clock{text-align:center;font-size:15px;color:var(--muted);margin:0 0 10px}
+  .hof-clock b{font-family:'Press Start 2P',monospace;font-size:18px;color:var(--gold);letter-spacing:1px}
+  .hof-verdict{border:2px solid var(--gold);background:rgba(243,198,79,.12);border-radius:12px;
+    padding:12px 14px;margin:0 0 12px;font-size:15px;line-height:1.55;text-align:center}
+  .hof-verdict b{color:var(--gold)}
+  @media(min-width:1000px){.hof-verdict{font-size:18px;padding:16px 18px}}
+  .hof-session{text-align:center;font-size:13px;color:var(--muted);margin:0 0 8px;
+    letter-spacing:.3px}
+  .hof-session b{color:var(--accent)}
+  .game-leave{margin-left:8px;background:var(--accentd);border-color:var(--accent);color:var(--accent)}
   .hof-coverage{text-align:center;font-size:14px;line-height:1.5;color:var(--muted);
     margin:0 0 10px;padding:9px 12px;border-radius:10px;
     background:var(--surface);border:1px solid var(--line)}
@@ -1205,6 +1215,7 @@
     <!-- Points bar -->
     <div class="pointsbar">
       <button class="game-back" id="gameBack">← Back to games</button>
+      <button class="game-back game-leave" id="gameLeave">🏆 Leave &amp; see ranking</button>
       <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
       <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
     </div>
@@ -1672,8 +1683,16 @@
         <h2>🏆 Hall of Fame</h2>
         <div class="hof-group" id="hofGroupLabel"></div>
       </div>
+      <p class="hof-session" id="hofSession"></p>
+      <p class="hof-clock" id="hofClock"></p>
+      <div class="hof-verdict" id="hofVerdict" style="display:none"></div>
       <p class="hof-coverage" id="hofCoverage"></p>
       <p class="encourage" id="hofEncourage"></p>
+      <div class="ticket-box" id="hofRank" style="display:none">
+        <div class="ticket-lead" id="hofRankLead"></div>
+        <div class="ticket-qr" id="hofRankQR"></div>
+        <div class="ticket-sub" id="hofRankSub"></div>
+      </div>
       <div class="ticket-box" id="hofTicket" style="display:none">
         <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a compass</div>
         <div class="ticket-qr" id="hofQR"></div>
@@ -1937,6 +1956,22 @@ var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
 var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
+/* ════════ RANKING SESSIONS ══════════════════════════════════════
+   The board runs in clock hours. A player belongs to the hour in
+   which they finished, and only ever competes against that hour.
+
+   Nothing is written to freeze a session: at 10:00 the 09:00 board
+   stops changing because no later score can ever carry an 09:xx
+   timestamp. A snapshot with no snapshot, and two devices reading the
+   same rows can never disagree about a past hour — the same reason
+   the prize draw computes winners rather than storing them. */
+function sessionStart(ts){var d=new Date(ts||Date.now());d.setMinutes(0,0,0);return d.getTime();}
+function sessionEnd(ts){return sessionStart(ts)+3600000;}
+function hhmm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function sessionLabel(ts){return hhmm(sessionStart(ts))+'–'+hhmm(sessionEnd(ts));}
+function sameSession(a,b){return sessionStart(a)===sessionStart(b);}
+function inSession(row,ts){return row&&row.ts&&sameSession(row.ts,ts);}
+
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
 var STATION=(function(){try{var q=new URLSearchParams(location.search).get('station');if(q){localStorage.setItem('gds_station',q);return q;}return localStorage.getItem('gds_station')||('Phone '+DEVICE_ID.slice(-4));}catch(e){return 'Phone '+DEVICE_ID.slice(-4);}})();
@@ -2010,16 +2045,30 @@ var Cloud=(function(){
     if(group)q=q.eq('grp',group);
     q.then(function(r){cb((r.data||[]).map(mapRow));},function(){cb([]);});
   }
+  /* A Supabase channel accepts .on() handlers only BEFORE subscribe(), and
+     both of these can be called more than once now that a player can reach
+     the Hall of Fame repeatedly. Subscribe once per channel and fan the
+     callbacks out ourselves. */
+  var liveChs={};
+  function liveChannel(name,group){
+    if(liveChs[name])return liveChs[name];
+    var subs=[];
+    var ch=sb.channel(name).on('postgres_changes',
+      {event:'*',schema:'public',table:'scores'},
+      function(){fetchScores(group,function(rows){fire(subs,rows);});});
+    ch.subscribe();
+    return (liveChs[name]={ch:ch,subs:subs});
+  }
   function onLeaderboard(group,cb){
     if(mode==='cloud'&&sb){
       fetchScores(group,cb);
-      sb.channel('lb-'+group).on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(group,cb);}).subscribe();
+      liveChannel('lb-'+group,group).subs.push(cb);
     } else {(lbListeners[group]=lbListeners[group]||[]).push(cb);cb(boardFor(group));}
   }
   function allScores(cb){
     if(mode==='cloud'&&sb){
       fetchScores(null,cb);
-      sb.channel('scores-all').on('postgres_changes',{event:'*',schema:'public',table:'scores'},function(){fetchScores(null,cb);}).subscribe();
+      liveChannel('scores-all',null).subs.push(cb);
     } else {cb(lsScores());}
   }
   function pullScores(cb){if(mode==='cloud'&&sb){fetchScores(null,cb);}else{cb(lsScores());}}
@@ -2067,8 +2116,13 @@ var Cloud=(function(){
   function startSession(data){
     if(mode!=='cloud'||!sb)return;
     mySess=Object.assign({device:DEVICE_ID,station:STATION,ss:false,ts:Date.now()},data);
-    presenceCh=sb.channel('arcade-presence',{config:{presence:{key:DEVICE_ID}}});
-    presenceCh.subscribe(function(status){if(status==='SUBSCRIBED'){presenceCh.track(mySess);}});
+    /* Signing in twice (a test reset, a second player on the booth machine)
+       used to build a second presence channel on the same key and throw. */
+    if(presenceCh){try{presenceCh.track(mySess);}catch(e){}}
+    else{
+      presenceCh=sb.channel('arcade-presence',{config:{presence:{key:DEVICE_ID}}});
+      presenceCh.subscribe(function(status){if(status==='SUBSCRIBED'){presenceCh.track(mySess);}});
+    }
     if(hbTimer)clearInterval(hbTimer);
     hbTimer=setInterval(function(){if(presenceCh){mySess.ts=Date.now();presenceCh.track(mySess);}},10000);
   }
@@ -2180,10 +2234,18 @@ function renderAdmin(){
   live+='</div>';
   /* ---- PRIZE CONSOLE ---- */
   var prize=renderPrizeConsole();
+  /* ---- SESSIONS OF THE DAY ---- */
+  var sess=renderSessionBrowser();
   /* ---- LEADERBOARD MANAGEMENT ---- */
   var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
   var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
   mng+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupM','adminSetGroup(this.value)')+'<button class="warn" onclick="adminResetAll()">🗑 Reset ALL rankings</button></div>';
+  mng+='<div class="row" style="margin-bottom:8px"><button class="acc" onclick="adminTestReset()">'+
+       '🧪 Test reset — clear board + this device</button>'+
+       '<button onclick="adminResetDevice()">↺ Reset this device only</button></div>';
+  mng+='<p class="muted" style="margin:0 0 4px">Use these while rehearsing. '+
+       '“Test reset” empties the shared board as well; “this device only” leaves other '+
+       'the scores of other players alone and just makes this screen a fresh player again.</p>';
   mng+='<table><tr><th>Player</th><th>Score</th><th>When</th><th></th></tr>';
   if(!board.length)mng+='<tr><td colspan="4" class="muted">No entries.</td></tr>';
   board.forEach(function(e){mng+='<tr><td>'+esc(e.name)+'</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td><button class="warn" onclick="adminDelete(\''+e.id+'\')">Delete</button></td></tr>';});
@@ -2193,7 +2255,7 @@ function renderAdmin(){
   var allS=ADM.scores||[];var gc={'Young Explorer':0,'Teen Explorer':0,'Adult Explorer':0};allS.forEach(function(e){if(gc[e.group]!=null)gc[e.group]++;});
   var diag='<span class="muted" style="font-size:12px">Stored scores: '+allS.length+' (Young '+gc['Young Explorer']+' · Teen '+gc['Teen Explorer']+' · Adult '+gc['Adult Explorer']+') · '+(Cloud.mode==='cloud'?'Cloud':'Local')+'</span>';
   var bar='<div class="row" style="margin-bottom:10px;align-items:center"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
-  b.innerHTML=bar+live+prize+mng+dev;
+  b.innerHTML=bar+live+sess+prize+mng+dev;
 }
 /* ════════════════════════════════════════════════════════════════
    PRIZE CONSOLE — the staff-facing side of the hourly draw.
@@ -2215,6 +2277,78 @@ function fmtLeft(ms){
   if(ms<0)ms=0;
   var s=Math.floor(ms/1000),m=Math.floor(s/60);s=s%60;
   return m+':'+(s<10?'0':'')+s;
+}
+/* Every finished player carries the hour they finished in, so the day's
+   sessions are just a grouping of the rows already loaded — nothing extra
+   to store, and a past hour can never change. Staff need the secret code
+   here because that is what a player shows them at the stand. */
+var ADM_SESSION=null,ADM_DAY=null;
+function dayKey(ts){var d=new Date(ts);
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function dayLabel(k){
+  var p=k.split('-'),d=new Date(+p[0],+p[1]-1,+p[2]);
+  return d.toLocaleDateString(undefined,{weekday:'short',day:'numeric',month:'short'});
+}
+function adminSetSession(v){ADM_SESSION=v?Number(v):null;renderAdmin();}
+function adminSetDay(d){ADM_DAY=d;ADM_SESSION=null;renderAdmin();}
+function renderSessionBrowser(){
+  var rows=(ADM.scores||[]).filter(function(e){return e.ts;});
+  var buckets={};
+  rows.forEach(function(e){
+    var k=sessionStart(e.ts);
+    (buckets[k]=buckets[k]||[]).push(e);
+  });
+  var keys=Object.keys(buckets).map(Number).sort(function(a,b){return b-a;});
+  var h='<div class="card"><h3>Sessions — hourly rankings, codes &amp; prizes</h3>';
+  if(!keys.length)return h+'<p class="muted">No finished players yet.</p></div>';
+  if(ADM_SESSION===null||keys.indexOf(ADM_SESSION)<0)ADM_SESSION=keys[0];
+
+  /* The show runs Saturday AND Sunday, so the day is its own control
+     rather than something to hunt for inside one long hour list. */
+  var days=[];
+  keys.forEach(function(k){var d=dayKey(k);if(days.indexOf(d)<0)days.push(d);});
+  if(ADM_DAY===null||days.indexOf(ADM_DAY)<0)ADM_DAY=dayKey(ADM_SESSION);
+  if(days.length>1){
+    h+='<div class="row" style="margin-bottom:8px">'+days.map(function(d){
+      return '<button class="'+(d===ADM_DAY?'acc':'')+'" onclick="adminSetDay(\''+d+'\')">'+
+        dayLabel(d)+'</button>';
+    }).join('')+'</div>';
+  }
+  var dayKeys=keys.filter(function(k){return dayKey(k)===ADM_DAY;});
+  if(dayKeys.indexOf(ADM_SESSION)<0)ADM_SESSION=dayKeys[0];
+
+  h+='<div class="row" style="margin-bottom:8px"><select onchange="adminSetSession(this.value)">'+
+     dayKeys.map(function(k){
+       return '<option value="'+k+'"'+(k===ADM_SESSION?' selected':'')+'>'+
+         sessionLabel(k)+' · '+buckets[k].length+' player'+
+         (buckets[k].length===1?'':'s')+'</option>';
+     }).join('')+'</select>';
+  var live=sessionStart(Date.now())===ADM_SESSION;
+  h+='<span class="badge">'+(live?'● LIVE — still open':'○ Frozen')+'</span></div>';
+  h+='<p class="muted" style="margin:0 0 10px">The player shows you the identifier on their screen. '+
+     'It must match the code in this table before you hand over a compass.</p>';
+  AGE_GROUPS.forEach(function(grp){
+    var list=buckets[ADM_SESSION].filter(function(e){return e.group===grp;})
+      .sort(function(a,b){return b.score-a.score||a.ts-b.ts;});
+    h+='<h4 style="margin:12px 0 4px">'+esc(grp)+' <span class="muted">('+list.length+')</span></h4>';
+    if(!list.length){h+='<p class="muted">Nobody.</p>';return;}
+    h+='<table><tr><th>#</th><th>Player</th><th>Score</th><th>Identifier</th><th>Finished</th><th>Prize</th></tr>';
+    list.forEach(function(e,i){
+      var podium=i<PODIUM;
+      h+='<tr'+(podium?' style="background:rgba(243,198,79,.10)"':'')+'>'+
+        '<td>'+(i+1)+(podium?' '+(['🥇','🥈','🥉'][i]||''):'')+'</td>'+
+        '<td>'+esc(e.name)+'</td><td>'+e.score+'</td>'+
+        '<td><b style="color:var(--gold);letter-spacing:1px">'+esc(e.code||'—')+'</b></td>'+
+        '<td>'+hhmm(e.ts)+'</td>'+
+        '<td>'+(!podium?'<span class="muted">—</span>'
+          :(e.claimed_at
+            ? '<span class="on-dot">✓ awarded</span> <button onclick="admClaim(\''+e.id+'\',false)">undo</button>'
+            : '<button class="acc" onclick="admClaim(\''+e.id+'\',true)">Award compass</button>'))+
+        '</td></tr>';
+    });
+    h+='</table>';
+  });
+  return h+'</div>';
 }
 function renderPrizeConsole(){
   var cfg=admCfg();
@@ -2399,6 +2533,43 @@ function adminSetGroup(g){ADM.group=g;renderAdmin();}
 function adminScreensaver(device,on){Cloud.sendCommand(device,{screensaver:!!on});setTimeout(renderAdmin,150);}
 function adminDelete(id){if(confirm('Delete this entry?')){Cloud.deleteScore(id);setTimeout(renderAdmin,150);}}
 function adminResetAll(){if(confirm('Wipe ALL rankings for every group? This cannot be undone.')){Cloud.resetAll();setTimeout(renderAdmin,150);}}
+/* Test reset. Rehearsing with real people means running the same hour over and
+   over, and the two halves of the state live in different places: the scores
+   are shared in the cloud, everything about THIS player sits in localStorage.
+   Clearing one without the other leaves a device that thinks it has already
+   finished, or a board full of yesterday's rehearsal. */
+function adminResetDevice(){
+  if(!confirm('Make this device a fresh player?\n\nThe shared board is untouched.'))return;
+  resetThisDevice();
+  alert('This device is a fresh player. Close the admin panel and press DIVE IN.');
+}
+function adminTestReset(){
+  if(!confirm('TEST RESET\n\n• hides every score on the board, for every device\n'+
+              '• clears this device: points, games played, finished flag, ticket\n\n'+
+              'Use this between practice runs. Real show data would be hidden too.'))return;
+  Cloud.resetAll(function(){
+    try{
+      ['gds_scores','gds_prize_claims'].forEach(function(k){localStorage.removeItem(k);});
+    }catch(e){}
+    resetThisDevice();
+    ADM.scores=[];ADM_SESSION=null;ADM_DAY=null;
+    adminRefresh();
+    alert('Reset done. The board is empty and this device is a fresh player.');
+  });
+}
+/* Everything the app remembers about the person currently holding it. */
+function resetThisDevice(){
+  POINTS=0;syncPoints();
+  playedGames={};
+  FINISHED=false;FINISH_TS=0;
+  window._hofSubmitted=false;
+  USER.code='';
+  qStartTime=0;
+  hofBoard=[];
+  if(hofTimer){clearInterval(hofTimer);hofTimer=null;}
+  var t=$('hofTicket');if(t)t.style.display='none';
+  var r=$('hofRank');if(r)r.style.display='none';
+}
 function adminRename(){var v=(document.getElementById('admStation').value||'').trim();if(v){setStation(v);renderAdmin();}}
 
 /* admin access: ?admin / #admin in URL, or tap the top-left corner 5× (no PIN) */
@@ -2855,17 +3026,27 @@ function showPanel(id){
    throwing you out mid-thought — there was never an idle timeout,
    this was it. Now it only marks the game done and lights up the
    Back button; leaving is always the player's decision. */
+/* A game counts as played the moment its finish line is on screen. Three
+   things need to agree about that — the delayed advanceGame(), the notice
+   observer, and opening the Hall of Fame — so they all ask here. Opening the
+   Hall of Fame matters most: it is where the score is submitted, and the
+   observer runs a tick later, so without this a player who finished and left
+   in the same breath banked a score that was one game short. */
+function bankFinishedGame(){
+  if(!activeGame)return false;
+  var panel=$('p-'+activeGame);
+  var notice=panel&&panel.querySelector('.auto-notice');
+  if(!notice||!notice.textContent.trim())return false;
+  playedGames[activeGame]=true;
+  return true;
+}
 function advanceGame(){
   /* Almost every game calls this on a ~2 second delay after showing its finish
      line. Tap through faster than that and the timer lands while a DIFFERENT
      game is on screen, which is how "Next challenge" ended up sitting there
      from the first moment of the next game. A stale call is one whose game is
      no longer showing a finish line, so check for it. */
-  if(!activeGame)return;
-  var panel=$('p-'+activeGame);
-  var notice=panel&&panel.querySelector('.auto-notice');
-  if(!notice||!notice.textContent.trim())return;
-  playedGames[activeGame]=true;
+  if(!bankFinishedGame())return;
   updateStrip(activeGame);
   var gb=$('gameBack');
   if(gb){gb.classList.add('done');gb.textContent='← Back to games';}
@@ -2919,6 +3100,7 @@ function hideNextChallenge(){
   });
 })();
 function startGame(name){
+  if(FINISHED&&name!=='hof'&&name!=='menu')return showHallOfFame();
   activeGame=(name==='hof'||name==='menu')?null:name;
   var strip=$('gamesstrip');
   if(name==='hof'||name==='menu'){strip.style.display='none';}
@@ -2931,6 +3113,8 @@ function startGame(name){
     gb.classList.remove('done');
     gb.textContent='← Back to games';
   }
+  var lv=$('gameLeave');
+  if(lv)lv.classList.toggle('show',!!activeGame);
   Cloud.updateSession({game:name,points:POINTS});
   if(name==='quiz')initQuiz();
   else if(name==='breath')initBreath();
@@ -2984,6 +3168,7 @@ var GAME_META={
   nav:{icon:'🧭',name:'Nav Trainer',desc:'Kick your fins to hold a bearing'}
 };
 function showMenu(){
+  if(FINISHED)return showHallOfFame();
   activeGame=null;
   hideNextChallenge();
   buildStrip();
@@ -3089,7 +3274,25 @@ function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('
   };
 })();
 /* Menu → Hall of Fame */
-(function(){var mf=$('menuFinish');if(mf)mf.onclick=function(){showHallOfFame();};})();
+/* Finishing is deliberately one-way. The score is submitted the moment
+   the Hall of Fame opens, and a player who could then go back and keep
+   earning points would be holding a submitted score AND a growing one. */
+var FINISHED=false;
+function leaveGames(){
+  if(FINISHED)return showHallOfFame();
+  var n=Object.keys(playedGames).length;
+  var msg=n?('Finish here and see the ranking?\n\nYou have played '+n+' game'+(n===1?'':'s')+
+             '. Your score is locked in as soon as you do — you cannot come back and play more.')
+           :('Leave without playing?\n\nYou have not finished a game yet, so your score will be 0. '+
+             'You cannot come back and play afterwards.');
+  if(!confirm(msg))return;
+  FINISHED=true;
+  showHallOfFame();
+}
+(function(){
+  var mf=$('menuFinish');if(mf)mf.onclick=leaveGames;
+  var lg=$('gameLeave');if(lg)lg.onclick=leaveGames;
+})();
 
 
 var qScore=0,qTotal=0,qQueue=[],qAnswered=false;
@@ -5891,6 +6094,8 @@ function showHallOfFame(){
   document.querySelectorAll('.panel').forEach(function(p){p.classList.remove('show');});
   $('p-hof').classList.add('show');
   window.scrollTo(0,0);
+  bankFinishedGame();
+  if(!FINISH_TS)FINISH_TS=Date.now();
   $('hofGroupLabel').textContent=USER.group;
   Cloud.updateSession({game:'done',points:POINTS});
   var fin=finalScore();
@@ -5909,6 +6114,32 @@ function showHallOfFame(){
         'finish the rest to bank every point.';
   }
   Cloud.onLeaderboard(USER.group,renderHof);
+  renderRankQR();
+}
+/* On a booth machine the player walks away from the screen, so the board
+   has to travel with them: the QR carries this session's ranking page. */
+function renderRankQR(){
+  var box=$('hofRank');if(!box)return;
+  if(!isBoothStation()){box.style.display='none';return;}
+  box.style.display='block';
+  $('hofRankLead').textContent='📸 Scan to follow the ranking until '+hhmm(sessionEnd(Date.now()));
+  var url=rankURL(), holder=$('hofRankQR');
+  holder.innerHTML='';
+  try{
+    if(!window.QRCode)throw new Error('qr.js did not load');
+    holder.appendChild(QRCode.canvas(url,{size:150}));
+  }catch(e){
+    holder.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
+      'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
+  }
+  $('hofRankSub').innerHTML='The board freezes at <b>'+hhmm(sessionEnd(Date.now()))+
+    '</b>. Until then the page has a Refresh button — tap it to see who has come in behind you.';
+}
+function rankURL(){
+  var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
+  return base+'rank.html?s='+sessionStart(Date.now())+
+         '&g='+encodeURIComponent(USER.group)+
+         (USER.code?'&me='+encodeURIComponent(USER.code):'');
 }
 /* Breadth counts. Points already fall away on their own when you skip games,
    but a strong run at three games could still out-score a steady run at
@@ -5923,7 +6154,14 @@ function finalScore(){
           factor:factor, score:Math.round(POINTS*factor)};
 }
 function renderHof(board){
-  board=(board||[]).slice().sort(function(a,b){return b.score-a.score;});
+  var now=Date.now();
+  /* only this hour competes; the previous hour is already frozen */
+  board=(board||[]).filter(function(e){return inSession(e,now);})
+                   .sort(function(a,b){return b.score-a.score;});
+  var sl=$('hofSession');
+  if(sl)sl.innerHTML='Session <b>'+sessionLabel(now)+'</b> · freezes at <b>'+hhmm(sessionEnd(now))+'</b>';
+  hofBoard=board;
+  startHofClock();
   var mine=finalScore().score;
   var meIdx=-1;
   for(var i=0;i<board.length;i++){if(board[i].device===DEVICE_ID&&board[i].name===USER.name&&board[i].score===mine){meIdx=i;break;}}
@@ -5942,6 +6180,60 @@ function renderHof(board){
    The handoff from a booth machine to the player's own phone. The QR
    carries the ticket URL; the code underneath is the fallback for a
    camera that will not focus, and the thing staff type at the stand. */
+/* ── the session clock in the app ──────────────────────────────────
+   Same rules as rank.html: count down while the hour runs, and the
+   moment it turns, say plainly whether the player is collecting a
+   compass or coming back for the next hour. */
+var PODIUM=3;
+var hofBoard=[],hofTimer=null;
+function startHofClock(){
+  if(hofTimer)clearInterval(hofTimer);
+  hofTick();
+  hofTimer=setInterval(hofTick,1000);
+}
+function hofMyRank(){
+  var mine=finalScore().score;
+  for(var i=0;i<hofBoard.length;i++){
+    if(hofBoard[i].device===DEVICE_ID&&hofBoard[i].name===USER.name&&hofBoard[i].score===mine)return i+1;
+  }
+  return 0;
+}
+function hofTick(){
+  var el=$('hofClock');if(!el)return;
+  var end=sessionEnd(FINISH_TS||Date.now()), left=end-Date.now();
+  var rank=hofMyRank(), verdict=$('hofVerdict');
+  if(left>0){
+    var m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
+    el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes';
+    if(verdict){
+      verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
+      if(rank&&rank<=PODIUM)verdict.innerHTML='You are <b>'+rank+ordinal(rank)+
+        '</b> right now. The top '+PODIUM+' in '+esc(USER.group)+
+        ' collect a compass when the hour turns — stay on this page.';
+    }
+    return;
+  }
+  if(hofTimer){clearInterval(hofTimer);hofTimer=null;}
+  /* The phone is in a pocket by now. A buzz is the only way to say "look at
+     me" — longer for a winner than for a nudge to come back next hour.
+     navigator.vibrate is Android-only; iOS silently ignores it, which is why
+     the screen still shouts the result on its own. */
+  buzz(hofMyRank()&&hofMyRank()<=PODIUM?[220,90,220,90,420]:[160]);
+  el.innerHTML='Session <b>closed</b> — these standings are final';
+  if(verdict){
+    verdict.style.display='block';
+    verdict.innerHTML=(rank&&rank<=PODIUM)
+      ? '🧭 <b>'+rank+ordinal(rank)+' place — you have won a compass.</b><br>'+
+        'Come to the VIZ stand, <b>stand '+PRIZE_STAND+'</b>, and show this screen to staff.'
+      : 'This hour is done. The board resets on the hour — come back and play the next session.';
+  }
+}
+function buzz(pattern){
+  try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}
+}
+function ordinal(n){return n===1?'st':n===2?'nd':n===3?'rd':'th';}
+var PRIZE_STAND='440';
+var FINISH_TS=0;
 function ticketURL(code){
   var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
   return base+'ticket.html?t='+encodeURIComponent(code);

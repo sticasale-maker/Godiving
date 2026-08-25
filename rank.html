@@ -1,0 +1,256 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06222e">
+<title>Live ranking — VIZ Sydney Dive Challenge</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
+    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
+    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%}
+  body{min-height:100dvh;display:flex;flex-direction:column;align-items:center;
+    padding:16px 14px calc(24px + env(safe-area-inset-bottom))}
+  .wrap{width:100%;max-width:460px}
+
+  .logobar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
+  .logobar img{height:34px;width:auto}
+  .logobar img.circle{border-radius:50%}
+  .logobar .sep{width:1px;height:26px;background:var(--line)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:16px 14px;margin-bottom:12px}
+  .eyebrow{font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+  h1{font-size:24px;margin:0 0 4px;line-height:1.2}
+  .sub{color:var(--muted);font-size:14px;line-height:1.5}
+  .sub b{color:var(--accent)}
+
+  /* the clock: counting down while the hour runs, frozen after */
+  .clock{text-align:center;margin:12px 0 4px}
+  .clock .t{font-family:'Press Start 2P',monospace;font-size:clamp(24px,8vw,34px);
+    color:var(--gold);letter-spacing:2px}
+  .clock .l{font-size:12px;color:var(--muted);letter-spacing:1px;margin-top:6px}
+  .clock.closed .t{color:var(--muted);font-size:clamp(15px,5vw,20px)}
+
+  .lrow{display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 10px;border-radius:10px;background:var(--bg2);margin-bottom:6px;
+    border:1px solid transparent}
+  .lrow.me{border-color:var(--accent);background:var(--accentd)}
+  .lrow.podium .rank{color:var(--gold)}
+  .l{display:flex;align-items:center;gap:9px;min-width:0}
+  .rank{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--muted);
+    min-width:24px;text-align:right}
+  .medal{font-size:17px;width:20px}
+  .nm{font-weight:700;font-size:15px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .sc{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--accent);white-space:nowrap}
+
+  .btn{width:100%;border:0;border-radius:12px;padding:15px 18px;font-size:17px;font-weight:800;
+    font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#28c3a8,#12907c);
+    color:#04211d;touch-action:manipulation}
+  .btn:active{transform:translateY(1px)}
+  .btn[disabled]{opacity:.5;cursor:default}
+
+  .prize{border:2px solid var(--gold);background:rgba(243,198,79,.12)}
+  .prize .eyebrow{color:var(--gold)}
+  .prize h2{margin:0 0 8px;font-size:21px;color:var(--gold)}
+  .prize p{margin:0 0 6px;font-size:15px;line-height:1.55}
+  .prize .stand{font-family:'Press Start 2P',monospace;font-size:20px;color:var(--gold);
+    display:block;text-align:center;margin:12px 0 6px;letter-spacing:2px}
+
+  .muted{color:var(--muted)}
+  .foot{text-align:center;font-size:12px;color:var(--muted);margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="logobar">
+    <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo">
+    <span class="sep"></span>
+    <img src="images/branding/vizlogo.png" alt="VIZ" class="logo circle">
+  </div>
+
+  <div class="card">
+    <div class="eyebrow">Live ranking</div>
+    <h1 id="grpTitle">Ranking</h1>
+    <div class="sub" id="sessLine"></div>
+    <div class="clock" id="clock"><div class="t" id="clockT">--:--</div><div class="l" id="clockL"></div></div>
+  </div>
+
+  <div class="card prize" id="prizeCard" style="display:none">
+    <div class="eyebrow">Prize</div>
+    <h2 id="prizeTitle"></h2>
+    <p id="prizeBody"></p>
+    <span class="stand">STAND 440</span>
+    <p class="muted" style="font-size:13px">Show this screen to VIZ staff.</p>
+  </div>
+
+  <div class="card">
+    <div class="eyebrow" id="boardHead">Standings</div>
+    <div id="board"><p class="muted">Loading…</p></div>
+  </div>
+
+  <button class="btn" id="refresh">↻ Refresh</button>
+  <p class="foot" id="foot"></p>
+</div>
+
+<script>
+var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
+
+var PODIUM = 3;        /* top three in each age group collect a compass */
+var STAND  = '440';
+
+var q       = new URLSearchParams(location.search);
+var START   = Number(q.get('s')) || sessionStart(Date.now());
+var END     = START + 3600000;
+var GROUP   = q.get('g') || '';
+var MYCODE  = q.get('me') || '';
+
+function sessionStart(ts){var d=new Date(ts||Date.now());d.setMinutes(0,0,0);return d.getTime();}
+function hhmm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
+function closed(){return Date.now()>=END;}
+
+document.getElementById('grpTitle').textContent = GROUP || 'Ranking';
+document.getElementById('sessLine').innerHTML =
+  'Session <b>'+hhmm(START)+'–'+hhmm(END)+'</b>. Only players who finished inside this hour appear here.';
+
+/* ── the clock ─────────────────────────────────────────────────── */
+function tickClock(){
+  var el=document.getElementById('clock'), t=document.getElementById('clockT'),
+      l=document.getElementById('clockL');
+  if(closed()){
+    el.classList.add('closed');
+    t.textContent='Session closed';
+    l.textContent='Final standings for '+hhmm(START)+'–'+hhmm(END);
+    return;
+  }
+  var ms=END-Date.now(), m=Math.floor(ms/60000), sec=Math.floor(ms/1000)%60;
+  t.textContent=('0'+m).slice(-2)+':'+('0'+sec).slice(-2);
+  l.textContent='until this session freezes';
+}
+function buzz(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
+setInterval(function(){
+  var was=closed();
+  tickClock();
+  /* the instant the hour turns, pull the final board and settle the prize.
+     The phone is almost certainly in a pocket, so buzz as well: a long
+     pattern for a winner, a short nudge for everyone else. Android only —
+     iOS ignores navigator.vibrate, so the page still says it in words. */
+  if(!was&&closed()){
+    load();
+    var me=-1;
+    if(MYCODE)for(var i=0;i<rows.length;i++)if(rows[i].code===MYCODE){me=i;break;}
+    buzz(me>=0&&me<PODIUM?[220,90,220,90,420]:[160]);
+  }
+},1000);
+tickClock();
+
+/* ── data ──────────────────────────────────────────────────────── */
+var sb=null, rows=[];
+function loadScript(src){return new Promise(function(res,rej){
+  var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;
+  document.head.appendChild(s);});}
+
+function load(){
+  var btn=document.getElementById('refresh');
+  btn.disabled=true;btn.textContent='↻ Loading…';
+  if(!sb){finish([]);return;}
+  sb.from('scores').select('*')
+    .not('hidden','is',true)
+    .gte('ts',new Date(START).toISOString())
+    .lt('ts',new Date(END).toISOString())
+    .then(function(r){finish((r.data||[]).filter(function(x){return !GROUP||x.grp===GROUP;}));},
+          function(){finish(null);});
+}
+function finish(data){
+  var btn=document.getElementById('refresh');
+  btn.disabled=false;btn.textContent='↻ Refresh';
+  if(data===null){
+    document.getElementById('foot').textContent='Could not reach the scoreboard. Try Refresh again.';
+    return;
+  }
+  rows=data.slice().sort(function(a,b){
+    if(b.score!==a.score)return b.score-a.score;
+    return new Date(a.ts)-new Date(b.ts);          /* earlier submission wins a tie */
+  });
+  render();
+}
+function render(){
+  var meIdx=-1;
+  if(MYCODE)for(var i=0;i<rows.length;i++)if(rows[i].code===MYCODE){meIdx=i;break;}
+  var medals=['🥇','🥈','🥉'];
+  document.getElementById('boardHead').textContent=
+    (closed()?'Final standings · ':'Standings · ')+rows.length+' player'+(rows.length===1?'':'s');
+  document.getElementById('board').innerHTML = rows.length
+    ? rows.map(function(e,i){
+        var me=(i===meIdx);
+        return '<div class="lrow'+(me?' me':'')+(i<PODIUM?' podium':'')+'">'+
+          '<div class="l"><span class="rank">'+(i+1)+'</span>'+
+          '<span class="medal">'+(medals[i]||'')+'</span>'+
+          '<span class="nm">'+esc(e.name)+(me?' (you)':'')+'</span></div>'+
+          '<span class="sc">'+e.score+' pts</span></div>';
+      }).join('')
+    : '<p class="muted">Nobody has finished in this hour yet.</p>';
+
+  var foot=document.getElementById('foot');
+  foot.innerHTML = closed()
+    ? 'This hour is over and these standings are final.'
+    : 'Updated '+hhmm(Date.now())+'. Tap Refresh to see who has come in behind you.';
+
+  renderPrize(meIdx);
+}
+function renderPrize(meIdx){
+  var card=document.getElementById('prizeCard');
+  if(meIdx<0){card.style.display='none';return;}
+  var rank=meIdx+1;
+  if(!closed()){
+    if(rank<=PODIUM){
+      card.style.display='block';
+      document.getElementById('prizeTitle').textContent='You are '+rank+(['st','nd','rd'][rank-1])+' — hold on to it';
+      document.getElementById('prizeBody').innerHTML=
+        'The top <b>'+PODIUM+'</b> in '+esc(GROUP)+' collect a compass when this session freezes at <b>'+
+        hhmm(END)+'</b>. Keep this page open and refresh it then.';
+    } else {
+      card.style.display='none';
+    }
+    return;
+  }
+  card.style.display='block';
+  if(rank<=PODIUM){
+    document.getElementById('prizeTitle').textContent='🧭 '+rank+(['st','nd','rd'][rank-1])+' place — you have won a compass';
+    document.getElementById('prizeBody').innerHTML=
+      'You finished <b>'+rank+'</b> of '+rows.length+' in '+esc(GROUP)+' for the '+
+      hhmm(START)+'–'+hhmm(END)+' session. Come back to the VIZ stand to collect it.';
+  } else {
+    document.getElementById('prizeTitle').textContent='Finished '+rank+' of '+rows.length;
+    document.getElementById('prizeBody').innerHTML=
+      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' collect a compass this hour. '+
+      'Come and play again in the next session — the board resets every hour.';
+    card.className='card';
+    document.querySelector('#prizeCard .stand').style.display='none';
+  }
+}
+
+document.getElementById('refresh').onclick=load;
+
+loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2').then(function(){
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  load();
+}).catch(function(){
+  document.getElementById('board').innerHTML='<p class="muted">Could not load the scoreboard.</p>';
+  document.getElementById('refresh').disabled=false;
+});
+</script>
+</body>
+</html>
