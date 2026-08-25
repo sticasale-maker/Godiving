@@ -32,8 +32,8 @@ body{
    a 2560-wide iMac. */
 #app{
   display:grid; height:100dvh; gap:10px; padding:10px;
-  --rig-w:clamp(302px,14.5vw,372px);
-  grid-template-columns:var(--rig-w) var(--stage-w,1fr) minmax(340px,1fr);
+  --rig-w:clamp(340px,18vw,430px);
+  grid-template-columns:var(--rig-w) var(--stage-w,1fr) minmax(320px,1fr);
   grid-template-rows:100%;
   grid-template-areas:"rig stage diver";
 }
@@ -46,8 +46,8 @@ body{
 #rig::-webkit-scrollbar{width:5px}
 #rig::-webkit-scrollbar-thumb{background:rgba(0,194,168,.3);border-radius:3px}
 
-.ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:19px;letter-spacing:3px;
-  color:var(--teal);font-weight:400}
+.ttl{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:27px;letter-spacing:3px;
+  color:var(--teal);font-weight:400;line-height:1.1}
 .sub{font-size:10.5px;color:var(--dim);line-height:1.45}
 
 /* ─────────────── map stage ─────────────── */
@@ -55,17 +55,23 @@ body{
 #mapCv{position:absolute}
 #leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
 #tiles{position:absolute;inset:0;pointer-events:none}
+/* The site markers get their own layer on top of the tiles. A tile column that
+   reaches far enough south sits over Oak Park's position, and a marker hidden
+   under a tile takes its leader's end point with it — the tile then points at
+   nothing. Leaders stay underneath, where being covered costs nothing. */
+#dots{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
+  overflow:visible;z-index:3}
 
 .tile{position:absolute;background:rgba(6,20,38,0.88);
-  border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:5px 5px 6px;
+  border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:4px 4px 5px;
   box-shadow:0 5px 18px rgba(0,0,0,0.6);pointer-events:auto;cursor:pointer;
   transition:left .3s cubic-bezier(.16,1,.3,1),top .3s cubic-bezier(.16,1,.3,1),
              border-color .15s,box-shadow .15s,transform .15s}
 .tile:hover{border-color:rgba(0,194,168,.75);box-shadow:0 6px 22px rgba(0,0,0,.7);transform:scale(1.04)}
 .tile:active{transform:scale(.99)}
 .tile canvas{width:100%;display:block;border-radius:6px}
-.tile .nm{font-size:10.5px;font-weight:700;letter-spacing:.2px;color:#fff;
-  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:4px 1px 3px}
+.tile .nm{font-size:11px;font-weight:700;letter-spacing:.2px;color:#fff;line-height:1.1;
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:3px 1px 2px}
 /* the familiar dashboard bar: 0–60 track with the amber(20)/green(40) thresholds */
 .trk{position:relative;height:19px;border-radius:4px;overflow:hidden;
   background:rgba(2,10,22,0.9);border:1px solid rgba(255,255,255,0.18)}
@@ -76,7 +82,7 @@ body{
   font-family:'Bebas Neue','DM Sans',sans-serif;font-size:15px;letter-spacing:.6px;color:#fff;
   text-shadow:-1px -1px 0 rgba(0,0,0,.75),1px -1px 0 rgba(0,0,0,.75),
               -1px 1px 0 rgba(0,0,0,.75),1px 1px 0 rgba(0,0,0,.75)}
-.dot{fill:#fff;stroke:rgba(0,0,0,.8);stroke-width:1.6}
+.dot{fill:#fff;stroke:rgba(0,0,0,.85);stroke-width:2}
 .lead{stroke:rgba(255,255,255,0.40);stroke-width:1.3;fill:none}
 
 /* Both of these are positioned onto the map itself in layout() — pinned to the
@@ -101,15 +107,15 @@ body{
 /* Dials and the wave tank scale with the screen so the rig never has to scroll —
    a booth control you must scroll is a control nobody finds. */
 .dial{touch-action:none;cursor:grab;display:block;margin:2px auto 3px;
-  width:min(100%,196px);height:auto;aspect-ratio:1/1;
-  max-height:clamp(92px,13vh,196px)}
+  width:min(100%,228px);height:auto;aspect-ratio:1/1;
+  max-height:clamp(92px,13.6vh,228px)}
 .dial:active{cursor:grabbing}
 
 /* wave shaper */
 #shaper{display:flex;flex-direction:column;background:rgba(0,0,0,.24);
   border:1px solid var(--border);border-radius:14px;padding:7px 9px 6px}
-#shaperTop{display:flex;gap:7px;height:clamp(96px,13.4vh,192px)}
-#hgtCol{display:flex;flex-direction:column;align-items:center;width:46px;flex:none}
+#shaperTop{display:flex;gap:8px;height:clamp(96px,13.8vh,210px)}
+#hgtCol{display:flex;flex-direction:column;align-items:center;width:52px;flex:none}
 #waveCv{flex:1;min-width:0;height:100%;border-radius:9px;
   background:rgba(2,12,26,.6);border:1px solid var(--border);display:block}
 #perRow{display:flex;justify-content:space-between;align-items:baseline;margin-top:1px}
@@ -152,18 +158,37 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
 
 /* Keyboard ring: Tab walks the six knobs, the highlighted one takes the arrows.
    Deliberately loud — at a show the visitor needs to see which knob they are
-   about to turn from a metre away. */
-.kn-on{outline:3px solid var(--teal);outline-offset:4px;border-radius:10px}
-svg.kn-on{border-radius:50%;outline-offset:2px}
-.kn-on::-webkit-slider-thumb{border-color:#fff;box-shadow:0 0 0 3px var(--teal),0 2px 8px rgba(0,0,0,.6)}
-.kn-on::-moz-range-thumb{border-color:#fff;box-shadow:0 0 0 3px var(--teal),0 2px 8px rgba(0,0,0,.6)}
-.dial:focus,input[type=range]:focus{outline:none}
+   about to turn from a metre away, so the whole pod lights up, not just the
+   control.
+   Note the selectors: an earlier version reset the focus ring with
+   `.dial:focus, input[type=range]:focus { outline:none }`, which outranks a
+   bare `.kn-on` on specificity — so the highlight was being cancelled at
+   exactly the moment the knob was focused, which is always. The active-state
+   rules are qualified to win, and nothing resets the ring any more. */
+.dial.kn-on,input[type=range].kn-on{
+  outline:3px solid var(--teal);outline-offset:4px;
+  box-shadow:0 0 0 7px rgba(0,194,168,.20)}
+svg.dial.kn-on{border-radius:50%;outline-offset:3px}
+input[type=range].kn-on{border-radius:10px}
+input[type=range].kn-on::-webkit-slider-thumb{
+  border-color:#fff;box-shadow:0 0 0 3px var(--teal),0 2px 10px rgba(0,0,0,.65)}
+input[type=range].kn-on::-moz-range-thumb{
+  border-color:#fff;box-shadow:0 0 0 3px var(--teal),0 2px 10px rgba(0,0,0,.65)}
+/* the surrounding pod, so the active knob reads across the room */
+.pod-on{border-color:var(--teal)!important;background:rgba(0,194,168,.10);
+  box-shadow:0 0 0 2px rgba(0,194,168,.40),0 0 26px rgba(0,194,168,.20)}
+.pod-on .pod-lab{color:var(--teal)}
 
 /* ─────────────── tapped-open site map ─────────────── */
 /* Six times the tile, so a visitor can actually read the headland doing the
    sheltering. Anywhere closes it — no close button to hunt for at a show. */
-#zoom{position:fixed;inset:0;z-index:100;display:flex;align-items:center;
-  justify-content:center;cursor:pointer;background:rgba(3,10,22,.8)}
+/* Stops short of the control rig on purpose: with a site enlarged you still
+   need to be able to turn the dials and watch that one site respond, so the
+   dimmed area covers the map and the surge panel only. openZoom() sets
+   --zoom-left to the rig's right edge. */
+#zoom{position:fixed;left:var(--zoom-left,0);top:0;right:0;bottom:0;
+  z-index:100;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;background:rgba(3,10,22,.82)}
 #zoom[hidden]{display:none}
 /* Fades in rather than scaling in on purpose: a transform changes the visual
    rect without changing the layout box, and the site renderer sizes its canvas
@@ -176,7 +201,7 @@ svg.kn-on{border-radius:50%;outline-offset:2px}
 #zoom{animation:fadeIn .16s ease-out}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
 #zoomCard canvas{width:100%;display:block;border-radius:12px}
-#zoomName{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:31px;letter-spacing:2px;
+#zoomName{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:43px;letter-spacing:2px;
   color:#fff;margin:11px 2px 8px;font-weight:400}
 #zoomCard .trk{height:36px;border-radius:7px}
 #zoomCard .pc{font-size:26px;right:10px}
@@ -282,6 +307,7 @@ svg.kn-on{border-radius:50%;outline-offset:2px}
       <canvas id="mapCv"></canvas>
       <svg id="leaders"></svg>
       <div id="tiles"></div>
+      <svg id="dots"></svg>
     </div>
     <div id="legend">
       <b class="lgR">Avoid</b><b class="lgY">Caution</b><b class="lgG">Easy</b>
@@ -318,7 +344,7 @@ svg.kn-on{border-radius:50%;outline-offset:2px}
     <div class="trk"><div class="fil"></div>
       <div class="tk" style="left:33.33%"></div><div class="tk" style="left:66.67%"></div>
       <div class="pc">&ndash;</div></div>
-    <div id="zoomHint">Click anywhere to close</div>
+    <div id="zoomHint">Keep turning the dials &mdash; click here to close</div>
   </div>
 </div>
 
@@ -1403,10 +1429,22 @@ var SITE_LL = {
   Oak:       {lat:-34.07061,   lon:151.157155}
 };
 
-/* Which flank each tile sits on. Chosen so neighbouring sites alternate sides
-   and no leader line has to cross another. */
-var RIGHT = ['Freshwater','CTB','CampCove','SharkPoint','LittleBay','BIE','Steps'];
-var LEFT  = ['Fairlight','Chowder','Gordons','BIW','Monument','Oak'];
+/* Which column each tile sits in, outermost first.
+   A tile is only ever as wide as the column height lets it be, and thirteen
+   tiles in two flanks means seven stacked in one of them — seven is what held
+   the site maps down to ~150 px however much spare width there was. Three
+   columns caps it at five, which is where extra width finally turns into a
+   bigger map. The western third of the basemap is inland Sydney with no dive
+   site in it, so the inner-west column is allowed to sit on top of it.
+   Ocean-side sites keep the right-hand column and their short leaders; the two
+   western columns alternate by latitude, so a WEST_OUT leader passes through
+   the gap between two WEST_IN tiles rather than straight across one. */
+var COL_EAST = ['Freshwater','CTB','SharkPoint','LittleBay','Steps'];
+var WEST_IN  = ['Fairlight','CampCove','BIE','Monument'];
+var WEST_OUT = ['Chowder','Gordons','BIW','Oak'];
+var COLS = [WEST_OUT, WEST_IN, COL_EAST];
+/* How much of the basemap's width the inner-west column may cover. */
+var INLAND_FRAC = 0.30;
 
 function el(id){ return document.getElementById(id); }
 function clamp(v,a,b){ return Math.max(a,Math.min(b,v)); }
@@ -1700,7 +1738,8 @@ function project(lat,lon){
    TILES — one VizSiteMap per site (unchanged renderer), flanking the map and
    tied back to the real position by a leader line.
    ══════════════════════════════════════════════════════════════════════════ */
-var tilesEl=el('tiles'), leadersEl=el('leaders'), stageEl=el('stage'), appEl=el('app');
+var tilesEl=el('tiles'), leadersEl=el('leaders'), dotsEl=el('dots'),
+    stageEl=el('stage'), appEl=el('app');
 var TILE={}, MAPS={}, TW=150, TH=130;
 var ORDER=SITES.filter(function(s){ return SITE_COAST[s.key] && SITE_COAST[s.key].rings.length && SITE_LL[s.key]; });
 
@@ -1726,46 +1765,66 @@ function tileChrome(){
   return (h>10&&h<120)?h:47;
 }
 
+/* Share of the width left over after the rig that the surge panel takes. */
+var DIVER_FRAC = 0.30;
+
 function layout(){
   var st=stageEl.getBoundingClientRect();
   if(!st.width||!st.height) return;
-  var pad=14, lead=24;
+  var pad=14, lead=24, colGap=6, gap=5;
   var chrome=tileChrome();
-  var n=Math.max(RIGHT.length,LEFT.length);
+  var nMax=Math.max(COLS[0].length,COLS[1].length,COLS[2].length);
   var avail=st.height-pad*2;
-  // Solve the tile width from the column budget. If the roomier gap cannot fit
-  // the taller column, close the gap up before shrinking the tiles further.
-  var gap=7;
-  var tw=Math.floor(((avail-(n-1)*gap)/n-chrome)/0.6);
-  if(tw<86){ gap=4; tw=Math.floor(((avail-(n-1)*gap)/n-chrome)/0.6); }
-  TW=clamp(tw,54,200);
+
+  // Column widths cannot change the stage HEIGHT, so the map size and the
+  // height budget are both settled before anything gets resized.
+  var mh=avail, mw=mh*(MAP.VW/MAP.VH);
+
+  // Give the surge panel its share of what is left after the rig; the stage
+  // takes the rest.
+  var appW=appEl.clientWidth-20-20;                 // app padding + the two gaps
+  var rigW=el('rig').getBoundingClientRect().width;
+  var free=Math.max(360, appW-rigW);
+  var diverW=clamp(Math.round(free*DIVER_FRAC), 320, 760);
+  var stageW=Math.max(360, free-diverW);
+  appEl.style.setProperty('--stage-w', Math.round(stageW)+'px');
+  st=stageEl.getBoundingClientRect();               // the grid has resized us
+  stageW=st.width;
+
+  // Tile width is whichever runs out first: the tallest column's height budget,
+  // or the width left once the map and its leaders have taken theirs. The three
+  // columns span (1-INLAND_FRAC)*map + lead + 3*TW + colGap, because the
+  // inner-west column overlaps the map's inland third.
+  var twH=Math.floor(((avail-(nMax-1)*gap)/nMax-chrome)/0.6);
+  var twW=Math.floor((stageW-pad*2-(1-INLAND_FRAC)*mw-lead-colGap)/3);
+  TW=clamp(Math.min(twH,twW),54,300);
+
   // Size the tiles, let the site renderer set its own canvas height, then take
   // the real tile height off the page. De-colliding against a computed guess is
   // what put two tiles on top of each other.
   ORDER.forEach(function(s){ TILE[s.key].el.style.width=TW+'px'; });
   Object.keys(MAPS).forEach(function(k){ if(MAPS[k].fit) MAPS[k].fit(); });
   TH=Math.max(TILE[ORDER[0].key].el.offsetHeight, Math.round(TW*0.6)+chrome);
-  // Nothing but the stage height decides how big the map and the tiles are, so
-  // the stage only ever needed the width those two add up to. Claim exactly
-  // that and the grid hands the rest to the surge panel, instead of leaving it
-  // as blank margin either side of the map.
-  var mh=avail, mw=mh*(MAP.VW/MAP.VH);
-  appEl.style.setProperty('--stage-w', Math.ceil(mw+2*(TW+lead)+pad*2)+'px');
-  st=stageEl.getBoundingClientRect();          // the grid has resized us
-  var maxMw=st.width-pad*2-2*(TW+lead);
-  if(mw>maxMw){ mw=Math.max(140,maxMw); mh=mw*(MAP.VH/MAP.VW); }
-  var box={ x:Math.round((st.width-mw)/2), y:Math.round((st.height-mh)/2),
+
+  // Lay the assembly out from its left edge, then centre it in the stage.
+  var span=(1-INLAND_FRAC)*mw+lead+3*TW+colGap;
+  var originX=Math.max(pad,(stageW-span)/2);
+  var colX=[ originX, originX+TW+colGap, 0 ];
+  var mapX=colX[1]+TW-INLAND_FRAC*mw;
+  colX[2]=mapX+mw+lead;
+  var box={ x:Math.round(mapX), y:Math.round((st.height-mh)/2),
             w:Math.round(mw), h:Math.round(mh) };
   fitMap(box);
 
-  leadersEl.setAttribute('viewBox','0 0 '+st.width+' '+st.height);
-  leadersEl.setAttribute('width',st.width); leadersEl.setAttribute('height',st.height);
-  var svg='';
+  [leadersEl,dotsEl].forEach(function(sv){
+    sv.setAttribute('viewBox','0 0 '+st.width+' '+st.height);
+    sv.setAttribute('width',st.width); sv.setAttribute('height',st.height);
+  });
+  var svg='', dotSvg='';
 
-  [['R',RIGHT],['L',LEFT]].forEach(function(pair){
-    var side=pair[0], keys=pair[1];
-    var colX=side==='R' ? box.x+box.w+lead : box.x-lead-TW;
-    colX=clamp(colX, pad, st.width-pad-TW);
+  COLS.forEach(function(keys,ci){
+    var side=(ci===2)?'R':'L';
+    var cx=clamp(colX[ci], 2, st.width-2-TW);
     var items=keys.map(function(k){
       var p=project(SITE_LL[k].lat,SITE_LL[k].lon);
       return {k:k,p:p,y:p.y-TH/2};
@@ -1789,19 +1848,20 @@ function layout(){
     items.forEach(function(it){
       var t=TILE[it.k];
       t.el.style.width=TW+'px';
-      t.el.style.left=Math.round(colX)+'px';
+      t.el.style.left=Math.round(cx)+'px';
       t.el.style.top=Math.round(it.y)+'px';
       t.el.style.zIndex=2;
       // leader from the tile edge nearest the map, to the real position
-      var ax=side==='R'?colX:colX+TW, ay=it.y+TH/2;
+      var ax=side==='R'?cx:cx+TW, ay=it.y+TH/2;
       var midX=(ax+it.p.x)/2;
       svg+='<path class="lead" d="M'+ax.toFixed(1)+' '+ay.toFixed(1)+
            'C'+midX.toFixed(1)+' '+ay.toFixed(1)+','+midX.toFixed(1)+' '+it.p.y.toFixed(1)+
-           ','+it.p.x.toFixed(1)+' '+it.p.y.toFixed(1)+'"/>'+
-           '<circle class="dot" cx="'+it.p.x.toFixed(1)+'" cy="'+it.p.y.toFixed(1)+'" r="3.4"/>';
+           ','+it.p.x.toFixed(1)+' '+it.p.y.toFixed(1)+'"/>';
+      dotSvg+='<circle class="dot" cx="'+it.p.x.toFixed(1)+'" cy="'+it.p.y.toFixed(1)+'" r="4"/>';
     });
   });
   leadersEl.innerHTML=svg;
+  dotsEl.innerHTML=dotSvg;
   // Title and legend ride on the map, not on the stage corners, so they can
   // never end up under a tile column.
   var hd=el('stageHead'), lg=el('legend');
@@ -2073,13 +2133,18 @@ function paintZoom(h){
   ZFIL.style.background=scoreColor(pct);
   ZPC.textContent=pct+'%';
 }
+function sizeZoom(){
+  // The overlay starts at the rig's right edge so the dials stay live, so the
+  // room available for a 6x card is what is left of the window beyond it.
+  var r=el('rig').getBoundingClientRect();
+  var left=Math.round(r.right+10);
+  ZOOM.style.setProperty('--zoom-left',left+'px');
+  var w=Math.min(TW*6, (window.innerWidth-left)-56, (window.innerHeight-190)/0.6);
+  ZCARD.style.width=Math.round(Math.max(260,w))+'px';
+}
 function openZoom(key){
   _zoomKey=key;
-  // Six times the tile. The overlay covers the whole window rather than the
-  // stage, so at every screen this runs on there is room for a true 6x; the
-  // two limits are only there so it can never grow off a smaller display.
-  var w=Math.min(TW*6, window.innerWidth-56, (window.innerHeight-190)/0.6);
-  ZCARD.style.width=Math.round(Math.max(260,w))+'px';
+  sizeZoom();
   ZOOM.hidden=false;
   paintZoom();
   if(ZMAP.fit) ZMAP.fit();
@@ -2120,12 +2185,17 @@ KNOBS.forEach(function(k,i){
     k.el.setAttribute('role','slider');
     k.el.setAttribute('aria-label',k.lab);
   }
+  // the panel that lights up with the knob
+  k.pod=k.el.closest('.pod,.mini,#hgtCol')||k.el.parentElement;
   k.el.addEventListener('focus',function(){ markKnob(i); });
 });
 
 function markKnob(i){
   knobIdx=i;
-  KNOBS.forEach(function(k,j){ k.el.classList.toggle('kn-on', j===i); });
+  KNOBS.forEach(function(k,j){
+    k.el.classList.toggle('kn-on', j===i);
+    if(k.pod) k.pod.classList.toggle('pod-on', j===i);
+  });
   if(KNOBS[i].wrap) KNOBS[i].el.setAttribute('aria-valuenow',Math.round(KNOBS[i].get()));
 }
 function focusKnob(i){
@@ -2217,7 +2287,10 @@ function boot(){
   fitWave(); fitDiver(); layout(); paint(); still();
   requestAnimationFrame(frame);
 }
-function relayout(){ fitWave(); fitDiver(); layout(); still(); }
+function relayout(){
+  fitWave(); fitDiver(); layout(); still();
+  if(!ZOOM.hidden){ sizeZoom(); if(ZMAP.fit) ZMAP.fit(); }
+}
 var _rz;
 function debouncedRelayout(){ clearTimeout(_rz); _rz=setTimeout(relayout,120); }
 window.addEventListener('resize',debouncedRelayout);
