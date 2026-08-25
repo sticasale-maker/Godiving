@@ -1816,8 +1816,13 @@ function tileChrome(){
   return (h>10&&h<120)?h:47;
 }
 
-/* Share of the width left over after the rig that the surge panel takes. */
-var DIVER_FRAC = 0.30;
+/* Share of the width left over after the rig that the surge panel takes.
+   The tiles are width-bound at every screen this runs on — three columns
+   share whatever the stage has left after the map — so this number is the
+   direct trade between how wide the surge panel is and how big the site
+   maps are. Every 3 px taken off the panel is 1 px onto each tile, until
+   the column height becomes the limit instead. */
+var DIVER_FRAC = 0.22;
 
 function layout(){
   var st=stageEl.getBoundingClientRect();
@@ -1860,7 +1865,7 @@ function layout(){
   // inner-west column overlaps the map's inland third.
   var twH=Math.floor(((avail-(nMax-1)*gap)/nMax-chrome)/0.6);
   var twW=Math.floor((stageW-pad*2-(1-INLAND_FRAC)*mw-lead-colGap)/3);
-  TW=clamp(Math.min(twH,twW),54,300);
+  TW=clamp(Math.min(twH,twW),54,360);
 
   // Size the tiles, let the site renderer set its own canvas height, then take
   // the real tile height off the page. De-colliding against a computed guess is
