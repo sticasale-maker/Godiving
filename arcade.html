@@ -2129,9 +2129,14 @@ var Cloud=(function(){
       cb(Object.assign({winners_per_group:2,stock:120,reserve_for_instant:45,max_per_player_per_day:1},v));
     }
   }
+  /* Reports whether the write actually landed. It used to swallow the error
+     and call back as if it had, so an admin whose schema was one migration
+     behind was told "Saved" while nothing left the browser. */
   function saveSettings(patch,cb){
     if(mode==='cloud'&&sb){
-      sb.from('settings').update(patch).eq('id',1).then(function(){if(cb)cb();},function(){if(cb)cb();});
+      sb.from('settings').update(patch).eq('id',1).then(
+        function(r){if(cb)cb(r&&r.error?r.error:null);},
+        function(e){if(cb)cb(e||new Error('save failed'));});
     } else {
       var v={};try{v=JSON.parse(localStorage.getItem('gds_settings')||'{}');}catch(e){}
       Object.assign(v,patch);
@@ -3332,8 +3337,15 @@ function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('
        which is exactly how a game switched off for adults kept turning up.
        Push it to the same shared settings row the prize rules already use. */
     $('adminSaved').textContent='Saving…';
-    Cloud.saveSettings({game_age_groups:GAME_AGE_GROUPS,game_exp:GAME_EXP},function(){
-      $('adminSaved').textContent='Saved ✓ · applies to every device';
+    Cloud.saveSettings({game_age_groups:GAME_AGE_GROUPS,game_exp:GAME_EXP},function(err){
+      if(err){
+        $('adminSaved').innerHTML='<span style="color:var(--bad)">Saved on THIS device only — '+
+          'the shared copy failed. Run supabase/schema.sql, then save again.</span>';
+        return;
+      }
+      $('adminSaved').textContent=(Cloud.mode==='cloud')
+        ? 'Saved ✓ · applies to every device'
+        : 'Saved ✓ · this device only (no cloud connection)';
     });
   };
 })();
