@@ -2114,20 +2114,92 @@ function renderDiver(t){
   ctx.strokeStyle='#5c5232'; ctx.lineWidth=2;
   ctx.beginPath(); ctx.moveTo(0,bed); ctx.lineTo(W,bed); ctx.stroke();
 
-  // the diver, swept by the surge. Screen scale: the excursion is drawn against
-  // the same metres-per-pixel as the depth axis, capped so it stays on stage.
-  var pxPerM=Math.min(mPerPx,(W*0.42)/Math.max(S.xi,0.01));
-  var off=S.xi*pxPerM*Math.sin(t/ST.per*Math.PI*2);
+  /* ── water particles ────────────────────────────────────────────────────
+     Under a wave the water does not travel with it — each particle runs round
+     a closed ellipse and comes back. Airy theory gives the semi-axes at a
+     height `hab` above the bed:
+        horizontal  a = (H/2) · cosh(k·hab) / sinh(k·d)
+        vertical    b = (H/2) · sinh(k·hab) / sinh(k·d)
+     so it is a near-circle up near the surface and squashes to a flat
+     back-and-forth line at the bed — which is exactly why the thing the diver
+     feels down there is surge and not lift. Showing the column of them is the
+     clearest way to say that.
+
+     Position on the ellipse, for the wave already drawn above:
+        dx = -a·sin(PHI)     dy = -b·cos(PHI)   (canvas y is down)
+     with PHI = 2π(x/lam - t/T) + π/2, which DECREASES as time runs, so the
+     particle goes round forward-at-the-crest, back-in-the-trough. Taking PHI
+     from the same x and lam as the drawn surface keeps the top particle
+     riding with the wave over its head rather than drifting against it. */
+  var d=ST.depth, k=S.k, amp=ST.hgt/2;
+  var shkd=Math.sinh(k*d)||1e-6;
   var cx=W/2, cy=bed-Math.max(15,H*0.09);
-  // orbit the particle is on
-  var k=S.k, d=ST.depth;
-  var zeta=(ST.hgt/2)*Math.sinh(k*0.6)/Math.max(Math.sinh(k*d),1e-6);
-  ctx.strokeStyle='rgba(159,208,245,0.28)'; ctx.lineWidth=1; ctx.setLineDash([3,3]);
+  var PHI=(cx/lam-t/ST.per)*Math.PI*2+Math.PI/2;
+
+  function semi(hab){
+    return { a:amp*Math.cosh(k*hab)/shkd, b:amp*Math.sinh(k*hab)/shkd };
+  }
+  var FR=[0.90,0.77,0.64,0.51,0.38,0.25];          // heights above the bed, as d
+  var parts=FR.map(function(f){
+    var sm=semi(f*d);
+    return { y:seaTop+(1-f)*d*mPerPx, a:sm.a, b:sm.b };
+  });
+  var bot=semi(Math.max(0.4,0.02*d));              // the one the diver is on
+  var aMax=Math.max(bot.a,Math.max.apply(null,parts.map(function(q){return q.a;})));
+  var bMax=Math.max(0.001,Math.max.apply(null,parts.map(function(q){return q.b;})));
+  /* One scale for every orbit AND for the diver, so the ellipses stay true to
+     one another. Capped twice: on width so the widest cannot run off the panel,
+     and on height so neighbouring orbits cannot grow into each other. */
+  var gapM=(FR[0]-FR[1])*d;
+  var orbScale=Math.min(mPerPx,
+                        (W*0.33)/Math.max(aMax,0.01),
+                        (gapM*mPerPx*0.42)/bMax);
+
+  function drawOrbit(x,y,a,b,head){
+    var A=Math.max(a*orbScale,0.6), B=Math.max(b*orbScale,0.6);
+    if(A<1.6&&B<1.6) return;
+    ctx.strokeStyle='rgba(159,208,245,0.20)'; ctx.lineWidth=1;
+    ctx.setLineDash([3,3]);
+    ctx.beginPath(); ctx.ellipse(x,y,A,B,0,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]);
+    // the comet tail — where it has just been. PHI grows going back in time.
+    var N=16, span=Math.PI*0.95;
+    ctx.fillStyle='#9fd0f5';
+    for(var i=N;i>=1;i--){
+      var ph=PHI+span*(i/N), f=1-i/N;
+      ctx.globalAlpha=0.06+f*0.50;
+      ctx.beginPath();
+      ctx.arc(x-A*Math.sin(ph), y-B*Math.cos(ph), 0.6+f*1.9, 0, Math.PI*2);
+      ctx.fill();
+    }
+    ctx.globalAlpha=1;
+    if(head===false) return;
+    ctx.beginPath();
+    ctx.arc(x-A*Math.sin(PHI), y-B*Math.cos(PHI), 3.4, 0, Math.PI*2);
+    ctx.fillStyle='#eaf4ff'; ctx.fill();
+    ctx.strokeStyle='rgba(6,28,38,0.85)'; ctx.lineWidth=1.1; ctx.stroke();
+  }
+  /* Clip the whole column to the water. A near-surface particle genuinely rises
+     above the still-water line, so it cannot simply be held below seaTop — but
+     surfAmp is clamped on a big swell while the orbit is not, and without this
+     the top particle is drawn hanging in the sky above its own wave. Clipping
+     to the surface that is actually drawn is exact whatever the two do. */
+  ctx.save();
   ctx.beginPath();
-  ctx.ellipse(cx,cy,Math.max(3,S.xi*pxPerM),Math.max(1.5,zeta*pxPerM),0,0,Math.PI*2);
-  ctx.stroke(); ctx.setLineDash([]);
+  ctx.moveTo(0,bed);
+  for(var xc=0;xc<=W;xc+=3)
+    ctx.lineTo(xc,seaTop+surfAmp*Math.sin((xc/lam-t/ST.per)*Math.PI*2));
+  ctx.lineTo(W,bed);
+  ctx.closePath();
+  ctx.clip();
+  parts.forEach(function(q){ drawOrbit(cx,q.y,q.a,q.b,true); });
+  drawOrbit(cx,cy,bot.a,bot.b,false);   // the diver's own orbit, no marker on it
+  ctx.restore();
+
+  // the diver rides the bottom orbit — same scale, same phase as the particles
+  var off=-bot.a*orbScale*Math.sin(PHI);
   var L=clamp(W*0.30,56,230);
-  var tilt=Math.cos(t/ST.per*Math.PI*2)*0.16;
+  var tilt=Math.cos(PHI)*0.16;
   diverGlyph(ctx,cx+off,cy,L,tilt,t*4.2);
   // bubbles
   ctx.fillStyle='rgba(210,236,255,0.42)';
@@ -2143,6 +2215,11 @@ function renderDiver(t){
   ctx.font=clamp(Math.round(W*0.028),9,15)+'px DM Mono,monospace';
   ctx.textAlign='right';
   ctx.fillText('0 m',W-5,seaTop+11);
+  ctx.textAlign='left';
+  ctx.fillStyle='rgba(200,221,245,0.5)';
+  ctx.fillText('water particles', 6, seaTop+13);
+  ctx.textAlign='right';
+  ctx.fillStyle='rgba(200,221,245,0.45)';
   ctx.fillText(ST.depth.toFixed(ST.depth%1?1:0)+' m',W-5,bed-5);
   ctx.textAlign='left';
 }
