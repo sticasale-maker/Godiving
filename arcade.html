@@ -246,6 +246,13 @@
   .trumps-footer{display:flex;justify-content:space-between;align-items:center;margin-top:2px;flex-shrink:0}
   svg{display:block}
   .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
+  /* Shared "Next challenge" button — parked under whichever end-of-game
+     notice just fired, so finishing a game always has one obvious exit. */
+  .next-challenge{display:block;width:100%;max-width:420px;margin:10px auto 4px;
+    background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;border:0;
+    border-radius:12px;padding:16px 20px;font-size:19px;font-weight:800;
+    letter-spacing:.3px;cursor:pointer;box-shadow:0 6px 18px rgba(18,144,124,.35)}
+  .next-challenge:active{transform:translateY(1px)}
 
   /* ── HOF: no header clutter ── */
   .hof-header{
@@ -1259,6 +1266,11 @@
       <div class="game-header">
         <span class="game-label">Hold your breath like a freediver</span>
         <span class="score">Best <b id="breathPB">0.0</b>s</span>
+      </div>
+      <div class="qlevels" id="breathLevels">
+        <button class="qlevel" data-lv="junior">Junior</button>
+        <button class="qlevel" data-lv="kid">Kid</button>
+        <button class="qlevel" data-lv="adult">Adult</button>
       </div>
       <div class="breath-stage">
         <div class="breath-orb" id="breathOrb">
@@ -2817,13 +2829,53 @@ function advanceGame(){
   updateStrip(activeGame);
   var gb=$('gameBack');
   if(gb){gb.classList.add('done');gb.textContent='← Back to games';}
+  showNextChallenge();
 }
+/* One shared button, moved under whichever auto-notice is currently showing. */
+var nextChallengeBtn=null;
+function showNextChallenge(notice){
+  if(!notice){
+    var panel=$('p-'+activeGame);
+    if(!panel)return;
+    notice=panel.querySelector('.auto-notice');
+  }
+  if(!notice)return;
+  if(!nextChallengeBtn){
+    nextChallengeBtn=document.createElement('button');
+    nextChallengeBtn.className='next-challenge';
+    nextChallengeBtn.textContent='Next challenge →';
+    nextChallengeBtn.onclick=function(){hideNextChallenge();showMenu();};
+  }
+  if(notice.nextSibling!==nextChallengeBtn)notice.parentNode.insertBefore(nextChallengeBtn,notice.nextSibling);
+  nextChallengeBtn.style.display='block';
+}
+function hideNextChallenge(){
+  if(nextChallengeBtn)nextChallengeBtn.style.display='none';
+}
+/* Games write their end-of-round line straight into .auto-notice, some of them
+   well before the delayed advanceGame() fires. Watch the notices so the button
+   lands the moment the player is told they have finished. */
+(function watchNotices(){
+  if(!window.MutationObserver)return;
+  var obs=new MutationObserver(function(muts){
+    for(var i=0;i<muts.length;i++){
+      var el=muts[i].target;
+      while(el&&el.nodeType!==1)el=el.parentNode;
+      if(!el||!el.classList||!el.classList.contains('auto-notice'))continue;
+      if(el.textContent.trim()&&$('p-'+activeGame)&&$('p-'+activeGame).contains(el))showNextChallenge(el);
+    }
+  });
+  document.querySelectorAll('.auto-notice').forEach(function(n){
+    obs.observe(n,{childList:true,characterData:true,subtree:true});
+  });
+})();
 function startGame(name){
   activeGame=(name==='hof'||name==='menu')?null:name;
   var strip=$('gamesstrip');
   if(name==='hof'||name==='menu'){strip.style.display='none';}
   else{strip.style.display='flex';}
   updateStrip(name);showPanel('p-'+name);
+  hideNextChallenge();
   var gb=$('gameBack');
   if(gb){
     gb.classList.toggle('show',!!activeGame);
@@ -3204,16 +3256,55 @@ function lineSVG(shape){
 }
 
 /* ════════ 1. BREATH HOLD ════════ */
-var BREATH_RECORDS=[
-  {who:'Reef rookie',t:30},
-  {who:'Keen snorkeller',t:60},
-  {who:'Club freediver',t:120},
-  {who:'Sydney comp diver',t:240},
-  {who:'Elite static apnea',t:360}
-];
+/* Each level gets its own ladder so the first rung is reachable:
+   Junior tops out at two minutes, Kid starts a touch higher, Adult is the
+   full freediving scale. */
+var BREATH_LADDERS={
+  junior:[
+    {who:'First fish',t:10},
+    {who:'Rock pool explorer',t:20},
+    {who:'Snorkel star',t:40},
+    {who:'Reef rookie',t:70},
+    {who:'Club freediver',t:120}
+  ],
+  kid:[
+    {who:'Rock pool explorer',t:15},
+    {who:'Reef rookie',t:30},
+    {who:'Keen snorkeller',t:60},
+    {who:'Snorkel star',t:90},
+    {who:'Club freediver',t:150}
+  ],
+  adult:[
+    {who:'Reef rookie',t:30},
+    {who:'Keen snorkeller',t:60},
+    {who:'Club freediver',t:120},
+    {who:'Sydney comp diver',t:240},
+    {who:'Elite static apnea',t:360}
+  ]
+};
+function breathDefaultLevel(){
+  if(USER.group==='Young Explorer')return 'junior';
+  if(USER.group==='Teen Explorer')return 'kid';
+  return 'adult';
+}
+var breathLevel=(function(){try{return localStorage.getItem('gds_breath_level')||'';}catch(e){return '';}})();
+if(!BREATH_LADDERS[breathLevel])breathLevel='';
+var BREATH_RECORDS=BREATH_LADDERS.adult;
+function breathMax(){return BREATH_RECORDS[BREATH_RECORDS.length-1].t;}
+function setBreathLevel(lv,skipInit){
+  if(!BREATH_LADDERS[lv])return;
+  breathLevel=lv;BREATH_RECORDS=BREATH_LADDERS[lv];
+  try{localStorage.setItem('gds_breath_level',lv);}catch(e){}
+  $('breathLevels').querySelectorAll('.qlevel').forEach(function(b){b.classList.toggle('on',b.dataset.lv===lv);});
+  if(!skipInit)initBreath();
+}
+$('breathLevels').querySelectorAll('.qlevel').forEach(function(b){
+  b.onclick=function(){setBreathLevel(b.dataset.lv);};
+});
 var breathState={holding:false,start:0,timer:null,pb:0,done:false,tries:0};
 function fmtSecs(s){return s.toFixed(1);}
 function initBreath(){
+  setBreathLevel(breathLevel||breathDefaultLevel(),true);
   breathState.holding=false;breathState.done=false;breathState.tries=0;
   try{breathState.pb=parseFloat(localStorage.getItem('gds_breath_pb'))||0;}catch(e){breathState.pb=0;}
   $('breathPB').textContent=fmtSecs(breathState.pb);
@@ -3235,7 +3326,7 @@ function breathTick(){
   if(!breathState.holding)return;
   var secs=(Date.now()-breathState.start)/1000;
   $('breathTime').textContent=fmtSecs(secs);
-  $('breathFill').style.height=Math.min(100,secs/240*100)+'%';
+  $('breathFill').style.height=Math.min(100,secs/breathMax()*100)+'%';
 }
 function breathStart(e){
   if(breathState.done||breathState.holding)return;
