@@ -1204,7 +1204,6 @@
       <div class="gstep" id="gs-speed"><div class="icon">⏱️</div><div class="label">Speed round</div></div>
       <div class="gstep" id="gs-season"><div class="icon">📅</div><div class="label">When to see</div></div>
       <div class="gstep" id="gs-wreckid"><div class="icon">🔱</div><div class="label">Wreck detective</div></div>
-      <div class="gstep" id="gs-wave"><div class="icon">🌊</div><div class="label">Wave lab</div></div>
       <div class="gstep" id="gs-wreckfind"><div class="icon">🗺️</div><div class="label">Wreck finder</div></div>
       <div class="gstep" id="gs-sharkid"><div class="icon">🦈</div><div class="label">Shark ID</div></div>
       <div class="gstep" id="gs-zoom"><div class="icon">🔍</div><div class="label">Zoom in</div></div>
@@ -1469,21 +1468,6 @@
       <p class="qfact" id="wreckidFact" style="margin-top:10px"></p>
       <div style="text-align:center"><button class="btn ghost" id="wreckidNext" style="display:none">Next →</button></div>
       <p class="auto-notice" id="wreckidNotice"></p>
-    </div>
-
-    <!-- 15. WAVE LAB -->
-    <div class="panel" id="p-wave">
-      <div class="game-header">
-        <span class="game-label">Read the conditions — will the site have good viz?</span>
-        <span class="score">Score <b id="waveScore">0</b> / <b id="waveTotal">0</b></span>
-      </div>
-      <div id="waveArt" style="margin-bottom:8px"></div>
-      <div id="waveCond" style="background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:10px;font-size:13.5px;line-height:1.7"></div>
-      <p style="text-align:center;color:var(--muted);margin:0 0 8px;font-size:13px">Your call for this dive site:</p>
-      <div class="opts-grid" id="waveOpts"></div>
-      <p class="qfact" id="waveFact" style="margin-top:10px"></p>
-      <div style="text-align:center"><button class="btn ghost" id="waveNext" style="display:none">Next →</button></div>
-      <p class="auto-notice" id="waveNotice"></p>
     </div>
 
     <!-- 16. WRECK FINDER (drag wrecks onto the map) -->
@@ -1942,7 +1926,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wave:'Wave Lab',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',macro:'Between the Surges',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',macro:'Between the Surges',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* stable per-browser device id + friendly station label */
 var DEVICE_ID=(function(){try{var v=localStorage.getItem('gds_device');if(!v){v='dev-'+Math.random().toString(36).slice(2,8);localStorage.setItem('gds_device',v);}return v;}catch(e){return 'dev-'+Math.random().toString(36).slice(2,8);}})();
@@ -2539,7 +2523,6 @@ function saveGameAgeGroups(){try{localStorage.setItem('gds_game_agegroups',JSON.
 var GAME_EXP_DEFAULTS={
   wreckid:  ['snorkel','scuba','freedive'],   /* Sydney wrecks are a diving subject */
   wreckfind:['snorkel','scuba','freedive'],
-  wave:     ['snorkel','scuba','freedive'],   /* reading conditions before a dive */
   ascent:   ['scuba'],                        /* return-to-surface: scuba only */
   nav:      ['scuba','freedive'],
   neutral:  ['snorkel','scuba','freedive'],
@@ -2822,7 +2805,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wave','wreckfind','sharkid','migrate','macro'];
+var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wreckfind','sharkid','migrate','macro'];
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_EXP=loadGameExp();
 var currentGame=0;
@@ -2919,7 +2902,6 @@ function startGame(name){
   else if(name==='speed')initSpeed();
   else if(name==='season')initSeason();
   else if(name==='wreckid')initWreckId();
-  else if(name==='wave')initWave();
   else if(name==='wreckfind')initWreckFind();
   else if(name==='sharkid')initSharkId();
   else if(name==='zoom')initZoom();
@@ -2948,7 +2930,6 @@ var GAME_META={
   speed:{icon:'⏱️',name:'Speed Round',desc:'60-second quick-fire'},
   season:{icon:'📅',name:'When Will I See It?',desc:'Match species to the months'},
   wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
-  wave:{icon:'🌊',name:'Wave Lab',desc:'Predict the visibility'},
   wreckfind:{icon:'🗺️',name:'Wreck Finder',desc:'Drag wrecks to the map'},
   sharkid:{icon:'🦈',name:'Shark ID',desc:'Drag each name onto its shark'},
   zoom:{icon:'🔍',name:'Zoom In',desc:'Name it before it zooms out'},
@@ -3937,56 +3918,6 @@ function wreckidRound(){
 }
 $('wreckidNext').onclick=wreckidRound;
 
-/* ════════════════════════════════════════════════════════
-   15. WAVE LAB — predict the viz
-   ════════════════════════════════════════════════════════ */
-var WAVE_OPTS=['Great viz 🟢','Diveable 🟡','Blown out 🔴'];
-var WAVE_ROUNDS=[
-  {site:'Cabbage Tree Bay',swell:'1.0 m',period:'7 s',dir:'NE',wind:'Light SW',ans:'Great viz 🟢',
-   f:'Small swell from the north-east barely enters this south-facing bay — and an offshore wind keeps it glassy. Classic good-viz day.'},
-  {site:'Bare Island',swell:'3.5 m',period:'13 s',dir:'S',wind:'Strong S',ans:'Blown out 🔴',
-   f:'A big, long-period south swell wraps straight onto Bare Island, and an onshore southerly churns up the sediment. Stay home.'},
-  {site:'Chowder Bay',swell:'2.5 m',period:'11 s',dir:'SE',wind:'Moderate NE',ans:'Great viz 🟢',
-   f:'Tucked deep inside the harbour, Chowder Bay is sheltered from ocean swell — it often stays clear when the coast is firing.'},
-  {site:'Gordons Bay',swell:'1.5 m',period:'9 s',dir:'E',wind:'Moderate NE',ans:'Diveable 🟡',
-   f:'A moderate easterly swell brings some surge to this exposed bay — diveable, but expect a bit of stir near the entry.'},
-  {site:'Kurnell',swell:'2.0 m',period:'10 s',dir:'NE',wind:'Light W',ans:'Great viz 🟢',
-   f:'Kurnell faces into Botany Bay and is protected from NE swell; with a light offshore wind the viz is usually excellent.'},
-  {site:'Shark Point',swell:'3.0 m',period:'12 s',dir:'SE',wind:'Fresh SE',ans:'Blown out 🔴',
-   f:'An exposed point taking a solid SE swell on an onshore wind — too much energy and stir for a safe, clear dive.'}
-];
-var waveQueue=[],waveScore=0,waveTotal=0,waveAnswered=false,waveCur=null;
-function initWave(){
-  waveQueue=shuffle(WAVE_ROUNDS.slice()).slice(0,3);waveScore=0;waveTotal=0;waveAnswered=false;
-  $('waveScore').textContent=0;$('waveTotal').textContent=0;$('waveNotice').textContent='';
-  waveRound();
-}
-function waveRound(){
-  waveAnswered=false;waveCur=waveQueue.shift();
-  $('waveArt').innerHTML='<div style="border-radius:10px;overflow:hidden;height:'+Math.round(artHeight(180)*0.55)+'px">'+waveSVG(waveCur)+'</div>';
-  $('waveCond').innerHTML='<b>'+esc(waveCur.site)+'</b><br>🌊 Swell: '+esc(waveCur.swell)+' @ '+esc(waveCur.period)+', from '+esc(waveCur.dir)+'<br>💨 Wind: '+esc(waveCur.wind);
-  $('waveFact').textContent='';$('waveNext').style.display='none';
-  $('waveOpts').innerHTML=WAVE_OPTS.map(function(o){return '<button class="opt" data-o="'+esc(o)+'">'+o+'</button>';}).join('');
-  $('waveOpts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
-    if(waveAnswered)return;waveAnswered=true;waveTotal++;
-    $('waveOpts').querySelectorAll('.opt').forEach(function(x){x.disabled=true;if(x.dataset.o===waveCur.ans)x.classList.add('right');});
-    if(btn.dataset.o===waveCur.ans){waveScore++;award(timedReward());}else{btn.classList.add('wrong');penalize();}
-    $('waveScore').textContent=waveScore;$('waveTotal').textContent=waveTotal;$('waveFact').textContent=waveCur.f;
-    if(waveQueue.length>0)$('waveNext').style.display='inline-block';
-    else{$('waveNotice').textContent='Forecast nailed! 🌊 Pick another game when you are ready →';setTimeout(advanceGame,2400);}
-  };});
-  startTimer();
-}
-$('waveNext').onclick=waveRound;
-function waveSVG(r){
-  var amp=Math.min(26,parseFloat(r.swell)*8+4);
-  return '<svg viewBox="0 0 660 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
-    '<defs><linearGradient id="wv" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1f6f86"/><stop offset="1" stop-color="#0c4257"/></linearGradient></defs>'+
-    '<rect width="660" height="180" fill="url(#wv)"/>'+
-    '<path d="M0 90 '+[0,1,2,3,4,5,6].map(function(i){var x=i*110;return 'Q '+(x+27)+' '+(90-amp)+' '+(x+55)+' 90 Q '+(x+82)+' '+(90+amp)+' '+(x+110)+' 90';}).join(' ')+'" fill="none" stroke="#bfe9f2" stroke-width="3" opacity="0.8"/>'+
-    '<g fill="#dff1f6" opacity="0.5" font-family="monospace" font-size="13"><text x="12" y="24">'+esc(r.dir)+' swell</text></g>'+
-    '</svg>';
-}
 
 /* ════════════════════════════════════════════════════════
    16. WRECK FINDER — drag wrecks onto the Sydney map
@@ -5652,8 +5583,12 @@ var ZOOM_CFG={
 var ZOOM_ROUNDS=3;
 var zoomQueue=[],zoomScore=0,zoomTotal=0,zoomCur=null,zoomAnswered=false,zoomRAF=null,zoomT0=0;
 
+/* The draughtboard shark is a Tasmanian/Victorian species a Sydney diver will
+   not meet, and the eastern blind shark already covers the small blunt-headed
+   bottom-dweller slot here — with a photo that is unambiguously one. */
+var ZOOM_EXCLUDE={draughtboard:true};
 function zoomPool(){
-  return Object.keys(PHOTOS).filter(function(k){return QD(k)&&PHOTOS[k];});
+  return Object.keys(PHOTOS).filter(function(k){return QD(k)&&PHOTOS[k]&&!ZOOM_EXCLUDE[k];});
 }
 function zoomCfg(){return ZOOM_CFG[USER.group]||ZOOM_CFG['Teen Explorer'];}
 
