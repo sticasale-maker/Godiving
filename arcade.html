@@ -558,7 +558,7 @@
   @media(max-height:720px){
     .bubble-brief{padding:8px 11px;gap:3px;font-size:13.5px;line-height:1.35;margin-bottom:7px}
   }
-  #bubbleStart{width:100%;margin-top:10px;flex-shrink:0}
+  #bubbleStart,#nuStart{width:100%;margin-top:10px;flex-shrink:0}
   .depth-how{font-size:13px;color:var(--muted);text-align:center;margin:0;flex-shrink:0}
   @media(min-width:1000px){
     .depth-how{font-size:17px}
@@ -1237,7 +1237,6 @@
           <div class="menu-sub" id="menuProgress">0 of 16 games played</div>
         </div>
         <button class="btn acc" id="menuFinish">🏆 Scores &amp; prizes</button>
-        <button class="admin-link" id="menuAdmin">⚙️ Age groups</button>
       </div>
       <div class="menu-grid" id="menuGrid"></div>
     </div>
@@ -1546,6 +1545,7 @@
         <canvas id="nuCanvas"></canvas>
         <div class="nu-hud"><span id="nuHud">Hold to breathe in — rise. Release — sink.</span></div>
       </div>
+      <button class="btn" id="nuStart" style="display:none">START →</button>
       <button class="nu-btn" id="nuBreath">🫁 HOLD TO BREATHE IN<small>release to exhale and sink<em class="keyhint"> · ↑ or space</em></small></button>
       <p class="auto-notice" id="nuNotice"></p>
     </div>
@@ -1717,7 +1717,7 @@
           <div class="menu-title">Age group <b>panel</b> ⚙️</div>
           <div class="menu-sub">Tick which age groups each game suits</div>
         </div>
-        <button class="btn ghost" id="adminBack">← Back to games</button>
+        <button class="btn ghost" id="adminBack">← Back</button>
       </div>
       <div class="admin-grid" id="adminGrid"></div>
       <button class="btn acc" id="adminSave" style="margin-top:14px">💾 Save</button>
@@ -2018,7 +2018,7 @@ var Cloud=(function(){
   var lbListeners={};                     /* local-mode leaderboard listeners */
   var presenceCh=null,hbTimer=null,mySess={};
   var adminCh=null,adminSessCbs=[],adminCmdCbs=[];
-  var cmdCh=null,cmdSendChs={};
+  var cmdCh=null,cmdSendChs={},myCmdCbs=[];
   function fire(cbs,arg){(cbs||[]).forEach(function(c){try{c(arg);}catch(e){}});}
   function loadScript(src){return new Promise(function(res,rej){var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;document.head.appendChild(s);});}
   function lsScores(){try{return JSON.parse(localStorage.getItem('gds_scores')||'[]');}catch(e){return [];}}
@@ -2156,13 +2156,8 @@ var Cloud=(function(){
   function startSession(data){
     if(mode!=='cloud'||!sb)return;
     mySess=Object.assign({device:DEVICE_ID,station:STATION,ss:false,ts:Date.now()},data);
-    /* Signing in twice (a test reset, a second player on the booth machine)
-       used to build a second presence channel on the same key and throw. */
-    if(presenceCh){try{presenceCh.track(mySess);}catch(e){}}
-    else{
-      presenceCh=sb.channel('arcade-presence',{config:{presence:{key:DEVICE_ID}}});
-      presenceCh.subscribe(function(status){if(status==='SUBSCRIBED'){presenceCh.track(mySess);}});
-    }
+    ensurePresence();
+    try{presenceCh.track(mySess);}catch(e){}
     if(hbTimer)clearInterval(hbTimer);
     hbTimer=setInterval(function(){if(presenceCh){mySess.ts=Date.now();presenceCh.track(mySess);}},10000);
   }
@@ -2170,24 +2165,41 @@ var Cloud=(function(){
     if(mode!=='cloud'||!sb||!presenceCh)return;
     Object.assign(mySess,patch,{ts:Date.now()});presenceCh.track(mySess);
   }
-  function adminPresence(){
-    if(adminCh)return;
-    adminCh=sb.channel('arcade-presence',{config:{presence:{key:'admin-'+DEVICE_ID}}});
+  /* ONE presence channel for the whole page. supabase.channel(name) hands back
+     the channel that already exists for that topic, and a channel only accepts
+     .on() handlers before subscribe() — so the admin console asking for
+     'arcade-presence' after a player had already subscribed to it threw
+     "cannot add presence callbacks after subscribe". Every listener is
+     registered up front and fanned out from here instead. */
+  function ensurePresence(){
+    if(presenceCh)return presenceCh;
+    presenceCh=sb.channel('arcade-presence',{config:{presence:{key:DEVICE_ID}}});
     function emit(){
-      var st=adminCh.presenceState(),arr=[];
+      var st=presenceCh.presenceState(),arr=[];
       Object.keys(st).forEach(function(k){if(k.indexOf('admin-')===0)return;var m=st[k]&&st[k][0];if(m)arr.push(m);});
       fire(adminSessCbs,arr);
-      var map={};arr.forEach(function(s){map[s.device]={screensaver:!!s.ss};});
+      var map={};arr.forEach(function(x){map[x.device]={screensaver:!!x.ss};});
       fire(adminCmdCbs,map);
     }
-    adminCh.on('presence',{event:'sync'},emit).on('presence',{event:'join'},emit).on('presence',{event:'leave'},emit).subscribe();
+    presenceCh.on('presence',{event:'sync'},emit)
+              .on('presence',{event:'join'},emit)
+              .on('presence',{event:'leave'},emit)
+              .subscribe(function(status){
+                if(status==='SUBSCRIBED'&&mySess&&mySess.device)presenceCh.track(mySess);
+              });
+    return presenceCh;
   }
-  function onSessions(cb){if(mode==='cloud'&&sb){adminSessCbs.push(cb);adminPresence();}else cb(null);}
-  function onCommands(cb){if(mode==='cloud'&&sb){adminCmdCbs.push(cb);adminPresence();}else cb({});}
+  function onSessions(cb){if(mode==='cloud'&&sb){adminSessCbs.push(cb);ensurePresence();}else cb(null);}
+  function onCommands(cb){if(mode==='cloud'&&sb){adminCmdCbs.push(cb);ensurePresence();}else cb({});}
 
   /* ----- commands / screensaver (Realtime Broadcast) ----- */
   function onMyCommand(cb){
-    if(mode==='cloud'&&sb){cmdCh=sb.channel('cmd-'+DEVICE_ID);cmdCh.on('broadcast',{event:'ss'},function(p){cb(p.payload||{});}).subscribe();}
+    if(mode==='cloud'&&sb){
+      if(cmdCh){myCmdCbs.push(cb);return;}
+      myCmdCbs.push(cb);
+      cmdCh=sb.channel('cmd-'+DEVICE_ID);
+      cmdCh.on('broadcast',{event:'ss'},function(p){fire(myCmdCbs,p.payload||{});}).subscribe();
+    }
     else{window.addEventListener('storage',function(e){if(e.key==='gds_cmd_'+DEVICE_ID){try{cb(JSON.parse(e.newValue||'{}'));}catch(x){}}});}
   }
   function sendCommand(device,cmd){
@@ -2280,6 +2292,8 @@ function renderAdmin(){
   var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
   var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
   mng+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupM','adminSetGroup(this.value)')+'<button class="warn" onclick="adminResetAll()">🗑 Reset ALL rankings</button></div>';
+  mng+='<div class="row" style="margin-bottom:8px"><button class="acc" onclick="showAdmin()">'+
+       '⚙️ Game availability by age group</button></div>';
   mng+='<div class="row" style="margin-bottom:8px"><button class="acc" onclick="adminTestReset()">'+
        '🧪 Test reset — clear board + this device</button>'+
        '<button onclick="adminResetDevice()">↺ Reset this device only</button></div>';
@@ -3315,10 +3329,17 @@ function buildAdminGrid(){
   }).join('');
   $('adminGrid').innerHTML=html;
 }
-function showAdmin(){buildAdminGrid();$('adminSaved').textContent='';showPanel('p-admin');}
+/* Reachable only from the admin console, which is itself behind ?admin or five
+   taps in the top-left corner. It used to be a link on the player menu, which
+   meant any visitor could change which games the stand offers — and since the
+   config went shared, change it for every machine at once. */
+function showAdmin(){
+  if(!ADM.open)return showMenu();
+  document.getElementById('adminOv').classList.remove('on');
+  buildAdminGrid();$('adminSaved').textContent='';showPanel('p-admin');
+}
 (function(){
-  var ma=$('menuAdmin');if(ma)ma.onclick=showAdmin;
-  var ab=$('adminBack');if(ab)ab.onclick=showMenu;
+  var ab=$('adminBack');if(ab)ab.onclick=function(){ADM.open?openAdmin():showMenu();};
   var as=$('adminSave');if(as)as.onclick=function(){
     $('adminGrid').querySelectorAll('input[type=checkbox]').forEach(function(cb){
       var g=cb.dataset.g;
@@ -5148,6 +5169,19 @@ function initNeutral(){
   nu.y=nuMid(72);
   $('nuScore').textContent=0;$('nuHits').textContent=0;
   $('nuLeft').textContent=NU.SECS;$('nuNotice').textContent='';
+  /* Frozen on the start line until the player says go. The brief explains a
+     control nobody has met before — you rise a moment AFTER you breathe in —
+     and the cave used to start scrolling while they were still reading it. */
+  nu.armed=false;
+  $('nuStart').style.display='block';
+  $('nuBreath').disabled=true;
+  nuDraw(72,false);          /* paint the mouth of the cave so it is not blank */
+}
+function startNeutral(){
+  if(!nu||nu.armed)return;
+  nu.armed=true;
+  $('nuStart').style.display='none';
+  $('nuBreath').disabled=false;
   nu.last=performance.now();
   nuRAF=requestAnimationFrame(nuStep);
 }
@@ -5260,7 +5294,8 @@ function nuEnd(){
   $('nuNotice').textContent=msg+' Pick another game when you are ready →';
   setTimeout(advanceGame,2900);
 }
-holdButton($('nuBreath'),function(on){if(nu&&!nu.done)nu.breathing=on;},
+$('nuStart').onclick=startNeutral;
+holdButton($('nuBreath'),function(on){if(nu&&nu.armed&&!nu.done)nu.breathing=on;},
   ['ArrowUp','Up',' ','Spacebar','w','W']);
 
 /* ═══════════════════════════════════════════════════════════════
