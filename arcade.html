@@ -3393,17 +3393,17 @@ var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:
    youngest divers were losing on the reading. Younger = fewer bubbles
    in the air, drifting more slowly, drawn bigger. */
 var BUBBLE_CFG={
-  'Young Explorer':{every:1500,rise:0.55,size:76,extra:30,start:2},
-  'Teen Explorer' :{every:1000,rise:0.85,size:64,extra:32,start:3},
-  'Adult Explorer':{every:820, rise:1.00,size:58,extra:34,start:3}
+  'Young Explorer':{every:2200,rise:0.32,size:84,extra:26,start:2,cap:4,secs:25},
+  'Teen Explorer' :{every:1200,rise:0.70,size:66,extra:30,start:3,cap:6,secs:20},
+  'Adult Explorer':{every:820, rise:1.00,size:58,extra:34,start:3,cap:8,secs:20}
 };
 function bubbleCfg(){return BUBBLE_CFG[USER.group]||BUBBLE_CFG['Teen Explorer'];}
 
 function initBubble(){
   var f=$('bubbleField');f.innerHTML='';
   var cfg=bubbleCfg();
-  bubbleState={time:15,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
-  $('bubbleTime').textContent='20';$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
+  bubbleState={time:cfg.secs,hit:0,miss:0,timer:null,spawn:null,active:true,bubbles:[],raf:null};
+  $('bubbleTime').textContent=cfg.secs;$('bubbleHit').textContent='0';$('bubbleMiss').textContent='0';
   $('bubbleMsg').textContent='Tap the REAL Sydney species. Ignore the impostors!';$('bubbleNotice').textContent='';
   bubbleState.timer=setInterval(function(){
     bubbleState.time--;$('bubbleTime').textContent=bubbleState.time;
@@ -3416,6 +3416,7 @@ function initBubble(){
 function spawnBubble(){
   if(!bubbleState.active)return;
   var f=$('bubbleField');var W=f.clientWidth||320;
+  if(bubbleState.bubbles.length>=bubbleCfg().cap)return;
   var real=Math.random()<0.55;
   var name=real?BUBBLE_REAL[Math.floor(Math.random()*BUBBLE_REAL.length)]
                 :BUBBLE_FAKE[Math.floor(Math.random()*BUBBLE_FAKE.length)];
