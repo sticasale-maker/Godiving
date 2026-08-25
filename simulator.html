@@ -26,9 +26,14 @@ body{
 }
 
 /* ─────────────── shell ─────────────── */
+/* The stage is sized to exactly what it holds — layout() sets --stage-w from
+   the map plus its two tile columns — so the width that used to sit empty on
+   either side of the map goes to the surge panel instead. Desktop only, up to
+   a 2560-wide iMac. */
 #app{
   display:grid; height:100dvh; gap:10px; padding:10px;
-  grid-template-columns:302px 1fr 322px;
+  --rig-w:clamp(302px,14.5vw,372px);
+  grid-template-columns:var(--rig-w) var(--stage-w,1fr) minmax(340px,1fr);
   grid-template-rows:100%;
   grid-template-areas:"rig stage diver";
 }
@@ -49,12 +54,15 @@ body{
 #mapWrap{position:absolute;inset:0}
 #mapCv{position:absolute}
 #leaders{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible}
-#tiles{position:absolute;inset:0}
+#tiles{position:absolute;inset:0;pointer-events:none}
 
 .tile{position:absolute;background:rgba(6,20,38,0.88);
   border:1px solid rgba(255,255,255,0.13);border-radius:10px;padding:5px 5px 6px;
-  box-shadow:0 5px 18px rgba(0,0,0,0.6);
-  transition:left .3s cubic-bezier(.16,1,.3,1),top .3s cubic-bezier(.16,1,.3,1)}
+  box-shadow:0 5px 18px rgba(0,0,0,0.6);pointer-events:auto;cursor:pointer;
+  transition:left .3s cubic-bezier(.16,1,.3,1),top .3s cubic-bezier(.16,1,.3,1),
+             border-color .15s,box-shadow .15s,transform .15s}
+.tile:hover{border-color:rgba(0,194,168,.75);box-shadow:0 6px 22px rgba(0,0,0,.7);transform:scale(1.04)}
+.tile:active{transform:scale(.99)}
 .tile canvas{width:100%;display:block;border-radius:6px}
 .tile .nm{font-size:10.5px;font-weight:700;letter-spacing:.2px;color:#fff;
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin:4px 1px 3px}
@@ -92,14 +100,15 @@ body{
 
 /* Dials and the wave tank scale with the screen so the rig never has to scroll —
    a booth control you must scroll is a control nobody finds. */
-.dial{touch-action:none;cursor:grab;display:block;margin:2px 0 3px;
-  height:clamp(92px,12.4vh,152px);width:auto;aspect-ratio:1/1}
+.dial{touch-action:none;cursor:grab;display:block;margin:2px auto 3px;
+  width:min(100%,196px);height:auto;aspect-ratio:1/1;
+  max-height:clamp(92px,13vh,196px)}
 .dial:active{cursor:grabbing}
 
 /* wave shaper */
 #shaper{display:flex;flex-direction:column;background:rgba(0,0,0,.24);
   border:1px solid var(--border);border-radius:14px;padding:7px 9px 6px}
-#shaperTop{display:flex;gap:7px;height:clamp(96px,13.2vh,164px)}
+#shaperTop{display:flex;gap:7px;height:clamp(96px,13.4vh,192px)}
 #hgtCol{display:flex;flex-direction:column;align-items:center;width:46px;flex:none}
 #waveCv{flex:1;min-width:0;height:100%;border-radius:9px;
   background:rgba(2,12,26,.6);border:1px solid var(--border);display:block}
@@ -140,6 +149,39 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
   background:rgba(0,194,168,.08);color:var(--text);font-family:'DM Sans',sans-serif;
   font-size:11px;cursor:pointer;text-align:center;line-height:1.25}
 .preset:active{background:rgba(0,194,168,.3);color:#fff}
+
+/* Keyboard ring: Tab walks the six knobs, the highlighted one takes the arrows.
+   Deliberately loud — at a show the visitor needs to see which knob they are
+   about to turn from a metre away. */
+.kn-on{outline:3px solid var(--teal);outline-offset:4px;border-radius:10px}
+svg.kn-on{border-radius:50%;outline-offset:2px}
+.kn-on::-webkit-slider-thumb{border-color:#fff;box-shadow:0 0 0 3px var(--teal),0 2px 8px rgba(0,0,0,.6)}
+.kn-on::-moz-range-thumb{border-color:#fff;box-shadow:0 0 0 3px var(--teal),0 2px 8px rgba(0,0,0,.6)}
+.dial:focus,input[type=range]:focus{outline:none}
+
+/* ─────────────── tapped-open site map ─────────────── */
+/* Six times the tile, so a visitor can actually read the headland doing the
+   sheltering. Anywhere closes it — no close button to hunt for at a show. */
+#zoom{position:fixed;inset:0;z-index:100;display:flex;align-items:center;
+  justify-content:center;cursor:pointer;background:rgba(3,10,22,.8)}
+#zoom[hidden]{display:none}
+/* Fades in rather than scaling in on purpose: a transform changes the visual
+   rect without changing the layout box, and the site renderer sizes its canvas
+   from the visual rect — opening on a scale animation sized the backing store
+   to a mid-animation width and left the enlarged map soft. */
+#zoomCard{background:rgba(6,20,38,.97);border:1px solid rgba(255,255,255,.2);
+  border-radius:18px;padding:14px;box-shadow:0 22px 70px rgba(0,0,0,.85);
+  animation:zoomIn .16s ease-out}
+@keyframes zoomIn{from{opacity:0}to{opacity:1}}
+#zoom{animation:fadeIn .16s ease-out}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+#zoomCard canvas{width:100%;display:block;border-radius:12px}
+#zoomName{font-family:'Bebas Neue','DM Sans',sans-serif;font-size:31px;letter-spacing:2px;
+  color:#fff;margin:11px 2px 8px;font-weight:400}
+#zoomCard .trk{height:36px;border-radius:7px}
+#zoomCard .pc{font-size:26px;right:10px}
+#zoomHint{text-align:center;font-size:11px;letter-spacing:1.6px;text-transform:uppercase;
+  color:var(--dim);margin-top:10px}
 
 /* ─────────────── diver ─────────────── */
 #diverBody{flex:1;display:flex;gap:8px;min-height:0;margin-top:9px}
@@ -243,7 +285,7 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
     </div>
     <div id="legend">
       <b class="lgR">Avoid</b><b class="lgY">Caution</b><b class="lgG">Easy</b>
-      <em>&mdash; same 0&ndash;60 score bar as the forecast app</em>
+      <em>&mdash; same 0&ndash;60 score bar as the forecast app &middot; click a site to enlarge it</em>
     </div>
   </section>
 
@@ -267,6 +309,17 @@ input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;
     <p id="diverNote"></p>
   </aside>
 
+</div>
+
+<div id="zoom" hidden>
+  <div id="zoomCard">
+    <canvas></canvas>
+    <div id="zoomName"></div>
+    <div class="trk"><div class="fil"></div>
+      <div class="tk" style="left:33.33%"></div><div class="tk" style="left:66.67%"></div>
+      <div class="pc">&ndash;</div></div>
+    <div id="zoomHint">Click anywhere to close</div>
+  </div>
 </div>
 
 <script>
@@ -1647,7 +1700,7 @@ function project(lat,lon){
    TILES — one VizSiteMap per site (unchanged renderer), flanking the map and
    tied back to the real position by a leader line.
    ══════════════════════════════════════════════════════════════════════════ */
-var tilesEl=el('tiles'), leadersEl=el('leaders'), stageEl=el('stage');
+var tilesEl=el('tiles'), leadersEl=el('leaders'), stageEl=el('stage'), appEl=el('app');
 var TILE={}, MAPS={}, TW=150, TH=130;
 var ORDER=SITES.filter(function(s){ return SITE_COAST[s.key] && SITE_COAST[s.key].rings.length && SITE_LL[s.key]; });
 
@@ -1658,6 +1711,7 @@ ORDER.forEach(function(s){
     '<div class="trk"><div class="fil"></div>'+
     '<div class="tk" style="left:33.33%"></div><div class="tk" style="left:66.67%"></div>'+
     '<div class="pc">–</div></div>';
+  d.addEventListener('click',function(){ openZoom(s.key); });
   tilesEl.appendChild(d);
   TILE[s.key]={el:d, fil:d.querySelector('.fil'), pc:d.querySelector('.pc')};
   MAPS[s.key]=VizSiteMap.create(d.querySelector('canvas'),{compact:true});
@@ -1684,15 +1738,20 @@ function layout(){
   var gap=7;
   var tw=Math.floor(((avail-(n-1)*gap)/n-chrome)/0.6);
   if(tw<86){ gap=4; tw=Math.floor(((avail-(n-1)*gap)/n-chrome)/0.6); }
-  TW=clamp(tw,54,182);
+  TW=clamp(tw,54,200);
   // Size the tiles, let the site renderer set its own canvas height, then take
   // the real tile height off the page. De-colliding against a computed guess is
   // what put two tiles on top of each other.
   ORDER.forEach(function(s){ TILE[s.key].el.style.width=TW+'px'; });
   Object.keys(MAPS).forEach(function(k){ if(MAPS[k].fit) MAPS[k].fit(); });
   TH=Math.max(TILE[ORDER[0].key].el.offsetHeight, Math.round(TW*0.6)+chrome);
-  // map: as tall as the stage allows, narrowed if the flanks would not fit
+  // Nothing but the stage height decides how big the map and the tiles are, so
+  // the stage only ever needed the width those two add up to. Claim exactly
+  // that and the grid hands the rest to the surge panel, instead of leaving it
+  // as blank margin either side of the map.
   var mh=avail, mw=mh*(MAP.VW/MAP.VH);
+  appEl.style.setProperty('--stage-w', Math.ceil(mw+2*(TW+lead)+pad*2)+'px');
+  st=stageEl.getBoundingClientRect();          // the grid has resized us
   var maxMw=st.width-pad*2-2*(TW+lead);
   if(mw>maxMw){ mw=Math.max(140,maxMw); mh=mw*(MAP.VH/MAP.VW); }
   var box={ x:Math.round((st.width-mw)/2), y:Math.round((st.height-mh)/2),
@@ -1874,7 +1933,7 @@ function renderDiver(t){
 
   // the diver, swept by the surge. Screen scale: the excursion is drawn against
   // the same metres-per-pixel as the depth axis, capped so it stays on stage.
-  var pxPerM=Math.min(mPerPx,(W*0.40)/Math.max(S.xi,0.01));
+  var pxPerM=Math.min(mPerPx,(W*0.42)/Math.max(S.xi,0.01));
   var off=S.xi*pxPerM*Math.sin(t/ST.per*Math.PI*2);
   var cx=W/2, cy=bed-Math.max(15,H*0.09);
   // orbit the particle is on
@@ -1884,7 +1943,7 @@ function renderDiver(t){
   ctx.beginPath();
   ctx.ellipse(cx,cy,Math.max(3,S.xi*pxPerM),Math.max(1.5,zeta*pxPerM),0,0,Math.PI*2);
   ctx.stroke(); ctx.setLineDash([]);
-  var L=clamp(W*0.42,52,120);
+  var L=clamp(W*0.30,56,230);
   var tilt=Math.cos(t/ST.per*Math.PI*2)*0.16;
   diverGlyph(ctx,cx+off,cy,L,tilt,t*4.2);
   // bubbles
@@ -1893,11 +1952,12 @@ function renderDiver(t){
     var b=BUB[i];
     var by=bed-((t*22*b[2]+b[0]*600)%(bed-seaTop+20));
     if(by<seaTop) continue;
-    var bx=cx+off+18+Math.sin(by*0.06+b[1]*6)*7;
-    ctx.beginPath(); ctx.arc(bx,by,1.2+b[1]*2.1,0,Math.PI*2); ctx.fill();
+    var bx=cx+off+L*0.17+Math.sin(by*0.06+b[1]*6)*(L*0.07);
+    ctx.beginPath(); ctx.arc(bx,by,(1.2+b[1]*2.1)*clamp(L/110,0.8,2),0,Math.PI*2); ctx.fill();
   }
   // depth scale
-  ctx.fillStyle='rgba(200,221,245,0.42)'; ctx.font='9px DM Mono,monospace';
+  ctx.fillStyle='rgba(200,221,245,0.45)';
+  ctx.font=clamp(Math.round(W*0.028),9,15)+'px DM Mono,monospace';
   ctx.textAlign='right';
   ctx.fillText('0 m',W-5,seaTop+11);
   ctx.fillText(ST.depth.toFixed(ST.depth%1?1:0)+' m',W-5,bed-5);
@@ -1915,11 +1975,25 @@ function renderDiver(t){
    SITE_MIN_MS. The trailing timer guarantees the value you stop on is the one
    that ends up drawn. */
 var SITE_MIN_MS=110;
-var _paintReq=0, _sitesTimer=0, _sitesAt=0, _sitesSig='';
+var _paintReq=0, _paintTo=0, _sitesTimer=0, _sitesAt=0, _sitesSig='';
 
+/* Coalesce a burst of input into one repaint. A plain rAF would be enough on a
+   screen somebody is looking at, but rAF does not fire at all while the page is
+   hidden — a blanked booth display would then come back with stale readouts, so
+   a timer runs the same paint if the frame never arrives. */
 function schedulePaint(){
-  if(_paintReq) return;
-  _paintReq=requestAnimationFrame(function(){ _paintReq=0; paint(); });
+  if(_paintReq||_paintTo) return;
+  var done=false;
+  var run=function(){
+    if(done) return;
+    done=true;
+    if(_paintReq) cancelAnimationFrame(_paintReq);
+    clearTimeout(_paintTo);
+    _paintReq=0; _paintTo=0;
+    paint();
+  };
+  _paintReq=requestAnimationFrame(run);
+  _paintTo=setTimeout(run,120);
 }
 
 function paint(){
@@ -1973,7 +2047,118 @@ function paintSites(h){
     t.fil.style.background=scoreColor(pct);
     t.pc.textContent=pct+'%';
   });
+  if(_zoomKey) paintZoom(h);
 }
+
+/* ══════════════════════════════════════════════════════════════════════════
+   TAP TO ENLARGE — a tile is only ~150 px across, which is enough to see that
+   a site is sheltered but not enough to see WHAT is sheltering it. Clicking
+   one opens the same map six times the size, drawn by a full-resolution
+   (non-compact) VizSiteMap rather than a scaled-up bitmap.
+   ══════════════════════════════════════════════════════════════════════════ */
+var ZOOM=el('zoom'), ZCARD=el('zoomCard'), ZNAME=el('zoomName');
+var ZFIL=ZCARD.querySelector('.fil'), ZPC=ZCARD.querySelector('.pc');
+var ZMAP=VizSiteMap.create(ZCARD.querySelector('canvas'));
+var SITE_BY_KEY={}; ORDER.forEach(function(s){ SITE_BY_KEY[s.key]=s; });
+var _zoomKey='';
+
+function paintZoom(h){
+  var s=SITE_BY_KEY[_zoomKey]; if(!s) return;
+  h=h||hour();
+  var sc=calcScore(s,h);
+  ZMAP.set(s.key,s.name,siteMapPayload(s,sc.demerits,h));
+  var pct=Math.round(sc.score/60*100);
+  ZNAME.textContent=s.name;
+  ZFIL.style.width=pct+'%';
+  ZFIL.style.background=scoreColor(pct);
+  ZPC.textContent=pct+'%';
+}
+function openZoom(key){
+  _zoomKey=key;
+  // Six times the tile. The overlay covers the whole window rather than the
+  // stage, so at every screen this runs on there is room for a true 6x; the
+  // two limits are only there so it can never grow off a smaller display.
+  var w=Math.min(TW*6, window.innerWidth-56, (window.innerHeight-190)/0.6);
+  ZCARD.style.width=Math.round(Math.max(260,w))+'px';
+  ZOOM.hidden=false;
+  paintZoom();
+  if(ZMAP.fit) ZMAP.fit();
+  // One more fit after the browser has settled the overlay, so the canvas is
+  // sized from the card's final width whatever the open animation did.
+  setTimeout(function(){ if(!ZOOM.hidden && ZMAP.fit) ZMAP.fit(); },220);
+}
+function closeZoom(){ ZOOM.hidden=true; _zoomKey=''; }
+ZOOM.addEventListener('click',closeZoom);
+/* The card scales in. A transform does not change the element's layout box, so
+   the renderer's own ResizeObserver never fires — but fit() reads the visual
+   rect, so sizing it mid-animation leaves the canvas backing store short and
+   the map soft. Re-fit once the animation has landed. */
+ZCARD.addEventListener('animationend',function(){ if(ZMAP.fit) ZMAP.fit(); });
+
+/* ══════════════════════════════════════════════════════════════════════════
+   KEYBOARD — Tab steps through the six knobs and wraps back to the first;
+   the highlighted one is then driven by the left/right arrows. The dials are
+   SVG, so they are given a tabindex and the slider role by hand; the sliders
+   are real range inputs but are still driven from here so that both kinds
+   step identically (a vertical range input maps the arrows differently).
+   ══════════════════════════════════════════════════════════════════════════ */
+var KNOBS=[
+  {el:el('dialSwell'), lab:'swell direction', step:5, wrap:true,
+   get:function(){return ST.dir;},  set:function(v){ ST.dir=v;  drawSwellDial(); }},
+  {el:el('hgt'),  lab:'wave height'},
+  {el:el('per'),  lab:'wave period'},
+  {el:el('dialWind'), lab:'wind direction', step:5, wrap:true,
+   get:function(){return ST.wdir;}, set:function(v){ ST.wdir=v; drawWindDial(); }},
+  {el:el('wspd'), lab:'wind speed'},
+  {el:el('tide'), lab:'tide'}
+];
+var knobIdx=-1;
+
+KNOBS.forEach(function(k,i){
+  if(k.wrap){
+    k.el.setAttribute('tabindex','0');
+    k.el.setAttribute('role','slider');
+    k.el.setAttribute('aria-label',k.lab);
+  }
+  k.el.addEventListener('focus',function(){ markKnob(i); });
+});
+
+function markKnob(i){
+  knobIdx=i;
+  KNOBS.forEach(function(k,j){ k.el.classList.toggle('kn-on', j===i); });
+  if(KNOBS[i].wrap) KNOBS[i].el.setAttribute('aria-valuenow',Math.round(KNOBS[i].get()));
+}
+function focusKnob(i){
+  i=((i%KNOBS.length)+KNOBS.length)%KNOBS.length;
+  markKnob(i);
+  KNOBS[i].el.focus({preventScroll:true});
+}
+function bumpKnob(k,dir){
+  if(k.wrap){
+    k.set((((k.get()+dir*k.step)%360)+360)%360);
+  } else {
+    var inp=k.el, step=+inp.step||1;
+    inp.value=clamp((+inp.value)+dir*step, +inp.min, +inp.max);
+    ST[inp.id]=+inp.value;
+  }
+  schedulePaint();
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape'){ if(!ZOOM.hidden) closeZoom(); return; }
+  if(e.key==='Tab'){
+    e.preventDefault();
+    focusKnob(knobIdx<0 ? 0 : knobIdx+(e.shiftKey?-1:1));
+    return;
+  }
+  var dir = (e.key==='ArrowRight'||e.key==='ArrowUp') ? 1
+          : (e.key==='ArrowLeft' ||e.key==='ArrowDown') ? -1 : 0;
+  if(!dir || knobIdx<0) return;
+  // Only take the arrows while the highlighted knob really has focus, so a
+  // slider the visitor clicked (the depth one) still works on its own.
+  if(document.activeElement!==KNOBS[knobIdx].el) return;
+  e.preventDefault();
+  bumpKnob(KNOBS[knobIdx],dir);
+});
 
 /* ══════════════════════════════════════════════════════════════════════════
    CONTROLS
@@ -2036,7 +2221,9 @@ function relayout(){ fitWave(); fitDiver(); layout(); still(); }
 var _rz;
 function debouncedRelayout(){ clearTimeout(_rz); _rz=setTimeout(relayout,120); }
 window.addEventListener('resize',debouncedRelayout);
-document.addEventListener('visibilitychange',function(){ if(!document.hidden) still(); });
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden){ paint(); still(); }
+});
 /* A window resize is not the only way the stage changes size — the rig column
    can reflow, and on a booth screen the browser chrome can come and go. */
 if(typeof ResizeObserver!=='undefined'){
