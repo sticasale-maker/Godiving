@@ -2688,12 +2688,17 @@ function ART_html(key,h){var ph=PHOTOS[key],hh=(h||artHeight(180));
 var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){return ART_html('pjshark');},groper:function(){return ART_html('groper');},cuttle:function(){return ART_html('cuttle');},bluedevil:function(){return ART_html('bluedevil');}};
 
 /* ════════ SITE DATA ════════ */
+/* One entry per SITE, each holding however many photographs we have of it, and
+   a round picks one at random. Keeping the site as the unit means six rounds
+   are six different places — a second Cabbage Tree Bay shot adds variety
+   between plays instead of asking the same question twice in one. */
 var PHOTO_SCENES=[
-  {img:'images/sites/chowder.jpg',name:'Chowder Bay',svg:siteSVG('WHERE AM I?','#1f6f86','#0c4257','pier')},
-  {img:'images/sites/ctb.jpg',name:'Cabbage Tree Bay',svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')},
-  {img:'images/sites/centennial.jpg',name:'SS Centennial wreck',svg:wreckSVG('WHERE AM I?')},
-  {img:'images/sites/currajong.jpg',name:'TSS Currajong wreck',svg:wreckSVG('WHERE AM I?')},
-  {img:'images/sites/bareisland.jpg',name:'Bare Island',svg:siteSVG('WHERE AM I?','#236f7e','#0c3a44','kelp')}
+  {name:'Chowder Bay',imgs:['images/sites/chowder.jpg'],svg:siteSVG('WHERE AM I?','#1f6f86','#0c4257','pier')},
+  {name:'Cabbage Tree Bay',imgs:['images/sites/ctb.jpg','images/sites/ctb-puffer.jpg'],svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')},
+  {name:'SS Centennial wreck',imgs:['images/sites/centennial.jpg'],svg:wreckSVG('WHERE AM I?')},
+  {name:'TSS Currajong wreck',imgs:['images/sites/currajong.jpg'],svg:wreckSVG('WHERE AM I?')},
+  {name:'Bare Island',imgs:['images/sites/bareisland.jpg'],svg:siteSVG('WHERE AM I?','#236f7e','#0c3a44','kelp')},
+  {name:'Oak Park',imgs:['images/sites/oakpark.jpg'],svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')}
 ];
 var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
 function siteSVG(label,top,bottom,feature){
@@ -3152,13 +3157,16 @@ function renderLog(){
 
 /* ════════ GUESS ════════ */
 var gScore=0,gTotal=0,gQueue=[],gAnswered=false;
-function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice()).slice(0,3);$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
+var GUESS_ROUNDS=6;
+function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice()).slice(0,GUESS_ROUNDS);$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
 function guessRound(){
   gAnswered=false;$('gnext').style.display='none';$('gnotice').textContent='';
   var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
+  var img=pick.imgs[Math.floor(Math.random()*pick.imgs.length)];
   var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
   var opts=shuffle([correctName].concat(wrong));
-  $('gart').innerHTML='<div style="border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+pick.img+'" alt="Guess the site" style="width:100%;display:block;max-height:340px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg"></div>';
+  $('gart').innerHTML='<div style="position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+img+'" alt="Guess the site" style="width:100%;display:block;max-height:340px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg">'+
+    (pick.credit&&pick.credit[img]?'<span class="photocredit">'+esc(pick.credit[img])+'</span>':'')+'</div>';
   $('gopts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+n+'">'+n+'</button>';}).join('');
   $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(gAnswered)return;gAnswered=true;gTotal++;
