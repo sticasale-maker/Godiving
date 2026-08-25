@@ -6211,7 +6211,7 @@ function showHallOfFame(){
     window._hofSubmitted=true;
     Cloud.submitScore(USER.group,USER.name,fin.score,
       {exp:USER.exp||null,age:USER.age||null},
-      function(code){USER.code=code;renderTicket(code);});
+      function(code){USER.code=code;maybeShowTicket();});
   }
   var cv=$('hofCoverage');
   if(cv){
@@ -6319,6 +6319,7 @@ function hofTick(){
     el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes '+
       'and you can check if you have won a prize.<br>'+
       '<span class="hof-rule">Only the first <b>'+PODIUM+'</b> of each age group qualify for a prize.</span>';
+    maybeShowTicket();
     if(verdict){
       verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
       if(rank&&rank<=PODIUM)verdict.innerHTML='You are <b>'+rank+ordinal(rank)+
@@ -6328,6 +6329,7 @@ function hofTick(){
     return;
   }
   if(hofTimer){clearInterval(hofTimer);hofTimer=null;}
+  maybeShowTicket();
   /* The phone is in a pocket by now. A buzz is the only way to say "look at
      me" — longer for a winner than for a nudge to come back next hour.
      navigator.vibrate is Android-only; iOS silently ignores it, which is why
@@ -6344,6 +6346,17 @@ function hofTick(){
 }
 function buzz(pattern){
   try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}
+}
+/* The ticket is the thing a winner shows staff, so it must not exist before
+   there is anything to win. While the session is open nobody has placed yet;
+   when it freezes, only the top three have. Showing it the moment a player
+   finished told everyone they had a prize coming. */
+function maybeShowTicket(){
+  var box=$('hofTicket');if(!box)return;
+  var end=sessionEnd(FINISH_TS||Date.now());
+  var rank=hofMyRank();
+  if(Date.now()<end||!rank||rank>PODIUM||!USER.code){box.style.display='none';return;}
+  renderTicket(USER.code);
 }
 function ordinal(n){return n===1?'st':n===2?'nd':n===3?'rd':'th';}
 var PRIZE_STAND='440';
