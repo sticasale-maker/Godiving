@@ -274,6 +274,11 @@
     color:rgba(255,255,255,.78);background:rgba(0,0,0,.45);
     padding:2px 6px;border-radius:5px;pointer-events:none}
   @media(min-width:1000px){.photocredit{font-size:11px;padding:3px 8px}}
+  .hof-coverage{text-align:center;font-size:14px;line-height:1.5;color:var(--muted);
+    margin:0 0 10px;padding:9px 12px;border-radius:10px;
+    background:var(--surface);border:1px solid var(--line)}
+  .hof-coverage b{color:var(--gold)}
+  @media(min-width:1000px){.hof-coverage{font-size:17px;padding:12px 16px}}
   .auto-notice{font-size:12px;color:var(--muted);text-align:center;margin-top:8px;min-height:16px;flex-shrink:0}
   /* Shared "Next challenge" button. Pinned to the right edge rather than left
      in the page flow: the end-of-game notice can sit below the fold, and the
@@ -1667,6 +1672,7 @@
         <h2>🏆 Hall of Fame</h2>
         <div class="hof-group" id="hofGroupLabel"></div>
       </div>
+      <p class="hof-coverage" id="hofCoverage"></p>
       <p class="encourage" id="hofEncourage"></p>
       <div class="ticket-box" id="hofTicket" style="display:none">
         <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a compass</div>
@@ -1844,22 +1850,59 @@ var LOGO_FALLBACK={
   viz:'<div style="height:52px;width:52px;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,#1f74a8,#0a2b47);border:1px solid var(--line);border-radius:50%"><span style="font-weight:900;font-size:20px;color:var(--gold);text-shadow:0 1px 2px rgba(0,0,0,.5)">VIZ</span></div>'
 };
 
-/* ════════ POINTS (speed-rewarded) ════════ */
+/* ════════ POINTS ════════════════════════════════════════════════
+   Speed and correctness are scored TOGETHER, because either one alone
+   is gameable: reward speed and the best play is to mash an answer;
+   reward only correctness and the best play is to sit and deliberate
+   over every question.
+
+   Both axes are read off the same clock, started when the question
+   appears:
+
+     FREE  the first couple of seconds are free — you have to read the
+           question, and nobody should be punished for that
+     PAR   the point where a correct answer has decayed to nothing
+
+   A CORRECT answer pays BASE * (PAR - t)/(PAR - FREE), full marks
+   inside FREE, sliding to zero at PAR. It never goes negative: being
+   right slowly earns you nothing, but knowing the answer should not
+   cost you points.
+
+   A WRONG answer costs MORE the faster it came, because a wrong answer
+   inside the reading window is a guess and guessing is the thing worth
+   discouraging. It slides from PEN_FAST down to PEN_SLOW, so someone
+   who genuinely thought about it and missed pays roughly a third of
+   what a masher pays.
+
+     fast + right  +10   ..  slow + right   0
+     slow + wrong   -3   ..  fast + wrong  -8
+
+   Nothing here knows which game it is; every game that calls
+   timedReward()/penalize() gets the same treatment. */
 var POINTS=0,REWARD=10,PENALTY=4;
-var TIME_PENALTY=1;   /* points lost per second taken to answer */
-var MIN_REWARD=3;     /* a correct answer never earns less than this */
+var SCORE={FREE:2, PAR:14, BASE:10, PEN_FAST:8, PEN_SLOW:3};
+var MIN_REWARD=3;     /* floor for the fixed, untimed awards some games use */
 var qStartTime=0;     /* set when each question/round is shown */
 function startTimer(){qStartTime=(window.performance&&performance.now)?performance.now():Date.now();}
-function timedReward(){
-  if(!qStartTime)return REWARD;
+function answerSecs(){
+  if(!qStartTime)return SCORE.FREE;
   var now=(window.performance&&performance.now)?performance.now():Date.now();
-  var secs=Math.max(0,(now-qStartTime)/1000);
-  var amt=REWARD-Math.floor(secs)*TIME_PENALTY;
-  return amt<MIN_REWARD?MIN_REWARD:amt;
+  return Math.max(0,(now-qStartTime)/1000);
+}
+function timedReward(){
+  var t=answerSecs();
+  var f=(SCORE.PAR-t)/(SCORE.PAR-SCORE.FREE);
+  if(f>1)f=1; if(f<0)f=0;
+  return Math.round(SCORE.BASE*f);
 }
 function flashPts(d){var fl=document.getElementById('ptsFloat');if(!fl)return;fl.textContent=(d>0?'+':'')+d;fl.className='fl '+(d>0?'up':'down');fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},900);}
 function award(amount){var a=(amount==null?REWARD:amount);POINTS+=a;syncPoints();flashPts(a);cloudUpdate();}
-function penalize(){POINTS-=PENALTY;if(POINTS<0)POINTS=0;syncPoints();flashPts(-PENALTY);cloudUpdate();}
+function penalize(){
+  var t=answerSecs();
+  var k=t/SCORE.PAR; if(k>1)k=1; if(k<0)k=0;
+  var pen=Math.round(SCORE.PEN_FAST-(SCORE.PEN_FAST-SCORE.PEN_SLOW)*k);
+  POINTS-=pen;if(POINTS<0)POINTS=0;syncPoints();flashPts(-pen);cloudUpdate();
+}
 function syncPoints(){var p=document.getElementById('points');if(p)p.textContent=POINTS;}
 function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
 
@@ -5850,18 +5893,40 @@ function showHallOfFame(){
   window.scrollTo(0,0);
   $('hofGroupLabel').textContent=USER.group;
   Cloud.updateSession({game:'done',points:POINTS});
+  var fin=finalScore();
   if(!window._hofSubmitted){
     window._hofSubmitted=true;
-    Cloud.submitScore(USER.group,USER.name,POINTS,
+    Cloud.submitScore(USER.group,USER.name,fin.score,
       {exp:USER.exp||null,age:USER.age||null},
       function(code){USER.code=code;renderTicket(code);});
   }
+  var cv=$('hofCoverage');
+  if(cv){
+    cv.innerHTML=fin.played>=fin.available
+      ? 'All <b>'+fin.available+'</b> games played — full <b>'+fin.score+'</b> points banked.'
+      : '<b>'+fin.played+'</b> of <b>'+fin.available+'</b> games played. '+
+        'Your '+fin.raw+' points count as <b>'+fin.score+'</b>; '+
+        'finish the rest to bank every point.';
+  }
   Cloud.onLeaderboard(USER.group,renderHof);
+}
+/* Breadth counts. Points already fall away on their own when you skip games,
+   but a strong run at three games could still out-score a steady run at
+   twenty, so the total is scaled by how much of YOUR list you actually
+   played. Everyone banks a score; only a full run banks all of it. */
+function finalScore(){
+  var available=gamesForGroup(USER.group).length||1;
+  var played=Object.keys(playedGames).filter(function(g){
+    return gamesForGroup(USER.group).indexOf(g)>-1;}).length;
+  var factor=0.55+0.45*(played/available);
+  return {raw:POINTS, played:played, available:available,
+          factor:factor, score:Math.round(POINTS*factor)};
 }
 function renderHof(board){
   board=(board||[]).slice().sort(function(a,b){return b.score-a.score;});
+  var mine=finalScore().score;
   var meIdx=-1;
-  for(var i=0;i<board.length;i++){if(board[i].device===DEVICE_ID&&board[i].name===USER.name&&board[i].score===POINTS){meIdx=i;break;}}
+  for(var i=0;i<board.length;i++){if(board[i].device===DEVICE_ID&&board[i].name===USER.name&&board[i].score===mine){meIdx=i;break;}}
   var medals=['🥇','🥈','🥉'];
   var myRank=meIdx>=0?meIdx+1:board.length;
   $('hofEncourage').textContent=encourageMsg(myRank,board.length||1);
