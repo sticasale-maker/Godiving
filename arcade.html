@@ -4183,10 +4183,43 @@ function initWreckFind(){
   startTimer();
 }
 
+/* Beaches, as short runs of real shoreline. Drawn sand-coloured over the
+   coast so the eye gets somewhere to land between the headlands. */
+var WF_BEACHES=[
+  [[-33.7920,151.2884],[-33.7962,151.2890]],   /* Manly            */
+  [[-33.7994,151.2934],[-33.7984,151.2948]],   /* Shelly           */
+  [[-33.7994,151.2846],[-33.7982,151.2878]],   /* Manly Cove       */
+  [[-33.8086,151.2868],[-33.8096,151.2862]],   /* Collins          */
+  [[-33.8120,151.2844],[-33.8134,151.2836]],   /* Store            */
+  [[-33.8232,151.2532],[-33.8206,151.2521]],   /* Balmoral         */
+  [[-33.8180,151.2510],[-33.8156,151.2499]],   /* Chinamans        */
+  [[-33.8052,151.2524],[-33.8074,151.2546]],   /* Clontarf         */
+  [[-33.8388,151.2794],[-33.8408,151.2799]],   /* Camp Cove        */
+  [[-33.8512,151.2754],[-33.8522,151.2750]],   /* Parsley Bay      */
+  [[-33.8548,151.2734],[-33.8560,151.2717]],   /* Shark Beach      */
+  [[-33.8722,151.2618],[-33.8702,151.2584]]    /* Rose Bay         */
+];
+/* The dredged channel, bank to bank down the middle of the port. It is why
+   the Currajong sits where she does, so it is worth drawing. */
+var WF_CHANNEL=[
+  [-33.8296,151.2980],[-33.8322,151.2836],[-33.8368,151.2742],
+  [-33.8432,151.2634],[-33.8486,151.2548],[-33.8528,151.2452],
+  [-33.8556,151.2338],[-33.8572,151.2206],[-33.8578,151.2074]
+];
+/* headland dots, so a name has something to point at */
+var WF_POINTS=[
+  [-33.8244,151.2944,'North Head'],[-33.8355,151.2836,'South Head'],
+  [-33.8272,151.2690,'Middle Head'],[-33.8531,151.2413,'Bradleys Head'],
+  [-33.8352,151.2528,'Georges Head'],[-33.8096,151.2572,'Grotto Point'],
+  [-33.8468,151.2802,'The Gap']
+];
+
 function wreckMapSVG(){
   var W=WF_MAP.W,H=WF_MAP.H;
-  var water=WF_WATER.map(function(pp){
-    return wfX(pp[1]).toFixed(1)+','+wfY(pp[0]).toFixed(1);}).join(' ');
+  var pts=WF_WATER.map(function(pp){
+    return wfX(pp[1]).toFixed(1)+','+wfY(pp[0]).toFixed(1);});
+  var water=pts.join(' ');
+  var waterPath='M'+pts.join('L')+'Z';
 
   /* a label anchored at a real place */
   function lab(lat,lon,txt,size,fill,anchor){
@@ -4194,9 +4227,13 @@ function wreckMapSVG(){
       'text-anchor="'+(anchor||'middle')+'" font-size="'+size+'" fill="'+fill+'" '+
       'font-family="system-ui,sans-serif" font-weight="600">'+txt+'</text>';
   }
+  function poly(list){
+    return list.map(function(p){
+      return wfX(p[1]).toFixed(1)+','+wfY(p[0]).toFixed(1);}).join(' ');
+  }
   var islands=WF_ISLANDS.map(function(i){
     return '<ellipse cx="'+wfX(i.lon).toFixed(1)+'" cy="'+wfY(i.lat).toFixed(1)+'" '+
-      'rx="'+i.rx+'" ry="'+i.ry+'" fill="url(#wfLand)" stroke="#2f7f6a" stroke-width="1"/>';
+      'rx="'+i.rx+'" ry="'+i.ry+'" fill="url(#wfLand)" stroke="#3d9b7f" stroke-width="1"/>';
   }).join('');
 
   /* the Bridge, drawn between its real pylons */
@@ -4204,27 +4241,76 @@ function wreckMapSVG(){
   /* 1 km through the same projection, for the scale bar */
   var kmPx=wfX(WF_MAP.lonW+1/(111.32*Math.cos(-33.84*Math.PI/180)))-wfX(WF_MAP.lonW);
 
-  var hatch='';
-  for(var hy=40;hy<H;hy+=50){
-    hatch+='<path d="M0 '+hy+' Q '+(W/2)+' '+(hy-14)+' '+W+' '+hy+'" fill="none"/>';
+  /* Relief on the land and shallows in the water are the SAME line — the real
+     coastline — stroked at decreasing widths and clipped to one side or the
+     other. Nothing is invented: every band follows the shore it came from. */
+  var relief='';
+  /* widest and lightest first, narrowest and darkest last, so the dark rim
+     ends up hugging the shore and fades inland rather than ringing it */
+  /* A centred stroke puts only half its width on the land side, so these are
+     doubled: 90/56/26 reaches 45/28/13 px inland. Widest and lightest first,
+     narrowest and darkest last, so the dark rim hugs the shore. */
+  [[90,'#175a41',.5],[56,'#123f2f',.55],[26,'#0a2a20',.6]].forEach(function(b){
+    relief+='<polygon points="'+water+'" fill="none" stroke="'+b[1]+'" stroke-width="'+b[0]+
+      '" stroke-opacity="'+b[2]+'" stroke-linejoin="round" clip-path="url(#wfClipLand)"/>';
+  });
+  var shallow='';
+  [[26,'#2b93a8',.30],[13,'#4fb6c4',.28]].forEach(function(b){
+    shallow+='<polygon points="'+water+'" fill="none" stroke="'+b[1]+'" stroke-width="'+b[0]+
+      '" stroke-opacity="'+b[2]+'" stroke-linejoin="round" clip-path="url(#wfClipWater)"/>';
+  });
+
+  var beaches=WF_BEACHES.map(function(b){
+    return '<polyline points="'+poly(b)+'" fill="none" stroke="#e8d9a8" stroke-width="4.5" '+
+      'stroke-linecap="round" stroke-opacity=".9"/>';
+  }).join('');
+
+  var heads=WF_POINTS.map(function(p){
+    return '<circle cx="'+wfX(p[1]).toFixed(1)+'" cy="'+wfY(p[0]).toFixed(1)+
+      '" r="2.6" fill="#eaf6fb" fill-opacity=".85"/>';
+  }).join('');
+
+  /* graticule: ticks every hundredth of a degree, off the same projection as
+     everything else, so the frame can actually be read as a chart */
+  var ticks='';
+  for(var lo=Math.ceil(WF_MAP.lonW*100)/100; lo<WF_MAP.lonE; lo+=0.01){
+    var tx=wfX(lo).toFixed(1);
+    ticks+='<path d="M'+tx+' 0v7 M'+tx+' '+H+'v-7"/>';
+  }
+  for(var la=Math.ceil(WF_MAP.latS*100)/100; la<WF_MAP.latN; la+=0.01){
+    var ty=wfY(la).toFixed(1);
+    ticks+='<path d="M0 '+ty+'h7 M'+W+' '+ty+'h-7"/>';
   }
 
   return '<svg viewBox="0 0 '+W+' '+H+'" xmlns="http://www.w3.org/2000/svg" style="width:100%;display:block">'+
     '<defs>'+
       '<linearGradient id="wfLand" x1="0" y1="0" x2="0" y2="1">'+
-        '<stop offset="0" stop-color="#15503f"/><stop offset="1" stop-color="#0e3b30"/></linearGradient>'+
+        '<stop offset="0" stop-color="#1c6349"/><stop offset="1" stop-color="#0f4231"/></linearGradient>'+
       '<linearGradient id="wfSea" x1="0" y1="0" x2="1" y2="1">'+
-        '<stop offset="0" stop-color="#0d4a61"/><stop offset="1" stop-color="#08334a"/></linearGradient>'+
+        '<stop offset="0" stop-color="#0e5570"/><stop offset="1" stop-color="#07293e"/></linearGradient>'+
+      /* everything inside the water polygon */
+      '<clipPath id="wfClipWater"><polygon points="'+water+'"/></clipPath>'+
+      /* everything outside it: the frame with the water punched out */
+      '<clipPath id="wfClipLand" clip-rule="evenodd">'+
+        '<path d="M0 0H'+W+'V'+H+'H0Z'+waterPath+'"/></clipPath>'+
     '</defs>'+
     '<rect width="'+W+'" height="'+H+'" fill="url(#wfLand)"/>'+
-    '<g stroke="#1b5f4b" stroke-width="1" opacity=".5">'+hatch+'</g>'+
-    '<polygon points="'+water+'" fill="url(#wfSea)" stroke="#7fd6e0" stroke-width="1.6" stroke-opacity=".55"/>'+
+    relief+
+    '<polygon points="'+water+'" fill="url(#wfSea)"/>'+
+    /* the deep channel, drawn before the shallows so the shore reads on top */
+    '<polyline points="'+poly(WF_CHANNEL)+'" fill="none" stroke="#03202f" stroke-width="26" '+
+      'stroke-opacity=".45" stroke-linecap="round" stroke-linejoin="round" clip-path="url(#wfClipWater)"/>'+
+    shallow+
+    '<polygon points="'+water+'" fill="none" stroke="#9fe8f2" stroke-width="1.7" stroke-opacity=".8"/>'+
+    beaches+
     islands+
     /* Harbour Bridge and Opera House: the two shapes everyone reads first */
     '<line x1="'+bx1.toFixed(1)+'" y1="'+by1.toFixed(1)+'" x2="'+bx2.toFixed(1)+'" y2="'+by2.toFixed(1)+'" '+
       'stroke="#cfe9f2" stroke-width="3.2" stroke-linecap="round"/>'+
     '<path d="M'+(wfX(151.2152)-7).toFixed(1)+' '+(wfY(-33.8570)+4).toFixed(1)+
       ' q3.5 -9 7 0 q3.5 -9 7 0 z" fill="#eaf6fb"/>'+
+    heads+
+    '<g stroke="#dff1f6" stroke-width="1" stroke-opacity=".45" fill="none">'+ticks+'</g>'+
     '<g opacity=".92">'+
       lab(-33.7952,151.2860,'MANLY',12,'#dff1f6','middle')+
       lab(-33.8252,151.2910,'NORTH HEAD',11,'#dff1f6','start')+
@@ -4245,6 +4331,7 @@ function wreckMapSVG(){
       lab(-33.8724,151.2620,'Rose Bay',10,'#9fe8e2','middle')+
       lab(-33.8418,151.2836,'Watsons Bay',10,'#9fe8e2','start')+
       lab(-33.8392,151.2536,'Chowder Bay',10,'#9fe8e2','end')+
+      lab(-33.8226,151.2560,'Balmoral',10,'#9fe8e2','end')+
     '</g>'+
     /* north arrow and scale bar, because it is a chart */
     '<g transform="translate('+(W-42)+',24)" opacity=".8">'+
