@@ -1,0 +1,329 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sydney Dive Challenge — attract loop</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.16);
+    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --gold:#f3c64f; --good:#4fd28a;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html,body{height:100%;background:#04161f;color:var(--text);overflow:hidden;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    cursor:none}
+  body.showcursor{cursor:auto}
+
+  /* The stage is locked to 16:9 and scaled to fit, so an iMac, a 1080p TV and a
+     laptop all get the identical composition instead of a reflow. */
+  #fit{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;background:#000}
+  /* flex-shrink:0 matters: without it the flex parent squeezes the 1920px
+     stage down to the viewport width FIRST and the transform then scales that
+     squeezed box, so everything on the right ran off the edge. */
+  #stage{position:relative;width:1920px;height:1080px;flex:0 0 auto;
+    transform-origin:center center;overflow:hidden;background:#04161f}
+
+  /* ── background: slow crossfading photographs, each drifting ─────── */
+  .bgwrap{position:absolute;inset:0}
+  .bg{position:absolute;inset:0;opacity:0;transition:opacity 2.2s ease}
+  .bg.on{opacity:1}
+  .bg img{width:100%;height:100%;object-fit:cover;display:block;
+    animation:drift 22s ease-in-out infinite alternate}
+  @keyframes drift{from{transform:scale(1.06) translate3d(-1.2%,-0.8%,0)}
+                   to{transform:scale(1.16) translate3d(1.2%,0.8%,0)}}
+  .scrim{position:absolute;inset:0;
+    background:linear-gradient(105deg,rgba(4,22,31,.94) 0%,rgba(4,22,31,.80) 38%,
+      rgba(4,22,31,.28) 66%,rgba(4,22,31,.55) 100%)}
+  .vig{position:absolute;inset:0;box-shadow:inset 0 0 220px 60px rgba(2,12,18,.85)}
+
+  /* ── layout ───────────────────────────────────────────────────── */
+  .grid{position:absolute;inset:0;display:grid;
+    grid-template-columns:1010px 1fr;grid-template-rows:auto 1fr auto;
+    padding:56px 64px;gap:0}
+
+  .top{grid-column:1/3;display:flex;align-items:center;gap:26px}
+  .top img{height:64px;width:auto}
+  .top .sep{width:2px;height:48px;background:var(--line)}
+  .top .circle{border-radius:50%}
+  .stand{margin-left:auto;font-family:'Press Start 2P',monospace;font-size:22px;
+    color:var(--gold);letter-spacing:3px}
+
+  .left{grid-column:1;align-self:center;padding-right:40px}
+  .kicker{font-family:'Press Start 2P',monospace;font-size:19px;letter-spacing:5px;
+    color:var(--accent);margin-bottom:26px}
+  h1{font-size:96px;line-height:.99;font-weight:900;letter-spacing:-2px;margin-bottom:22px;
+    text-shadow:0 6px 40px rgba(0,0,0,.75)}
+  h1 em{font-style:normal;color:var(--accent)}
+  .blurb{font-size:31px;line-height:1.42;color:var(--muted);max-width:900px}
+  .blurb b{color:var(--text)}
+
+  /* the rotating game card */
+  .right{grid-column:2;align-self:center;justify-self:end;width:640px}
+  .gcard{background:rgba(9,44,60,.78);border:2px solid var(--line);border-radius:26px;
+    padding:34px 34px 30px;backdrop-filter:blur(7px);
+    box-shadow:0 30px 80px rgba(0,0,0,.55)}
+  .gcard .lab{font-family:'Press Start 2P',monospace;font-size:13px;letter-spacing:3px;
+    color:var(--muted);margin-bottom:20px}
+  .gicon{font-size:96px;line-height:1;margin-bottom:14px}
+  .gname{font-size:46px;font-weight:900;line-height:1.08;margin-bottom:12px}
+  .gdesc{font-size:26px;line-height:1.4;color:var(--muted)}
+  .gdots{display:flex;gap:9px;margin-top:26px}
+  .gdots i{width:9px;height:9px;border-radius:50%;background:rgba(255,255,255,.22)}
+  .gdots i.on{background:var(--accent);box-shadow:0 0 12px rgba(54,201,192,.9)}
+  .swap{animation:swap .5s ease}
+  @keyframes swap{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+
+  /* ── bottom bar: the live bits ─────────────────────────────────── */
+  .bottom{grid-column:1/3;align-self:end;display:flex;align-items:flex-end;gap:34px}
+  .cta{background:linear-gradient(180deg,#2ad3b6,#0f8f7c);color:#032420;
+    border-radius:22px;padding:28px 44px;flex:0 0 auto;
+    box-shadow:0 18px 50px rgba(20,160,140,.45);animation:pulse 2.4s ease-in-out infinite}
+  @keyframes pulse{0%,100%{transform:translateY(0);box-shadow:0 18px 50px rgba(20,160,140,.45)}
+                   50%{transform:translateY(-7px);box-shadow:0 30px 66px rgba(20,160,140,.6)}}
+  .cta .l1{font-family:'Press Start 2P',monospace;font-size:30px;letter-spacing:2px}
+  .cta .l2{font-size:21px;font-weight:700;margin-top:11px;opacity:.85}
+
+  .panelrow{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .pnl{background:rgba(6,30,42,.80);border:1px solid var(--line);border-radius:20px;
+    padding:20px 24px;min-height:150px}
+  .pnl .h{font-family:'Press Start 2P',monospace;font-size:12px;letter-spacing:2.5px;
+    color:var(--muted);margin-bottom:14px}
+  .clockbig{font-family:'Press Start 2P',monospace;font-size:52px;color:var(--gold);letter-spacing:2px}
+  .clocksub{font-size:19px;color:var(--muted);margin-top:11px;line-height:1.35}
+  .lead{display:flex;align-items:center;gap:14px;font-size:23px;margin-bottom:9px}
+  .lead .r{font-family:'Press Start 2P',monospace;font-size:15px;color:var(--gold);width:26px}
+  .lead .n{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
+  .lead .s{font-family:'Press Start 2P',monospace;font-size:15px;color:var(--accent)}
+  .quiet{color:var(--muted);font-size:20px;line-height:1.45}
+
+  /* drifting bubbles, because it is a dive show */
+  .bub{position:absolute;bottom:-90px;border-radius:50%;
+    background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(180,235,255,.22) 62%,
+      rgba(140,210,240,.06));border:1px solid rgba(255,255,255,.35);
+    animation:rise linear infinite;pointer-events:none}
+  @keyframes rise{to{transform:translateY(-1300px) translateX(var(--dx));opacity:0}}
+</style>
+</head>
+<body>
+<div id="fit"><div id="stage">
+  <div class="bgwrap" id="bgwrap"></div>
+  <div class="scrim"></div>
+  <div class="vig"></div>
+  <div id="bubbles"></div>
+
+  <div class="grid">
+    <div class="top">
+      <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show">
+      <span class="sep"></span>
+      <img src="images/branding/vizlogo.png" alt="VIZ" class="circle">
+      <span class="stand">STAND 440</span>
+    </div>
+
+    <div class="left">
+      <div class="kicker">FREE TO PLAY · ALL AGES</div>
+      <h1>SYDNEY<br>DIVE <em>CHALLENGE</em></h1>
+      <p class="blurb">Twenty-three quick games about what actually lives on
+        <b>Sydney's reefs</b> — and what it takes to dive them.
+        <b>Two minutes</b> is enough to get on the board.</p>
+    </div>
+
+    <div class="right">
+      <div class="gcard">
+        <div class="lab">NOW PLAYING</div>
+        <div id="gbody">
+          <div class="gicon" id="gicon">🐠</div>
+          <div class="gname" id="gname">Guess Who</div>
+          <div class="gdesc" id="gdesc">Name the creature from a photo</div>
+        </div>
+        <div class="gdots" id="gdots"></div>
+      </div>
+    </div>
+
+    <div class="bottom">
+      <div class="cta">
+        <div class="l1">PLAY NOW</div>
+        <div class="l2">Grab a screen — it is free</div>
+      </div>
+      <div class="panelrow">
+        <div class="pnl">
+          <div class="h" id="clockHead">NEXT PRIZE ROUND</div>
+          <div class="clockbig" id="clockBig">--:--</div>
+          <div class="clocksub" id="clockSub">Top 3 in each age group win a prize</div>
+        </div>
+        <div class="pnl">
+          <div class="h">ON THE BOARD THIS HOUR</div>
+          <div id="board"><div class="quiet">Be the first name up here.</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div></div>
+
+<script>
+var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
+var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
+
+/* ── scale the fixed 1920x1080 stage to whatever screen it lands on ── */
+function fit(){
+  var s=Math.min(innerWidth/1920,innerHeight/1080);
+  document.getElementById('stage').style.transform='scale('+s+')';
+}
+addEventListener('resize',fit);fit();
+
+/* ── session clock: the same timetable the arcade uses ────────────── */
+var SESSION_DAYS={
+  '2026-09-05':['09:30','11:00','12:00','13:00','14:00','15:00','16:00','17:00'],
+  '2026-09-06':['09:30','11:00','12:00','13:00','14:00','15:00','16:00']
+};
+function dayKey(ts){var d=new Date(ts);
+  return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
+function atLocal(k,hm){var d=k.split('-'),t=hm.split(':');
+  return new Date(+d[0],+d[1]-1,+d[2],+t[0],+t[1],0,0).getTime();}
+function sessionBounds(ts){
+  var t=ts||Date.now(),k=dayKey(t),marks=SESSION_DAYS[k];
+  if(marks){
+    for(var i=0;i<marks.length-1;i++){
+      var a=atLocal(k,marks[i]),b=atLocal(k,marks[i+1]);
+      if(t>=a&&t<b)return {start:a,end:b};
+    }
+    if(t<atLocal(k,marks[0]))return {start:atLocal(k,marks[0]),end:atLocal(k,marks[1])};
+    return {start:atLocal(k,marks[marks.length-2]),end:atLocal(k,marks[marks.length-1])};
+  }
+  var h=new Date(t);h.setMinutes(0,0,0);
+  return {start:h.getTime(),end:h.getTime()+3600000};
+}
+function hhmm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
+
+function tickClock(){
+  var b=sessionBounds(),left=b.end-Date.now();
+  if(left<0)left=0;
+  var m=Math.floor(left/60000),s=Math.floor(left/1000)%60;
+  document.getElementById('clockBig').textContent=('0'+m).slice(-2)+':'+('0'+s).slice(-2);
+  document.getElementById('clockSub').innerHTML=
+    'until the board freezes at <b style="color:var(--text)">'+hhmm(b.end)+'</b>.<br>'+
+    'Top 3 in each age group win a prize.';
+}
+setInterval(tickClock,1000);tickClock();
+
+/* ── background photographs ───────────────────────────────────────── */
+var SHOTS=[
+  'images/sites/ctb.jpg','images/sites/oakpark.jpg','images/sites/bareisland.jpg',
+  'images/sites/chowder.jpg','images/sites/ctb-puffer.jpg','images/scenes/spotter2.jpg',
+  'images/creatures/weedy.jpg','images/creatures/greynurse.jpg','images/creatures/cuttle.jpg',
+  'images/creatures/groper.jpg','images/nudi/yellow-spotted.jpg','images/nudi/blue-cream.jpg',
+  'images/creatures/wobbegong_spotted.jpg','images/creatures/portjackson.jpg'
+];
+var bgwrap=document.getElementById('bgwrap'),layers=[],bgi=-1;
+SHOTS.forEach(function(src){
+  var d=document.createElement('div');d.className='bg';
+  var im=new Image();im.src=src;im.alt='';
+  im.onerror=function(){d.remove();};
+  d.appendChild(im);bgwrap.appendChild(d);layers.push(d);
+});
+function nextBg(){
+  if(!layers.length)return;
+  layers.forEach(function(l){l.classList.remove('on');});
+  bgi=(bgi+1)%layers.length;
+  layers[bgi].classList.add('on');
+}
+nextBg();setInterval(nextBg,7000);
+
+/* ── the game carousel ────────────────────────────────────────────── */
+var GAMES=[
+  ['🐠','Guess Who','Name the creature from a photo'],
+  ['🎨','Colour the Creature','A nudibranch in black and white — pick its real colours'],
+  ['🎯','Bubble Pop','Pop the real Sydney species, ignore the impostors'],
+  ['🔍','Zoom In','Name it before the picture zooms out'],
+  ['🦈','Shark ID','Nine sharks, nine names — match them up'],
+  ['🫁','Neutral','Fly a cave on your lungs alone'],
+  ['⬆️','Safe Ascent','Get to the surface without hurting yourself'],
+  ['🧭','Nav Trainer','Kick your fins to hold a bearing'],
+  ['🗺️','Wreck Finder','Put four real wrecks on the harbour chart'],
+  ['🫧','Breath Hold','Hold on like a freediver'],
+  ['🃏','Stat Battle','Top trumps with sea life'],
+  ['🔎','Where Am I?','Name the Sydney dive site']
+];
+var gi=-1;
+var dots=document.getElementById('gdots');
+GAMES.forEach(function(){dots.appendChild(document.createElement('i'));});
+function nextGame(){
+  gi=(gi+1)%GAMES.length;
+  var g=GAMES[gi];
+  document.getElementById('gicon').textContent=g[0];
+  document.getElementById('gname').textContent=g[1];
+  document.getElementById('gdesc').textContent=g[2];
+  var body=document.getElementById('gbody');
+  body.classList.remove('swap');void body.offsetWidth;body.classList.add('swap');
+  [].forEach.call(dots.children,function(d,i){d.classList.toggle('on',i===gi);});
+}
+nextGame();setInterval(nextGame,4200);
+
+/* ── bubbles ──────────────────────────────────────────────────────── */
+(function(){
+  var box=document.getElementById('bubbles');
+  for(var i=0;i<16;i++){
+    var b=document.createElement('div');b.className='bub';
+    var sz=10+Math.round(Math.random()*46);
+    b.style.width=b.style.height=sz+'px';
+    b.style.left=Math.round(Math.random()*1900)+'px';
+    b.style.setProperty('--dx',(Math.random()*90-45)+'px');
+    b.style.animationDuration=(11+Math.random()*15)+'s';
+    b.style.animationDelay=(-Math.random()*20)+'s';
+    box.appendChild(b);
+  }
+})();
+
+/* ── the live board ───────────────────────────────────────────────── */
+var sb=null;
+function loadScript(src){return new Promise(function(res,rej){
+  var s=document.createElement('script');s.src=src;s.onload=res;s.onerror=rej;
+  document.head.appendChild(s);});}
+
+function renderBoard(rows){
+  var box=document.getElementById('board');
+  if(!rows.length){
+    box.innerHTML='<div class="quiet">Nobody has finished this hour yet.<br>'+
+      '<b style="color:var(--gold)">First name on the board is yours.</b></div>';
+    return;
+  }
+  box.innerHTML=rows.slice(0,4).map(function(e,i){
+    return '<div class="lead"><span class="r">'+(i+1)+'</span>'+
+      '<span class="n">'+String(e.name||'').replace(/[<>&]/g,'')+'</span>'+
+      '<span class="s">'+e.score+'</span></div>';
+  }).join('');
+}
+function refresh(){
+  if(!sb)return;
+  var b=sessionBounds();
+  sb.from('scores').select('name,score,ts,grp')
+    .not('hidden','is',true)
+    .gte('ts',new Date(b.start).toISOString())
+    .lt('ts',new Date(b.end).toISOString())
+    .then(function(r){
+      var rows=(r.data||[]).sort(function(a,c){return c.score-a.score;});
+      renderBoard(rows);
+    },function(){});
+}
+loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2').then(function(){
+  sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+  refresh();setInterval(refresh,20000);
+}).catch(function(){});
+
+/* Move the mouse and the cursor comes back, so staff can drive the machine
+   without restarting anything. */
+var hideT=null;
+addEventListener('mousemove',function(){
+  document.body.classList.add('showcursor');
+  clearTimeout(hideT);
+  hideT=setTimeout(function(){document.body.classList.remove('showcursor');},2500);
+});
+/* Any key or click hands the screen over to the game itself. */
+function go(){location.href='arcade.html';}
+addEventListener('click',go);
+addEventListener('keydown',function(e){if(e.key!=='F11')go();});
+</script>
+</body>
+</html>
