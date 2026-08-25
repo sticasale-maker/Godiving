@@ -657,15 +657,16 @@
      states the control and the goal before the swim starts */
   .game-header .game-label.nu-title{
     font-size:clamp(16px,4vw,22px);font-weight:800;color:var(--text);letter-spacing:.3px}
-  .nu-brief{flex-shrink:0;margin:0 0 8px;padding:8px 11px;border-radius:11px;
+  .nu-brief{flex-shrink:0;margin:0 0 9px;padding:11px 14px;border-radius:11px;
     background:var(--surface);border:1px solid var(--line);
-    display:flex;flex-direction:column;gap:3px;
-    font-size:clamp(12px,2.9vw,15px);line-height:1.4;color:var(--text)}
+    display:flex;flex-direction:column;gap:5px;
+    font-size:clamp(14px,3.5vw,19px);line-height:1.45;color:var(--text)}
   .nu-brief i{font-style:normal;font-weight:800;color:var(--accent)}
   .nu-brief .warn{color:var(--muted)}
   .nu-brief .warn b{color:var(--gold)}
+  @media(min-width:1000px){.nu-brief{font-size:21px;padding:15px 18px;gap:7px;margin-bottom:12px}}
   @media(max-height:720px){
-    .nu-brief{padding:6px 9px;gap:2px;font-size:11.5px;line-height:1.32;margin-bottom:6px}
+    .nu-brief{padding:8px 11px;gap:3px;font-size:13.5px;line-height:1.35;margin-bottom:7px}
   }
   .nu-btn{width:100%;margin-top:8px;padding:16px 8px;border-radius:14px;cursor:pointer;flex-shrink:0;
     background:#0d3b46;color:#9fe8e2;border:2px solid var(--accent);
@@ -757,10 +758,12 @@
   /* the brief: what to press and what the limit is, stated up front */
   .game-header .game-label.asc-title{
     font-size:clamp(16px,4vw,22px);font-weight:800;color:var(--text);letter-spacing:.3px}
-  .asc-brief{flex-shrink:0;margin:0 0 8px;padding:8px 11px;border-radius:11px;
+  /* This is the only place the rules of the game are stated, so it is worth
+     real height — it was set small enough to skim past. */
+  .asc-brief{flex-shrink:0;margin:0 0 9px;padding:11px 14px;border-radius:11px;
     background:var(--surface);border:1px solid var(--line);
-    display:flex;flex-direction:column;gap:3px;
-    font-size:clamp(12px,2.9vw,15px);line-height:1.4;color:var(--text)}
+    display:flex;flex-direction:column;gap:5px;
+    font-size:clamp(14px,3.5vw,19px);line-height:1.45;color:var(--text)}
   .asc-brief i{font-style:normal;font-weight:800;color:var(--accent)}
   .asc-brief .warn{color:var(--muted)}
   .asc-brief .warn b{color:var(--gold);font-size:1.08em}
@@ -770,8 +773,9 @@
   @media(hover:hover) and (pointer:fine){.keyhint{display:inline}}
   /* short phones: the water column is the game, so give the brief
      back as much height as it can spare */
+  @media(min-width:1000px){.asc-brief{font-size:21px;padding:15px 18px;gap:7px;margin-bottom:12px}}
   @media(max-height:720px){
-    .asc-brief{padding:6px 9px;gap:2px;font-size:11.5px;line-height:1.32;margin-bottom:6px}
+    .asc-brief{padding:8px 11px;gap:3px;font-size:13.5px;line-height:1.35;margin-bottom:7px}
   }
 
   /* both gauges together in one column beside the water */
@@ -4767,8 +4771,13 @@ var NU={
      a ~1.2 s swing, which you can feel without it becoming a fight.
      Halved again from 4.0/4.4 because the diver still darted: a
      twitch of the button should lean you, not launch you. */
-  LUNG_IN:2.0, LUNG_OUT:2.2,   /* litres per second                */
-  LUNG_MAX:0.85,               /* usable tidal range               */
+  LUNG_IN:2.0, LUNG_OUT:1.8,   /* litres per second                */
+  /* Asymmetric on purpose: the diver is trimmed slightly positive, so a full
+     exhale is less negative than a full inhale is positive. Sinking was the
+     default state and the cave floor did most of the scraping. Rise authority
+     is untouched at 39 px/s; the sink now tops out at 31. */
+  LUNG_MAX:0.85,               /* full inhale                      */
+  LUNG_MIN:-0.55,              /* full exhale                      */
   /* Heavier and draggier so vertical speed builds and bleeds slowly:
      top speed 39 px/s (was 60), 1.4 s to reach it (was 1.0), and a
      0.96 s reversal that still only commits ~23 px of tunnel. */
@@ -4837,7 +4846,7 @@ function nuStep(now){
   /* lungs -> buoyancy -> velocity -> position. Two integrations, and
      the lag between them is the thing being taught. */
   nu.lung+=(nu.breathing?NU.LUNG_IN:-NU.LUNG_OUT)*dt;
-  nu.lung=Math.max(-NU.LUNG_MAX,Math.min(NU.LUNG_MAX,nu.lung));
+  nu.lung=Math.max(NU.LUNG_MIN,Math.min(NU.LUNG_MAX,nu.lung));
   var B=nu.lung*1.03;
   nu.v+=((B*NU.G-NU.DRAG*nu.v*Math.abs(nu.v))/NU.MASS)*dt;
   nu.y-=nu.v*NU.PXM*dt;
@@ -4916,7 +4925,7 @@ function nuDraw(dx,scraped){
   c.restore();
 
   /* lung / buoyancy indicator on the body */
-  var f=nu.lung/NU.LUNG_MAX,bw=32*nu.k,bh=4*nu.k;
+  var f=nu.lung/(nu.lung<0?-NU.LUNG_MIN:NU.LUNG_MAX),bw=32*nu.k,bh=4*nu.k;
   c.fillStyle=Math.abs(f)<0.22?'#4fd28a':(f>0?'#36c9c0':'#ef6b6b');
   c.fillRect(dx-bw/2,y+14*nu.k,bw*Math.abs(f),bh);
   c.strokeStyle='rgba(255,255,255,.35)';c.lineWidth=1;c.strokeRect(dx-bw/2,y+14*nu.k,bw,bh);
@@ -5509,7 +5518,11 @@ function ascBubble(kind){
   b.style.top=(ascYPct(asc.d)-(dump?2.4:3.6))+'%';
   box.appendChild(b);
   var top=parseFloat(b.style.top),drift=(Math.random()-0.5)*3;
-  var dur=dump?1500:1900;
+  /* Exhaled bubbles used to shoot up the column in under two seconds, which
+     read as fizz rather than breathing. Four times slower is much nearer the
+     ~0.3 m/s a real bubble manages, and it leaves a proper trail behind the
+     diver. The dump burst stays quick — it is feedback for a button press. */
+  var dur=dump?1500:7600;
   var t0=performance.now();
   (function rise(now){
     var p=(now-t0)/dur;
