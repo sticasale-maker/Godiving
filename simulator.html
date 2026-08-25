@@ -223,7 +223,6 @@ input[type=range].kn-on::-moz-range-thumb{
    optional furniture so the rig still fits without becoming a scrolling column. */
 @media (max-height:880px){
   #rig{gap:7px}
-  #rig > div:first-child .sub{display:none}
   #presets{grid-template-columns:1fr 1fr 1fr 1fr;gap:5px}
   .preset{padding:7px 3px;font-size:10px}
   .mini{padding:4px 9px 0}
@@ -246,10 +245,7 @@ input[type=range].kn-on::-moz-range-thumb{
 
   <!-- ══════════ CONTROL RIG ══════════ -->
   <section id="rig">
-    <div>
-      <div class="ttl">Set the conditions</div>
-      <div class="sub">Turn the dials, stretch the wave &mdash; every dive site rescores live.</div>
-    </div>
+    <div><div class="ttl">Set the conditions</div></div>
 
     <div class="pod">
       <div class="pod-lab">Swell coming from</div>
