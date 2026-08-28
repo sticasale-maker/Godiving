@@ -145,3 +145,16 @@ alter table public.settings add column if not exists game_exp        jsonb;
 -- and the strip share — and they are shared for the same reason as the rest.
 alter table public.settings add column if not exists games_enabled   jsonb;
 alter table public.settings add column if not exists game_order      jsonb;
+
+-- ── Rehearsal ────────────────────────────────────────────────────
+-- The prize flow only happens on the two show days, which leaves it
+-- untestable for the months beforehand. Rehearsal mode replaces the
+-- hourly freeze with short slots so the whole path can be run through
+-- in minutes.
+--   { "on": true, "minutes": 5, "started": 1756339200000 }
+-- "started" is an absolute epoch anchor and is the reason this is a
+-- shared column rather than a URL flag: the old per-device test mode
+-- started counting when each browser switched it on, so a booth laptop
+-- and the phone that scanned its QR were on different schedules, and
+-- the handoff between them was the one thing worth rehearsing.
+alter table public.settings add column if not exists rehearsal       jsonb;

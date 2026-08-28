@@ -130,7 +130,9 @@ function closed(){return Date.now()>=END;}
 
 document.getElementById('grpTitle').textContent = GROUP || 'Ranking';
 document.getElementById('sessLine').innerHTML =
-  'Session <b>'+hhmm(START)+'–'+hhmm(END)+'</b>. Only players who finished inside this hour appear here.';
+  /* "this session", not "this hour": the first session of each day runs
+     09:30–11:00, and a rehearsal makes them minutes long. */
+  'Session <b>'+hhmm(START)+'–'+hhmm(END)+'</b>. Only players who finished inside this session appear here.';
 
 /* ── the clock ─────────────────────────────────────────────────── */
 function tickClock(){

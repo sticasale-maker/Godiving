@@ -80,34 +80,83 @@ var PRIZE = (function () {
   function at(dateStr, timeStr) {
     return new Date(dateStr + 'T' + timeStr + ':00+10:00');
   }
-
-  /* Test mode collapses the whole two-day schedule into draws every
-     N minutes starting a minute from now, so the full flow (play →
-     ticket → countdown → draw → win/lose → claim) can be rehearsed
-     end to end without waiting for September. */
-  var testMode = null;
-
-  function enableTestMode(intervalMin, count) {
-    var iv = intervalMin || 3, n = count || 8;
-    var base = Date.now() + 60000;
-    var list = [];
-    for (var i = 0; i < n; i++) {
-      list.push({
-        day: 1,
-        at: new Date(base + i * iv * 60000),
-        label: 'T' + (i + 1),
-        closesAt: new Date(base + (i + 1) * iv * 60000)
-      });
-    }
-    testMode = { draws: list, openFrom: new Date(base - 60 * 60000) };
-    return list;
+  /* Rehearsal draws are labelled by clock time like real ones, so every
+     screen that prints draw.label reads the same in both modes. */
+  function hhmmOf(d) {
+    return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2);
   }
 
-  function isTestMode() { return !!testMode; }
+  /* ── Rehearsal ────────────────────────────────────────────────
+     The show is two days in September. Everything here — the hourly
+     freeze, the countdown, the win/lose verdict, the claim at the
+     stand — only happens on those two dates, which makes the whole
+     prize flow untestable for the months beforehand.
+
+     Rehearsal collapses the schedule into fixed slots of a few
+     minutes so the full path (play → ticket → countdown → draw →
+     win or lose → claim) runs end to end in the time it takes to
+     make a coffee.
+
+     The anchor is a SHARED ABSOLUTE TIMESTAMP, not "a minute from
+     whenever this device called enable". That distinction is the
+     whole point: the previous test mode started counting when each
+     browser happened to switch it on, so a booth laptop and the
+     phone that scanned its QR sat on different schedules and the
+     handoff — the single most valuable thing to rehearse — could
+     not be rehearsed at all. Given the same {started, minutes},
+     every device computes an identical list of draws.
+
+     Slots are generated rather than stored so a rehearsal left
+     running does not run out of draws.                            */
+  var rehearsal = null;      /* { minutes, started } */
+  var REHEARSAL_SLOTS = 400; /* ~33h at 5min: longer than any rehearsal */
+
+  /* Accepts the raw settings value, so every page can hand over what
+     it read from the shared row without unpacking it first. */
+  function setRehearsal(cfg) {
+    if (!cfg || !cfg.on || !cfg.started) { rehearsal = null; return null; }
+    var mins = Number(cfg.minutes) || 5;
+    if (mins < 1) mins = 1;
+    rehearsal = { minutes: mins, started: Number(cfg.started) };
+    return rehearsal;
+  }
+
+  function getRehearsal() { return rehearsal; }
+
+  /* Which rehearsal slot a timestamp falls in. Before the anchor
+     counts as the first slot, so a score submitted in the seconds
+     between two devices adopting the setting is not orphaned. */
+  function rehearsalSlot(t) {
+    var span = rehearsal.minutes * 60000;
+    var n = Math.floor((t - rehearsal.started) / span);
+    return n < 0 ? 0 : n;
+  }
+
+  /* Kept so ?prizetest=1 still works on a single device without any
+     database round trip. It simply anchors a rehearsal at now. */
+  function enableTestMode(intervalMin) {
+    setRehearsal({ on: true, minutes: intervalMin || 3, started: Date.now() });
+    return draws();
+  }
+
+  function isTestMode() { return !!rehearsal; }
 
   /* All draws across the show, chronological. */
   function draws() {
-    if (testMode) return testMode.draws.slice();
+    if (rehearsal) {
+      var span = rehearsal.minutes * 60000, list = [], i;
+      for (i = 1; i <= REHEARSAL_SLOTS; i++) {
+        var at_ = new Date(rehearsal.started + i * span);
+        list.push({
+          day: 1,
+          at: at_,
+          label: hhmmOf(at_),
+          dayOpen: new Date(rehearsal.started),
+          dayClose: new Date(rehearsal.started + REHEARSAL_SLOTS * span)
+        });
+      }
+      return list;
+    }
     var out = [];
     SHOW.days.forEach(function (d) {
       d.draws.forEach(function (t) {
@@ -146,10 +195,10 @@ var PRIZE = (function () {
     var t = ts instanceof Date ? ts.getTime() : Number(ts);
     var all = draws(), i;
 
-    if (testMode) {
-      for (i = 0; i < all.length; i++) if (t <= all[i].at.getTime()) return all[i];
-      return null;
-    }
+    /* Indexed rather than scanned: a rehearsal running for hours has
+       hundreds of slots, and drawFor is called once per score per
+       render. The slot a score sits in is the one that closes it. */
+    if (rehearsal) return all[rehearsalSlot(t)] || null;
 
     var day = showDayFor(t);
     if (!day) return null;
@@ -313,7 +362,9 @@ var PRIZE = (function () {
     provisional: provisional,
     rank: rank,
     enableTestMode: enableTestMode,
-    isTestMode: isTestMode
+    isTestMode: isTestMode,
+    setRehearsal: setRehearsal,
+    getRehearsal: getRehearsal
   };
 })();
 
