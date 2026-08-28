@@ -938,7 +938,15 @@
   .mem-card.done .mem-front{border-color:var(--good);background:var(--goodd)}
   .mem-card.done{pointer-events:none}
 
-  /* ── admin grid: two gating axes per game ── */
+  /* ── admin grid: the list itself, then two gating axes per game ── */
+  .ar-move{display:flex;flex-direction:column;gap:2px;flex:0 0 auto}
+  .ar-mv{width:26px;height:18px;line-height:1;padding:0;font-size:10px;cursor:pointer;
+    background:var(--bg);border:1px solid var(--line);color:var(--muted);border-radius:5px}
+  .ar-mv:hover:not(:disabled){border-color:var(--accent);color:var(--text)}
+  .ar-mv:disabled{opacity:.3;cursor:default}
+  .admin-row label.ar-on{font-weight:700;letter-spacing:.5px}
+  .admin-row.ar-off{opacity:.45}
+  .admin-row.ar-off .ar-move,.admin-row.ar-off label.ar-on{opacity:1}
   .ar-axis{display:flex;flex-wrap:wrap;align-items:center;gap:6px;
     border-left:1px solid var(--line);padding-left:10px;margin-left:4px}
   .ar-axlabel{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);
@@ -1714,8 +1722,8 @@
     <div class="panel" id="p-admin">
       <div class="menu-head">
         <div>
-          <div class="menu-title">Age group <b>panel</b> ⚙️</div>
-          <div class="menu-sub">Tick which age groups each game suits</div>
+          <div class="menu-title">Games <b>panel</b> ⚙️</div>
+          <div class="menu-sub">Switch games on or off, reorder them with ▲▼, and tick which age groups and divers each one suits</div>
         </div>
         <button class="btn ghost" id="adminBack">← Back</button>
       </div>
@@ -2131,12 +2139,35 @@ var Cloud=(function(){
   }
   /* Reports whether the write actually landed. It used to swallow the error
      and call back as if it had, so an admin whose schema was one migration
-     behind was told "Saved" while nothing left the browser. */
+     behind was told "Saved" while nothing left the browser.
+
+     That schema drift also has to be survivable. A patch spans several
+     columns and a stand one migration behind has some of them and not
+     others, but Postgrest rejects the whole update over a single unknown
+     column — so a database missing only the newest setting would quietly
+     stop the settings it does have from saving too. Drop the column it
+     names and retry, then report which ones genuinely could not go. */
   function saveSettings(patch,cb){
     if(mode==='cloud'&&sb){
-      sb.from('settings').update(patch).eq('id',1).then(
-        function(r){if(cb)cb(r&&r.error?r.error:null);},
-        function(e){if(cb)cb(e||new Error('save failed'));});
+      var dropped=[];
+      (function attempt(p){
+        if(!Object.keys(p).length){
+          var e=new Error('no known columns');e.droppedColumns=dropped;if(cb)cb(e);return;
+        }
+        sb.from('settings').update(p).eq('id',1).then(function(r){
+          var err=r&&r.error?r.error:null;
+          var miss=err&&err.code==='PGRST204'&&/Could not find the '([^']+)' column/.exec(err.message||'');
+          if(miss&&miss[1] in p){
+            dropped.push(miss[1]);
+            var next={};Object.keys(p).forEach(function(k){if(k!==miss[1])next[k]=p[k];});
+            return attempt(next);
+          }
+          if(!err&&dropped.length){
+            var pe=new Error('partially saved');pe.droppedColumns=dropped;if(cb)cb(pe);return;
+          }
+          if(cb)cb(err);
+        },function(e){if(cb)cb(e||new Error('save failed'));});
+      })(patch);
     } else {
       var v={};try{v=JSON.parse(localStorage.getItem('gds_settings')||'{}');}catch(e){}
       Object.assign(v,patch);
@@ -2292,8 +2323,6 @@ function renderAdmin(){
   var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
   var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
   mng+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupM','adminSetGroup(this.value)')+'<button class="warn" onclick="adminResetAll()">🗑 Reset ALL rankings</button></div>';
-  mng+='<div class="row" style="margin-bottom:8px"><button class="acc" onclick="showAdmin()">'+
-       '⚙️ Game availability by age group</button></div>';
   mng+='<div class="row" style="margin-bottom:8px"><button class="acc" onclick="adminTestReset()">'+
        '🧪 Test reset — clear board + this device</button>'+
        '<button onclick="adminResetDevice()">↺ Reset this device only</button></div>';
@@ -2308,7 +2337,12 @@ function renderAdmin(){
   var dev='<div class="card"><h3>This device</h3><div class="row"><span class="muted">Station name:</span><input id="admStation" value="'+esc(STATION)+'"><button class="acc" onclick="adminRename()">Save</button></div><p class="muted" style="margin-top:6px">Device ID: '+esc(DEVICE_ID)+'</p></div>';
   var allS=ADM.scores||[];var gc={'Young Explorer':0,'Teen Explorer':0,'Adult Explorer':0};allS.forEach(function(e){if(gc[e.group]!=null)gc[e.group]++;});
   var diag='<span class="muted" style="font-size:12px">Stored scores: '+allS.length+' (Young '+gc['Young Explorer']+' · Teen '+gc['Teen Explorer']+' · Adult '+gc['Adult Explorer']+') · '+(Cloud.mode==='cloud'?'Cloud':'Local')+'</span>';
-  var bar='<div class="row" style="margin-bottom:10px;align-items:center"><button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
+  /* The games editor used to be a button buried inside the leaderboard card,
+     which is not where anyone looks for "which games are we running today". */
+  var onCount=GAME_ORDER.filter(function(g){return GAME_ENABLED[g]!==false;}).length;
+  var bar='<div class="row" style="margin-bottom:10px;align-items:center">'+
+    '<button class="acc" onclick="showAdmin()">🎮 Games &amp; age groups ('+onCount+' of '+GAME_ORDER.length+' on)</button>'+
+    '<button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
   b.innerHTML=bar+live+sess+prize+mng+dev;
 }
 /* ════════════════════════════════════════════════════════════════
@@ -2758,6 +2792,37 @@ function pruneRetired(map){
 var GAME_AGE_GROUPS={};
 function saveGameAgeGroups(){try{localStorage.setItem('gds_game_agegroups',JSON.stringify(GAME_AGE_GROUPS));}catch(e){}}
 
+/* ---- the list itself: which games the stand runs, and in what order ----
+   Age and diver type narrow a game to some players. Neither can take a game
+   off the stand entirely without unticking every box on the row, which reads
+   as a mistake rather than a decision and is easy to half-do. These two are
+   the list: an explicit on/off, and the running order the menu and strip use. */
+var GAME_ENABLED={};
+function loadGameEnabled(){
+  var map={};
+  try{map=JSON.parse(localStorage.getItem('gds_game_enabled')||'{}');}catch(e){map={};}
+  pruneRetired(map);
+  GAME_ORDER.forEach(function(g){if(typeof map[g]!=='boolean')map[g]=true;});
+  return map;
+}
+function saveGameEnabled(){try{localStorage.setItem('gds_game_enabled',JSON.stringify(GAME_ENABLED));}catch(e){}}
+/* GAME_ORDER is reordered in place — every other part of the arcade already
+   holds a reference to that array, and handing them a new one would leave the
+   strip, the menu and the progress count reading three different lists. */
+function applyGameOrder(list){
+  if(!list||!list.length)return;
+  var seen={},out=[];
+  list.forEach(function(g){if(GAME_ORDER.indexOf(g)>-1&&!seen[g]){seen[g]=1;out.push(g);}});
+  GAME_ORDER.forEach(function(g){if(!seen[g])out.push(g);});
+  GAME_ORDER.length=0;out.forEach(function(g){GAME_ORDER.push(g);});
+}
+function loadGameOrder(){
+  var list=null;
+  try{list=JSON.parse(localStorage.getItem('gds_game_order')||'null');}catch(e){list=null;}
+  applyGameOrder(list);
+}
+function saveGameOrder(){try{localStorage.setItem('gds_game_order',JSON.stringify(GAME_ORDER));}catch(e){}}
+
 /* ---- which diver categories each game is offered to ----
    Defaults are "everyone" because most of the arcade is marine life,
    which anyone can enjoy. Only genuinely diving-specific games are
@@ -3075,10 +3140,18 @@ var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
 var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wreckfind','sharkid','migrate'];
+loadGameOrder();
 GAME_AGE_GROUPS=loadGameAgeGroups();
+GAME_ENABLED=loadGameEnabled();
 /* The shared row wins over whatever this browser happens to remember. */
 function adoptSharedGameConfig(cb){
   Cloud.getSettings(function(st){
+    if(st&&st.game_order){applyGameOrder(st.game_order);saveGameOrder();}
+    if(st&&st.games_enabled){
+      GAME_ENABLED=pruneRetired(st.games_enabled);
+      GAME_ORDER.forEach(function(g){if(typeof GAME_ENABLED[g]!=='boolean')GAME_ENABLED[g]=true;});
+      saveGameEnabled();
+    }
     if(st&&st.game_age_groups){
       GAME_AGE_GROUPS=pruneRetired(st.game_age_groups);
       GAME_ORDER.forEach(function(g){
@@ -3278,6 +3351,7 @@ function showMenu(){
 }
 function gamesForGroup(group){
   return GAME_ORDER.filter(function(g){
+    if(GAME_ENABLED[g]===false)return false;
     var ags=GAME_AGE_GROUPS[g]||{};
     if(group&&!ags[group])return false;
     /* second axis: is this game offered to this kind of diver? */
@@ -3301,7 +3375,7 @@ function buildMenu(){
       '<span class="mc-desc">'+esc(m.desc)+'</span>'+done+
       '</button>';
   }).join('');
-  $('menuGrid').innerHTML=html||'<div class="menu-sub">No games are enabled for your age group yet — check the Age groups panel.</div>';
+  $('menuGrid').innerHTML=html||'<div class="menu-sub">No games are enabled for your age group yet — check the Games panel.</div>';
   $('menuGrid').querySelectorAll('.menu-card').forEach(function(b){
     if(b.disabled)return;
     b.onclick=function(){startGame(b.dataset.g);};
@@ -3333,9 +3407,11 @@ function buildStrip(){
   });
 }
 function buildAdminGrid(){
-  var html=GAME_ORDER.map(function(g){
+  var last=GAME_ORDER.length-1;
+  var html=GAME_ORDER.map(function(g,i){
     var m=GAME_META[g]||{icon:'🎮',name:g,desc:''};
     var ags=GAME_AGE_GROUPS[g]||{};
+    var on=GAME_ENABLED[g]!==false;
     var boxes=AGE_GROUPS.map(function(ag){
       var checked=ags[ag]?' checked':'';
       return '<label><input type="checkbox" data-g="'+g+'" data-ag="'+esc(ag)+'"'+checked+'>'+esc(AGE_GROUP_SHORT[ag])+'</label>';
@@ -3345,11 +3421,49 @@ function buildAdminGrid(){
       return '<label><input type="checkbox" data-g="'+g+'" data-exp="'+esc(e.key)+'"'+(exs[e.key]?' checked':'')+'>'+
              e.icon+' '+esc(e.label)+'</label>';
     }).join('');
-    return '<div class="admin-row"><span class="ar-name"><span class="ar-icon">'+m.icon+'</span>'+esc(m.name)+'</span>'+
+    return '<div class="admin-row'+(on?'':' ar-off')+'">'+
+           '<span class="ar-move">'+
+             '<button type="button" class="ar-mv" data-move="up" data-g="'+g+'"'+(i===0?' disabled':'')+' title="Move up">▲</button>'+
+             '<button type="button" class="ar-mv" data-move="down" data-g="'+g+'"'+(i===last?' disabled':'')+' title="Move down">▼</button>'+
+           '</span>'+
+           '<label class="ar-on"><input type="checkbox" data-g="'+g+'" data-on="1"'+(on?' checked':'')+'>On</label>'+
+           '<span class="ar-name"><span class="ar-icon">'+m.icon+'</span>'+esc(m.name)+'</span>'+
            '<span class="ar-axis"><span class="ar-axlabel">Age</span>'+boxes+'</span>'+
            '<span class="ar-axis"><span class="ar-axlabel">Divers</span>'+ebox+'</span></div>';
   }).join('');
   $('adminGrid').innerHTML=html;
+  /* A row greys out the moment it is switched off, so an operator scanning the
+     list sees what the stand is actually running without reading every tick. */
+  $('adminGrid').querySelectorAll('input[data-on]').forEach(function(cb){
+    cb.onchange=function(){cb.closest('.admin-row').classList.toggle('ar-off',!cb.checked);};
+  });
+  $('adminGrid').querySelectorAll('.ar-mv').forEach(function(b){
+    b.onclick=function(){
+      /* keep whatever is ticked right now — rebuilding the grid would
+         otherwise throw away edits the operator has not saved yet */
+      collectAdminGrid();
+      var i=GAME_ORDER.indexOf(b.dataset.g),j=b.dataset.move==='up'?i-1:i+1;
+      if(i<0||j<0||j>=GAME_ORDER.length)return;
+      var t=GAME_ORDER[i];GAME_ORDER[i]=GAME_ORDER[j];GAME_ORDER[j]=t;
+      buildAdminGrid();$('adminSaved').textContent='Order changed — press Save.';
+    };
+  });
+}
+/* Read the grid back into the config objects. Shared by Save and by the
+   reorder buttons, which rebuild the grid and would lose unsaved ticks. */
+function collectAdminGrid(){
+  $('adminGrid').querySelectorAll('input[type=checkbox]').forEach(function(cb){
+    var g=cb.dataset.g;
+    if(cb.dataset.on){
+      GAME_ENABLED[g]=cb.checked;
+    } else if(cb.dataset.ag){
+      if(!GAME_AGE_GROUPS[g])GAME_AGE_GROUPS[g]={};
+      GAME_AGE_GROUPS[g][cb.dataset.ag]=cb.checked;
+    } else if(cb.dataset.exp){
+      if(!GAME_EXP[g])GAME_EXP[g]={};
+      GAME_EXP[g][cb.dataset.exp]=cb.checked;
+    }
+  });
 }
 /* Reachable only from the admin console, which is itself behind ?admin or five
    taps in the top-left corner. It used to be a link on the player menu, which
@@ -3363,28 +3477,27 @@ function showAdmin(){
 (function(){
   var ab=$('adminBack');if(ab)ab.onclick=function(){ADM.open?openAdmin():showMenu();};
   var as=$('adminSave');if(as)as.onclick=function(){
-    $('adminGrid').querySelectorAll('input[type=checkbox]').forEach(function(cb){
-      var g=cb.dataset.g;
-      if(cb.dataset.ag){
-        if(!GAME_AGE_GROUPS[g])GAME_AGE_GROUPS[g]={};
-        GAME_AGE_GROUPS[g][cb.dataset.ag]=cb.checked;
-      } else if(cb.dataset.exp){
-        if(!GAME_EXP[g])GAME_EXP[g]={};
-        GAME_EXP[g][cb.dataset.exp]=cb.checked;
-      }
-    });
+    collectAdminGrid();
     letNonDiversIn(GAME_EXP);
-    saveGameAgeGroups();saveGameExp();
+    saveGameAgeGroups();saveGameExp();saveGameEnabled();saveGameOrder();
     buildStrip();
     /* localStorage is per browser. At the stand that means the laptop the
        operator set up and the four machines people actually play on disagree,
        which is exactly how a game switched off for adults kept turning up.
        Push it to the same shared settings row the prize rules already use. */
     $('adminSaved').textContent='Saving…';
-    Cloud.saveSettings({game_age_groups:GAME_AGE_GROUPS,game_exp:GAME_EXP},function(err){
+    Cloud.saveSettings({game_age_groups:GAME_AGE_GROUPS,game_exp:GAME_EXP,
+                        games_enabled:GAME_ENABLED,game_order:GAME_ORDER.slice()},function(err){
       if(err){
-        $('adminSaved').innerHTML='<span style="color:var(--bad)">Saved on THIS device only — '+
-          'the shared copy failed. Run supabase/schema.sql, then save again.</span>';
+        var COLNAME={game_age_groups:'age groups',game_exp:'diver types',
+                     games_enabled:'games on/off',game_order:'game order'};
+        var d=(err.droppedColumns||[]).map(function(c){return COLNAME[c]||c;});
+        $('adminSaved').innerHTML='<span style="color:var(--bad)">'+
+          (d.length
+            ? 'Shared everywhere except <b>'+esc(d.join(' and '))+'</b>, which this '+
+              'database does not have a column for yet — those are saved on THIS device only. '
+            : 'Saved on THIS device only — the shared copy failed. ')+
+          'Run supabase/schema.sql, then save again.</span>';
         return;
       }
       $('adminSaved').textContent=(Cloud.mode==='cloud')

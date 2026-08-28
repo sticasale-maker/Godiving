@@ -137,3 +137,11 @@ order by privilege_type, column_name;
 -- same shared row as the prize rules, for the same reason.
 alter table public.settings add column if not exists game_age_groups jsonb;
 alter table public.settings add column if not exists game_exp        jsonb;
+
+-- The two columns above narrow a game to some players. Neither takes a game
+-- off the stand: to do that an operator had to untick every box on the row,
+-- which reads as a half-finished edit rather than a decision. These carry the
+-- list itself — an explicit on/off per game, and the running order the menu
+-- and the strip share — and they are shared for the same reason as the rest.
+alter table public.settings add column if not exists games_enabled   jsonb;
+alter table public.settings add column if not exists game_order      jsonb;
