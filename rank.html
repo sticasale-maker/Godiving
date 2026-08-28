@@ -106,7 +106,11 @@
 var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 
-var PODIUM = 3;        /* top three in each age group win a prize */
+/* How many per age group collect. Read from the shared settings row rather
+   than fixed here: staff can lower it from the console when stock runs low,
+   and this page must not keep telling a player they have won a prize that is
+   no longer allocated. 3 is only the value used until that read lands. */
+var PODIUM = 3;
 /* The prize is deliberately never named. What is actually handed over depends
    on what is left in the box by that hour, and a screen that promises a
    specific thing to someone who ends up with something else is worse than one
@@ -175,6 +179,13 @@ function load(){
   var btn=document.getElementById('refresh');
   btn.disabled=true;btn.textContent='↻ Loading…';
   if(!sb){finish([]);return;}
+  /* Refreshed alongside the board, so lowering the winner count mid-show
+     reaches a phone that is already sitting on this page. */
+  sb.from('settings').select('winners_per_group').eq('id',1).single()
+    .then(function(r){
+      var n=r.data&&r.data.winners_per_group;
+      if(n!=null&&n>0){PODIUM=Number(n);render();}
+    },function(){});
   sb.from('scores').select('*')
     .not('hidden','is',true)
     .gte('ts',new Date(START).toISOString())
@@ -210,11 +221,11 @@ function render(){
           '<span class="nm">'+esc(e.name)+(me?' (you)':'')+'</span></div>'+
           '<span class="sc">'+e.score+' pts</span></div>';
       }).join('')
-    : '<p class="muted">Nobody has finished in this hour yet.</p>';
+    : '<p class="muted">Nobody has finished in this session yet.</p>';
 
   var foot=document.getElementById('foot');
   foot.innerHTML = closed()
-    ? 'This hour is over and these standings are final.'
+    ? 'This session is over and these standings are final.'
     : 'Updated '+hhmm(Date.now())+'. Tap Refresh to see who has come in behind you.';
 
   renderPrize(meIdx);
@@ -244,7 +255,7 @@ function renderPrize(meIdx){
   } else {
     document.getElementById('prizeTitle').textContent='Finished '+rank+' of '+rows.length;
     document.getElementById('prizeBody').innerHTML=
-      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize this hour. '+
+      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize this session. '+
       'Come and play again in the next session — the board resets every hour.';
     card.className='card';
     document.querySelector('#prizeCard .stand').style.display='none';

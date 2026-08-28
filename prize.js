@@ -45,7 +45,12 @@ var PRIZE = (function () {
   var DEFAULTS = {
     stock: 120,              /* plastic compasses purchased          */
     reserveForInstant: 45,   /* held back for Golden Compass wins     */
-    winnersPerGroup: 2,      /* per age group, per draw               */
+    /* Must stay in step with PODIUM in arcade.html and rank.html. Those
+       two screens tell a player "the top N win"; this is the number that
+       actually decides it. When they disagreed at 3 and 2, someone
+       finishing third was congratulated by the booth machine and told
+       they had lost by the phone in their hand. */
+    winnersPerGroup: 3,      /* per age group, per draw               */
     maxPerPlayerPerDay: 1,   /* stops one keen kid taking eight       */
     claimExpiresAtClose: true
   };

@@ -88,7 +88,7 @@ grant  update (claimed_at, hidden) on public.scores to anon;
 -- here, not in localStorage, for exactly that reason.
 create table if not exists public.settings (
   id                     int primary key default 1,
-  winners_per_group      int default 2,
+  winners_per_group      int default 3,
   stock                  int default 120,
   reserve_for_instant    int default 45,
   max_per_player_per_day int default 1,

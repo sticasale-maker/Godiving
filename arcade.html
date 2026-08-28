@@ -2457,7 +2457,7 @@ function admGamesTabLabel(){
 function admCfg(){
   var s=ADM.settings||{};
   return {
-    winnersPerGroup:s.winners_per_group!=null?s.winners_per_group:2,
+    winnersPerGroup:s.winners_per_group!=null?s.winners_per_group:3,
     stock:s.stock!=null?s.stock:120,
     reserveForInstant:s.reserve_for_instant!=null?s.reserve_for_instant:45,
     maxPerPlayerPerDay:s.max_per_player_per_day!=null?s.max_per_player_per_day:1
@@ -3303,6 +3303,7 @@ function showRehearsalBanner(){
 function adoptSharedGameConfig(cb){
   Cloud.getSettings(function(st){
     adoptRehearsal(st);
+    adoptPodium(st);
     if(st&&st.game_order){applyGameOrder(st.game_order);saveGameOrder();}
     if(st&&st.games_enabled){
       GAME_ENABLED=pruneRetired(st.games_enabled);
@@ -6634,7 +6635,17 @@ function renderHof(board){
    what is on the table depends on what is left by then, and a screen that
    promises a compass to someone who ends up with something else is worse
    than one that promised nothing. */
-var PODIUM=3;
+/* How many per age group actually collect. NOT a constant: the operator can
+   lower it from the console when stock runs low, and this is the number the
+   Hall of Fame uses to tell a player they have won. It was hardcoded at 3
+   while the ticket page read winners_per_group from the shared row, so the
+   booth screen and the phone in the same player's hand could disagree about
+   whether they had won. One source, adopted at load and whenever it changes. */
+var PODIUM=PRIZE.DEFAULTS.winnersPerGroup;
+function adoptPodium(st){
+  var n=st&&st.winners_per_group;
+  PODIUM=(n!=null&&n>0)?Number(n):PRIZE.DEFAULTS.winnersPerGroup;
+}
 var hofBoard=[],hofTimer=null;
 function startHofClock(){
   if(hofTimer)clearInterval(hofTimer);
