@@ -1166,7 +1166,7 @@
     /* .wrap deliberately goes full-bleed at this size for the menu
        grid, but a two-column answer row 1200px per button is not
        "big", it is unreadable. Rein the game panels back in. */
-    .panel:not(#p-menu):not(#p-hof):not(#p-admin){
+    .panel:not(#p-menu):not(#p-hof){
       width:100%;max-width:1280px;margin-left:auto;margin-right:auto}
     .game-header .game-label{font-size:30px}
     button.opt{font-size:22px;padding:18px 22px}
@@ -1718,15 +1718,11 @@
       <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
     </div>
 
-    <!-- AGE GROUP ADMIN PANEL -->
-    <div class="panel" id="p-admin">
-      <div class="menu-head">
-        <div>
-          <div class="menu-title">Games <b>panel</b> ⚙️</div>
-          <div class="menu-sub">Switch games on or off, reorder them with ▲▼, and tick which age groups and divers each one suits</div>
-        </div>
-        <button class="btn ghost" id="adminBack">← Back</button>
-      </div>
+    <!-- GAMES EDITOR — markup only; buildAdminShell() moves these three
+         elements into the admin console's "Games & ages" tab on first open.
+         It used to be a panel of its own, which meant opening it closed the
+         console the operator had just come from. -->
+    <div id="adminGridSrc" hidden>
       <div class="admin-grid" id="adminGrid"></div>
       <button class="btn acc" id="adminSave" style="margin-top:14px">💾 Save</button>
       <span class="menu-sub" id="adminSaved" style="margin-left:10px"></span>
@@ -2274,9 +2270,51 @@ function adminWire(){
 function buildAdminShell(){
   if(document.getElementById('adminOv'))return;
   var ov=document.createElement('div');ov.id='adminOv';
-  ov.innerHTML='<button class="adm-close" id="admClose">✕ Close</button><div class="adm"><h2>🛠 Arcade Admin</h2><div id="admBody"></div></div>';
+  /* Two jobs, two tabs. Watching the stand — who is playing, what they
+     scored, which hour they were in — is a running job for whoever is on
+     the floor. Setting up the games is a job you do once before doors and
+     then leave alone. They were one long scroll, so the settings sat under
+     a live table that reflowed under the operator every few seconds. */
+  ov.innerHTML='<button class="adm-close" id="admClose">✕ Close</button>'+
+    '<div class="adm"><h2>🛠 Arcade Admin</h2>'+
+    '<div class="adm-tabs">'+
+      '<button class="adm-tab" data-tab="live">📊 Players &amp; scores</button>'+
+      '<button class="adm-tab" data-tab="games">🎮 Games &amp; ages</button>'+
+    '</div>'+
+    '<div id="admBody"></div><div id="admGames"></div></div>';
   document.body.appendChild(ov);
   document.getElementById('admClose').onclick=function(){ADM.open=false;ov.classList.remove('on');};
+  ov.querySelectorAll('.adm-tab').forEach(function(b){
+    b.onclick=function(){admShowTab(b.dataset.tab);};
+  });
+  /* The games editor was built as its own full-screen panel outside this
+     overlay, so opening it closed the console. Move the real elements in
+     rather than duplicating them — buildAdminGrid and the Save handler are
+     already bound to these ids, and a copy would drift from them. */
+  var host=document.getElementById('admGames');
+  var card=document.createElement('div');card.className='card';
+  card.innerHTML='<h3>Which games the stand runs</h3>'+
+    '<p class="muted" style="margin:0 0 10px">Switch a game on or off, reorder it with ▲▼, and tick '+
+    'which age groups and which kinds of diver it is offered to. Saved settings apply to every machine.</p>';
+  ['adminGrid','adminSave','adminSaved'].forEach(function(id){
+    var el=document.getElementById(id);if(el)card.appendChild(el);
+  });
+  host.appendChild(card);
+  admShowTab('live');
+}
+/* ADM.tab survives a re-render: renderAdmin() repaints the live tab on every
+   realtime update, and an operator halfway through the games grid must not be
+   thrown back to a table they were not looking at. */
+function admShowTab(name){
+  ADM.tab=name;
+  var ov=document.getElementById('adminOv');if(!ov)return;
+  ov.querySelectorAll('.adm-tab').forEach(function(b){
+    b.classList.toggle('on',b.dataset.tab===name);
+  });
+  var live=document.getElementById('admBody'),games=document.getElementById('admGames');
+  if(live)live.style.display=name==='live'?'block':'none';
+  if(games)games.style.display=name==='games'?'block':'none';
+  if(name==='games')buildAdminGrid();
 }
 function openAdmin(){
   buildAdminShell();adminWire();ADM.open=true;
@@ -2337,13 +2375,17 @@ function renderAdmin(){
   var dev='<div class="card"><h3>This device</h3><div class="row"><span class="muted">Station name:</span><input id="admStation" value="'+esc(STATION)+'"><button class="acc" onclick="adminRename()">Save</button></div><p class="muted" style="margin-top:6px">Device ID: '+esc(DEVICE_ID)+'</p></div>';
   var allS=ADM.scores||[];var gc={'Young Explorer':0,'Teen Explorer':0,'Adult Explorer':0};allS.forEach(function(e){if(gc[e.group]!=null)gc[e.group]++;});
   var diag='<span class="muted" style="font-size:12px">Stored scores: '+allS.length+' (Young '+gc['Young Explorer']+' · Teen '+gc['Teen Explorer']+' · Adult '+gc['Adult Explorer']+') · '+(Cloud.mode==='cloud'?'Cloud':'Local')+'</span>';
-  /* The games editor used to be a button buried inside the leaderboard card,
-     which is not where anyone looks for "which games are we running today". */
-  var onCount=GAME_ORDER.filter(function(g){return GAME_ENABLED[g]!==false;}).length;
   var bar='<div class="row" style="margin-bottom:10px;align-items:center">'+
-    '<button class="acc" onclick="showAdmin()">🎮 Games &amp; age groups ('+onCount+' of '+GAME_ORDER.length+' on)</button>'+
     '<button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
   b.innerHTML=bar+live+sess+prize+mng+dev;
+  admGamesTabLabel();
+}
+/* The tab carries the count, so "how many games are we running today" is
+   answerable from the console without opening the editor. */
+function admGamesTabLabel(){
+  var t=document.querySelector('.adm-tab[data-tab="games"]');if(!t)return;
+  var on=GAME_ORDER.filter(function(g){return GAME_ENABLED[g]!==false;}).length;
+  t.innerHTML='🎮 Games &amp; ages <span class="badge">'+on+'/'+GAME_ORDER.length+'</span>';
 }
 /* ════════════════════════════════════════════════════════════════
    PRIZE CONSOLE — the staff-facing side of the hourly draw.
@@ -2703,6 +2745,13 @@ function promptAdmin(){openAdmin();}
 '.adm button.acc{background:var(--accent);border-color:var(--accent);color:#04282a;font-weight:600}'+
 '.adm .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}'+
 '.adm select,.adm input{font-family:inherit;background:#000;border:1px solid var(--line);color:#fff;border-radius:6px;padding:6px 8px;font-size:13px}'+
+'.adm-tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--line);padding-bottom:0}'+
+'.adm-tab{font-family:inherit;cursor:pointer;background:transparent;border:1px solid transparent;'+
+  'border-bottom:none;color:var(--muted);padding:9px 15px;font-size:13px;font-weight:600;'+
+  'border-radius:9px 9px 0 0;margin-bottom:-1px}'+
+'.adm-tab:hover{color:var(--text)}'+
+'.adm-tab.on{color:var(--accent);border-color:var(--line);background:var(--surface);'+
+  'border-bottom:1px solid var(--surface)}'+
 '.adm-close{position:fixed;top:12px;right:14px;z-index:9550;background:var(--bg2);color:var(--text);border:1px solid var(--line);border-radius:999px;padding:8px 14px;font-size:13px;cursor:pointer}'+
 '#pinOv{position:fixed;inset:0;z-index:9600;display:none;background:rgba(2,12,18,.92)}'+
 '#pinOv.on{display:block}'+
@@ -2918,7 +2967,7 @@ document.getElementById('wstart').onclick=function(){
   document.getElementById('welcome').style.display='none';
   Cloud.startSession({name:USER.name,group:USER.group,age:USER.age,exp:USER.exp,game:'quiz',points:0,started:Date.now()});
   showApp();
-  if(nm.toLowerCase()==='marco'&&av===99){showAdmin();}
+  if(nm.toLowerCase()==='marco'&&av===99){openAdmin();}
   else{showMenu();}
 };
 ['wname','wage'].forEach(function(id){
@@ -3435,7 +3484,10 @@ function buildAdminGrid(){
   /* A row greys out the moment it is switched off, so an operator scanning the
      list sees what the stand is actually running without reading every tick. */
   $('adminGrid').querySelectorAll('input[data-on]').forEach(function(cb){
-    cb.onchange=function(){cb.closest('.admin-row').classList.toggle('ar-off',!cb.checked);};
+    cb.onchange=function(){
+      cb.closest('.admin-row').classList.toggle('ar-off',!cb.checked);
+      GAME_ENABLED[cb.dataset.g]=cb.checked;admGamesTabLabel();
+    };
   });
   $('adminGrid').querySelectorAll('.ar-mv').forEach(function(b){
     b.onclick=function(){
@@ -3445,7 +3497,8 @@ function buildAdminGrid(){
       var i=GAME_ORDER.indexOf(b.dataset.g),j=b.dataset.move==='up'?i-1:i+1;
       if(i<0||j<0||j>=GAME_ORDER.length)return;
       var t=GAME_ORDER[i];GAME_ORDER[i]=GAME_ORDER[j];GAME_ORDER[j]=t;
-      buildAdminGrid();$('adminSaved').textContent='Order changed — press Save.';
+      buildAdminGrid();admGamesTabLabel();
+      $('adminSaved').textContent='Order changed — press Save.';
     };
   });
 }
@@ -3465,17 +3518,11 @@ function collectAdminGrid(){
     }
   });
 }
-/* Reachable only from the admin console, which is itself behind ?admin or five
-   taps in the top-left corner. It used to be a link on the player menu, which
-   meant any visitor could change which games the stand offers — and since the
-   config went shared, change it for every machine at once. */
-function showAdmin(){
-  if(!ADM.open)return showMenu();
-  document.getElementById('adminOv').classList.remove('on');
-  buildAdminGrid();$('adminSaved').textContent='';showPanel('p-admin');
-}
+/* The editor is a tab of the admin console, which is itself behind ?admin or
+   five taps in the top-left corner. It used to be a link on the player menu,
+   which meant any visitor could change which games the stand offers — and
+   since the config went shared, change it for every machine at once. */
 (function(){
-  var ab=$('adminBack');if(ab)ab.onclick=function(){ADM.open?openAdmin():showMenu();};
   var as=$('adminSave');if(as)as.onclick=function(){
     collectAdminGrid();
     letNonDiversIn(GAME_EXP);
