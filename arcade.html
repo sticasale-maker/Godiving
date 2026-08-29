@@ -1013,6 +1013,12 @@
   .ticket-box{background:linear-gradient(160deg,#0f4a56,#0c3142);border:2px solid var(--gold);
     border-radius:14px;padding:14px 12px;margin:0 0 12px;text-align:center;flex-shrink:0}
   .ticket-lead{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:10px}
+  /* This line is the difference between a player learning they won and walking
+     away from a booth screen that resets behind them. It only ever shows on a
+     booth machine — a big screen somebody is standing in front of — so it is
+     sized to be read across a stand, not politely. */
+  #hofRankLead{font-size:clamp(26px,4.2vw,52px);line-height:1.15;letter-spacing:.5px;
+    margin-bottom:14px;text-shadow:0 0 18px rgba(243,198,79,.35)}
   .ticket-qr{display:flex;justify-content:center;margin-bottom:8px;min-height:8px}
   .ticket-qr canvas,.ticket-qr img{background:#fff;padding:8px;border-radius:8px;
     image-rendering:pixelated;width:150px;height:150px}
@@ -6813,6 +6819,9 @@ function showHallOfFame(){
         'Your '+fin.raw+' points count as <b>'+fin.score+'</b>; '+
         'finish the rest to bank every point.';
   }
+  var pa=$('hofPlayAgain');
+  if(pa)pa.textContent=isBoothStation()?'👋 Next player — hand the screen over'
+                                       :'🔄 Start over (new score)';
   Cloud.onLeaderboard(USER.group,renderHof);
   renderRankQR();
 }
@@ -6867,7 +6876,8 @@ function renderHof(board){
   startHofClock();
   var mine=finalScore().score;
   var meIdx=-1;
-  for(var i=0;i<board.length;i++){if(board[i].device===DEVICE_ID&&board[i].name===USER.name&&board[i].score===mine){meIdx=i;break;}}
+  if(USER.code)for(var ci=0;ci<board.length;ci++){if(board[ci].code===USER.code){meIdx=ci;break;}}
+  if(meIdx<0)for(var i=0;i<board.length;i++){if(board[i].device===DEVICE_ID&&board[i].name===USER.name&&board[i].score===mine){meIdx=i;break;}}
   var medals=['🥇','🥈','🥉'];
   var myRank=meIdx>=0?meIdx+1:board.length;
   $('hofEncourage').textContent=encourageMsg(myRank,board.length||1);
@@ -6910,7 +6920,8 @@ function startHofClock(){
 function hofMyRank(){
   var mine=finalScore().score;
   for(var i=0;i<hofBoard.length;i++){
-    if(hofBoard[i].device===DEVICE_ID&&hofBoard[i].name===USER.name&&hofBoard[i].score===mine)return i+1;
+    if(USER.code?hofBoard[i].code===USER.code
+               :(hofBoard[i].device===DEVICE_ID&&hofBoard[i].name===USER.name&&hofBoard[i].score===mine))return i+1;
   }
   return 0;
 }
@@ -7053,14 +7064,35 @@ function renderTicket(code){
 $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;showMenu();};
 /* showMenu() handles the all-played case, so 'Back to games' from the final
    game lands on the ranking too rather than bouncing off a dead menu. */
+/* On a booth machine the queue moves and the next person to press this is
+   somebody else. Carrying the last player's name, age and group into their
+   run is not a cosmetic slip: the age group decides which draw they are
+   entered in, and the name is the one printed on the prize ticket. A shared
+   keyboard is not a shared identity, so a shared machine always asks again.
+
+   It also used to reset only half the state — POINTS and the code, but not
+   playedGames or FINISHED. Every game stayed ticked off, and with FINISHED
+   still set showMenu() sent them straight back to the ranking, so "start
+   over" could not start anything over. resetThisDevice() already knew how to
+   clear all of it. */
 $('hofPlayAgain').onclick=function(){
-  POINTS=0;syncPoints();currentGame=0;window._hofSubmitted=false;qStartTime=0;
-  USER.code='';var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
+  resetThisDevice();
+  currentGame=0;
+  var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
   Cloud.updateSession({game:'quiz',points:0});
   document.getElementById('app').style.display='none';
-  window._skipWelcome=true;
-  document.getElementById('whoName').textContent=USER.name;
-  document.getElementById('whoGroup').textContent=USER.group;
+  if(isBoothStation()){
+    USER={name:'',age:0,group:'',exp:''};
+    pickedExp='';
+    ['wname','wage'].forEach(function(id){var el=$(id);if(el)el.value='';});
+    var wx=$('wexp');if(wx)wx.querySelectorAll('.exp-btn').forEach(function(b){b.classList.remove('sel');});
+    var we=$('werr');if(we)we.textContent='';
+    window._skipWelcome=false;          /* ask who this is */
+  }else{
+    window._skipWelcome=true;           /* their own phone: still them */
+    document.getElementById('whoName').textContent=USER.name;
+    document.getElementById('whoGroup').textContent=USER.group;
+  }
   window.SPLASH_CTRL.replay();
 };
 
