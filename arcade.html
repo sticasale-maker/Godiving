@@ -1048,18 +1048,6 @@
   .swatch:disabled{cursor:default}
   .swatch .dot{width:24px;height:24px;border-radius:6px;flex-shrink:0;border:1px solid rgba(255,255,255,.25)}
 
-  /* ── 9. ODD ONE OUT ── */
-  .odd-prompt{text-align:center;font-size:14px;color:var(--muted);margin-bottom:8px;flex-shrink:0}
-  .odd-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;flex:1;align-content:center;min-height:0}
-  .odd-card{padding:20px 12px;border-radius:12px;border:2px solid var(--line);background:var(--bg2);
-    color:var(--text);font-size:15px;font-weight:600;cursor:pointer;transition:.12s;text-align:center;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;min-height:96px}
-  .odd-card .oc-emoji{font-size:30px}
-  .odd-card:hover:not(:disabled){border-color:var(--accent)}
-  .odd-card:disabled{cursor:default}
-  .odd-card.right{background:var(--goodd)!important;border-color:var(--good)!important;color:#cdf3df!important}
-  .odd-card.wrong{background:var(--badd)!important;border-color:var(--bad)!important;color:#f7cfcf!important}
-
   /* ════════════════
      RESPONSIVE
      ════════════════ */
@@ -1124,9 +1112,6 @@
     .chips-grid{gap:10px}
     .swatch{font-size:19px;padding:13px 16px}
     .swatch .dot{width:30px;height:30px}
-    .odd-prompt{font-size:20px;margin-bottom:12px}
-    .odd-card{font-size:22px;min-height:130px}
-    .odd-card .oc-emoji{font-size:42px}
     .fact,.qfact{font-size:18px;line-height:1.5}
     .qcat{font-size:17px}
     .btn{font-size:17px;padding:12px 20px}
@@ -1473,18 +1458,6 @@
     </div>
 
     <!-- 9. ODD ONE OUT -->
-    <div class="panel" id="p-oddone">
-      <div class="game-header">
-        <span class="game-label">Spot the impostor</span>
-        <span class="score">Score <b id="oddScore">0</b> / <b id="oddTotal">0</b></span>
-      </div>
-      <p class="odd-prompt">Three live in Sydney waters. One does <b>not</b>. Tap the impostor.</p>
-      <div class="odd-grid" id="oddGrid"></div>
-      <p class="fact" id="oddFact"></p>
-      <button class="btn" id="oddNext" style="display:none">Next round →</button>
-      <p class="auto-notice" id="oddNotice"></p>
-    </div>
-
     <!-- 10. SPEED ROUND -->
     <div class="panel" id="p-speed">
       <div class="game-header">
@@ -2017,7 +1990,7 @@ var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
 var ADMIN_PIN = '2468';         /* <-- change this */
 var PRIZE_WINDOW_MIN = 120;     /* prize eligibility window, minutes */
-var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',oddone:'Odd One Out',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
+var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette Match',log:'Spotter Log',bubble:'Bubble Pop',depth:'Depth Gauge',guess:'Where Am I?',truefalse:'Myth Busters',colour:'Colour the Creature',trumps:'Stat Battle',speed:'Speed Round',season:'When Will I See It?',wreckid:'Wreck Detective',wreckfind:'Wreck Finder',sharkid:'Shark ID',ascent:'Safe Ascent',migrate:'Migration Highway',neutral:'Neutral',nav:'Nav Trainer',zoom:'Zoom In',lineup:'Size Line-Up',memory:'Dive Log Memory',done:'Finished',hof:'Hall of Fame'};
 
 /* ════════ RANKING SESSIONS ══════════════════════════════════════
    The board runs in clock hours. A player belongs to the hour in
@@ -3317,7 +3290,7 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
-var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','oddone','lineup','speed','season','wreckid','wreckfind','sharkid','migrate'];
+var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','lineup','speed','season','wreckid','wreckfind','sharkid','migrate'];
 loadGameOrder();
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_ENABLED=loadGameEnabled();
@@ -3527,7 +3500,6 @@ function startGame(name){
   else if(name==='truefalse')initTrueFalse();
   else if(name==='colour')initColour();
   else if(name==='trumps')initTrumps();
-  else if(name==='oddone')initOddOne();
   else if(name==='speed')initSpeed();
   else if(name==='season')initSeason();
   else if(name==='wreckid')initWreckId();
@@ -3554,7 +3526,6 @@ var GAME_META={
   truefalse:{icon:'📖',name:'Myth Busters',desc:'True or false?'},
   colour:{icon:'🎨',name:'Colour the Creature',desc:'Pick the real colours'},
   trumps:{icon:'🃏',name:'Stat Battle',desc:'Top-trumps with sea life'},
-  oddone:{icon:'🔍',name:'Odd One Out',desc:'Find the one that doesn\'t fit'},
   speed:{icon:'⏱️',name:'Speed Round',desc:'60-second quick-fire'},
   season:{icon:'📅',name:'When Will I See It?',desc:'Match species to the months'},
   wreckid:{icon:'🔱',name:'Wreck Detective',desc:'ID the Sydney wreck'},
@@ -3568,6 +3539,16 @@ var GAME_META={
   neutral:{icon:'🫁',name:'Neutral',desc:'Hover through the gully on your lungs'},
   nav:{icon:'🧭',name:'Nav Trainer',desc:'Kick your fins to hold a bearing'}
 };
+/* The points bar spans every panel, and its two buttons only mean something
+   while a game is actually open. On the menu they are noise at best: "Back to
+   games" points at the screen you are already looking at, and "Finish & see
+   ranking" is the second copy of a button the menu already has six inches
+   below it. */
+function hideGameBar(){
+  ['gameBack','gameLeave'].forEach(function(id){
+    var b=$(id);if(b)b.classList.remove('show');
+  });
+}
 function showMenu(){
   if(FINISHED)return showHallOfFame();
   /* Every game played: the menu would be a grid of disabled tiles above a
@@ -3576,6 +3557,7 @@ function showMenu(){
   if(allGamesPlayed())return finishAllPlayed();
   activeGame=null;
   hideNextChallenge();
+  hideGameBar();
   buildStrip();
   $('gamesstrip').style.display='flex';
   updateStrip(null);
@@ -3637,7 +3619,7 @@ function buildMenu(){
 /* Compact labels for the strip; the menu shows the full names. */
 var STRIP_SHORT={quiz:'Guess who',breath:'Breath hold',silhouette:'Silhouette',log:'Spotter log',
   bubble:'Bubble pop',depth:'Depth gauge',guess:'Where am I?',truefalse:'True/false',
-  colour:'Colour it',trumps:'Stat battle',oddone:'Odd one out',speed:'Speed round',
+  colour:'Colour it',trumps:'Stat battle',speed:'Speed round',
   season:'When to see',wreckid:'Wreck detective',wreckfind:'Wreck finder',sharkid:'Shark ID',
   zoom:'Zoom in',ascent:'Safe ascent',nav:'Nav trainer',neutral:'Neutral',migrate:'Migration',
   lineup:'Line-up',memory:'Memory'};
@@ -4441,6 +4423,19 @@ var TF_QUESTIONS=[
    f:'False, and dangerously so — it blunts the urge to breathe without adding oxygen, so you black out with no warning.'}
 ];
 var tfQueue=[],tfScore=0,tfTotal=0,tfAnswered=false,tfCur=null;
+/* The next myth arrives on its own three seconds after an answer, so a player
+   is never left tapping through a quiz that has already told them the result.
+   The button stays and counts down rather than disappearing: it says the move
+   is coming, and it lets somebody who has finished reading go now.
+
+   Both handles are cleared together and at every exit, because a stray timer
+   here does not misfire harmlessly — it fires three seconds later while a
+   DIFFERENT game is on screen and silently burns one of this player's myths. */
+var TF_AUTO_MS=3000, tfTimer=null, tfTick=null;
+function tfClearAuto(){
+  if(tfTimer){clearTimeout(tfTimer);tfTimer=null;}
+  if(tfTick){clearInterval(tfTick);tfTick=null;}
+}
 function initTrueFalse(){
   /* Gated by experience: a scuba diver gets the regulator and DCS
      questions, a freediver gets the blackout ones, a first-timer gets
@@ -4450,8 +4445,10 @@ function initTrueFalse(){
   tfRound();
 }
 function tfRound(){
+  tfClearAuto();
   tfAnswered=false;tfCur=tfQueue.shift();
-  $('tfStatement').textContent=tfCur.s;$('tfReveal').textContent='';$('tfNext').style.display='none';
+  $('tfStatement').textContent=tfCur.s;$('tfReveal').textContent='';
+  $('tfNext').style.display='none';$('tfNext').textContent='Next myth →';
   $('tfTrue').disabled=false;$('tfFalse').disabled=false;
   $('tfTrue').style.opacity='1';$('tfFalse').style.opacity='1';
   startTimer();
@@ -4462,7 +4459,24 @@ function tfAnswer(val){
   if(val===tfCur.a){tfScore++;award(timedReward());$('tfReveal').innerHTML='✅ <b>Correct!</b> '+esc(tfCur.f);}
   else{penalize();$('tfReveal').innerHTML='❌ <b>Not quite.</b> '+esc(tfCur.f);}
   $('tfScore').textContent=tfScore;$('tfTotal').textContent=tfTotal;
-  if(tfQueue.length>0)$('tfNext').style.display='inline-block';
+  if(tfQueue.length>0){
+    var btn=$('tfNext'), left=Math.round(TF_AUTO_MS/1000);
+    btn.style.display='inline-block';
+    btn.textContent='Next myth → ('+left+')';
+    tfClearAuto();
+    tfTick=setInterval(function(){
+      left--;
+      if(left>0)btn.textContent='Next myth → ('+left+')';
+    },1000);
+    tfTimer=setTimeout(function(){
+      tfTimer=null;tfClearAuto();
+      /* Checked at fire time, not set time: three seconds is long enough for
+         the player to have tapped Next, gone back to the menu, or started
+         something else entirely. */
+      if(activeGame!=='truefalse'||!tfAnswered)return;
+      tfRound();
+    },TF_AUTO_MS);
+  }
   else{$('tfNotice').textContent='Myths busted! 📖 Pick another game when you are ready →';setTimeout(advanceGame,2300);}
 }
 $('tfTrue').onclick=function(){tfAnswer(true);};
@@ -4598,43 +4612,6 @@ function colRound(){
   startTimer();
 }
 $('colNext').onclick=colRound;
-
-/* ════════ 9. ODD ONE OUT ════════ */
-var ODD_ROUNDS=[
-  {real:[['Weedy seadragon','🐉'],['Port Jackson shark','🦈'],['Blue groper','🐟']],fake:['Clownfish','🐠'],f:'Clownfish live on tropical coral reefs, not Sydney.'},
-  {real:[['Giant cuttlefish','🦑'],['Maori octopus','🐙'],['Fiddler ray','🐡']],fake:['Piranha','🐟'],f:'Piranhas are freshwater fish from South America.'},
-  {real:[['Blue devil','🐟'],['Old wife','🐠'],['Mado','🐟']],fake:['Mandarinfish','🐠'],f:'Mandarinfish live in shallow tropical lagoons in the western Pacific, not Sydney.'},
-  {real:[['Wobbegong','🦈'],['Sea tulip','🌷'],['Eastern blue groper','🐟']],fake:['Coral trout','🐠'],f:'Coral trout belong on the Great Barrier Reef.'},
-  {real:[['Weedy seadragon','🐉'],['Sea urchin','🦔'],['Cuttlefish','🦑']],fake:['Manatee','🦭'],f:'Manatees live in warm tropical rivers and bays.'},
-  {real:[['Red lionfish','🦂'],['Wobbegong','🦈'],['Common toadfish','🐡']],fake:['Anaconda','🐍'],f:'Anacondas are South American river snakes. The other three are all genuinely seen on Sydney dives — lionfish surprise people, but they are native here.'}
-];
-var oddQueue=[],oddScore=0,oddTotal=0,oddAnswered=false;
-function initOddOne(){
-  oddQueue=shuffle(ODD_ROUNDS.slice()).slice(0,3);oddScore=0;oddTotal=0;oddAnswered=false;
-  $('oddScore').textContent=0;$('oddTotal').textContent=0;$('oddNotice').textContent='';
-  oddRound();
-}
-function oddRound(){
-  oddAnswered=false;var r=oddQueue.shift();
-  $('oddFact').textContent='';$('oddNext').style.display='none';
-  var cards=r.real.map(function(x){return {label:x[0],emoji:x[1],fake:false};});
-  cards.push({label:r.fake[0],emoji:r.fake[1],fake:true});
-  cards=shuffle(cards);
-  $('oddGrid').innerHTML=cards.map(function(c){
-    return '<button class="odd-card" data-fake="'+(c.fake?'1':'0')+'"><span class="oc-emoji">'+c.emoji+'</span><span>'+c.label+'</span></button>';
-  }).join('');
-  $('oddGrid').querySelectorAll('.odd-card').forEach(function(btn){btn.onclick=function(){
-    if(oddAnswered)return;oddAnswered=true;oddTotal++;
-    $('oddGrid').querySelectorAll('.odd-card').forEach(function(x){x.disabled=true;if(x.dataset.fake==='1')x.classList.add('right');});
-    if(btn.dataset.fake==='1'){oddScore++;award(timedReward());}
-    else{btn.classList.add('wrong');penalize();}
-    $('oddScore').textContent=oddScore;$('oddTotal').textContent=oddTotal;$('oddFact').textContent=r.f;
-    if(oddQueue.length>0)$('oddNext').style.display='inline-block';
-    else{$('oddNotice').textContent='Impostors caught! 🔍 Pick another game when you are ready →';setTimeout(advanceGame,2300);}
-  };});
-  startTimer();
-}
-$('oddNext').onclick=oddRound;
 
 /* ════════ 10. SPEED ROUND ════════ */
 var SPEED_QUESTIONS=[
@@ -6814,13 +6791,8 @@ function showHallOfFame(){
   var np=$('hofNewPlayer');if(np)np.style.display=booth?'block':'none';
   var pa=$('hofPlayAgain');
   if(pa){pa.style.display=booth?'none':'block';pa.textContent='🔄 Start over (new score)';}
-  /* The points bar sits above every panel and its two buttons were never
-     cleared on the way in here, so a finished player was looking at "Back to
-     games" and "Finish & see ranking" — one of which returns to this page and
-     the other of which IS this page. Both are inert once the run is over. */
-  ['gameBack','gameLeave'].forEach(function(id){
-    var b=$(id);if(b)b.classList.remove('show');
-  });
+  /* Inert once the run is over: one returns to this page, the other IS it. */
+  hideGameBar();
   Cloud.onLeaderboard(USER.group,renderHof);
   renderRankQR();
 }
