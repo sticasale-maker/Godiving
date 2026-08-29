@@ -223,6 +223,15 @@
     padding:9px 15px;font-size:14px;font-weight:600;cursor:pointer;margin-top:8px;flex-shrink:0}
   .btn.ghost{background:transparent;color:var(--text);border:1px solid var(--line);font-weight:500}
   .btn.play-again{background:var(--accent);color:#04282a;width:100%;padding:14px;font-size:15px;margin-top:10px}
+  /* Booth only, and at the very top, because it is aimed at the person
+     WAITING rather than the one who just played — they need to see, from a
+     step back and without being told, that the machine is theirs to take. */
+  .hof-newplayer{width:100%;flex-shrink:0;margin:0 0 12px;border:0;border-radius:14px;
+    cursor:pointer;font-family:inherit;font-weight:800;letter-spacing:1px;
+    background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;
+    padding:clamp(14px,1.8vw,22px);font-size:clamp(20px,3vw,38px);
+    box-shadow:0 6px 0 rgba(0,0,0,.22)}
+  .hof-newplayer:active{transform:translateY(2px);box-shadow:0 4px 0 rgba(0,0,0,.22)}
   .fact{font-size:13.5px;color:var(--muted);min-height:18px;margin:6px 0 0;flex-shrink:0}
 
   /* ── PROGRESS BAR (spotter) ── */
@@ -1013,14 +1022,8 @@
   .ticket-box{background:linear-gradient(160deg,#0f4a56,#0c3142);border:2px solid var(--gold);
     border-radius:14px;padding:14px 12px;margin:0 0 12px;text-align:center;flex-shrink:0}
   .ticket-lead{font-size:13px;color:var(--gold);font-weight:700;margin-bottom:10px}
-  /* This line is the difference between a player learning they won and walking
-     away from a booth screen that resets behind them. It only ever shows on a
-     booth machine — a big screen somebody is standing in front of — so it is
-     sized to be read across a stand, not politely. */
-  #hofRankLead{font-size:clamp(26px,4.2vw,52px);line-height:1.15;letter-spacing:.5px;
-    margin-bottom:14px;text-shadow:0 0 18px rgba(243,198,79,.35)}
   .ticket-qr{display:flex;justify-content:center;margin-bottom:8px;min-height:8px}
-  .ticket-qr canvas,.ticket-qr img{background:#fff;padding:8px;border-radius:8px;
+  .ticket-qr canvas,.ticket-qr img{max-width:100%;height:auto;background:#fff;padding:8px;border-radius:8px;
     image-rendering:pixelated;width:150px;height:150px}
   .ticket-code{font-family:'Press Start 2P',monospace;font-size:clamp(15px,4.5vw,21px);
     color:var(--gold);letter-spacing:2px;margin:6px 0 4px}
@@ -1738,6 +1741,7 @@
     </div>
 
     <div class="panel" id="p-hof">
+      <button class="hof-newplayer" id="hofNewPlayer" style="display:none">👋 NEW PLAYER</button>
       <div class="logobar" style="margin-bottom:10px;display:flex!important">
         <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show" class="logo" onerror="this.outerHTML=LOGO_FALLBACK.godiving">
         <span class="sep"></span>
@@ -1750,14 +1754,13 @@
       <p class="hof-session" id="hofSession"></p>
       <p class="hof-clock" id="hofClock"></p>
       <div class="hof-stay" id="hofStay" style="display:none"></div>
-      <div class="hof-verdict" id="hofVerdict" style="display:none"></div>
-      <p class="hof-coverage" id="hofCoverage"></p>
-      <p class="encourage" id="hofEncourage"></p>
       <div class="ticket-box" id="hofRank" style="display:none">
-        <div class="ticket-lead" id="hofRankLead"></div>
         <div class="ticket-qr" id="hofRankQR"></div>
         <div class="ticket-sub" id="hofRankSub"></div>
       </div>
+      <div class="hof-verdict" id="hofVerdict" style="display:none"></div>
+      <p class="hof-coverage" id="hofCoverage"></p>
+      <p class="encourage" id="hofEncourage"></p>
       <div class="ticket-box" id="hofTicket" style="display:none">
         <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a prize</div>
         <div class="ticket-qr" id="hofQR"></div>
@@ -1765,7 +1768,6 @@
         <div class="ticket-sub" id="hofDrawInfo"></div>
       </div>
       <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
-      <button class="btn play-again" id="hofBackMenu" style="background:var(--surface);color:var(--text);border:1px solid var(--line)">← Back to games</button>
       <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
     </div>
 
@@ -6819,9 +6821,17 @@ function showHallOfFame(){
         'Your '+fin.raw+' points count as <b>'+fin.score+'</b>; '+
         'finish the rest to bank every point.';
   }
+  var booth=isBoothStation();
+  var np=$('hofNewPlayer');if(np)np.style.display=booth?'block':'none';
   var pa=$('hofPlayAgain');
-  if(pa)pa.textContent=isBoothStation()?'👋 Next player — hand the screen over'
-                                       :'🔄 Start over (new score)';
+  if(pa){pa.style.display=booth?'none':'block';pa.textContent='🔄 Start over (new score)';}
+  /* The points bar sits above every panel and its two buttons were never
+     cleared on the way in here, so a finished player was looking at "Back to
+     games" and "Finish & see ranking" — one of which returns to this page and
+     the other of which IS this page. Both are inert once the run is over. */
+  ['gameBack','gameLeave'].forEach(function(id){
+    var b=$(id);if(b)b.classList.remove('show');
+  });
   Cloud.onLeaderboard(USER.group,renderHof);
   renderRankQR();
 }
@@ -6831,12 +6841,11 @@ function renderRankQR(){
   var box=$('hofRank');if(!box)return;
   if(!isBoothStation()){box.style.display='none';return;}
   box.style.display='block';
-  $('hofRankLead').textContent='📸 SCAN THIS BEFORE YOU GO';
   var url=rankURL(), holder=$('hofRankQR');
   holder.innerHTML='';
   try{
     if(!window.QRCode)throw new Error('qr.js did not load');
-    holder.appendChild(QRCode.canvas(url,{size:150}));
+    holder.appendChild(QRCode.canvas(url,{size:300}));
   }catch(e){
     holder.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
       'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
@@ -7060,7 +7069,6 @@ function renderTicket(code){
 }
 
 /* ════════ PLAY AGAIN ════════ */
-(function(){var bm=$('hofBackMenu');if(bm)bm.onclick=function(){showApp();showMenu();};})();
 $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;showMenu();};
 /* showMenu() handles the all-played case, so 'Back to games' from the final
    game lands on the ranking too rather than bouncing off a dead menu. */
@@ -7075,7 +7083,7 @@ $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;show
    still set showMenu() sent them straight back to the ranking, so "start
    over" could not start anything over. resetThisDevice() already knew how to
    clear all of it. */
-$('hofPlayAgain').onclick=function(){
+function startNextPlayer(){
   resetThisDevice();
   currentGame=0;
   var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
@@ -7094,7 +7102,9 @@ $('hofPlayAgain').onclick=function(){
     document.getElementById('whoGroup').textContent=USER.group;
   }
   window.SPLASH_CTRL.replay();
-};
+}
+$('hofPlayAgain').onclick=startNextPlayer;
+(function(){var np=$('hofNewPlayer');if(np)np.onclick=startNextPlayer;})();
 
 /* ════════ STARTUP: cloud + remote screensaver listener ════════ */
 Cloud.init(function(){
