@@ -4008,18 +4008,24 @@ var BREATH_LADDERS={
     {who:'Club freediver',t:120}
   ],
   kid:[
-    {who:'Rock pool explorer',t:15},
-    {who:'Reef rookie',t:30},
-    {who:'Keen snorkeller',t:60},
-    {who:'Snorkel star',t:90},
-    {who:'Club freediver',t:150}
+    {who:'First fish',t:10},
+    {who:'Rock pool explorer',t:25},
+    {who:'Reef rookie',t:45},
+    {who:'Keen snorkeller',t:75},
+    {who:'Club freediver',t:120}
   ],
+  /* The first rung is the whole game for most people. At 30s an adult who
+     let go at 22 had beaten nothing and was told so — a stranger at a stand
+     gets one go, and the first thing it said to them was "not enough". Every
+     tier now opens at 10s, which almost everyone clears on their first
+     attempt, and the ladder above it is unchanged in spirit: still real
+     numbers, still ending somewhere worth aiming at. */
   adult:[
+    {who:'First breath',t:10},
     {who:'Reef rookie',t:30},
     {who:'Keen snorkeller',t:60},
     {who:'Club freediver',t:120},
-    {who:'Sydney comp diver',t:240},
-    {who:'Elite static apnea',t:360}
+    {who:'Sydney comp diver',t:240}
   ]
 };
 var breathLevel='adult';
@@ -4581,7 +4587,10 @@ var COL_ROUNDS=[
      ['Brown with cream blotches','linear-gradient(135deg,#5a3a1c 55%,#efe1c8)']],
    f:'Same three colours turn up on nudibranchs oceans apart. Predators learn one warning pattern, so it pays to copy a design that already works.'}
 ];
-var COL_ROUNDS_N=6;
+/* 8 of the 9 nudibranchs per player. The pool is only nine deep, so this is
+   nearly all of them — but not all, which keeps a second run from being the
+   identical sequence. */
+var COL_ROUNDS_N=8;
 var colQueue=[],colScore=0,colTotal=0,colAnswered=false;
 function initColour(){
   colQueue=shuffle(COL_ROUNDS.slice()).slice(0,Math.min(COL_ROUNDS_N,COL_ROUNDS.length));
