@@ -377,6 +377,24 @@
   /* ════════════════
      SPLASH
      ════════════════ */
+  .wlinks{display:flex;gap:14px;justify-content:center;margin-top:14px}
+  .wlinks button,.wlinks a{
+    background:none;border:0;padding:4px 2px;cursor:pointer;text-decoration:none;
+    font-family:inherit;font-size:12px;letter-spacing:.5px;color:var(--muted);
+    opacity:.75;transition:.15s}
+  .wlinks button:hover,.wlinks a:hover{color:var(--accent);opacity:1}
+  .wlinks button:focus-visible,.wlinks a:focus-visible{
+    outline:2px solid var(--accent);outline-offset:2px}
+
+  /* the looping film, for a screen nobody is standing at */
+  #splashLoop{position:fixed;inset:0;z-index:99999;background:#000;display:none}
+  #splashLoop.on{display:block}
+  #splashLoop video{width:100%;height:100%;object-fit:contain;display:block}
+  #splashLoop .hint{position:absolute;left:0;right:0;bottom:26px;text-align:center;
+    color:rgba(255,255,255,.66);font-size:13px;letter-spacing:1.5px;
+    text-transform:uppercase;pointer-events:none;animation:hintFade 6s ease forwards}
+  @keyframes hintFade{0%,55%{opacity:1}100%{opacity:0}}
+
   #splash{
     position:fixed;inset:0;z-index:1000;background:#000;
     display:flex;align-items:center;justify-content:center;overflow:hidden;cursor:pointer;
@@ -1005,10 +1023,12 @@
     font-weight:700;margin-right:2px}
 
   /* ── EXPERIENCE PICKER on the welcome screen ── */
-  .exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px}
-  .exp-btn{padding:11px 6px;border-radius:10px;cursor:pointer;transition:.12s;
+  /* One row. Three choices read as one question; two-plus-one reads as a
+     list that ran out of space, and the orphan looks like a default. */
+  .exp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:4px}
+  .exp-btn{padding:11px 4px;border-radius:10px;cursor:pointer;transition:.12s;
     background:rgba(255,255,255,.05);border:2px solid var(--line);color:var(--text);
-    font-family:inherit;font-size:13px;font-weight:700;line-height:1.3;text-align:center}
+    font-family:inherit;font-size:clamp(11px,3vw,13px);font-weight:700;line-height:1.25;text-align:center;overflow-wrap:anywhere}
   .exp-btn .ic{display:block;font-size:20px;margin-bottom:3px}
   .exp-btn:active{transform:translateY(1px)}
   .exp-btn.sel{background:var(--accentd);border-color:var(--accent);color:var(--accent)}
@@ -1244,7 +1264,7 @@
       <div class="arcade-insert">— INSERT DIVER —</div>
       <div class="wcard">
         <div class="arcade-title">SYDNEY DIVE<br>CHALLENGE</div>
-        <div class="arcade-sub">17 GAMES · ALL AGES · SYDNEY REEFS</div>
+        <div class="arcade-sub" id="wcount">ALL AGES · SYDNEY REEFS</div>
         <div class="arcade-event">Go Diving Show · 5–6 Sept 2026</div>
         <label class="arcade-label" for="wname">▶ YOUR NAME</label>
         <input class="arcade-input" id="wname" type="text" placeholder="ENTER NAME" maxlength="20" autocomplete="off">
@@ -1254,6 +1274,10 @@
         <div class="exp-grid" id="wexp"></div>
         <p class="werr" id="werr"></p>
         <button class="arcade-start" id="wstart">DIVE IN →</button>
+        <div class="wlinks">
+          <button type="button" id="wsplash">▶ Splash loop</button>
+          <a href="attract.html">◆ Ad page</a>
+        </div>
       </div>
     </div>
   </div>
@@ -1753,7 +1777,10 @@
 <script src="qr.js"></script>
 <script>
 /* ════════ SPLASH ════════ */
-var SKIP_SPLASH_ON_LOAD=true; /* set to false to re-enable intro */
+/* The intro plays before every game. It was suspended in August because
+   sitting through it on every test reload is intolerable; on the stand it is
+   the thing that makes someone look up. Set true again if you are testing. */
+var SKIP_SPLASH_ON_LOAD=false;
 (function(){
   var splash=document.getElementById('splash'),video=document.getElementById('splashVideo'),
     canvas=document.getElementById('splashCanvas'),fallback=document.getElementById('splashFallback'),
@@ -1761,7 +1788,7 @@ var SKIP_SPLASH_ON_LOAD=true; /* set to false to re-enable intro */
     cont=document.getElementById('splashContinue'),skipBtn=document.getElementById('splashSkip');
   var dismissed=false,playing=false,frozen=false,autoplayBlocked=false,SPEED=2;
 
-  window.SPLASH_CTRL={replay:replaySplash};
+  window.SPLASH_CTRL={replay:replaySplash,file:splashFile};
 
   function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
 
@@ -2977,6 +3004,51 @@ var pickedExp='';
   });
 })();
 
+/* ── splash on a loop ──────────────────────────────────────────────
+   For a screen that nobody is standing at yet: the film, full bleed, over and
+   over, until somebody presses Escape or clicks. Built as its own overlay
+   rather than reusing the intro's, because that one removes itself from the
+   page once it has played and would not be there to borrow.
+
+   Every exit route is wired — Escape, any click, any tap — because the person
+   who needs to get out of this is a volunteer with a queue forming, and a
+   full-screen video with no visible way out is the worst thing to leave on a
+   booth machine. */
+function playSplashLoop(){
+  if(document.getElementById('splashLoop'))return;
+  var ov=document.createElement('div');
+  ov.id='splashLoop';
+  var v=document.createElement('video');
+  v.muted=true;v.loop=true;v.playsInline=true;
+  v.setAttribute('playsinline','');v.setAttribute('webkit-playsinline','');
+  v.src=(window.SPLASH_CTRL&&SPLASH_CTRL.file)?SPLASH_CTRL.file():'images/splash.mp4';
+  var hint=document.createElement('div');
+  hint.className='hint';hint.textContent='Press ESC or click to exit';
+  ov.appendChild(v);ov.appendChild(hint);
+  document.body.appendChild(ov);
+  requestAnimationFrame(function(){ov.classList.add('on');});
+
+  function stop(e){
+    if(e&&e.type==='keydown'&&e.key!=='Escape')return;
+    document.removeEventListener('keydown',stop,true);
+    ov.removeEventListener('click',stop);
+    try{v.pause();}catch(err){}
+    if(ov.parentNode)ov.parentNode.removeChild(ov);
+  }
+  document.addEventListener('keydown',stop,true);
+  ov.addEventListener('click',stop);
+
+  var pr=v.play&&v.play();
+  /* autoplay refused, or the file is missing: do not strand the screen on a
+     black rectangle with no way to tell what happened */
+  if(pr&&pr.catch)pr.catch(function(){stop();});
+  v.addEventListener('error',function(){stop();});
+}
+(function(){
+  var b=document.getElementById('wsplash');
+  if(b)b.onclick=function(ev){ev.preventDefault();playSplashLoop();};
+})();
+
 document.getElementById('wstart').onclick=function(){
   var nm=document.getElementById('wname').value.trim();
   var av=parseInt(document.getElementById('wage').value,10);
@@ -3219,6 +3291,7 @@ var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','lo
 loadGameOrder();
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_ENABLED=loadGameEnabled();
+updateWelcomeCount();
 
 /* ---- consolation prize ----
    Everyone who plays takes a prize home. There are a fixed number of them and
@@ -3233,6 +3306,7 @@ function adoptConsolation(st){ CONSOLATION = !(st && st.consolation_on === false
 function adoptSharedGameConfig(cb){
   Cloud.getSettings(function(st){
     adoptPodium(st);
+    updateWelcomeCount();
     adoptConsolation(st);
     if(st&&st.game_order){applyGameOrder(st.game_order);saveGameOrder();}
     if(st&&st.games_enabled){
@@ -3475,6 +3549,17 @@ function finishAllPlayed(){
   FINISHED=true;
   hideNextChallenge();
   showHallOfFame();
+}
+/* The welcome screen used to claim "17 GAMES" in the markup. It was true once;
+   by today there were 22 and nobody had thought to edit a string in the HTML.
+   Counting the list means the sign on the door can never drift from what is
+   behind it. The welcome screen does not know the visitor's age yet, so this
+   is the whole catalogue — a given player is shown between 19 and 22 of them
+   depending on their group. */
+function updateWelcomeCount(){
+  var el=document.getElementById('wcount');if(!el)return;
+  var n=GAME_ORDER.filter(function(g){return GAME_ENABLED[g]!==false;}).length;
+  el.textContent=n+' GAMES · ALL AGES · SYDNEY REEFS';
 }
 function gamesForGroup(group){
   return GAME_ORDER.filter(function(g){
