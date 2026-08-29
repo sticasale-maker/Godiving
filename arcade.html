@@ -2646,7 +2646,7 @@ function renderPrizeConsole(){
      is empty this has to stop being promised on four different screens at
      once, and a volunteer cannot be editing copy mid-show. */
   h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
-     '<span class="muted">Consolation compass for every player:</span>'+
+     '<span class="muted">Consolation prize for every player:</span>'+
      '<button class="'+(CONSOLATION?'acc':'')+'" onclick="admSetConsolation(true)">On</button>'+
      '<button class="'+(!CONSOLATION?'warn':'')+'" onclick="admSetConsolation(false)">Off — box empty</button>'+
      '</div>';
@@ -6948,7 +6948,7 @@ function hofTick(){
     var m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
     el.innerHTML='<b>'+pad2(m)+':'+pad2(sec)+'</b> until this session freezes.<br>'+
       '<span class="hof-rule">Top <b>'+PODIUM+'</b> of each age group win the session prize'+
-      (CONSOLATION?' &#183; <b style="color:var(--good)">everyone who plays takes a compass home</b>':'')+'.</span>';
+      (CONSOLATION?' &#183; <b style="color:var(--good)">everyone who plays wins a prize</b>':'')+'.</span>';
     maybeShowTicket();
     var stay=$('hofStay');
     if(stay){
@@ -6960,7 +6960,7 @@ function hofTick(){
         : '<span class="hof-stay-big">⏳ STAY ON THIS PAGE</span>'+
           'The session prize is decided at <b>'+hhmm(end)+'</b> and this page will say so '+
           'straight away. Leave it open.'+
-          (CONSOLATION?' Either way there is a compass waiting for you at the stand.':'');
+          (CONSOLATION?' Either way there is a prize waiting for you at the stand.':'');
     }
     if(verdict){
       verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
@@ -6982,11 +6982,11 @@ function hofTick(){
     verdict.style.display='block';
     verdict.innerHTML=(rank&&rank<=PODIUM)
       ? '🏆 <b>'+rank+ordinal(rank)+' place — you have won a prize.</b><br>'+
-        'Come to <b>'+PRIZE_STAND+'</b> and show this screen to staff.'
+        'Come to <b>'+PRIZE_STAND+'</b> ('+STAND_WHERE+') and show this screen to staff.'
       : (CONSOLATION
-          ? '🧭 <b>You have still won a little compass.</b> Come to <b>'+PRIZE_STAND+
-            '</b> and show this screen to staff.<br>'+
-            'The board resets too, so there is another session to play.'
+          ? 'Unfortunately you did not make it to the top '+PODIUM+' this round, '+
+            '<b>but you still won a prize.</b> Go to <b>'+PRIZE_STAND+'</b> ('+STAND_WHERE+
+            ') and collect it!'
           : 'This session is done — the board resets, so come back and play the next one.');
   }
 }
@@ -7010,6 +7010,7 @@ function ordinal(n){return n===1?'st':n===2?'nd':n===3?'rd':'th';}
    sign, and the sign says VIZ. Kept as a constant so the phrase is changed in
    one place if the stand is ever renamed. */
 var PRIZE_STAND='the VIZ stand';
+var STAND_WHERE='in front of the main stage';
 var FINISH_TS=0;
 function ticketURL(code){
   var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
