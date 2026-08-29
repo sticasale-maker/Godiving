@@ -15,7 +15,22 @@
        node tools/make-poster.js                                          */
 var fs = require('fs');
 
-var W = 420, H = 594;                 /* A2 in mm; 1 SVG user unit = 1 mm */
+var W = 420, H = 594;                 /* A2 TRIM size in mm; 1 unit = 1 mm */
+
+/* BLEED — artwork carried past the trim so a millimetre of drift in the
+   guillotine does not leave a white sliver down an edge. The file is issued
+   at trim+bleed and the viewBox is offset, so everything below is still
+   positioned in plain 0..420 / 0..594 trim coordinates.
+   Tell the printer the file INCLUDES 3mm bleed, or they may scale it to fit
+   A2 and shrink the whole poster by 1.4%. */
+var BLEED = 3;
+
+/* MARGIN — the opposite of bleed, and the actual problem on the first
+   version: the headline was measured at 428mm wide on a 420mm sheet, so it
+   ran off both edges and would have been trimmed off. Nothing that carries
+   meaning goes outside this. */
+var MARGIN = 34;
+var SAFE = W - MARGIN * 2;            /* 352mm of usable width */
 var C = {
   bg: '#04161f', deep: '#06222e', accent: '#36c9c0',
   gold: '#f3c64f', text: '#eaf6fb', muted: '#9fc3d2'
@@ -92,8 +107,11 @@ function txt(x, y, s, fill, size, weight, extra) {
 
 var s = [];
 s.push('<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink"');
-s.push('     width="' + W + 'mm" height="' + H + 'mm" viewBox="0 0 ' + W + ' ' + H + '">');
+s.push('     width="' + (W + BLEED * 2) + 'mm" height="' + (H + BLEED * 2) + 'mm"');
+s.push('     viewBox="' + (-BLEED) + ' ' + (-BLEED) + ' ' + (W + BLEED * 2) + ' ' + (H + BLEED * 2) + '">');
 s.push('<title>Sydney Dive Challenge — A2 poster</title>');
+s.push('<desc>Trim size ' + W + 'x' + H + 'mm (A2). Includes ' + BLEED +
+  'mm bleed on every side — do not scale to fit A2. Safe margin ' + MARGIN + 'mm.</desc>');
 
 s.push('<defs>');
 s.push('<linearGradient id="sea" x1="0" y1="0" x2="0.22" y2="1">' +
@@ -107,10 +125,12 @@ s.push('<radialGradient id="vig" cx="0.5" cy="0.36" r="0.78">' +
   '<stop offset="1" stop-color="#000" stop-opacity="0.5"/></radialGradient>');
 s.push('</defs>');
 
-s.push('<rect width="' + W + '" height="' + H + '" fill="url(#sea)"/>');
+s.push('<rect x="' + (-BLEED) + '" y="' + (-BLEED) + '" width="' + (W + BLEED * 2) +
+  '" height="' + (H + BLEED * 2) + '" fill="url(#sea)"/>');
 s.push(shafts());
 s.push(bubbles());
-s.push('<rect width="' + W + '" height="' + H + '" fill="url(#vig)"/>');
+s.push('<rect x="' + (-BLEED) + '" y="' + (-BLEED) + '" width="' + (W + BLEED * 2) +
+  '" height="' + (H + BLEED * 2) + '" fill="url(#vig)"/>');
 
 /* logos — 122mm wide from a 1600px source is ~333dpi */
 s.push('<image x="112" y="26" width="122" height="58" preserveAspectRatio="xMidYMid meet"' +
@@ -120,8 +140,8 @@ s.push('<image x="260" y="30" width="50" height="50"' +
   ' xlink:href="data:image/png;base64,' + b64('images/branding/vizlogo.png') + '"/>');
 
 s.push(txt(210, 132, 'FREE TO PLAY &#183; ALL AGES', C.accent, 11.5, 700, ' letter-spacing="4.6"'));
-s.push(txt(210, 190, 'WIN PRIZES', C.gold, 60, 800, ' letter-spacing="1.5"'));
-s.push(txt(210, 228, 'SYDNEY DIVE CHALLENGE', C.text, 26, 800, ' letter-spacing="2.1"'));
+s.push(txt(210, 190, 'WIN PRIZES', C.gold, 50, 800, ' letter-spacing="1.4"'));
+s.push(txt(210, 226, 'SYDNEY DIVE CHALLENGE', C.text, 21, 800, ' letter-spacing="1.8"'));
 s.push('<rect x="150" y="242" width="120" height="0.9" fill="' + C.accent + '" opacity="0.85"/>');
 
 s.push('<g fill="' + C.accent + '" opacity="0.9">');
@@ -131,11 +151,11 @@ s.push('<g transform="translate(282,274) scale(0.78)">' + shark + '</g>');
 s.push('</g>');
 
 s.push(txt(210, 360, '21 quick games about what really lives', C.text, 15.5, 500));
-s.push(txt(210, 381, 'on Sydney&#8217;s reefs &#8212; and what it takes to dive them.', C.text, 15.5, 500));
+s.push(txt(210, 381, 'on Sydney&#8217;s reefs &#8212; and what it takes to dive them.', C.text, 14.5, 500));
 s.push(txt(210, 407, 'Two minutes is enough to get on the board.', C.muted, 13.5, 400));
 
 /* the call to action */
-s.push('<rect x="30" y="428" width="360" height="120" rx="12" fill="url(#cta)"/>');
+s.push('<rect x="' + MARGIN + '" y="428" width="' + SAFE + '" height="120" rx="12" fill="url(#cta)"/>');
 s.push(txt(146, 474, 'PLAY NOW', '#04211d', 34, 800, ' letter-spacing="1.2"'));
 s.push(txt(146, 500, 'On your phone,', '#04211d', 15.5, 700));
 s.push(txt(146, 519, 'or on the computers here', '#04211d', 15.5, 700));
@@ -144,7 +164,7 @@ s.push('<rect x="272" y="442" width="92" height="92" rx="7" fill="#ffffff"/>');
 s.push('<path d="' + qrPath(280, 450, 76) + '" fill="#04161f" shape-rendering="crispEdges"/>');
 s.push(txt(318, 543, 'SCAN TO PLAY', '#04211d', 9.5, 800, ' letter-spacing="1.6"'));
 
-s.push('<rect x="30" y="562" width="360" height="0.7" fill="' + C.muted + '" opacity="0.3"/>');
+s.push('<rect x="' + MARGIN + '" y="562" width="' + SAFE + '" height="0.7" fill="' + C.muted + '" opacity="0.3"/>');
 s.push(txt(210, 578, 'Go Diving Show &#183; 5&#8211;6 September 2026 &#183; the VIZ stand',
   C.muted, 12, 600));
 

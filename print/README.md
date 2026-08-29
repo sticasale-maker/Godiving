@@ -55,15 +55,44 @@ Better still: take the screenshot on a 4K screen rather than from the video —
 a 3840 px capture prints full-bleed A2 at 232 dpi and solves the problem
 outright.
 
+## Size, bleed and margins
+
+| | |
+|---|---|
+| Trim (finished size) | **420 × 594 mm** — A2 |
+| File size | **426 × 600 mm** — includes 3 mm bleed all round |
+| Safe margin | **34 mm** — nothing meaningful goes outside it |
+
+**Tell the printer the file already includes 3 mm bleed.** If they are handed
+a 426 × 600 file and told "A2", some will scale it to fit and shrink the whole
+poster by 1.4 %. The `<desc>` inside the SVG says so too.
+
+The first version of this poster had no margin discipline and the headline
+measured 428 mm wide on a 420 mm sheet — it ran off *both* edges and would
+have printed with the ends sliced away. Type sizes are now derived from
+measured widths rather than chosen by eye. Current clearances:
+
+    WIN PRIZES               37.5 mm each side
+    SYDNEY DIVE CHALLENGE    36.0 mm
+    the reef line            43.3 mm
+    tightest anything gets   36.0 mm
+
+To re-check after editing, open the SVG in a browser and run:
+
+    document.querySelectorAll('text').forEach(t => {
+      const b = t.getBBox();
+      console.log(t.textContent.slice(0,30), b.x.toFixed(1), (b.x+b.width).toFixed(1));
+    });
+
+Anything below 34 or above 386 is in the danger zone.
+
 ## Before sending to the printer
 
 1. **Outline the fonts.** The SVG asks for Helvetica/Arial. Open in
    Illustrator or Inkscape and *Type → Convert to outlines* (Inkscape:
    *Path → Object to Path*), or the printer's RIP may substitute a font and
-   reflow the layout.
-2. **Add bleed** if they want it — currently trimmed exactly to 420 × 594 mm.
-   The background is a flat gradient, so extending it 3 mm each side is safe.
-3. **Export to PDF/X** from the same application. Colours are RGB; ask the
+   reflow the layout — which would undo the margin work above.
+2. **Export to PDF/X** from the same application. Colours are RGB; ask the
    printer to convert, or convert to CMYK yourself. The gold `#f3c64f` and
    teal `#36c9c0` are both outside CMYK gamut and will shift slightly duller —
    normal, and worth a proof if the brand colour matters.
