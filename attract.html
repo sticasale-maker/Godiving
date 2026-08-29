@@ -78,13 +78,35 @@
 
   /* ── bottom bar: the live bits ─────────────────────────────────── */
   .bottom{grid-column:1/3;align-self:end;display:flex;align-items:flex-end;gap:34px}
-  .cta{background:linear-gradient(180deg,#2ad3b6,#0f8f7c);color:#032420;
-    border-radius:22px;padding:28px 44px;flex:0 0 auto;
-    box-shadow:0 18px 50px rgba(20,160,140,.45);animation:pulse 2.4s ease-in-out infinite}
-  @keyframes pulse{0%,100%{transform:translateY(0);box-shadow:0 18px 50px rgba(20,160,140,.45)}
-                   50%{transform:translateY(-7px);box-shadow:0 30px 66px rgba(20,160,140,.6)}}
-  .cta .l1{font-family:'Press Start 2P',monospace;font-size:30px;letter-spacing:2px}
-  .cta .l2{font-size:21px;font-weight:700;margin-top:11px;opacity:.85}
+  /* The one thing a passer-by has to understand from ten metres away, so it
+     flashes rather than floats: the old animation only nudged it up and down
+     seven pixels, which reads as decoration next to a screen already full of
+     drifting photographs and rising bubbles. Alternating the whole slab
+     between teal and gold is what actually catches an eye that is not looking.
+
+     The cycle is 1.6s — about 0.6 flashes per second, well under the 3Hz
+     threshold that matters for photosensitivity, and slow enough to read the
+     words during either half. */
+  .cta{border-radius:26px;padding:34px 52px;flex:0 0 auto;white-space:nowrap;
+    background:linear-gradient(180deg,#2ad3b6,#0f8f7c);color:#032420;
+    box-shadow:0 18px 50px rgba(20,160,140,.45);
+    animation:ctaFlash 1.6s ease-in-out infinite;will-change:transform}
+  @keyframes ctaFlash{
+    0%,100%{background:linear-gradient(180deg,#2ad3b6,#0f8f7c);color:#032420;
+            transform:translateY(0) scale(1);
+            box-shadow:0 18px 50px rgba(20,160,140,.45)}
+    50%    {background:linear-gradient(180deg,#ffe98f,#f3c64f);color:#2b1d00;
+            transform:translateY(-8px) scale(1.04);
+            box-shadow:0 32px 80px rgba(243,198,79,.65)}
+  }
+  /* A booth screen wants the motion, but honouring the preference costs
+     nothing and still leaves the panel unmistakably gold. */
+  @media(prefers-reduced-motion:reduce){
+    .cta{animation:none;background:linear-gradient(180deg,#ffe98f,#f3c64f);color:#2b1d00;
+         box-shadow:0 24px 64px rgba(243,198,79,.55)}
+  }
+  .cta .l1{font-family:'Press Start 2P',monospace;font-size:54px;letter-spacing:3px;line-height:1}
+  .cta .l2{font-size:29px;font-weight:800;margin-top:16px;opacity:.9}
 
   .panelrow{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .pnl{background:rgba(6,30,42,.80);border:1px solid var(--line);border-radius:20px;
