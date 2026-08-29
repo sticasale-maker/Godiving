@@ -6923,13 +6923,15 @@ function hofMyRank(){
   }
   return 0;
 }
+/* Two digits, but never fewer than the number needs. */
+function pad2(v){v=Math.max(0,Math.floor(v));return (v<10?'0':'')+v;}
 function hofTick(){
   var el=$('hofClock');if(!el)return;
   var end=sessionEnd(FINISH_TS||Date.now()), left=end-Date.now();
   var rank=hofMyRank(), verdict=$('hofVerdict');
   if(left>0){
     var m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
-    el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes.<br>'+
+    el.innerHTML='<b>'+pad2(m)+':'+pad2(sec)+'</b> until this session freezes.<br>'+
       '<span class="hof-rule">Only the first <b>'+PODIUM+'</b> of each age group qualify for a prize.</span>';
     maybeShowTicket();
     var stay=$('hofStay');

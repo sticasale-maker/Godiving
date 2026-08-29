@@ -91,6 +91,12 @@
     padding:20px 24px;min-height:150px}
   .pnl .h{font-family:'Press Start 2P',monospace;font-size:12px;letter-spacing:2.5px;
     color:var(--muted);margin-bottom:14px}
+  /* The countdown alone never says how long a session IS. That matters most
+     for the first one of each day, which runs 09:30-11:00 rather than a clean
+     hour: somebody arriving at 09:45 sees a 75 minute countdown and has no way
+     to tell whether they have walked in near the start or near the end. */
+  .sesswin{font-family:'Press Start 2P',monospace;font-size:21px;color:var(--accent);
+    letter-spacing:1.5px;margin-bottom:12px}
   .clockbig{font-family:'Press Start 2P',monospace;font-size:52px;color:var(--gold);letter-spacing:2px}
   .clocksub{font-size:19px;color:var(--muted);margin-top:11px;line-height:1.35}
   #rehearsalBar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#8a5a00;
@@ -153,11 +159,12 @@
       <div class="panelrow">
         <div class="pnl">
           <div class="h" id="clockHead">NEXT PRIZE ROUND</div>
+          <div class="sesswin" id="sessWin">&nbsp;</div>
           <div class="clockbig" id="clockBig">--:--</div>
           <div class="clocksub" id="clockSub">Top 3 in each age group win a prize</div>
         </div>
         <div class="pnl">
-          <div class="h">ON THE BOARD THIS HOUR</div>
+          <div class="h">ON THE BOARD THIS SESSION</div>
           <div id="board"><div class="quiet">Be the first name up here.</div></div>
         </div>
       </div>
@@ -221,11 +228,15 @@ function sessionBounds(ts){
 }
 function hhmm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2);}
 
+/* Two digits, but never fewer than the number needs. */
+function pad2(v){v=Math.max(0,Math.floor(v));return (v<10?'0':'')+v;}
 function tickClock(){
   var b=sessionBounds(),left=b.end-Date.now();
+  var sw=document.getElementById('sessWin');
+  if(sw)sw.textContent=hhmm(b.start)+' – '+hhmm(b.end);
   if(left<0)left=0;
   var m=Math.floor(left/60000),s=Math.floor(left/1000)%60;
-  document.getElementById('clockBig').textContent=('0'+m).slice(-2)+':'+('0'+s).slice(-2);
+  document.getElementById('clockBig').textContent=pad2(m)+':'+pad2(s);
   document.getElementById('clockSub').innerHTML=
     'until the board freezes at <b style="color:var(--text)">'+hhmm(b.end)+'</b>.<br>'+
     'Top 3 in each age group win a prize.';

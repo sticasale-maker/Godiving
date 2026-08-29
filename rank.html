@@ -139,6 +139,8 @@ document.getElementById('sessLine').innerHTML =
   'Session <b>'+hhmm(START)+'–'+hhmm(END)+'</b>. Only players who finished inside this session appear here.';
 
 /* ── the clock ─────────────────────────────────────────────────── */
+/* Two digits, but never fewer than the number needs. */
+function pad2(v){v=Math.max(0,Math.floor(v));return (v<10?'0':'')+v;}
 function tickClock(){
   var el=document.getElementById('clock'), t=document.getElementById('clockT'),
       l=document.getElementById('clockL');
@@ -149,7 +151,7 @@ function tickClock(){
     return;
   }
   var ms=END-Date.now(), m=Math.floor(ms/60000), sec=Math.floor(ms/1000)%60;
-  t.textContent=('0'+m).slice(-2)+':'+('0'+sec).slice(-2);
+  t.textContent=pad2(m)+':'+pad2(sec);
   l.textContent='until this session freezes';
 }
 function buzz(pattern){try{if(navigator.vibrate)navigator.vibrate(pattern);}catch(e){}}
