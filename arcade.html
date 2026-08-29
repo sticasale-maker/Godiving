@@ -2007,9 +2007,16 @@ var GAME_LABELS = {quiz:'Guess Who',breath:'Breath Hold',silhouette:'Silhouette 
 
    Any other date — a rehearsal on a Tuesday night — falls back to plain clock
    hours so the whole thing is still testable out of show week. */
+/* The last mark of each day is the final DRAW time, not the hall's closing
+   time. It has to be: prize.js draws at 16:45 and 15:45 so a winner has a
+   quarter of an hour to reach the stand, and when this table ended at 17:00
+   and 16:00 instead, everyone who finished in that last gap was shown a
+   countdown to a freeze that no draw would ever settle.
+   These two lists must agree with SHOW.days in prize.js — tools/check-schedule.js
+   compares them. */
 var SESSION_DAYS={
-  '2026-09-05':['09:30','11:00','12:00','13:00','14:00','15:00','16:00','17:00'],
-  '2026-09-06':['09:30','11:00','12:00','13:00','14:00','15:00','16:00']
+  '2026-09-05':['09:30','11:00','12:00','13:00','14:00','15:00','16:00','16:45'],
+  '2026-09-06':['09:30','11:00','12:00','13:00','14:00','15:00','15:45']
 };
 function atLocal(dayk,hm){
   var d=dayk.split('-'),t=hm.split(':');
