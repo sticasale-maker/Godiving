@@ -1025,8 +1025,6 @@
   .ticket-qr{display:flex;justify-content:center;margin-bottom:8px;min-height:8px}
   .ticket-qr canvas,.ticket-qr img{max-width:100%;height:auto;background:#fff;padding:8px;border-radius:8px;
     image-rendering:pixelated;width:150px;height:150px}
-  .ticket-code{font-family:'Press Start 2P',monospace;font-size:clamp(15px,4.5vw,21px);
-    color:var(--gold);letter-spacing:2px;margin:6px 0 4px}
   .ticket-sub{font-size:12px;color:var(--muted);line-height:1.5}
 
   /* ── 8. COLOUR THE CREATURE ── */
@@ -1733,12 +1731,6 @@
       <div class="hof-verdict" id="hofVerdict" style="display:none"></div>
       <p class="hof-coverage" id="hofCoverage"></p>
       <p class="encourage" id="hofEncourage"></p>
-      <div class="ticket-box" id="hofTicket" style="display:none">
-        <div class="ticket-lead" id="hofTicketLead">📸 Scan to check if you win a prize</div>
-        <div class="ticket-qr" id="hofQR"></div>
-        <div class="ticket-code" id="hofCode">—</div>
-        <div class="ticket-sub" id="hofDrawInfo"></div>
-      </div>
       <div class="hof-scroll"><div class="hof" id="hofList"></div></div>
       <button class="btn play-again" id="hofPlayAgain">🔄 Start over (new score)</button>
       <button class="hof-newplayer" id="hofNewPlayer" style="display:none">👋 NEW PLAYER</button>
@@ -2242,13 +2234,6 @@ var Cloud=(function(){
       if(cb)cb();
     }
   }
-  function setClaimed(id,claimed,cb){
-    var val=claimed?new Date().toISOString():null;
-    if(mode==='cloud'&&sb){sb.from('scores').update({claimed_at:val}).eq('id',id).then(function(){if(cb)cb();},function(){if(cb)cb();});}
-    else{
-      var a=lsScores();a.forEach(function(e){if(e.id===id)e.claimed_at=val;});lsSave(a);if(cb)cb();
-    }
-  }
 
   /* ----- sessions / presence (Realtime Presence) ----- */
   function startSession(data){
@@ -2313,7 +2298,7 @@ var Cloud=(function(){
     deleteScore:deleteScore,resetAll:resetAll,
     get dryrun(){return DRYRUN;}, DRYRUN_STATION:DRYRUN_STATION,
     clearDryRuns:clearDryRuns,startSession:startSession,updateSession:updateSession,
-    getSettings:getSettings,saveSettings:saveSettings,setClaimed:setClaimed,
+    getSettings:getSettings,saveSettings:saveSettings,
     onSessions:onSessions,onMyCommand:onMyCommand,onCommands:onCommands,sendCommand:sendCommand};
 })();
 
@@ -2510,7 +2495,7 @@ function renderSessionBrowser(){
     (buckets[k]=buckets[k]||[]).push(e);
   });
   var keys=Object.keys(buckets).map(Number).sort(function(a,b){return b-a;});
-  var h='<div class="card"><h3>Sessions — hourly rankings, codes &amp; prizes</h3>';
+  var h='<div class="card"><h3>Sessions — hourly rankings &amp; prizes</h3>';
   if(!keys.length)return h+'<p class="muted">No finished players yet.</p></div>';
   if(ADM_SESSION===null||keys.indexOf(ADM_SESSION)<0)ADM_SESSION=keys[0];
 
@@ -2536,26 +2521,22 @@ function renderSessionBrowser(){
      }).join('')+'</select>';
   var live=sessionStart(Date.now())===ADM_SESSION;
   h+='<span class="badge">'+(live?'● LIVE — still open':'○ Frozen')+'</span></div>';
-  h+='<p class="muted" style="margin:0 0 10px">The player shows you the identifier on their screen. '+
-     'It must match the code in this table before you hand a prize over.</p>';
+  h+='<p class="muted" style="margin:0 0 10px">'+
+     'Whoever shows you this screen has won it — there is nothing to match.</p>';
   AGE_GROUPS.forEach(function(grp){
     var list=buckets[ADM_SESSION].filter(function(e){return e.group===grp;})
       .sort(function(a,b){return b.score-a.score||a.ts-b.ts;});
     h+='<h4 style="margin:12px 0 4px">'+esc(grp)+' <span class="muted">('+list.length+')</span></h4>';
     if(!list.length){h+='<p class="muted">Nobody.</p>';return;}
-    h+='<table><tr><th>#</th><th>Player</th><th>Score</th><th>Identifier</th><th>Finished</th><th>Prize</th></tr>';
+    h+='<table><tr><th>#</th><th>Player</th><th>Score</th><th>Finished</th><th>Prize</th></tr>';
     list.forEach(function(e,i){
       var podium=i<PODIUM;
       h+='<tr'+(podium?' style="background:rgba(243,198,79,.10)"':'')+'>'+
         '<td>'+(i+1)+(podium?' '+(['🥇','🥈','🥉'][i]||''):'')+'</td>'+
         '<td>'+esc(e.name)+'</td><td>'+e.score+'</td>'+
-        '<td><b style="color:var(--gold);letter-spacing:1px">'+esc(e.code||'—')+'</b></td>'+
         '<td>'+hhmm(e.ts)+'</td>'+
-        '<td>'+(!podium?'<span class="muted">—</span>'
-          :(e.claimed_at
-            ? '<span class="on-dot">✓ awarded</span> <button onclick="admClaim(\''+e.id+'\',false)">undo</button>'
-            : '<button class="acc" onclick="admClaim(\''+e.id+'\',true)">Award prize</button>'))+
-        '</td></tr>';
+        '<td>'+(podium?'<b style="color:var(--gold)">prize</b>'
+                      :'<span class="muted">compass</span>')+'</td></tr>';
     });
     h+='</table>';
   });
@@ -2579,11 +2560,11 @@ function renderPrizeConsole(){
   var next=PRIZE.nextDraw(now);
 
   /* ---- stock ---- */
-  var claimed=0,goldenIssued=0;
+  var goldenIssued=0;
   var winnerIds={};
   res.byDraw.forEach(function(d){
     Object.keys(d.groups).forEach(function(g){
-      d.groups[g].winners.forEach(function(w){winnerIds[w.id]=true;if(w.claimed_at)claimed++;});
+      d.groups[g].winners.forEach(function(w){winnerIds[w.id]=true;});
     });
   });
   scores.forEach(function(e){if(e.golden)goldenIssued++;});
@@ -2594,8 +2575,6 @@ function renderPrizeConsole(){
   h+='<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
      '<span class="badge">'+issued+' won on draws</span>'+
      '<span class="badge">'+goldenIssued+' golden</span>'+
-     '<span class="badge">'+claimed+' collected</span>'+
-     '<span class="badge'+((issued-claimed)>0?' warn':'')+'">'+(issued-claimed)+' waiting</span>'+
      '</div>';
 
   if(next){
@@ -2624,13 +2603,6 @@ function renderPrizeConsole(){
      'dial it down if the box is running low and every device recomputes from the next draw. '+
      'Players are told the number, so it is never a silent change.</p>';
 
-  /* ---- claim by code ---- */
-  h+='<div class="row" style="gap:8px;margin-bottom:6px;align-items:center">'+
-     '<span class="muted">Claim a ticket:</span>'+
-     '<input id="admClaimCode" placeholder="VIZ-7K3M" style="width:130px;text-transform:uppercase">'+
-     '<button class="acc" onclick="admLookup()">Look up</button></div>';
-  h+='<div id="admClaimResult" style="margin-bottom:12px">'+(ADM.claimMsg||'')+'</div>';
-
   /* ---- draw picker ---- */
   h+='<div class="row" style="gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:center">'+
      '<span class="muted">Draw:</span><select onchange="admSetDraw(this.value)">';
@@ -2655,10 +2627,7 @@ function renderPrizeConsole(){
     w.forEach(function(e,i){
       h+='<tr><td>'+(i===0?esc(AGE_GROUP_SHORT[g]||g):'')+'</td><td>'+(['🥇','🥈','🥉'][i]||(i+1))+'</td>'+
          '<td>'+esc(e.name)+'</td><td>'+e.score+'</td>'+
-         '<td><b style="color:var(--gold)">'+esc(e.code||'—')+'</b></td>'+
-         '<td>'+(e.claimed_at
-            ? '<span class="on-dot">✓ yes</span> <button onclick="admClaim(\''+e.id+'\',false)">undo</button>'
-            : '<button class="acc" onclick="admClaim(\''+e.id+'\',true)">Mark collected</button>')+'</td></tr>';
+         '<td>'+(e.golden?'<b style="color:var(--gold)">golden</b>':'')+'</td></tr>';
     });
   });
   if(!any&&sel&&sel.at.getTime()>now)h+='<tr><td colspan="6" class="muted">This draw has not run yet.</td></tr>';
@@ -2678,36 +2647,6 @@ function admSetConsolation(on){
     ADM.settings=Object.assign(ADM.settings||{},{consolation_on:!!on});
     renderAdmin();
   });
-}
-function admClaim(id,on){
-  Cloud.setClaimed(id,on,function(){adminRefresh();});
-}
-function admLookup(){
-  var raw=(document.getElementById('admClaimCode')||{}).value||'';
-  var code=PRIZE.normaliseCode(raw);
-  var out=document.getElementById('admClaimResult');
-  if(!code){out.innerHTML='<span class="muted">Enter a code like VIZ-7K3M.</span>';return;}
-  var scores=(ADM.scores||[]).filter(function(e){return !e.hidden;});
-  var res=PRIZE.compute(scores,admCfg());
-  var r=res.byCode[code];
-  if(!r){
-    ADM.claimMsg='<span style="color:var(--bad)">No ticket '+esc(code)+'. Check the code, or hit Refresh — it can take a moment to sync.</span>';
-    out.innerHTML=ADM.claimMsg;return;
-  }
-  var e=r.entry,drawn=PRIZE.hasDrawn(r.draw,Date.now());
-  if(!drawn){
-    ADM.claimMsg='<span class="muted"><b>'+esc(e.name)+'</b> · '+esc(e.group)+' · '+e.score+' pts — '+
-      'their draw at <b>'+esc(r.draw.label)+'</b> has not run yet (currently '+r.rank+' of '+r.fieldSize+').</span>';
-  } else if(!r.won){
-    ADM.claimMsg='<span style="color:var(--muted)"><b>'+esc(e.name)+'</b> placed '+r.rank+' of '+r.fieldSize+
-      ' in the '+esc(r.draw.label)+' draw — <b>no prize</b> on this ticket.</span>';
-  } else {
-    ADM.claimMsg='<div style="background:var(--goodd);border:1px solid var(--good);border-radius:8px;padding:10px">'+
-      '🧭 <b>'+esc(e.name)+'</b> WON — '+esc(e.group)+' · '+e.score+' pts · '+esc(r.draw.label)+' draw'+
-      (e.claimed_at?' <span class="on-dot">· already collected</span>'
-        :' <button class="acc" onclick="admClaim(\''+e.id+'\',true)">Hand over a prize</button>')+'</div>';
-  }
-  out.innerHTML=ADM.claimMsg;
 }
 /* Fullscreen winner board for a screen facing the aisle. The hourly
    moment is free theatre — people look over when a screen changes. */
@@ -2732,8 +2671,7 @@ function admBigScreen(){
       'text-transform:uppercase">'+esc(AGE_GROUP_SHORT[g]||g)+'</div>';
     w.forEach(function(e,k){
       rows+='<div style="font-size:5vh;font-weight:800;line-height:1.25">'+(['🥇','🥈','🥉'][k]||'')+' '+
-        esc(e.name)+' <span style="color:var(--gold);font-family:\'Press Start 2P\',monospace;font-size:3vh">'+
-        esc(e.code||'')+'</span></div>';
+        esc(e.name)+'</div>';
     });
     rows+='</div>';
   });
@@ -2790,7 +2728,6 @@ function resetThisDevice(){
   qStartTime=0;
   hofBoard=[];
   if(hofTimer){clearInterval(hofTimer);hofTimer=null;}
-  var t=$('hofTicket');if(t)t.style.display='none';
   var r=$('hofRank');if(r)r.style.display='none';
 }
 function adminRename(){var v=(document.getElementById('admStation').value||'').trim();if(v){setStation(v);renderAdmin();}}
@@ -6749,7 +6686,7 @@ function showHallOfFame(){
          use, so the stored row cannot land in a different session from the
          one the player was told they were in */
       {exp:USER.exp||null,age:USER.age||null,when:FINISH_TS},
-      function(code){USER.code=code;maybeShowTicket();});
+      function(code){USER.code=code;});
   }
   var cv=$('hofCoverage');
   if(cv){
@@ -6878,7 +6815,7 @@ function hofTick(){
     el.innerHTML='<b>'+pad2(m)+':'+pad2(sec)+'</b> until this session freezes.<br>'+
       '<span class="hof-rule">Top <b>'+PODIUM+'</b> of each age group win the session prize'+
       (CONSOLATION?' &#183; <b style="color:var(--good)">everyone who plays wins a prize</b>':'')+'.</span>';
-    maybeShowTicket();
+    
     var stay=$('hofStay');
     if(stay){
       stay.style.display='block';
@@ -6900,7 +6837,7 @@ function hofTick(){
   }
   if(hofTimer){clearInterval(hofTimer);hofTimer=null;}
   var stayEl=$('hofStay');if(stayEl)stayEl.style.display='none';
-  maybeShowTicket();
+  
   /* The phone is in a pocket by now. A buzz is the only way to say "look at
      me" — longer for a winner than for a nudge to come back next hour.
      navigator.vibrate is Android-only; iOS silently ignores it, which is why
@@ -6926,13 +6863,6 @@ function buzz(pattern){
    there is anything to win. While the session is open nobody has placed yet;
    when it freezes, only the top three have. Showing it the moment a player
    finished told everyone they had a prize coming. */
-function maybeShowTicket(){
-  var box=$('hofTicket');if(!box)return;
-  var end=sessionEnd(FINISH_TS||Date.now());
-  var rank=hofMyRank();
-  if(Date.now()<end||!rank||rank>PODIUM||!USER.code){box.style.display='none';return;}
-  renderTicket(USER.code);
-}
 function ordinal(n){return n===1?'st':n===2?'nd':n===3?'rd':'th';}
 /* The stand is named, not numbered. A number is only useful to somebody
    reading a floor plan; a winner walking back through a hall is looking for a
@@ -6941,10 +6871,6 @@ function ordinal(n){return n===1?'st':n===2?'nd':n===3?'rd':'th';}
 var PRIZE_STAND='the VIZ stand';
 var STAND_WHERE='in front of the main stage';
 var FINISH_TS=0;
-function ticketURL(code){
-  var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
-  return base+'ticket.html?t='+encodeURIComponent(code);
-}
 /* A booth laptop is one launched with ?station=... (or renamed in
    admin); anything else keeps the default "Phone xxxx" label. The
    QR only makes sense on the booth machines — it exists to carry the
@@ -6973,46 +6899,6 @@ function isBoothStation(){
   }catch(e){return false;}
 }
 
-function renderTicket(code){
-  var box=$('hofTicket'); if(!box||!code)return;
-  box.style.display='block';
-  $('hofCode').textContent=code;
-
-  var booth=isBoothStation();
-
-  $('hofTicketLead').textContent=booth
-    ? '📸 Scan this with your phone before you go'
-    : '🧭 Your prize ticket';
-
-  var qr=$('hofQR'), url=ticketURL(code);
-  qr.innerHTML='';
-
-  if(booth){
-    /* degrade in stages rather than vanishing: QR -> printed URL */
-    try{
-      if(!window.QRCode)throw new Error('qr.js did not load');
-      qr.appendChild(QRCode.canvas(url,{size:170}));
-    }catch(e){
-      qr.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
-        'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
-    }
-    /* The one thing the verdict above cannot do for them. */
-    $('hofDrawInfo').innerHTML='<b style="color:var(--accent)">Scan it to keep your code</b> — '+
-      'this screen resets for the next player.';
-  } else {
-    /* already on their own device — a link beats a QR */
-    var a=document.createElement('a');
-    a.href=url;
-    a.className='btn';
-    a.style.cssText='display:block;text-decoration:none;padding:14px;border-radius:12px;'+
-      'background:var(--accent);color:#04222b;font-weight:800;font-size:16px;text-align:center';
-    a.textContent='Open my prize ticket →';
-    qr.appendChild(a);
-    /* Already on their own phone, and already told they have won. The code
-       is on screen and the button opens it; anything more is repetition. */
-    $('hofDrawInfo').innerHTML='';
-  }
-}
 
 /* ════════ PLAY AGAIN ════════ */
 $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;showMenu();};
@@ -7032,7 +6918,7 @@ $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;show
 function startNextPlayer(){
   resetThisDevice();
   currentGame=0;
-  var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
+  
   Cloud.updateSession({game:'quiz',points:0});
   document.getElementById('app').style.display='none';
   if(isBoothStation()){

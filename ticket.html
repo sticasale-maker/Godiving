@@ -226,7 +226,6 @@ function render() {
   if (!entry) {
     content.innerHTML = card('err',
       '<div class="eyebrow">Ticket not found</div>' +
-      '<div class="code">' + esc(CODE) + '</div>' +
       '<p class="muted center">We could not find this ticket. It can take a few seconds to ' +
       'register after you finish — pull down to refresh. If it still will not load, come to ' +
       'the VIZ stand with this code.</p>' +
@@ -240,9 +239,7 @@ function render() {
   var head =
     '<div class="eyebrow">Prize ticket</div>' +
     '<div class="who">' + esc(entry.name) + '</div>' +
-    '<div class="meta">' + esc(entry.group) + ' · <b>' + entry.score + ' points</b></div>' +
-    '<div class="code">' + esc(entry.code) + '</div>' +
-    '<div class="codehint">Show this code at the VIZ stand</div>';
+    '<div class="meta">' + esc(entry.group) + ' · <b>' + entry.score + ' points</b></div>';
 
   /* played after the last draw of the day */
   if (!draw) {
@@ -325,8 +322,6 @@ function render() {
         (entry.claimed_at
           ? '<div class="claimed">✓ Collected — thanks for playing!</div>'
           : '<div class="claimed">Collect before the show closes</div>')) +
-      card('', '<div class="code">' + esc(entry.code) + '</div>' +
-        '<div class="codehint">Your claim code</div>') +
       '<a class="btn ghost" href="arcade.html">🎮 Play again</a>';
   } else {
     renderLost(res, head, draw, next);
@@ -397,8 +392,7 @@ loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2').then(function
   content.innerHTML = card('err',
     '<div class="eyebrow">Offline</div>' +
     '<p class="muted">This page needs a connection to check the draw. ' +
-    'Your code is still valid — bring it to the VIZ stand.</p>' +
-    (CODE ? '<div class="code">' + esc(CODE) + '</div>' : ''));
+    'Just come to the VIZ stand and we will sort it out.</p>');
 });
 </script>
 </body>
