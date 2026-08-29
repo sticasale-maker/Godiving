@@ -35,6 +35,11 @@ if (!browser) { console.error('no Chrome or Edge found'); process.exit(1); }
 
 /* The SVG goes in as a data URI inside a page sized exactly to the sheet, so
    there is no HTML layout between the artwork and the paper. */
+if (!fs.existsSync(inSvg)) {
+  console.error('cannot find ' + path.resolve(inSvg));
+  console.error('(run this from the repo root, or give absolute paths)');
+  process.exit(1);
+}
 var svg = fs.readFileSync(inSvg);
 var wrapper =
 '<!doctype html><html><head><meta charset="utf-8"><style>\n' +
@@ -64,4 +69,7 @@ if (!fs.existsSync(outPdf)) {
   console.error((r.stderr || '').split('\n').slice(0, 12).join('\n'));
   process.exit(1);
 }
-console.log('wrote ' + outPdf + '  (' + Math.round(fs.statSync(outPdf).size / 1024) + ' KB)');
+console.log('');
+console.log('  wrote  ' + path.resolve(outPdf));
+console.log('  size   ' + Math.round(fs.statSync(outPdf).size / 1024) + ' KB');
+console.log('');
