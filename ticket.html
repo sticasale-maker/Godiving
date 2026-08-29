@@ -138,6 +138,9 @@ if (qs.get('prizetest') === '1') PRIZE.enableTestMode(3);
    show day, so a forgotten test cannot change what this page promises a
    player on the Saturday. */
 var SHOW_DATES = { '2026-09-05': 1, '2026-09-06': 1 };
+/* Everyone who plays takes a little compass home. Off means the box is empty
+   and every screen stops promising one; absent means on. */
+var CONSOLATION = true;
 var REHEARSAL_MAX_H = 12;
 function todayKey() {
   var d = new Date();
@@ -212,6 +215,7 @@ function fetchAll() {
        on every settings change, so starting or stopping a rehearsal reaches
        a phone that is already sitting on this page. */
     adoptRehearsal(s);
+    CONSOLATION = !(s.consolation_on === false);
     cfg = {
       winnersPerGroup: s.winners_per_group != null ? s.winners_per_group : 3,
       maxPerPlayerPerDay: s.max_per_player_per_day != null ? s.max_per_player_per_day : 1
@@ -376,12 +380,20 @@ function renderLost(res, head, draw, next) {
 
   content.innerHTML =
     card('', head) +
-    card('lost',
-      '<div class="big">Not this time</div>' +
+    card(CONSOLATION ? 'won' : 'lost',
+      (CONSOLATION
+        ? '<div class="compass">🧭</div>' +
+          '<div class="big">There is a compass for you</div>'
+        : '<div class="big">Not this time</div>') +
       '<div class="muted">You finished <b>' + ord(res.rank) + ' of ' + res.fieldSize +
         '</b> in the ' + esc(draw.label) + ' draw' +
         (res.cutoff != null ? ', where <b>' + res.cutoff + '</b> took the last prize' : '') +
         '.</div>' +
+      (CONSOLATION
+        ? '<div class="stand">THE VIZ STAND</div>' +
+          '<div class="muted">The session prize went elsewhere, but everyone who plays takes ' +
+          'a little compass home. Show this screen to staff.</div>'
+        : '') +
       (next
         ? '<div class="muted" style="margin-top:12px">Next draw is at <b>' + esc(next.label) +
           '</b> — play again and you are straight back in.</div>'

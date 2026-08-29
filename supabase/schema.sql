@@ -158,3 +158,11 @@ alter table public.settings add column if not exists game_order      jsonb;
 -- and the phone that scanned its QR were on different schedules, and
 -- the handoff between them was the one thing worth rehearsing.
 alter table public.settings add column if not exists rehearsal       jsonb;
+
+-- ── Consolation compass ──────────────────────────────────────────
+-- Every player takes a little compass home, not just the podium. There are a
+-- fixed number of them and no way to know in advance how many people will
+-- play, so this is a switch: when the box is empty staff turn it off and all
+-- four screens stop promising one in the same moment.
+-- Absent or true means on, so the promise works before this line is run.
+alter table public.settings add column if not exists consolation_on boolean default true;

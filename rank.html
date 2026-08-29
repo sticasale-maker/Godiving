@@ -111,6 +111,10 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
    and this page must not keep telling a player they have won a prize that is
    no longer allocated. 3 is only the value used until that read lands. */
 var PODIUM = 3;
+/* Everyone who plays takes a little compass home. Read from the shared row so
+   staff can switch it off the moment the box is empty; absent means on, so the
+   promise survives a database that has not been migrated yet. */
+var CONSOLATION = true;
 /* The prize is deliberately never named. What is actually handed over depends
    on what is left in the box by that hour, and a screen that promises a
    specific thing to someone who ends up with something else is worse than one
@@ -182,10 +186,13 @@ function load(){
   if(!sb){finish([]);return;}
   /* Refreshed alongside the board, so lowering the winner count mid-show
      reaches a phone that is already sitting on this page. */
-  sb.from('settings').select('winners_per_group').eq('id',1).single()
+  sb.from('settings').select('*').eq('id',1).single()
     .then(function(r){
-      var n=r.data&&r.data.winners_per_group;
-      if(n!=null&&n>0){PODIUM=Number(n);render();}
+      var d=r.data||{};
+      var n=d.winners_per_group;
+      CONSOLATION = !(d.consolation_on === false);
+      if(n!=null&&n>0)PODIUM=Number(n);
+      render();
     },function(){});
   sb.from('scores').select('*')
     .not('hidden','is',true)
@@ -254,12 +261,22 @@ function renderPrize(meIdx){
       'You finished <b>'+rank+'</b> of '+rows.length+' in '+esc(GROUP)+' for the '+
       hhmm(START)+'–'+hhmm(END)+' session. Come back to the VIZ stand to collect it.';
   } else {
-    document.getElementById('prizeTitle').textContent='Finished '+rank+' of '+rows.length;
-    document.getElementById('prizeBody').innerHTML=
-      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize this session. '+
-      'Come and play again in the next session — the board resets every hour.';
-    card.className='card';
-    document.querySelector('#prizeCard .stand').style.display='none';
+    if(CONSOLATION){
+      document.getElementById('prizeTitle').textContent='🧭 There is a compass for you';
+      document.getElementById('prizeBody').innerHTML=
+        'You finished <b>'+rank+'</b> of '+rows.length+' in '+esc(GROUP)+', so the session '+
+        'prize went elsewhere — but everyone who plays takes a little compass home. '+
+        'Show this screen to staff.';
+      card.className='card prize';
+      document.querySelector('#prizeCard .stand').style.display='';
+    } else {
+      document.getElementById('prizeTitle').textContent='Finished '+rank+' of '+rows.length;
+      document.getElementById('prizeBody').innerHTML=
+        'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize this session. '+
+        'Come and play again in the next session — the board resets every hour.';
+      card.className='card';
+      document.querySelector('#prizeCard .stand').style.display='none';
+    }
   }
 }
 

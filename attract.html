@@ -213,7 +213,7 @@
           <div class="h" id="clockHead">NEXT PRIZE ROUND</div>
           <div class="sesswin" id="sessWin">&nbsp;</div>
           <div class="clockbig" id="clockBig">--:--</div>
-          <div class="clocksub" id="clockSub">Top 3 in each age group win a prize</div>
+          <div class="clocksub" id="clockSub">Everyone who plays wins a compass</div>
         </div>
         <div class="pnl">
           <div class="h">ON THE BOARD THIS SESSION</div>
@@ -307,7 +307,7 @@ function tickClock(){
   document.getElementById('clockBig').textContent=pad2(m)+':'+pad2(s);
   document.getElementById('clockSub').innerHTML=
     'until the board freezes at <b style="color:var(--text)">'+hhmm(b.end)+'</b>.<br>'+
-    'Top 3 in each age group win a prize.';
+    'Top 3 win the session prize &#183; <b style="color:var(--good)">everyone who plays wins a compass</b>.';
 }
 setInterval(tickClock,1000);tickClock();
 
