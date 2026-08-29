@@ -2098,10 +2098,34 @@ var Cloud=(function(){
      can show it and build the QR. Retries once on a unique-index
      collision — 31^4 codes makes that vanishingly unlikely, but a
      duplicate would send two people to the same ticket. */
+  /* `when` is the moment the player FINISHED, and it is sent explicitly.
+     The row used to carry no ts at all and take the column default, which is
+     now() at INSERT — a different moment. Everything the player sees is
+     grouped by their finish time, while the admin table and the prize draw
+     read the stored ts, so any gap between the two put them in different
+     sessions: network latency, the retry below after a code collision, or a
+     write that lands after a slow round trip. Across an hour boundary that
+     is a player who finished at 14:59 appearing in the 15:00 session, having
+     been told on screen they were in the 14:00 one — and the draw is decided
+     per session, so it is not only cosmetic. */
+  /* ?dryrun=1 — play the whole thing through without touching the board.
+     The score is still written, so the code, the ticket, the QR and the draw
+     all behave exactly as they will on the day; it is just born hidden, so it
+     never appears in a ranking or competes for a prize.
+
+     This exists because the alternative is what actually happened: rehearsing
+     against the live shared database put invented players on a real
+     leaderboard, above a real one. There was no way to exercise the finish
+     without publishing a score. */
+  var DRYRUN=(function(){try{return new URLSearchParams(location.search).get('dryrun')==='1';}catch(e){return false;}})();
   function submitScore(group,name,score,extra,cb){
     var code=PRIZE.newCode();
+    var e=extra||{}, when=e.when||Date.now();
     var row=Object.assign({name:name,score:score,grp:group,code:code,
-                           device:DEVICE_ID,station:STATION},extra||{});
+                           device:DEVICE_ID,station:STATION,
+                           ts:new Date(when).toISOString()},e);
+    delete row.when;              /* carried in, not a column — and not the caller's to lose */
+    if(DRYRUN)row.hidden=true;
     if(mode==='cloud'&&sb){
       sb.from('scores').insert(row).then(function(r){
         if(r&&r.error){
@@ -2116,8 +2140,10 @@ var Cloud=(function(){
       },function(){if(cb)cb(code);});
     }
     else{
-      var entry=Object.assign({name:name,score:score,group:group,code:code,ts:Date.now(),
-        device:DEVICE_ID,station:STATION,id:'s'+Date.now()+Math.random().toString(36).slice(2,5)},extra||{});
+      var entry=Object.assign({name:name,score:score,group:group,code:code,
+        device:DEVICE_ID,station:STATION,id:'s'+Date.now()+Math.random().toString(36).slice(2,5)},e,
+        {ts:when});   /* ms here, not ISO — nothing maps this path through mapRow */
+      delete entry.when;
       var a=lsScores();a.push(entry);lsSave(a);fire(lbListeners[group],boardFor(group));
       if(cb)cb(code);
     }
@@ -6690,7 +6716,10 @@ function showHallOfFame(){
   if(!window._hofSubmitted){
     window._hofSubmitted=true;
     Cloud.submitScore(USER.group,USER.name,fin.score,
-      {exp:USER.exp||null,age:USER.age||null},
+      /* the same FINISH_TS the countdown, the session label and the QR all
+         use, so the stored row cannot land in a different session from the
+         one the player was told they were in */
+      {exp:USER.exp||null,age:USER.age||null,when:FINISH_TS},
       function(code){USER.code=code;maybeShowTicket();});
   }
   var cv=$('hofCoverage');
@@ -6882,11 +6911,16 @@ function isBoothStation(){
        screen.width reads 0 in some embedded browsers, so size alone would
        quietly classify a real laptop as a phone. */
     var desktop=matchMedia('(pointer:fine)').matches&&matchMedia('(hover:hover)').matches;
-    /* Width is only a sanity floor, taken from whichever source answers, so a
-       device that misreports its pointer still cannot pass as a booth. */
+    /* Width is only a sanity floor against a device that misreports its
+       pointer — it is not evidence on its own, and it must not VETO. Every
+       source can read 0 (a background or non-compositing tab returns zero for
+       all of them), and treating that as "too small" is the same failure this
+       function was just fixed for: a real laptop classified as a phone and
+       shown no QR. Unknown means unknown, so only a width we actually have
+       is allowed to overrule the pointer. */
     var w=Math.max(screen.width||0,screen.height||0,window.outerWidth||0,
                    window.innerWidth||0,document.documentElement.clientWidth||0);
-    return !!(desktop&&w>=700);
+    return !!(desktop&&(w===0||w>=700));
   }catch(e){return false;}
 }
 
