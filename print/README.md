@@ -86,6 +86,38 @@ To re-check after editing, open the SVG in a browser and run:
 
 Anything below 34 or above 386 is in the danger zone.
 
+## PDF (what the printer wants)
+
+```bash
+node tools/make-poster.js                                              # SVG
+node tools/svg-to-pdf.js print/dive-challenge-A2.svg print/dive-challenge-A2.pdf 426 600
+node tools/svg-to-pdf.js print/qr-arcade.svg print/qr-arcade.pdf 40 40
+```
+
+`dive-challenge-A2.pdf` is the file to send. Converted through headless
+Chrome, which keeps vectors as vectors and embeds the fonts, so the outlining
+step below is already done for you.
+
+Verified on the generated file rather than assumed:
+
+| | |
+|---|---|
+| Page size | 426.1 × 600.0 mm — bleed included, **not scaled** |
+| Pages | 1 |
+| Fonts | Arial subsets embedded (`AAAAAA+Arial-BoldMT` …) |
+| Artwork | 1800 line segments, 1600 curves, 267 text draws |
+| Images | 3 — the two logos and one alpha mask, no page-sized raster |
+
+The line-segment count is the QR: 441 modules survive as real geometry. A
+flattened export would instead show a single ~5000 px image and **no embedded
+fonts at all** — that is the check to repeat if the file is ever regenerated
+another way.
+
+One caveat: Chrome re-encodes the VIZ logo as JPEG (`DCTDecode`). At
+300 × 300 px it was already the weakest asset on the sheet, and JPEG on a
+hard-edged logo can add faint ringing. A vector or larger PNG source fixes
+both problems at once.
+
 ## Before sending to the printer
 
 1. **Outline the fonts.** The SVG asks for Helvetica/Arial. Open in
