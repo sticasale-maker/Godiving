@@ -734,6 +734,16 @@
   .nav-task b{color:var(--gold)}
   .nav-stage{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
   .nav-stage canvas{max-width:100%;max-height:100%;aspect-ratio:1/1}
+  /* The current used to exist only inside the compass bezel, which is the one
+     part of the screen already busy with a rotating card — the thing pushing
+     you was the hardest thing to see. It now runs across the whole panel, so
+     the water is the background you are swimming in and the compass sits in
+     it. Behind everything and inert; the panel is the positioning context. */
+  #p-nav{position:relative}
+  #navFlow{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+  .nav-shift{animation:navShift .9s ease}
+  @keyframes navShift{0%,100%{filter:none}35%{filter:drop-shadow(0 0 14px rgba(243,198,79,.85))}}
+  #p-nav>*:not(#navFlow){position:relative;z-index:1}
   .nav-meters{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:8px 0;flex-shrink:0}
   .nav-meter .lab{font-size:10px;letter-spacing:1px;text-transform:uppercase;color:var(--muted);font-weight:700}
   .nav-bar{height:9px;border-radius:999px;background:var(--bg2);border:1px solid var(--line);
@@ -1593,6 +1603,7 @@
 
     <!-- NAV TRAINER -->
     <div class="panel" id="p-nav">
+      <canvas id="navFlow" aria-hidden="true"></canvas>
       <div class="game-header">
         <span class="game-label" id="navLabel">Compass navigation</span>
         <span class="score">Leg <b id="navLeg">1</b> / <b id="navLegs">2</b></span>
@@ -2904,12 +2915,12 @@ var USER={name:'',age:0,group:'',exp:''};
    Tag any item with {exp:[...]} and/or {minAge:n} / {groups:[...]}.
    An untagged item is general and shows to everyone.               */
 var EXP_LEVELS=[
-  {key:'none',    icon:'🌊', label:'Never dived'},
   {key:'snorkel', icon:'🤿', label:'Snorkeller'},
   {key:'scuba',   icon:'🐠', label:'Scuba diver'},
   {key:'freedive',icon:'🫁', label:'Freediver'}
 ];
-var EXP_LABEL={};EXP_LEVELS.forEach(function(e){EXP_LABEL[e.key]=e.label;});
+var EXP_LABEL={none:'Never dived (retired)'};   /* legacy rows only */
+EXP_LEVELS.forEach(function(e){EXP_LABEL[e.key]=e.label;});
 
 function contentAllowed(tags){
   if(!tags)return true;
@@ -3007,8 +3018,6 @@ function saveGameOrder(){try{localStorage.setItem('gds_game_order',JSON.stringif
    most likely to make someone want to learn. A stand that hides its best
    material from newcomers has the filter backwards. */
 var GAME_EXP_DEFAULTS={};
-/* 'none' is not narrowable, so the admin does not offer a checkbox for it. */
-function expLevelsEditable(){return EXP_LEVELS.filter(function(e){return e.key!=='none';});}
 var GAME_EXP={};
 function loadGameExp(){
   var map={};
@@ -3019,26 +3028,25 @@ function loadGameExp(){
     if(!map[g]){var o={};EXP_LEVELS.forEach(function(e){o[e.key]=def.indexOf(e.key)>-1;});map[g]=o;}
     else EXP_LEVELS.forEach(function(e){if(typeof map[g][e.key]!=='boolean')map[g][e.key]=def.indexOf(e.key)>-1;});
   });
-  return letNonDiversIn(map);
+  return openAllExpOnce(map);
 }
-/* Applied to every source — this browser's copy and the shared row — because
-   a stand configured before this change still has the old narrowing stored.
+/* A one-time widening, applied to every source — this browser's copy and the
+   shared row — because a stand configured before it still has the old
+   narrowing stored. It runs once and then the operator's choices stick.
 
-   It clears the WHOLE diver axis once, not just 'none'. Opening the wreck and
-   scuba games to people who have never dived while leaving them shut to
-   snorkellers left snorkellers with fewer games than beginners, which is worse
-   than the thing being fixed. The axis still exists and the admin can narrow
-   it deliberately; the flag means a later choice sticks. */
+   It used to do a second job: force the 'none' level open on every game,
+   since that level had no checkbox in the console and so could never be
+   reopened by hand. That level is gone, and with it the exception. */
 var EXP_OPEN_V='gds_exp_open_v1';
-function letNonDiversIn(map){
+function openAllExpOnce(map){
   var done=false;
   try{done=localStorage.getItem(EXP_OPEN_V)==='1';}catch(e){}
+  if(done)return map;
   GAME_ORDER.forEach(function(g){
     if(!map[g])return;
-    if(done){map[g].none=true;return;}
     EXP_LEVELS.forEach(function(e){map[g][e.key]=true;});
   });
-  if(!done){try{localStorage.setItem(EXP_OPEN_V,'1');}catch(e){}}
+  try{localStorage.setItem(EXP_OPEN_V,'1');}catch(e){}
   return map;
 }
 function saveGameExp(){try{localStorage.setItem('gds_game_exp',JSON.stringify(GAME_EXP));}catch(e){}}
@@ -3378,7 +3386,7 @@ function adoptSharedGameConfig(cb){
       saveGameAgeGroups();
     }
     if(st&&st.game_exp){
-      GAME_EXP=letNonDiversIn(pruneRetired(st.game_exp));
+      GAME_EXP=openAllExpOnce(pruneRetired(st.game_exp));
       saveGameExp();
     }
     if(cb)cb();
@@ -3665,7 +3673,7 @@ function buildAdminGrid(){
       return '<label><input type="checkbox" data-g="'+g+'" data-ag="'+esc(ag)+'"'+checked+'>'+esc(AGE_GROUP_SHORT[ag])+'</label>';
     }).join('');
     var exs=GAME_EXP[g]||{};
-    var ebox=expLevelsEditable().map(function(e){
+    var ebox=EXP_LEVELS.map(function(e){
       return '<label><input type="checkbox" data-g="'+g+'" data-exp="'+esc(e.key)+'"'+(exs[e.key]?' checked':'')+'>'+
              e.icon+' '+esc(e.label)+'</label>';
     }).join('');
@@ -3724,7 +3732,7 @@ function collectAdminGrid(){
 (function(){
   var as=$('adminSave');if(as)as.onclick=function(){
     collectAdminGrid();
-    letNonDiversIn(GAME_EXP);
+    openAllExpOnce(GAME_EXP);
     saveGameAgeGroups();saveGameExp();saveGameEnabled();saveGameOrder();
     buildStrip();
     /* localStorage is per browser. At the stand that means the laptop the
@@ -5773,6 +5781,14 @@ var NAV={
      tools/check-nav.js. */
   LEG_GATE:0.78,   /* gate multiplier per leg after the first    */
   LEG_CURRENT:1.5, /* current multiplier per leg after the first */
+  /* The current reverses once inside each leg. A constant push is solved
+     once and then held; a reversal is the thing that actually happens on a
+     dive, and it means the correction you settled into becomes the wrong one.
+     It swings through zero over SHIFT_RAMP rather than flipping, so the
+     arrows visibly slow, stop and rebuild the other way — a player gets a
+     second of warning from the water itself, not just from the text. */
+  SHIFT_AT:[0.42,0.58], /* fraction of the leg the swing begins within */
+  SHIFT_RAMP:1.1,       /* seconds to swing from full one way to full the other */
   TAU:0.45,        /* seconds for a kick's push to bleed away    */
   SETTLE:0.6,      /* seconds inside the gate that ends aligning */
   COOLDOWN:110     /* ms — stops a mashed button out-kicking a rhythm */
@@ -5820,6 +5836,9 @@ function navNextLeg(){
   nav.gate=nav.tier.gate*Math.pow(NAV.LEG_GATE,step);
   nav.current=nav.tier.current*Math.pow(NAV.LEG_CURRENT,step);
   nav.secs=nav.tier.secs;
+  /* Randomised inside a window so it cannot be learnt as a stopwatch cue. */
+  nav.shiftAt=nav.secs*(NAV.SHIFT_AT[0]+Math.random()*(NAV.SHIFT_AT[1]-NAV.SHIFT_AT[0]));
+  nav.shifted=false;
   nav.target=Math.floor(Math.random()*24)*15;                /* whole 15° steps */
   var off=(50+Math.random()*60)*(Math.random()<0.5?-1:1);    /* start well off  */
   nav.heading=(nav.target+off+360)%360;
@@ -5839,6 +5858,16 @@ function navSetTask(){
   var harder=nav.leg>1?'<b style="color:var(--gold)">Tighter line this leg.</b> ':'';
   $('navTask').innerHTML=harder+'Leg '+nav.leg+' — swing onto <b>'+navFmt(nav.target)+'</b> using the <b>'+fin+
     '</b> fin only.'+cur;
+}
+/* Signed strength of the current right now, in deg/s. Before the swing it is
+   the leg's direction at full strength; during it, it eases through zero to
+   the opposite. Both the physics and the arrows read this one function, so
+   what pushes the diver is always what is drawn. */
+function navCurNow(){
+  if(!nav||!nav.current||nav.phase!=='swim')return 0;
+  var t=nav.elapsed-nav.shiftAt, f=1;
+  if(t>0)f=t>=NAV.SHIFT_RAMP?-1:Math.cos(Math.PI*t/NAV.SHIFT_RAMP);
+  return nav.curDir*nav.current*f;
 }
 function navFmt(d){return ('00'+Math.round((d%360+360)%360)).slice(-3)+'°';}
 function navDiff(a,b){return ((a-b+540)%360)-180;}
@@ -5863,7 +5892,7 @@ function navStep(now){
 
   /* drag bleeds the kick away; the current only bites once you are swimming */
   nav.heading=(nav.heading+nav.rate*dt+
-    (nav.phase==='swim'?nav.curDir*nav.current*dt:0)+360)%360;
+    (nav.phase==='swim'?navCurNow()*dt:0)+360)%360;
   nav.rate*=Math.exp(-dt/NAV.TAU);
   if(Math.abs(nav.rate)<0.05)nav.rate=0;
   for(var i=nav.wash.length-1;i>=0;i--){nav.wash[i].age+=dt;if(nav.wash[i].age>0.7)nav.wash.splice(i,1);}
@@ -5879,10 +5908,18 @@ function navStep(now){
     if(nav.settled>=NAV.SETTLE)navStartSwim();
   } else if(nav.phase==='swim'){
     nav.elapsed+=dt;
+    if(!nav.shifted&&nav.current&&nav.elapsed>=nav.shiftAt){
+      nav.shifted=true;
+      var to=(nav.curDir>0?'left':'right');   /* it is reversing INTO this */
+      $('navTask').innerHTML='<b style="color:var(--gold)">⟲ The current has turned — '+
+        'it is pushing you '+to.toUpperCase()+' now.</b> Swap the fin you were leaning on.';
+      var st=$('navStage')||document.querySelector('.nav-stage');
+      if(st){st.classList.remove('nav-shift');void st.offsetWidth;st.classList.add('nav-shift');}
+    }
     if(err<=nav.gate)nav.onCourse+=dt;
     if(nav.elapsed>=nav.secs){navRAF=null;return navFinishLeg();}
   }
-  navDraw();
+  navDraw();navDrawFlow();
   navRAF=requestAnimationFrame(navStep);
 }
 
@@ -5893,11 +5930,67 @@ function navStartSwim(){
   $('navTask').innerHTML=(oneFin?'On the bearing with one fin — textbook. ':'On the bearing. ')+
     'Now <b>left, right, left, right</b> to swim it straight'+
     (nav.current?' — the current is pushing you '+(nav.curDir>0?'right':'left')+
-      ', so slip in extra kicks on the <b>'+(nav.curDir>0?'right':'left')+'</b> fin to hold it.':'.');
+      ', so slip in extra kicks on the <b>'+(nav.curDir>0?'right':'left')+'</b> fin to hold it. '+
+      '<b style="color:var(--gold)">Watch the water: it turns partway through.</b>':'.');
   $('navGo').textContent='SWIM';
   $('navDistLab').textContent='Distance';
 }
 
+/* Draws the drift as arrows flowing across a box. cur is the signed strength
+   from navCurNow(): its SIGN is the way the water runs and its MAGNITUDE
+   drives opacity and streak length, so as the current swings through zero the
+   arrows thin out, stall, and rebuild pointing the other way. Alpha is scaled
+   against the strongest current any tier uses, so a gentle push looks gentle
+   and an adult's leg-two push looks like something to fight. */
+function navFlowField(c,W,H,cur,t,opt){
+  opt=opt||{};
+  var mag=Math.abs(cur)/11.4;                       /* 11.4 = adult leg 2     */
+  if(mag<0.02)return;
+  var dir=cur>0?1:-1;
+  var rows=opt.rows||9, base=opt.alpha||0.5;
+  var a=base*Math.min(1,0.25+mag);
+  var len=W*(opt.len||0.16)*(0.55+0.45*Math.min(1,mag));
+  var head=Math.max(4,W*(opt.head||0.016));
+  var col=opt.col||'143,232,255';
+  c.save();
+  c.lineCap='round';
+  for(var i=0;i<rows;i++){
+    /* speed follows strength, so a stalling current visibly stalls */
+    var ph=((t*(0.10+0.30*mag))+i*0.37)%1;
+    var x=dir>0?(-0.15+ph*1.30)*W:(1.15-ph*1.30)*W;
+    var y=H*((i+0.5)/rows);
+    var wob=Math.sin(t*0.9+i)*H*0.012;
+    c.globalAlpha=a*(0.55+0.45*Math.sin(Math.PI*ph));   /* fade in and out    */
+    c.strokeStyle='rgb('+col+')';c.lineWidth=Math.max(2,W*0.0042);
+    c.beginPath();c.moveTo(x,y+wob);c.lineTo(x-dir*len,y+wob);c.stroke();
+    c.beginPath();c.moveTo(x,y+wob);
+    c.lineTo(x-dir*head*1.9,y+wob-head);
+    c.lineTo(x-dir*head*1.9,y+wob+head);
+    c.closePath();c.fillStyle='rgb('+col+')';c.fill();
+  }
+  c.restore();
+}
+/* the panel-wide layer, behind the whole game */
+/* The loop stops on the last frame it drew, so without this the water freezes
+   mid-stream behind the result. */
+function navClearFlow(){
+  var cv=$('navFlow');if(!cv||!cv.width)return;
+  cv.getContext('2d').clearRect(0,0,cv.width,cv.height);
+}
+function navDrawFlow(){
+  var cv=$('navFlow');if(!cv)return;
+  var panel=$('p-nav'), w=panel.clientWidth||0, h=panel.clientHeight||0;
+  if(!w||!h)return;
+  var dpr=Math.min(2,window.devicePixelRatio||1);
+  if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){
+    cv.width=Math.round(w*dpr);cv.height=Math.round(h*dpr);
+  }
+  var c=cv.getContext('2d');
+  c.setTransform(dpr,0,0,dpr,0,0);
+  c.clearRect(0,0,w,h);
+  navFlowField(c,w,h,navCurNow(),nav?nav.elapsed:0,
+               {rows:Math.max(6,Math.round(h/64)),alpha:0.30,len:0.10,head:0.009});
+}
 function navDraw(){
   var cv=$('navCanvas'),c=cv.getContext('2d'),S=nav.side,R=S/2,cx=R,cy=R;
   c.clearRect(0,0,S,S);
@@ -5965,24 +6058,13 @@ function navDraw(){
   }
 
   /* cross-current: streaks blowing across the face while you swim */
+  /* Same field as the panel behind, clipped to the bezel and drawn stronger:
+     the streaks appear to pass under the compass and out the other side, so
+     it reads as one body of water rather than a decoration in a circle. */
   if(nav.phase==='swim'&&nav.current){
-    /* vx is the way the water actually runs, and it is the same way the
-       current shoves your heading: curDir>0 pushes you right. hx is the
-       LEADING point of each streak, so the head sits at the front and the
-       tail and barbs trail behind it. */
-    var vx=nav.curDir;
     c.save();
     c.beginPath();c.arc(cx,cy,R*0.775,0,7);c.clip();
-    for(var s=0;s<7;s++){
-      var ph=(nav.elapsed*0.34+s/7)%1;
-      var hx=vx>0?(-S*0.05+ph*S*1.45):(S*1.05-ph*S*1.45);
-      var sy=S*0.15+s*(S*0.105);
-      c.beginPath();c.moveTo(hx,sy);c.lineTo(hx-vx*S*0.10,sy);
-      c.strokeStyle='rgba(143,232,255,.32)';c.lineWidth=2;c.stroke();
-      c.beginPath();c.moveTo(hx,sy);
-      c.lineTo(hx-vx*S*0.028,sy-S*0.016);c.lineTo(hx-vx*S*0.028,sy+S*0.016);
-      c.closePath();c.fillStyle='rgba(143,232,255,.32)';c.fill();
-    }
+    navFlowField(c,S,S,navCurNow(),nav.elapsed,{rows:7,alpha:0.62,len:0.17,head:0.019});
     c.restore();
   }
 
@@ -6027,6 +6109,7 @@ function navFinishLeg(){
 function navEnd(){
   nav.done=true;
   if(navRAF){cancelAnimationFrame(navRAF);navRAF=null;}
+  navClearFlow();
   var avg=nav.score/Math.max(1,nav.legs);
   $('navNotice').textContent=(avg>0.8?'Navigator! 🧭 ':'Good effort 🧭 ')+
     'Average '+Math.round(avg*100)+'% on course. Pick another game when you are ready →';
