@@ -2645,7 +2645,7 @@ function renderPrizeConsole(){
   scores.forEach(function(e){if(e.golden)goldenIssued++;});
   var issued=res.issued;
 
-  var h='<div class="card"><h3>🧭 Prize console — stand 440</h3>';
+  var h='<div class="card"><h3>🧭 Prize console — VIZ stand</h3>';
 
   h+='<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
      '<span class="badge">'+issued+' won on draws</span>'+
@@ -2781,7 +2781,7 @@ function admBigScreen(){
   if(!rows)rows='<div style="font-size:3vh;color:var(--muted)">No winners in this draw yet.</div>';
   ov.innerHTML='<div style="font-family:\'Press Start 2P\',monospace;font-size:3.4vh;color:var(--accent);'+
     'margin-bottom:1vh">'+esc(d?d.label:'')+' DRAW</div>'+
-    '<div style="font-size:2.4vh;color:var(--muted);margin-bottom:2vh">Come to stand 440 to collect 🧭</div>'+
+    '<div style="font-size:2.4vh;color:var(--muted);margin-bottom:2vh">Come to the VIZ stand to collect 🧭</div>'+
     rows+'<div style="margin-top:3vh;font-size:1.8vh;color:var(--muted)">tap anywhere to close</div>';
   ov.style.display='flex';
 }
@@ -6965,7 +6965,7 @@ function hofTick(){
     verdict.style.display='block';
     verdict.innerHTML=(rank&&rank<=PODIUM)
       ? '🏆 <b>'+rank+ordinal(rank)+' place — you have won a prize.</b><br>'+
-        'Come to <b>stand '+PRIZE_STAND+'</b> and show this screen to staff.'
+        'Come to <b>'+PRIZE_STAND+'</b> and show this screen to staff.'
       : 'This session is done — the board resets, so come back and play the next one.';
   }
 }
@@ -6984,7 +6984,11 @@ function maybeShowTicket(){
   renderTicket(USER.code);
 }
 function ordinal(n){return n===1?'st':n===2?'nd':n===3?'rd':'th';}
-var PRIZE_STAND='440';
+/* The stand is named, not numbered. A number is only useful to somebody
+   reading a floor plan; a winner walking back through a hall is looking for a
+   sign, and the sign says VIZ. Kept as a constant so the phrase is changed in
+   one place if the stand is ever renamed. */
+var PRIZE_STAND='the VIZ stand';
 var FINISH_TS=0;
 function ticketURL(code){
   var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');

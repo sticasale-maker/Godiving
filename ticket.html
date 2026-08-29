@@ -103,7 +103,7 @@
 
   <p class="foot">
     VIZ Sydney Diving Visibility Reports<br>
-    Go Diving Show · 5–6 September 2026 · Stand 440
+    Go Diving Show · 5–6 September 2026 · VIZ stand
   </p>
 </div>
 
@@ -255,7 +255,7 @@ function render() {
     content.innerHTML = card('err',
       '<div class="eyebrow">No ticket code</div>' +
       '<p class="muted">This link is missing its ticket code. Scan the QR on the game screen ' +
-      'again, or come to stand 440 and we will look you up by name.</p>');
+      'again, or come to the VIZ stand and we will look you up by name.</p>');
     return;
   }
   if (!entry) {
@@ -264,7 +264,7 @@ function render() {
       '<div class="code">' + esc(CODE) + '</div>' +
       '<p class="muted center">We could not find this ticket. It can take a few seconds to ' +
       'register after you finish — pull down to refresh. If it still will not load, come to ' +
-      'stand 440 with this code.</p>' +
+      'the VIZ stand with this code.</p>' +
       '<button class="btn ghost" onclick="location.reload()">Try again</button>');
     return;
   }
@@ -277,7 +277,7 @@ function render() {
     '<div class="who">' + esc(entry.name) + '</div>' +
     '<div class="meta">' + esc(entry.group) + ' · <b>' + entry.score + ' points</b></div>' +
     '<div class="code">' + esc(entry.code) + '</div>' +
-    '<div class="codehint">Show this code at stand 440</div>';
+    '<div class="codehint">Show this code at the VIZ stand</div>';
 
   /* played after the last draw of the day */
   if (!draw) {
@@ -285,7 +285,7 @@ function render() {
       card('', head) +
       card('', '<div class="eyebrow">After the last draw</div>' +
         '<p class="muted">You played after the final draw of the day, so this score is not in ' +
-        'an hourly prize round. Come to <b>stand 440</b> anyway — we keep prizes aside and ' +
+        'an hourly prize round. Come to <b>the VIZ stand</b> anyway — we keep prizes aside and ' +
         'we would love to talk to you about diving Sydney.</p>');
     return;
   }
@@ -355,7 +355,7 @@ function render() {
           esc(entry.group) + ' · ' + entry.score + ' pts · ' +
           (res.rank === 1 ? '🥇 1st' : res.rank === 2 ? '🥈 2nd' : res.rank + 'th') +
           ' in the ' + esc(draw.label) + ' draw</div>' +
-        '<div class="stand">STAND 440</div>' +
+        '<div class="stand">THE VIZ STAND</div>' +
         '<div class="muted" style="color:#cdf3df">Show this screen to collect</div>' +
         (entry.claimed_at
           ? '<div class="claimed">✓ Collected — thanks for playing!</div>'
@@ -386,7 +386,7 @@ function renderLost(res, head, draw, next) {
         ? '<div class="muted" style="margin-top:12px">Next draw is at <b>' + esc(next.label) +
           '</b> — play again and you are straight back in.</div>'
         : '<div class="muted" style="margin-top:12px">That was the last draw. Come say hello ' +
-          'at stand 440 anyway.</div>')) +
+          'at the VIZ stand anyway.</div>')) +
     '<a class="btn" href="arcade.html">🎮 Play again for the ' +
       (next ? esc(next.label) : 'next') + ' draw</a>';
 }
@@ -396,7 +396,7 @@ function refresh() {
     content.innerHTML = card('err',
       '<div class="eyebrow">Connection problem</div>' +
       '<p class="muted">Could not reach the leaderboard. Check your signal and try again — ' +
-      'or just come to stand 440 with your code.</p>' +
+      'or just come to the VIZ stand with your code.</p>' +
       '<button class="btn ghost" onclick="location.reload()">Retry</button>');
   });
 }
@@ -423,7 +423,7 @@ loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2').then(function
   content.innerHTML = card('err',
     '<div class="eyebrow">Offline</div>' +
     '<p class="muted">This page needs a connection to check the draw. ' +
-    'Your code is still valid — bring it to stand 440.</p>' +
+    'Your code is still valid — bring it to the VIZ stand.</p>' +
     (CODE ? '<div class="code">' + esc(CODE) + '</div>' : ''));
 });
 </script>

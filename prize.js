@@ -1,7 +1,7 @@
 /* ════════════════════════════════════════════════════════════════
    PRIZE.JS — hourly draw engine, shared by arcade.html and ticket.html
    ────────────────────────────────────────────────────────────────
-   Go Diving Show, Sydney — 5–6 September 2026, stand 440.
+   Go Diving Show, Sydney — 5–6 September 2026, the VIZ stand.
 
    DESIGN: winners are COMPUTED, never stored.
 
@@ -32,7 +32,7 @@ var PRIZE = (function () {
      time is useless because nobody can collect. 16:45 and 15:45
      leave winners 15 minutes to reach the stand.                  */
   var SHOW = {
-    stand: '440',
+    stand: 'the VIZ stand',
     days: [
       { day: 1, date: '2026-09-05', open: '09:30', close: '17:00',
         draws: ['11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '16:45'] },
