@@ -43,8 +43,15 @@ var PRIZE = (function () {
 
   /* ── Prize rules (overridable from the admin console) ────────── */
   var DEFAULTS = {
-    stock: 120,              /* plastic compasses purchased          */
-    reserveForInstant: 45,   /* held back for Golden Compass wins     */
+    /* There is no stock figure. There used to be: 120 compasses with 45 held
+       back, which capped the hourly draw at 75 and then silently stopped
+       naming winners — a player who came first was told they had not won,
+       with nothing on any screen explaining why. Nobody had a real number to
+       put in it, so the cap was guesswork enforced as fact.
+
+       Supply is controlled by winnersPerGroup instead, which staff already
+       dial down when the box runs low, applies from the next draw, and is
+       visible on every screen as "only the first N qualify". */
     /* Must stay in step with PODIUM in arcade.html and rank.html. Those
        two screens tell a player "the top N win"; this is the number that
        actually decides it. When they disagreed at 3 and 2, someone
@@ -253,7 +260,6 @@ var PRIZE = (function () {
   */
   function compute(scores, cfg) {
     var c = Object.assign({}, DEFAULTS, cfg || {});
-    var hourlyStock = Math.max(0, c.stock - c.reserveForInstant);
 
     var all = (scores || []).filter(function (e) {
       return e && typeof e.score === 'number' && e.ts;
@@ -284,7 +290,6 @@ var PRIZE = (function () {
 
         for (var i = 0; i < board.length; i++) {
           if (winners.length >= c.winnersPerGroup) break;
-          if (issued >= hourlyStock) break;
           var e = board[i], key = playerKey(e);
           /* already won today — skip and promote the next player */
           if ((dayWins[d.day][key] || 0) >= c.maxPerPlayerPerDay) continue;
@@ -320,7 +325,6 @@ var PRIZE = (function () {
       byCode: byCode,
       byDraw: byDraw,
       issued: issued,
-      hourlyStock: hourlyStock,
       config: c
     };
   }

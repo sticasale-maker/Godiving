@@ -2537,8 +2537,6 @@ function admCfg(){
   var s=ADM.settings||{};
   return {
     winnersPerGroup:s.winners_per_group!=null?s.winners_per_group:3,
-    stock:s.stock!=null?s.stock:120,
-    reserveForInstant:s.reserve_for_instant!=null?s.reserve_for_instant:45,
     maxPerPlayerPerDay:s.max_per_player_per_day!=null?s.max_per_player_per_day:1
   };
 }
@@ -2646,13 +2644,10 @@ function renderPrizeConsole(){
   });
   scores.forEach(function(e){if(e.golden)goldenIssued++;});
   var issued=res.issued;
-  var remaining=cfg.stock-issued-goldenIssued;
 
   var h='<div class="card"><h3>🧭 Prize console — stand 440</h3>';
 
   h+='<div class="row" style="gap:14px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
-     '<span style="font-size:26px;font-weight:800;color:'+(remaining<10?'var(--bad)':'var(--gold)')+'">'+remaining+'</span>'+
-     '<span class="muted">prizes left of '+cfg.stock+'</span>'+
      '<span class="badge">'+issued+' won on draws</span>'+
      '<span class="badge">'+goldenIssued+' golden</span>'+
      '<span class="badge">'+claimed+' collected</span>'+
@@ -2673,9 +2668,10 @@ function renderPrizeConsole(){
   [1,2,3].forEach(function(n){
     h+='<button class="'+(cfg.winnersPerGroup===n?'acc':'')+'" onclick="admSetWinners('+n+')">'+n+'</button>';
   });
-  h+='<span class="muted">· Stock:</span><input id="admStock" value="'+cfg.stock+'" style="width:70px">'+
-     '<button class="acc" onclick="admSaveStock()">Save</button></div>';
-  h+='<p class="muted" style="font-size:12px;margin:0 0 12px">Dial winners down if stock runs low — every device recomputes from this immediately.</p>';
+  h+='</div>';
+  h+='<p class="muted" style="font-size:12px;margin:0 0 12px">This is the whole supply control: '+
+     'dial it down if the box is running low and every device recomputes from the next draw. '+
+     'Players are told the number, so it is never a silent change.</p>';
 
   /* ---- claim by code ---- */
   h+='<div class="row" style="gap:8px;margin-bottom:6px;align-items:center">'+
@@ -2722,13 +2718,6 @@ function admSetDraw(i){ADM.drawIdx=parseInt(i,10);renderAdmin();}
 function admSetWinners(n){
   Cloud.saveSettings({winners_per_group:n},function(){
     ADM.settings=Object.assign(ADM.settings||{},{winners_per_group:n});renderAdmin();
-  });
-}
-function admSaveStock(){
-  var v=parseInt((document.getElementById('admStock')||{}).value,10);
-  if(!v||v<0)return;
-  Cloud.saveSettings({stock:v},function(){
-    ADM.settings=Object.assign(ADM.settings||{},{stock:v});renderAdmin();
   });
 }
 function admClaim(id,on){
