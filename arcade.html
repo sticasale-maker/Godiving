@@ -4065,8 +4065,13 @@ function silRound(){
 $('silNext').onclick=silRound;
 
 /* ════════ 5. BUBBLE POP ════════ */
-var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Bluespotted ray','Old wife','Mado','Sea tulip'];
-var BUBBLE_FAKE=['Clownfish','Great white… reef','Piranha','Lionfish','Coral trout','Mandarinfish','Anaconda','Pufferfish','Manatee','Parrotfish'];
+var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Bluespotted ray','Old wife','Mado','Sea tulip','Red lionfish','Common toadfish'];
+/* Every name here must be one a Sydney diver genuinely cannot see, because
+   tapping it costs the player a point. Lionfish and toadfish used to sit in
+   this list and are both common on Sydney dives — the ID game upstairs even
+   teaches them as local species, so the arcade was marking players wrong for
+   knowing the app's own material. */
+var BUBBLE_FAKE=['Clownfish','Napoleon wrasse','Piranha','Regal angelfish','Coral trout','Mandarinfish','Anaconda','Giant clam','Manatee','Parrotfish'];
 var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:[],raf:null};
 /* Reading a species name off a bubble that is already halfway up the
    screen is a reading-speed test as much as a knowledge one, and the
@@ -4503,9 +4508,10 @@ $('colNext').onclick=colRound;
 var ODD_ROUNDS=[
   {real:[['Weedy seadragon','🐉'],['Port Jackson shark','🦈'],['Blue groper','🐟']],fake:['Clownfish','🐠'],f:'Clownfish live on tropical coral reefs, not Sydney.'},
   {real:[['Giant cuttlefish','🦑'],['Maori octopus','🐙'],['Bluespotted ray','🐡']],fake:['Piranha','🐟'],f:'Piranhas are freshwater fish from South America.'},
-  {real:[['Blue devil','🐟'],['Old wife','🐠'],['Mado','🐟']],fake:['Lionfish','🦂'],f:'Lionfish are invasive tropicals, not Sydney natives.'},
+  {real:[['Blue devil','🐟'],['Old wife','🐠'],['Mado','🐟']],fake:['Mandarinfish','🐠'],f:'Mandarinfish live in shallow tropical lagoons in the western Pacific, not Sydney.'},
   {real:[['Wobbegong','🦈'],['Sea tulip','🌷'],['Eastern blue groper','🐟']],fake:['Coral trout','🐠'],f:'Coral trout belong on the Great Barrier Reef.'},
-  {real:[['Weedy seadragon','🐉'],['Sea urchin','🦔'],['Cuttlefish','🦑']],fake:['Manatee','🦭'],f:'Manatees live in warm tropical rivers and bays.'}
+  {real:[['Weedy seadragon','🐉'],['Sea urchin','🦔'],['Cuttlefish','🦑']],fake:['Manatee','🦭'],f:'Manatees live in warm tropical rivers and bays.'},
+  {real:[['Red lionfish','🦂'],['Wobbegong','🦈'],['Common toadfish','🐡']],fake:['Anaconda','🐍'],f:'Anacondas are South American river snakes. The other three are all genuinely seen on Sydney dives — lionfish surprise people, but they are native here.'}
 ];
 var oddQueue=[],oddScore=0,oddTotal=0,oddAnswered=false;
 function initOddOne(){
