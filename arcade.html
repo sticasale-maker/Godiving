@@ -1262,7 +1262,7 @@
     <!-- Points bar -->
     <div class="pointsbar">
       <button class="game-back" id="gameBack">← Back to games</button>
-      <button class="game-back game-leave" id="gameLeave">🏆 Leave &amp; see ranking</button>
+      <button class="game-back game-leave" id="gameLeave">🏆 Finish &amp; see ranking</button>
       <span class="who">Diver <b id="whoName">—</b><span class="grp" id="whoGroup">—</span></span>
       <span class="pts">Points <b id="points">0</b><span class="fl" id="ptsFloat"></span></span>
     </div>
@@ -1277,7 +1277,7 @@
           <div class="menu-title">Pick a game, <b id="menuName">diver</b> 🤿</div>
           <div class="menu-sub" id="menuProgress">0 of 16 games played</div>
         </div>
-        <button class="btn acc" id="menuFinish">🏆 Scores &amp; prizes</button>
+        <button class="btn acc" id="menuFinish">🏆 Finish &amp; see ranking</button>
       </div>
       <div class="menu-grid" id="menuGrid"></div>
     </div>
@@ -5730,10 +5730,23 @@ var NAV={
   TIERS:{
     /* Two legs for everyone. Difficulty is carried by the kick, the gate and
        the current, not by making an adult swim the same drill three times. */
-    'Young Explorer':{legs:2,kick:26,gate:26,current:0,  secs:8},
-    'Teen Explorer' :{legs:2,kick:20,gate:19,current:3.2,secs:8},
-    'Adult Explorer':{legs:2,kick:16,gate:14,current:6.0,secs:10}
+    'Young Explorer':{legs:2,kick:26,gate:23,current:1.6,secs:10},
+    'Teen Explorer' :{legs:2,kick:20,gate:16,current:4.2,secs:10},
+    'Adult Explorer':{legs:2,kick:16,gate:12,current:7.6,secs:13}
   },
+  /* Each leg beyond the first narrows the gate and strengthens the current.
+     Two legs of identical drill is a repeat, not a progression: leg one
+     teaches the rhythm, leg two asks you to hold it against more.
+
+     The gate cannot be tightened freely. Holding a bearing against a current
+     means kicking often enough to cancel it, and the heading drifts between
+     kicks by exactly kick*TAU degrees — current cancels out of that, so the
+     swing is the same whatever the current is. Below about that width the
+     gate is unholdable no matter how well the player plays. Every tier keeps
+     its final-leg gate above one kick's worth; there is a check for it in
+     tools/check-nav.js. */
+  LEG_GATE:0.78,   /* gate multiplier per leg after the first    */
+  LEG_CURRENT:1.5, /* current multiplier per leg after the first */
   TAU:0.45,        /* seconds for a kick's push to bleed away    */
   SETTLE:0.6,      /* seconds inside the gate that ends aligning */
   COOLDOWN:110     /* ms — stops a mashed button out-kicking a rhythm */
@@ -5773,6 +5786,14 @@ function navNextLeg(){
   nav.leg++;
   if(nav.leg>nav.legs)return navEnd();
   $('navLeg').textContent=nav.leg;
+  /* Everything downstream reads nav.gate/current/secs rather than the tier,
+     so the ramp applies everywhere at once — the drawn gate wedge, the
+     ON COURSE readout and the scoring cannot disagree about how wide the
+     gate is on this leg. */
+  var step=nav.leg-1;
+  nav.gate=nav.tier.gate*Math.pow(NAV.LEG_GATE,step);
+  nav.current=nav.tier.current*Math.pow(NAV.LEG_CURRENT,step);
+  nav.secs=nav.tier.secs;
   nav.target=Math.floor(Math.random()*24)*15;                /* whole 15° steps */
   var off=(50+Math.random()*60)*(Math.random()<0.5?-1:1);    /* start well off  */
   nav.heading=(nav.target+off+360)%360;
@@ -5788,8 +5809,9 @@ function navNextLeg(){
 }
 function navSetTask(){
   var fin=navDiff(nav.target,nav.heading)>0?'LEFT':'RIGHT';
-  var cur=nav.tier.current?(' Once you set off a current will push you to the <b>'+(nav.curDir>0?'right':'left')+'</b>.'):'';
-  $('navTask').innerHTML='Leg '+nav.leg+' — swing onto <b>'+navFmt(nav.target)+'</b> using the <b>'+fin+
+  var cur=nav.current?(' Once you set off a current will push you to the <b>'+(nav.curDir>0?'right':'left')+'</b>.'):'';
+  var harder=nav.leg>1?'<b style="color:var(--gold)">Tighter line this leg.</b> ':'';
+  $('navTask').innerHTML=harder+'Leg '+nav.leg+' — swing onto <b>'+navFmt(nav.target)+'</b> using the <b>'+fin+
     '</b> fin only.'+cur;
 }
 function navFmt(d){return ('00'+Math.round((d%360+360)%360)).slice(-3)+'°';}
@@ -5815,7 +5837,7 @@ function navStep(now){
 
   /* drag bleeds the kick away; the current only bites once you are swimming */
   nav.heading=(nav.heading+nav.rate*dt+
-    (nav.phase==='swim'?nav.curDir*nav.tier.current*dt:0)+360)%360;
+    (nav.phase==='swim'?nav.curDir*nav.current*dt:0)+360)%360;
   nav.rate*=Math.exp(-dt/NAV.TAU);
   if(Math.abs(nav.rate)<0.05)nav.rate=0;
   for(var i=nav.wash.length-1;i>=0;i--){nav.wash[i].age+=dt;if(nav.wash[i].age>0.7)nav.wash.splice(i,1);}
@@ -5827,12 +5849,12 @@ function navStep(now){
        leg: a diver alternating fins the way the game asks never drops below
        a kick's worth of turn rate, so aligning could only be finished by
        stopping — which nothing on screen tells you to do. */
-    if(err<=nav.tier.gate)nav.settled+=dt;else nav.settled=Math.max(0,nav.settled-dt*2);
+    if(err<=nav.gate)nav.settled+=dt;else nav.settled=Math.max(0,nav.settled-dt*2);
     if(nav.settled>=NAV.SETTLE)navStartSwim();
   } else if(nav.phase==='swim'){
     nav.elapsed+=dt;
-    if(err<=nav.tier.gate)nav.onCourse+=dt;
-    if(nav.elapsed>=nav.tier.secs){navRAF=null;return navFinishLeg();}
+    if(err<=nav.gate)nav.onCourse+=dt;
+    if(nav.elapsed>=nav.secs){navRAF=null;return navFinishLeg();}
   }
   navDraw();
   navRAF=requestAnimationFrame(navStep);
@@ -5844,7 +5866,7 @@ function navStartSwim(){
   var pushed=nav.curDir>0?'right':'left';
   $('navTask').innerHTML=(oneFin?'On the bearing with one fin — textbook. ':'On the bearing. ')+
     'Now <b>left, right, left, right</b> to swim it straight'+
-    (nav.tier.current?' — the current is pushing you '+(nav.curDir>0?'right':'left')+
+    (nav.current?' — the current is pushing you '+(nav.curDir>0?'right':'left')+
       ', so slip in extra kicks on the <b>'+(nav.curDir>0?'right':'left')+'</b> fin to hold it.':'.');
   $('navGo').textContent='SWIM';
   $('navDistLab').textContent='Distance';
@@ -5876,7 +5898,7 @@ function navDraw(){
   c.beginPath();c.arc(cx,cy,R*0.63,0,7);c.fillStyle='#0c3142';c.fill();
 
   /* the bearing you were given, and the gate you have to hold it in */
-  var G=nav.tier.gate;
+  var G=nav.gate;
   c.beginPath();c.moveTo(cx,cy);
   c.arc(cx,cy,R*0.769,(nav.target-G-nav.heading-90)*Math.PI/180,(nav.target+G-nav.heading-90)*Math.PI/180);
   c.closePath();c.fillStyle='rgba(243,198,79,.13)';c.fill();
@@ -5917,7 +5939,7 @@ function navDraw(){
   }
 
   /* cross-current: streaks blowing across the face while you swim */
-  if(nav.phase==='swim'&&nav.tier.current){
+  if(nav.phase==='swim'&&nav.current){
     /* vx is the way the water actually runs, and it is the same way the
        current shoves your heading: curDir>0 pushes you right. hx is the
        LEADING point of each streak, so the head sits at the front and the
@@ -5947,15 +5969,15 @@ function navDraw(){
   c.fillText(navFmt(nav.heading),cx,cy+R*0.30);
   var d=navDiff(nav.target,nav.heading),err=Math.abs(d);
   c.font='600 '+Math.round(S*0.042)+'px system-ui,sans-serif';
-  c.fillStyle=err<=nav.tier.gate?'#4fd28a':'#f3c64f';
-  c.fillText(err<=nav.tier.gate?(nav.phase==='align'?'ON THE BEARING':'ON COURSE')
+  c.fillStyle=err<=nav.gate?'#4fd28a':'#f3c64f';
+  c.fillText(err<=nav.gate?(nav.phase==='align'?'ON THE BEARING':'ON COURSE')
     :Math.round(err)+'° off · kick '+(d>0?'LEFT':'RIGHT')+' fin',cx,cy+R*0.44);
 
   var acc=(nav.phase==='swim'&&nav.elapsed)?nav.onCourse/nav.elapsed:0;
   var af=$('navAccFill');af.style.width=Math.round(acc*100)+'%';
   af.className=acc<0.5?'low':'';
   /* while aligning the distance bar doubles as the "hold it there" meter */
-  $('navDistFill').style.width=Math.round((nav.phase==='swim'?Math.min(1,nav.elapsed/nav.tier.secs)
+  $('navDistFill').style.width=Math.round((nav.phase==='swim'?Math.min(1,nav.elapsed/nav.secs)
     :nav.phase==='align'?Math.min(1,nav.settled/NAV.SETTLE):0)*100)+'%';
 }
 
@@ -6688,7 +6710,7 @@ function renderRankQR(){
   var box=$('hofRank');if(!box)return;
   if(!isBoothStation()){box.style.display='none';return;}
   box.style.display='block';
-  $('hofRankLead').textContent='📸 Scan to follow the ranking until '+hhmm(sessionEnd(Date.now()));
+  $('hofRankLead').textContent='📸 SCAN THIS BEFORE YOU GO';
   var url=rankURL(), holder=$('hofRankQR');
   holder.innerHTML='';
   try{
@@ -6698,8 +6720,10 @@ function renderRankQR(){
     holder.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
       'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
   }
-  $('hofRankSub').innerHTML='The board freezes at <b>'+hhmm(sessionEnd(Date.now()))+
-    '</b>. Until then the page has a Refresh button — tap it to see who has come in behind you.';
+  $('hofRankSub').innerHTML='<b style="color:var(--accent)">Open it at '+hhmm(sessionEnd(Date.now()))+
+    ' to find out if you have won.</b><br>'+
+    'The board freezes then, and the page tells you straight away. Until then it has a '+
+    'Refresh button — tap it to see who has come in behind you.';
 }
 function rankURL(){
   var base=location.href.replace(/[?#].*$/,'').replace(/[^/]*$/,'');
@@ -6849,7 +6873,22 @@ function ticketURL(code){
    ticket URL onto a phone the player is taking away with them. On
    their own phone it would be a code they cannot scan with the device
    already displaying it, so they get a direct link instead. */
-function isBoothStation(){return !/^Phone /.test(STATION||'');}
+function isBoothStation(){
+  if(!/^Phone /.test(STATION||''))return true;          /* staff named it */
+  try{
+    if(!window.matchMedia)return false;
+    /* A phone and a tablet report a coarse primary pointer and no hover; a
+       mouse or trackpad reports both. This pair is the reliable signal —
+       screen.width reads 0 in some embedded browsers, so size alone would
+       quietly classify a real laptop as a phone. */
+    var desktop=matchMedia('(pointer:fine)').matches&&matchMedia('(hover:hover)').matches;
+    /* Width is only a sanity floor, taken from whichever source answers, so a
+       device that misreports its pointer still cannot pass as a booth. */
+    var w=Math.max(screen.width||0,screen.height||0,window.outerWidth||0,
+                   window.innerWidth||0,document.documentElement.clientWidth||0);
+    return !!(desktop&&w>=700);
+  }catch(e){return false;}
+}
 
 function renderTicket(code){
   var box=$('hofTicket'); if(!box||!code)return;
