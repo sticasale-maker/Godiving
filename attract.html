@@ -144,6 +144,13 @@
   .lead .s{font-family:'Press Start 2P',monospace;font-size:15px;color:var(--accent)}
   .quiet{color:var(--muted);font-size:20px;line-height:1.45}
 
+  /* The splash takes the whole stage when it runs. object-fit:cover rather
+     than contain: the stage is already 16:9 and letterboxing inside a
+     letterbox reads as a bug on a booth screen. */
+  #splashVid{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+    background:#04161f;z-index:40;display:none}
+  #splashVid.on{display:block}
+
   /* drifting bubbles, because it is a dive show */
   .bub{position:absolute;bottom:-90px;border-radius:50%;
     background:radial-gradient(circle at 32% 28%,rgba(255,255,255,.85),rgba(180,235,255,.22) 62%,
@@ -158,6 +165,9 @@
   <div class="scrim"></div>
   <div class="vig"></div>
   <div id="bubbles"></div>
+
+  <video id="splashVid" muted playsinline webkit-playsinline preload="auto"
+         aria-hidden="true"></video>
 
   <div class="grid">
     <div class="top">
@@ -408,6 +418,52 @@ loadScript('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2').then(function
   sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
   refresh();setInterval(refresh,20000);
 }).catch(function(){});
+
+/* ── attract ⇄ splash ────────────────────────────────────────────────
+   The loop alternates: the board and the invitation for a while, then the
+   film, then back. Two different things to catch two different passers-by,
+   and the screen stops looking like a poster that never changes.
+
+   Every failure path returns to the attract screen rather than sitting on a
+   black rectangle. A booth screen is unattended for hours, so a video that
+   will not load, will not autoplay, or stalls halfway has to fall back on its
+   own: the watchdog covers a stall that never fires 'ended', and one refusal
+   is enough to stop trying for the rest of the session. */
+var ATTRACT_MS=60000;      /* attract time between plays */
+var splashTimer=null;
+(function splashCycle(){
+  var v=document.getElementById('splashVid');
+  if(!v)return;
+  var dead=false, watchdog=null;
+
+  function back(){
+    clearTimeout(watchdog);
+    v.classList.remove('on');
+    try{v.pause();v.currentTime=0;}catch(e){}
+    schedule();
+  }
+  function schedule(){
+    clearTimeout(splashTimer);
+    if(dead)return;                       /* it failed once — leave it alone */
+    splashTimer=setTimeout(play,ATTRACT_MS);
+  }
+  function fail(){dead=true;back();}
+  function play(){
+    if(dead)return;
+    v.classList.add('on');
+    /* however long the film is, plus slack; a stalled video must not strand
+       the screen on a frozen frame until somebody notices */
+    var cap=((v.duration&&isFinite(v.duration))?v.duration:40)*1000+6000;
+    clearTimeout(watchdog);watchdog=setTimeout(back,cap);
+    var pr=v.play&&v.play();
+    if(pr&&pr.catch)pr.catch(fail);       /* autoplay refused */
+  }
+
+  v.addEventListener('ended',back);
+  v.addEventListener('error',fail);
+  v.src='images/Splash_pc_720.mp4';
+  schedule();
+})();
 
 /* Move the mouse and the cursor comes back, so staff can drive the machine
    without restarting anything. */

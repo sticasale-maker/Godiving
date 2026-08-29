@@ -5488,7 +5488,12 @@ var NU={
      as an adult's. Everything downstream reads nuSpeed(), including the wander
      cap, so the faster cave is automatically a flatter one and the reach
      budget still holds by construction. */
-  SPEEDS:{'Young Explorer':96,'Teen Explorer':96,'Adult Explorer':96},
+  /* Teen and adult swim 30% faster than the young again. They were levelled
+     at 96 when the young tier was raised off a crawl, which fixed the young
+     tier and left the other two easier than they had been. Difficulty is
+     still carried by OPEN as well: an adult's gully is barely more than half
+     the height of a young diver's. */
+  SPEEDS:{'Young Explorer':96,'Teen Explorer':125,'Adult Explorer':125},
   SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
