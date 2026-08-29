@@ -77,7 +77,7 @@
   @keyframes swap{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
 
   /* ── bottom bar: the live bits ─────────────────────────────────── */
-  .bottom{grid-column:1/3;align-self:end;display:flex;align-items:flex-end;gap:34px}
+  .bottom{grid-column:1/3;align-self:end;display:flex;flex-direction:column;gap:20px}
   /* The one thing a passer-by has to understand from ten metres away, so it
      flashes rather than floats: the old animation only nudged it up and down
      seven pixels, which reads as decoration next to a screen already full of
@@ -87,7 +87,7 @@
      The cycle is 1.6s — about 0.6 flashes per second, well under the 3Hz
      threshold that matters for photosensitivity, and slow enough to read the
      words during either half. */
-  .cta{border-radius:26px;padding:34px 52px;flex:0 0 auto;white-space:nowrap;
+  .cta{border-radius:26px;padding:24px 44px;flex:0 0 auto;white-space:nowrap;
     background:linear-gradient(180deg,#2ad3b6,#0f8f7c);color:#032420;
     box-shadow:0 18px 50px rgba(20,160,140,.45);
     animation:ctaFlash 1.6s ease-in-out infinite;will-change:transform}
@@ -105,10 +105,24 @@
     .cta{animation:none;background:linear-gradient(180deg,#ffe98f,#f3c64f);color:#2b1d00;
          box-shadow:0 24px 64px rgba(243,198,79,.55)}
   }
-  .cta .l1{font-family:'Press Start 2P',monospace;font-size:54px;letter-spacing:3px;line-height:1}
-  .cta .l2{font-size:29px;font-weight:800;margin-top:16px;opacity:.9}
+  .cta{width:100%;display:flex;align-items:center;justify-content:center;gap:56px}
+  .cta .l1{font-family:'Press Start 2P',monospace;font-size:62px;letter-spacing:3px;line-height:1}
+  .cta .l2{font-size:31px;font-weight:800;margin-top:18px;opacity:.9}
+  /* The divider carries the whole point — two routes, not one — so it is a
+     word rather than a rule, and sized to be seen from the same distance. */
+  .cta .ctaor{font-family:'Press Start 2P',monospace;font-size:30px;opacity:.6;
+    border-left:3px solid rgba(0,0,0,.22);border-right:3px solid rgba(0,0,0,.22);
+    padding:0 26px;align-self:stretch;display:flex;align-items:center}
+  .cta .ctaphone{display:flex;align-items:center;gap:22px}
+  .cta .l3{font-family:'Press Start 2P',monospace;font-size:24px;line-height:1.5;
+    letter-spacing:1px;text-align:right}
+  /* White plate under the code: the slab flashes between teal and gold, and a
+     QR needs a light quiet zone that does not move under it to stay scannable. */
+  .qbox{background:#fff;border-radius:14px;padding:12px;line-height:0;
+    box-shadow:0 8px 24px rgba(0,0,0,.35)}
+  .qbox canvas{display:block;width:172px;height:172px;image-rendering:pixelated}
 
-  .panelrow{flex:1;display:grid;grid-template-columns:1fr 1fr;gap:20px}
+  .panelrow{flex:0 0 auto;width:100%;display:grid;grid-template-columns:1fr 1fr;gap:20px}
   .pnl{background:rgba(6,30,42,.80);border:1px solid var(--line);border-radius:20px;
     padding:20px 24px;min-height:150px}
   .pnl .h{font-family:'Press Start 2P',monospace;font-size:12px;letter-spacing:2.5px;
@@ -150,7 +164,6 @@
       <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="Go Diving Show">
       <span class="sep"></span>
       <img src="images/branding/vizlogo.png" alt="VIZ" class="circle">
-      <span class="stand">STAND 440</span>
     </div>
 
     <div class="left">
@@ -175,8 +188,15 @@
 
     <div class="bottom">
       <div class="cta">
-        <div class="l1">PLAY NOW</div>
-        <div class="l2">Grab a screen — it is free</div>
+        <div class="ctamain">
+          <div class="l1">PLAY NOW</div>
+          <div class="l2">Grab a screen — it is free</div>
+        </div>
+        <div class="ctaor">OR</div>
+        <div class="ctaphone">
+          <div class="l3">PLAY ON<br>YOUR PHONE</div>
+          <div class="qbox" id="ctaQR"></div>
+        </div>
       </div>
       <div class="panelrow">
         <div class="pnl">
@@ -194,6 +214,7 @@
   </div>
 </div></div>
 
+<script src="qr.js"></script>
 <script>
 var SUPABASE_URL = 'https://gkspukabnfbzrvjoewpc.supabase.co';
 var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imdrc3B1a2FibmZienJ2am9ld3BjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA1NTczMTYsImV4cCI6MjA5NjEzMzMxNn0.byWf97g2Jn3yXhmta3q6bCxBYRyGP37skcNPy-CRPM4';
@@ -252,6 +273,21 @@ function hhmm(t){var d=new Date(t);return ('0'+d.getHours()).slice(-2)+':'+('0'+
 
 /* Two digits, but never fewer than the number needs. */
 function pad2(v){v=Math.max(0,Math.floor(v));return (v<10?'0':'')+v;}
+/* Rendered once at load. If qr.js ever fails to arrive the slab still reads
+   as a call to action rather than showing an empty white plate, so the phone
+   half removes itself instead of leaving a hole. */
+var PHONE_URL='https://app.viz.net.au/Godiving/arcade';
+(function drawCtaQR(){
+  var box=document.getElementById('ctaQR');if(!box)return;
+  try{
+    if(!window.QRCode)throw new Error('qr.js did not load');
+    box.appendChild(QRCode.canvas(PHONE_URL,{size:172}));
+  }catch(e){
+    var ph=document.querySelector('.ctaphone'),or=document.querySelector('.ctaor');
+    if(ph)ph.style.display='none';
+    if(or)or.style.display='none';
+  }
+})();
 function tickClock(){
   var b=sessionBounds(),left=b.end-Date.now();
   var sw=document.getElementById('sessWin');
