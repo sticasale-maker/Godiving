@@ -77,9 +77,6 @@
     padding:10px;text-align:center;color:var(--accent);font-weight:700;margin-top:10px}
   .err{background:var(--badd);border:1px solid var(--bad);color:#f7cfcf}
   .foot{text-align:center;color:var(--muted);font-size:12px;margin-top:14px;line-height:1.6}
-  #rehearsalBar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#8a5a00;
-    color:#fff6e0;font-size:12px;font-weight:600;padding:7px 12px;text-align:center;
-    border-top:1px solid #ffcf6b;pointer-events:none}
   .pulse{animation:pulse 1.4s ease-in-out infinite}
   @keyframes pulse{0%,100%{opacity:1}50%{opacity:.55}}
 </style>
@@ -132,38 +129,7 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
 
 var qs = new URLSearchParams(location.search);
 var CODE = PRIZE.normaliseCode(qs.get('t') || qs.get('code') || '');
-if (qs.get('prizetest') === '1') PRIZE.enableTestMode(3);
 
-/* Mirrors arcade.html: a rehearsal expires on its own and never runs on a
-   show day, so a forgotten test cannot change what this page promises a
-   player on the Saturday. */
-var SHOW_DATES = { '2026-09-05': 1, '2026-09-06': 1 };
-/* Everyone who plays takes a little compass home. Off means the box is empty
-   and every screen stops promising one; absent means on. */
-var CONSOLATION = true;
-var REHEARSAL_MAX_H = 12;
-function todayKey() {
-  var d = new Date();
-  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + ('0' + d.getDate()).slice(-2);
-}
-function adoptRehearsal(s) {
-  /* prize.js caches independently of this page, so for a few minutes after a
-     deploy the API may not be there yet. Absent means "no rehearsal". */
-  if (!PRIZE.setRehearsal) return;
-  var r = s && s.rehearsal;
-  var ok = r && r.on && r.started &&
-           (Date.now() - Number(r.started) <= REHEARSAL_MAX_H * 3600000) &&
-           !SHOW_DATES[todayKey()];
-  PRIZE.setRehearsal(ok ? r : null);
-  var el = $('rehearsalBar');
-  if (!PRIZE.getRehearsal()) { if (el) el.remove(); return; }
-  if (!el) {
-    el = document.createElement('div'); el.id = 'rehearsalBar';
-    document.body.appendChild(el);
-  }
-  el.textContent = '🧪 REHEARSAL — draws every ' + PRIZE.getRehearsal().minutes +
-    ' min, not on the hour.';
-}
 
 var $ = function (id) { return document.getElementById(id); };
 var content = $('content');
@@ -208,13 +174,8 @@ function fetchAll() {
       };
     });
     var s = r[1].data || {};
-    /* Adopt the shared rehearsal before anything computes a draw. This page
-       is the far end of the QR handoff, so it must be on the same clock as
-       the booth machine the player just walked away from — which is why the
-       anchor lives in the settings row rather than in a URL flag. Refetched
-       on every settings change, so starting or stopping a rehearsal reaches
-       a phone that is already sitting on this page. */
-    adoptRehearsal(s);
+    /* Refetched on every settings change, so switching the consolation prize
+       off reaches a phone already sitting on this page. */
     CONSOLATION = !(s.consolation_on === false);
     cfg = {
       winnersPerGroup: s.winners_per_group != null ? s.winners_per_group : 3,

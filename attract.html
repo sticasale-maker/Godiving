@@ -135,9 +135,6 @@
     letter-spacing:1.5px;margin-bottom:12px}
   .clockbig{font-family:'Press Start 2P',monospace;font-size:52px;color:var(--gold);letter-spacing:2px}
   .clocksub{font-size:19px;color:var(--muted);margin-top:11px;line-height:1.35}
-  #rehearsalBar{position:fixed;left:0;right:0;bottom:0;z-index:60;background:#8a5a00;
-    color:#fff6e0;font-size:20px;font-weight:700;padding:9px 12px;text-align:center;
-    border-top:2px solid #ffcf6b;letter-spacing:.5px}
   .lead{display:flex;align-items:center;gap:14px;font-size:23px;margin-bottom:9px}
   .lead .r{font-family:'Press Start 2P',monospace;font-size:15px;color:var(--gold);width:26px}
   .lead .n{font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}
@@ -245,29 +242,8 @@ function dayKey(ts){var d=new Date(ts);
   return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2);}
 function atLocal(k,hm){var d=k.split('-'),t=hm.split(':');
   return new Date(+d[0],+d[1]-1,+d[2],+t[0],+t[1],0,0).getTime();}
-/* Rehearsal, read from the shared settings row. The attract screen is the
-   big countdown the queue reads, so during a rehearsal it has to be counting
-   to the same freeze as the machines behind it. Expires by itself and never
-   applies on a show day, matching arcade.html and ticket.html. */
-var REHEARSAL=null, REHEARSAL_MAX_H=12;
-function adoptRehearsal(s){
-  var r=s&&s.rehearsal;
-  var ok=r&&r.on&&r.started&&
-         (Date.now()-Number(r.started)<=REHEARSAL_MAX_H*3600000)&&
-         !SESSION_DAYS[dayKey(Date.now())];
-  REHEARSAL=ok?{minutes:Number(r.minutes)||5,started:Number(r.started)}:null;
-  var el=document.getElementById('rehearsalBar');
-  if(!REHEARSAL){if(el)el.remove();return;}
-  if(!el){el=document.createElement('div');el.id='rehearsalBar';document.body.appendChild(el);}
-  el.textContent='🧪 REHEARSAL — sessions freeze every '+REHEARSAL.minutes+' min';
-}
 function sessionBounds(ts){
   var t=ts||Date.now(),k=dayKey(t),marks=SESSION_DAYS[k];
-  if(REHEARSAL){
-    var span=REHEARSAL.minutes*60000;
-    var n=Math.floor((t-REHEARSAL.started)/span);if(n<0)n=0;
-    return {start:REHEARSAL.started+n*span,end:REHEARSAL.started+(n+1)*span};
-  }
   if(marks){
     for(var i=0;i<marks.length-1;i++){
       var a=atLocal(k,marks[i]),b=atLocal(k,marks[i+1]);
@@ -400,10 +376,6 @@ function renderBoard(rows){
 }
 function refresh(){
   if(!sb)return;
-  /* Re-read the rehearsal each cycle, so starting or stopping one reaches
-     an attract screen that has been looping unattended for hours. */
-  sb.from('settings').select('rehearsal').eq('id',1).single()
-    .then(function(r){adoptRehearsal(r.data||{});},function(){});
   var b=sessionBounds();
   sb.from('scores').select('name,score,ts,grp')
     .not('hidden','is',true)

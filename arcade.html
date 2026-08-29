@@ -2023,18 +2023,7 @@ function atLocal(dayk,hm){
   return new Date(+d[0],+d[1]-1,+d[2],+t[0],+t[1],0,0).getTime();
 }
 function sessionBounds(ts){
-  var t=ts||Date.now();
-  /* A rehearsal replaces the published session marks with fixed short
-     slots. It has to be the same slot prize.js is drawing on, or the Hall
-     of Fame would freeze at one moment and the ticket would settle at
-     another — the two screens a player is holding at the same time. */
-  var reh=(typeof PRIZE!=='undefined')&&PRIZE.getRehearsal&&PRIZE.getRehearsal();
-  if(reh){
-    var span=reh.minutes*60000;
-    var n=Math.floor((t-reh.started)/span);if(n<0)n=0;
-    return {start:reh.started+n*span,end:reh.started+(n+1)*span};
-  }
-  var marks=SESSION_DAYS[dayKey(t)];
+  var t=ts||Date.now(), marks=SESSION_DAYS[dayKey(t)];
   if(marks){
     var k=dayKey(t),i,a,b;
     for(i=0;i<marks.length-1;i++){
@@ -2403,7 +2392,6 @@ function admShowTab(name){
 function openAdmin(){
   buildAdminShell();adminWire();ADM.open=true;
   document.getElementById('adminOv').classList.add('on');
-  if(new URLSearchParams(location.search).get('prizetest')==='1'&&!PRIZE.isTestMode())PRIZE.enableTestMode(3,8);
   Cloud.getSettings(function(s){ADM.settings=s||{};adminRefresh();});
   /* the console is a live operational screen — refresh it so the
      countdown ticks and a draw rolling over is visible without a
@@ -2439,8 +2427,6 @@ function renderAdmin(){
   live+='</div>';
   /* ---- PRIZE CONSOLE ---- */
   var prize=renderPrizeConsole();
-  /* ---- REHEARSAL ---- */
-  var reh=renderRehearsalCard();
   /* ---- SESSIONS OF THE DAY ---- */
   var sess=renderSessionBrowser();
   /* ---- LEADERBOARD MANAGEMENT ---- */
@@ -2474,55 +2460,8 @@ function renderAdmin(){
   var diag='<span class="muted" style="font-size:12px">Stored scores: '+allS.length+' (Young '+gc['Young Explorer']+' · Teen '+gc['Teen Explorer']+' · Adult '+gc['Adult Explorer']+') · '+(Cloud.mode==='cloud'?'Cloud':'Local')+'</span>';
   var bar='<div class="row" style="margin-bottom:10px;align-items:center">'+
     '<button class="acc" onclick="adminRefresh()">↻ Refresh data</button>'+diag+'</div>';
-  b.innerHTML=bar+reh+live+sess+prize+mng+dev;
+  b.innerHTML=bar+live+sess+prize+mng+dev;
   admGamesTabLabel();
-}
-/* ---- rehearsal control ----
-   Deliberately in the Players & scores tab rather than the games tab:
-   you start a rehearsal in order to watch what it does to the board,
-   and the board is right underneath it. */
-function renderRehearsalCard(){
-  if(!PRIZE.setRehearsal)return '';
-  var r=PRIZE.getRehearsal();
-  var h='<div class="card"'+(r?' style="border-color:#ffcf6b"':'')+'>'+
-        '<h3>🧪 Rehearsal — test the prize flow before the show</h3>';
-  if(isShowDay()){
-    return h+'<p class="muted">Today is a show day, so rehearsal is disabled. '+
-      'Sessions follow the published schedule.</p></div>';
-  }
-  if(r){
-    var end=sessionEnd(Date.now());
-    h+='<p style="margin:0 0 8px">Running with <b>'+r.minutes+'-minute</b> sessions. '+
-       'This session freezes at <b>'+hhmm(end)+'</b> ('+fmtLeft(end-Date.now())+' left).</p>'+
-       '<p class="muted" style="margin:0 0 8px">Every device follows the same clock, so you can '+
-       'finish on a booth machine, scan the QR, and watch the phone settle at the same moment. '+
-       'Ends by itself after '+REHEARSAL_MAX_H+'h, and never runs on a show day.</p>'+
-       '<div class="row"><button class="warn" onclick="adminStopRehearsal()">■ Stop rehearsal</button></div>';
-  } else {
-    h+='<p class="muted" style="margin:0 0 8px">Outside the show, sessions freeze on the hour — too slow '+
-       'to test. Start a rehearsal to shorten them and run the whole path (play → ticket → countdown → '+
-       'result → claim) in minutes. Scores stay real, so clear the board afterwards.</p>'+
-       '<div class="row"><span class="muted">Session length:</span>'+
-       [2,5,10].map(function(m){
-         return '<button class="acc" onclick="adminStartRehearsal('+m+')">'+m+' min</button>';
-       }).join('')+'</div>';
-  }
-  return h+'</div>';
-}
-function adminStartRehearsal(mins){
-  var cfg={on:true,minutes:mins,started:Date.now()};
-  Cloud.saveSettings({rehearsal:cfg},function(err){
-    if(err){alert('Could not start the rehearsal: the shared settings row rejected it.\n\n'+
-      'Run supabase/schema.sql (it adds the "rehearsal" column), then try again.');return;}
-    adoptRehearsal({rehearsal:cfg});
-    renderAdmin();
-  });
-}
-function adminStopRehearsal(){
-  Cloud.saveSettings({rehearsal:{on:false}},function(){
-    adoptRehearsal({rehearsal:{on:false}});
-    renderAdmin();
-  });
 }
 /* The tab carries the count, so "how many games are we running today" is
    answerable from the console without opening the editor. */
@@ -2661,8 +2600,7 @@ function renderPrizeConsole(){
 
   if(next){
     h+='<p class="muted" style="margin:0 0 10px">Next draw <b style="color:var(--accent)">'+esc(next.label)+
-       '</b> — in <b id="admCountdown">'+fmtLeft(next.at.getTime()-now)+'</b>'+
-       (PRIZE.isTestMode()?' <span class="badge warn">TEST MODE</span>':'')+'</p>';
+       '</b> — in <b id="admCountdown">'+fmtLeft(next.at.getTime()-now)+'</b>'+'</p>';
   } else {
     h+='<p class="muted" style="margin:0 0 10px">All draws for the show have run.</p>';
   }
@@ -2900,10 +2838,6 @@ function promptAdmin(){openAdmin();}
 '.adm button.acc{background:var(--accent);border-color:var(--accent);color:#04282a;font-weight:600}'+
 '.adm .row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}'+
 '.adm select,.adm input{font-family:inherit;background:#000;border:1px solid var(--line);color:#fff;border-radius:6px;padding:6px 8px;font-size:13px}'+
-'#rehearsalBar{position:fixed;left:0;right:0;bottom:0;z-index:9600;background:#8a5a00;'+
-  'color:#fff6e0;font:600 12px/1.35 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;'+
-  'padding:7px 12px;text-align:center;letter-spacing:.3px;pointer-events:none;'+
-  'border-top:1px solid #ffcf6b}'+
 '.adm-tabs{display:flex;gap:6px;margin:0 0 14px;border-bottom:1px solid var(--line);padding-bottom:0}'+
 '.adm-tab{font-family:inherit;cursor:pointer;background:transparent;border:1px solid transparent;'+
   'border-bottom:none;color:var(--muted);padding:9px 15px;font-size:13px;font-weight:600;'+
@@ -3349,62 +3283,18 @@ loadGameOrder();
 GAME_AGE_GROUPS=loadGameAgeGroups();
 GAME_ENABLED=loadGameEnabled();
 
-/* ---- rehearsal, adopted from the shared row ----
-   A rehearsal that outlives the person who started it is the dangerous
-   case: someone tests on a Thursday, forgets, and on Saturday the stand
-   is freezing sessions every five minutes while the printed signage
-   promises the hour. Two guards, because a stale rehearsal is far worse
-   than a rehearsal that ends early:
-     · it expires on its own after REHEARSAL_MAX_H hours
-     · it is refused outright on a real show day
-   Both are evaluated on every device at load, so nobody has to remember
-   to switch it off. */
-/* Everyone who plays takes a little compass home. There are 120 of them and
+/* ---- consolation prize ----
+   Everyone who plays takes a prize home. There are a fixed number of them and
    no way to know in advance how many people will play, so this is a switch
-   rather than a fact baked into the copy: when the box is empty, staff turn
-   it off and every screen stops promising one. Defaults ON, and reads true
-   when the column is absent, so the promise works before the schema is
-   updated and only the toggle waits. */
+   rather than a fact baked into the copy: when the box is empty, staff turn it
+   off and every screen stops promising one. Defaults ON, and reads true when
+   the column is absent, so the promise works before the schema is updated. */
 var CONSOLATION=true;
 function adoptConsolation(st){ CONSOLATION = !(st && st.consolation_on === false); }
 
-var REHEARSAL_MAX_H=12;
-function isShowDay(t){return !!SESSION_DAYS[dayKey(t||Date.now())];}
-function rehearsalUsable(r){
-  if(!r||!r.on||!r.started)return false;
-  if(Date.now()-Number(r.started)>REHEARSAL_MAX_H*3600000)return false;
-  if(isShowDay())return false;
-  return true;
-}
-/* arcade.html and prize.js are separate files with independent cache
-   lifetimes, so for a few minutes after a deploy a browser can hold a new
-   page against an old script. Feature-detect rather than assume: a missing
-   rehearsal API must mean "no rehearsal", not an exception that takes the
-   whole shared-config load down with it. */
-function adoptRehearsal(st){
-  if(!PRIZE.setRehearsal)return;
-  var r=st&&st.rehearsal;
-  PRIZE.setRehearsal(rehearsalUsable(r)?r:null);
-  showRehearsalBanner();
-}
-/* Every screen says so, unmissably. A rehearsal changes what the arcade
-   promises a player, so it must never be something you have to go looking
-   in the admin console to discover. */
-function showRehearsalBanner(){
-  var r=PRIZE.getRehearsal&&PRIZE.getRehearsal(),el=document.getElementById('rehearsalBar');
-  if(!r){if(el)el.remove();return;}
-  if(!el){
-    el=document.createElement('div');el.id='rehearsalBar';
-    document.body.appendChild(el);
-  }
-  el.textContent=(Cloud.dryrun?'🧪 DRY RUN — this score will be cleared. ':'')+
-    '🧪 REHEARSAL — sessions freeze every '+r.minutes+
-    ' min, not on the hour. Scores are real; this is not the show schedule.';
-}
 /* The shared row wins over whatever this browser happens to remember. */
 function adoptSharedGameConfig(cb){
-  Cloud.getSettings(function(st){
-    adoptRehearsal(st);
+  Cloud.getSettings(function(st){
     adoptPodium(st);
     adoptConsolation(st);
     if(st&&st.game_order){applyGameOrder(st.game_order);saveGameOrder();}
