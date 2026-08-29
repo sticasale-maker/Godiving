@@ -4073,7 +4073,12 @@ var bubbleState={time:0,hit:0,miss:0,timer:null,spawn:null,active:false,bubbles:
    youngest divers were losing on the reading. Younger = fewer bubbles
    in the air, drifting more slowly, drawn bigger. */
 var BUBBLE_CFG={
-  'Young Explorer':{every:2200,rise:0.32,size:84,extra:26,start:2,cap:4,secs:25},
+  /* The young tier was slowed until it stopped being a game: an eight-year-old
+     read the crawl as nothing happening. Rise is up 30% and the round is 30%
+     longer, so there is more to do AND more time to do it — the reading-speed
+     protection now comes from the bigger text and the emptier field, not from
+     bubbles that barely move. */
+  'Young Explorer':{every:2200,rise:0.42,size:84,extra:26,start:2,cap:4,secs:33},
   'Teen Explorer' :{every:1200,rise:0.70,size:66,extra:30,start:3,cap:6,secs:20},
   'Adult Explorer':{every:820, rise:1.00,size:58,extra:34,start:3,cap:8,secs:20}
 };
@@ -4106,6 +4111,7 @@ function startBubble(){
     bubbleState.time--;$('bubbleTime').textContent=bubbleState.time;
     if(bubbleState.time<=0)endBubble();
   },1000);
+  bubbleState.last=0;
   bubbleState.spawn=setInterval(spawnBubble,cfg.every);
   for(var i=0;i<cfg.start;i++)setTimeout(spawnBubble,i*320);
   animateBubbles();
@@ -4147,7 +4153,13 @@ function spawnBubble(){
   b._lane=lane;
   b.style.left=Math.round(L.pad+lane*L.w+(L.w-size)/2)+'px';
   b._y=H;b.style.top=b._y+'px';
-  b._speed=cfg.rise*0.8;   /* was 0.5-1.2x random; 0.8 keeps the old average pace */
+  /* PIXELS PER SECOND, not per frame. This used to advance a fixed step every
+     animation frame, which meant the whole per-age speed tuning silently
+     doubled on a 120Hz screen and halved on a struggling one — the youngest
+     tier, the one the tuning exists to protect, was the worst affected. The
+     0.8*2.2*60 reproduces the old 60Hz pace exactly, so every tier plays as
+     it was tuned to, on any display. */
+  b._speed=cfg.rise*0.8*2.2*60;
   b._real=real;b.textContent=name;
   b.addEventListener('click',function(ev){
     ev.stopPropagation();
@@ -4159,12 +4171,15 @@ function spawnBubble(){
   });
   f.appendChild(b);bubbleState.bubbles.push(b);
 }
-function animateBubbles(){
+function animateBubbles(now){
   if(!bubbleState.active)return;
-  var f=$('bubbleField');
+  /* Clamped so a tab restored from the background does not teleport every
+     bubble off the top of the field in one step. */
+  var dt=bubbleState.last?Math.min(0.05,(now-bubbleState.last)/1000):0;
+  bubbleState.last=now;
   for(var i=bubbleState.bubbles.length-1;i>=0;i--){
     var b=bubbleState.bubbles[i];if(b._popped)continue;
-    b._y-=b._speed*2.2;b.style.top=b._y+'px';
+    b._y-=b._speed*dt;b.style.top=b._y+'px';
     if(b._y< -100){if(b.parentNode)b.parentNode.removeChild(b);bubbleState.bubbles.splice(i,1);}
   }
   bubbleState.raf=requestAnimationFrame(animateBubbles);
@@ -5388,10 +5403,14 @@ var NU={
      0.96 s reversal that still only commits ~23 px of tunnel. */
   MASS:9, DRAG:22, G:9.81,
   PXM:62,                      /* px per metre of travel           */
-  /* Per group: the young keep the gentler pace, the other two swim 30%
-     faster. Everything downstream reads nuSpeed(), including the wander cap,
-     so a faster cave is automatically a flatter one and reach still holds. */
-  SPEEDS:{'Young Explorer':74,'Teen Explorer':96,'Adult Explorer':96},
+  /* One pace for everyone. The young swam at 74 to be kind, but a slow cave is
+     not an easier cave — it is a duller one, and a child reads the crawl as the
+     game being broken rather than gentle. Difficulty is carried by OPEN
+     instead, where the young still get a tunnel well over half again as wide
+     as an adult's. Everything downstream reads nuSpeed(), including the wander
+     cap, so the faster cave is automatically a flatter one and the reach
+     budget still holds by construction. */
+  SPEEDS:{'Young Explorer':96,'Teen Explorer':96,'Adult Explorer':96},
   SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
@@ -5457,6 +5476,13 @@ function initNeutral(){
     hits:0, pts:0, t:0, sinceTick:0, cool:0,
     breathing:false, done:false
   };
+  /* Where the cave mouth is, in world x. nu.x advances at exactly nuSpeed()
+     per second and the swim ends on the clock, so the exit is one full swim
+     downstream of the start, plus the diver's own offset from the left edge.
+     That makes the line arrive under the diver at the same instant the timer
+     runs out — it cannot drift apart from the countdown, because both are the
+     same number. */
+  nu.endX=nuSpeed()*NU.SECS+72;
   /* open centred in the tunnel mouth so nobody starts inside rock */
   nu.y=nuMid(72);
   $('nuScore').textContent=0;$('nuHits').textContent=0;
@@ -5547,6 +5573,29 @@ function nuDraw(dx,scraped){
     c.strokeStyle='rgba(160,220,240,.22)';c.lineWidth=2;c.stroke();
   }
   band(true);band(false);
+
+  /* ── the arrival line ──
+     There was a seconds counter in the corner and nothing in the water, so
+     the cave simply stopped: it read as the game cutting out rather than the
+     diver arriving, and there was no way to pace the last stretch. Nobody
+     swims to a digit. This scrolls in on the rock's own clock, so the end of
+     the swim is something you watch coming. */
+  var fx=nu.endX-nu.x;
+  if(fx<=w+40){
+    var fm=nuMid(nu.endX), fh=nuHalf(nu.endX);
+    c.save();
+    c.shadowColor='rgba(243,198,79,.9)';c.shadowBlur=12;
+    c.strokeStyle='#f3c64f';c.lineWidth=3*nu.k;c.setLineDash([9*nu.k,7*nu.k]);
+    c.beginPath();c.moveTo(fx,fm-fh);c.lineTo(fx,fm+fh);c.stroke();
+    c.restore();
+    /* Labelled, because a gold line on its own could be one more hazard —
+       and being unsure whether to dodge the finish is worse than no line. */
+    c.save();
+    c.fillStyle='#f3c64f';c.textAlign='center';c.textBaseline='bottom';
+    c.font='700 '+Math.round(11*nu.k)+'px -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif';
+    c.fillText('EXIT', Math.min(w-18*nu.k,Math.max(18*nu.k,fx)), fm-fh-4*nu.k);
+    c.restore();
+  }
 
   /* diver, side on, finning to the right */
   var y=nu.y;
