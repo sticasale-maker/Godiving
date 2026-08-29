@@ -2100,24 +2100,28 @@ var Cloud=(function(){
      is a player who finished at 14:59 appearing in the 15:00 session, having
      been told on screen they were in the 14:00 one — and the draw is decided
      per session, so it is not only cosmetic. */
-  /* ?dryrun=1 — play the whole thing through without touching the board.
-     The score is still written, so the code, the ticket, the QR and the draw
-     all behave exactly as they will on the day; it is just born hidden, so it
-     never appears in a ranking or competes for a prize.
+  /* ?dryrun=1 — a rehearsal you can clear up afterwards.
+     The row is written normally and stays VISIBLE, because the first version
+     of this was born hidden and that made it useless: every read filters
+     hidden rows, so a dry-run player never appeared on the leaderboard, never
+     had a rank, and could not win the draw. It tested the act of submitting a
+     score and nothing that happens to the score afterwards — which is the
+     whole flow anybody actually wants to rehearse.
 
-     This exists because the alternative is what actually happened: rehearsing
-     against the live shared database put invented players on a real
-     leaderboard, above a real one. There was no way to exercise the finish
-     without publishing a score. */
+     So instead of hiding it, it is MARKED. The station is stamped DRY RUN,
+     which needs no schema change, shows up in the admin's own station column,
+     and gives the console an exact filter to clear afterwards. Everything
+     downstream — ranking, verdict, draw, ticket, claim — behaves precisely as
+     it will on the day, and one button removes every trace. */
+  var DRYRUN_STATION='DRY RUN';
   var DRYRUN=(function(){try{return new URLSearchParams(location.search).get('dryrun')==='1';}catch(e){return false;}})();
   function submitScore(group,name,score,extra,cb){
     var code=PRIZE.newCode();
     var e=extra||{}, when=e.when||Date.now();
     var row=Object.assign({name:name,score:score,grp:group,code:code,
-                           device:DEVICE_ID,station:STATION,
+                           device:DEVICE_ID,station:DRYRUN?DRYRUN_STATION:STATION,
                            ts:new Date(when).toISOString()},e);
     delete row.when;              /* carried in, not a column — and not the caller's to lose */
-    if(DRYRUN)row.hidden=true;
     if(mode==='cloud'&&sb){
       sb.from('scores').insert(row).then(function(r){
         if(r&&r.error){
@@ -2181,6 +2185,14 @@ var Cloud=(function(){
   function deleteScore(id,cb){
     if(mode==='cloud'&&sb){sb.from('scores').update({hidden:true}).eq('id',id).then(function(){if(cb)cb();},function(){if(cb)cb();});}
     else{lsSave(lsScores().filter(function(e){return e.id!==id;}));Object.keys(lbListeners).forEach(function(g){fire(lbListeners[g],boardFor(g));});if(cb)cb();}
+  }
+  /* Hides only the rows this stamped, so a sweep after a rehearsal cannot
+     touch a real player who happened to be on the board at the same time. */
+  function clearDryRuns(cb){
+    if(mode!=='cloud'||!sb){if(cb)cb(0);return;}
+    sb.from('scores').update({hidden:true})
+      .eq('station',DRYRUN_STATION).not('hidden','is',true)
+      .then(function(){if(cb)cb();},function(){if(cb)cb();});
   }
   function resetAll(cb){
     if(mode==='cloud'&&sb){sb.from('scores').update({hidden:true}).not('hidden','is',true).then(function(){if(cb)cb();},function(){if(cb)cb();});}
@@ -2302,7 +2314,9 @@ var Cloud=(function(){
   }
 
   return {init:init,get mode(){return mode;},submitScore:submitScore,onLeaderboard:onLeaderboard,allScores:allScores,pullScores:pullScores,
-    deleteScore:deleteScore,resetAll:resetAll,startSession:startSession,updateSession:updateSession,
+    deleteScore:deleteScore,resetAll:resetAll,
+    get dryrun(){return DRYRUN;}, DRYRUN_STATION:DRYRUN_STATION,
+    clearDryRuns:clearDryRuns,startSession:startSession,updateSession:updateSession,
     getSettings:getSettings,saveSettings:saveSettings,setClaimed:setClaimed,
     onSessions:onSessions,onMyCommand:onMyCommand,onCommands:onCommands,sendCommand:sendCommand};
 })();
@@ -2426,6 +2440,12 @@ function renderAdmin(){
   var board=(ADM.scores||[]).filter(function(e){return ADM.group==='All'||e.group===ADM.group;}).sort(function(a,b){return b.score-a.score;});
   var mng='<div class="card"><h3>Leaderboard — delete / reset</h3>';
   mng+='<div class="row" style="margin-bottom:8px">'+groupSelect('admGroupM','adminSetGroup(this.value)')+'<button class="warn" onclick="adminResetAll()">🗑 Reset ALL rankings</button></div>';
+  var dryN=(ADM.scores||[]).filter(function(e){return e.station===Cloud.DRYRUN_STATION;}).length;
+  mng+='<div class="row" style="margin-bottom:8px">'+
+       '<button class="'+(dryN?'acc':'')+'" onclick="adminClearDryRuns()"'+(dryN?'':' disabled')+'>'+
+       '🧪 Clear dry-run rows'+(dryN?' ('+dryN+')':'')+'</button>'+
+       '<span class="muted" style="font-size:12px">Removes only rows played with '+
+       '<b>?dryrun=1</b> — real players are never touched.</span></div>';
   mng+='<div class="row" style="margin-bottom:8px"><button class="acc" onclick="adminTestReset()">'+
        '🧪 Test reset — clear board + this device</button>'+
        '<button onclick="adminResetDevice()">↺ Reset this device only</button></div>';
@@ -2434,7 +2454,12 @@ function renderAdmin(){
        'the scores of other players alone and just makes this screen a fresh player again.</p>';
   mng+='<table><tr><th>Player</th><th>Score</th><th>When</th><th></th></tr>';
   if(!board.length)mng+='<tr><td colspan="4" class="muted">No entries.</td></tr>';
-  board.forEach(function(e){mng+='<tr><td>'+esc(e.name)+'</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td><button class="warn" onclick="adminDelete(\''+e.id+'\')">Delete</button></td></tr>';});
+  board.forEach(function(e){
+    var dry=e.station===Cloud.DRYRUN_STATION;
+    mng+='<tr><td>'+esc(e.name)+(dry?' <span class="badge warn">DRY RUN</span>':'')+
+      '</td><td>'+e.score+'</td><td>'+ago(e.ts)+'</td><td>'+
+      '<button class="warn" onclick="adminDelete(\''+e.id+'\')">Delete</button>'+'</td></tr>';
+  });
   mng+='</table></div>';
   /* ---- THIS DEVICE ---- */
   var dev='<div class="card"><h3>This device</h3><div class="row"><span class="muted">Station name:</span><input id="admStation" value="'+esc(STATION)+'"><button class="acc" onclick="adminRename()">Save</button></div><p class="muted" style="margin-top:6px">Device ID: '+esc(DEVICE_ID)+'</p></div>';
@@ -2779,6 +2804,12 @@ function groupSelect(id,onchg){var gs=['All','Young Explorer','Teen Explorer','A
 function adminSetGroup(g){ADM.group=g;renderAdmin();}
 function adminScreensaver(device,on){Cloud.sendCommand(device,{screensaver:!!on});setTimeout(renderAdmin,150);}
 function adminDelete(id){if(confirm('Delete this entry?')){Cloud.deleteScore(id);setTimeout(renderAdmin,150);}}
+function adminClearDryRuns(){
+  var n=(ADM.scores||[]).filter(function(e){return e.station===Cloud.DRYRUN_STATION;}).length;
+  if(!n)return;
+  if(!confirm('Remove '+n+' dry-run row'+(n===1?'':'s')+' from the board? Real players are not affected.'))return;
+  Cloud.clearDryRuns(function(){setTimeout(adminRefresh,400);});
+}
 function adminResetAll(){if(confirm('Wipe ALL rankings for every group? This cannot be undone.')){Cloud.resetAll();setTimeout(renderAdmin,150);}}
 /* Test reset. Rehearsing with real people means running the same hour over and
    over, and the two halves of the state live in different places: the scores
@@ -3359,7 +3390,8 @@ function showRehearsalBanner(){
     el=document.createElement('div');el.id='rehearsalBar';
     document.body.appendChild(el);
   }
-  el.textContent='🧪 REHEARSAL — sessions freeze every '+r.minutes+
+  el.textContent=(Cloud.dryrun?'🧪 DRY RUN — this score will be cleared. ':'')+
+    '🧪 REHEARSAL — sessions freeze every '+r.minutes+
     ' min, not on the hour. Scores are real; this is not the show schedule.';
 }
 /* The shared row wins over whatever this browser happens to remember. */
