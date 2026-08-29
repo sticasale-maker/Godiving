@@ -330,7 +330,40 @@
   .hof .me .nm{color:var(--accent)}
   .hof .me .rank{color:var(--accent)}
   .hof .medal{font-size:15px;width:18px;text-align:center}
+  .hof-stay{border:2px solid var(--accent);background:var(--accentd);border-radius:12px;
+    padding:12px 14px;margin:0 0 10px;text-align:center;font-size:15px;line-height:1.5;
+    color:var(--text);flex-shrink:0}
+  .hof-stay .hof-stay-big{display:block;font-weight:800;letter-spacing:.6px;
+    font-size:17px;color:var(--accent);margin-bottom:4px}
+  @media(min-width:1000px){
+    .hof-stay{font-size:20px;padding:16px 20px}
+    .hof-stay .hof-stay-big{font-size:26px}
+  }
   .hof-scroll{overflow-y:auto;flex:1;min-height:0}
+  /* ── Hall of Fame on a big screen ──
+     The ranking is the one screen people read from a step back rather than
+     leaning over: a player looking for their own name, and often a parent or
+     a queue reading over their shoulder. At phone sizes it was legible but
+     tiny on a booth monitor, with the leaderboard sitting in a narrow column
+     of 14px rows while most of the panel stayed empty.
+
+     Only the type scales. The layout, the medals and the highlight of the
+     player's own row are untouched, so nothing reflows or moves — the same
+     screen, read from further away. .hof-clock, .hof-verdict and .hof-coverage
+     already had their own desktop steps; these are the parts that were
+     missed. */
+  @media(min-width:1000px){
+    .hof-header h2{font-size:31px}
+    .hof-group{font-size:17px}
+    .hof-session{font-size:16px}
+    .encourage{font-size:20px;padding:14px 20px;margin-bottom:14px}
+    .hof .lrow{font-size:22px;padding:13px 18px;margin:8px 0;border-radius:12px}
+    .hof .lrow .l{gap:14px}
+    .hof .lrow .rank{width:36px;font-size:21px}
+    .hof .medal{font-size:24px;width:28px}
+    .ticket-lead{font-size:18px}
+    .ticket-sub{font-size:15px}
+  }
 
   /* ════════════════
      SPLASH
@@ -1699,6 +1732,7 @@
       </div>
       <p class="hof-session" id="hofSession"></p>
       <p class="hof-clock" id="hofClock"></p>
+      <div class="hof-stay" id="hofStay" style="display:none"></div>
       <div class="hof-verdict" id="hofVerdict" style="display:none"></div>
       <p class="hof-coverage" id="hofCoverage"></p>
       <p class="encourage" id="hofEncourage"></p>
@@ -3393,6 +3427,13 @@ function showNextChallenge(){
        them the containing block and break position:fixed. */
     document.body.appendChild(nextChallengeBtn);
   }
+  /* Relabelled every time, because the last game is only knowable once it has
+     been played — the same button ends the visit when there is nothing left. */
+  var last=allGamesPlayed();
+  nextChallengeBtn.textContent=last?'🏆 See my ranking →':'Next challenge →';
+  nextChallengeBtn.onclick=last
+    ? function(){finishAllPlayed();}
+    : function(){hideNextChallenge();showMenu();};
   nextChallengeBtn.style.display='block';
 }
 function hideNextChallenge(){
@@ -3498,6 +3539,10 @@ var GAME_META={
 };
 function showMenu(){
   if(FINISHED)return showHallOfFame();
+  /* Every game played: the menu would be a grid of disabled tiles above a
+     Finish button, which reads as a dead end rather than an ending. Go
+     straight to the ranking. */
+  if(allGamesPlayed())return finishAllPlayed();
   activeGame=null;
   hideNextChallenge();
   buildStrip();
@@ -3506,6 +3551,25 @@ function showMenu(){
   buildMenu();
   showPanel('p-menu');
   Cloud.updateSession({game:'menu',points:POINTS});
+}
+/* Has this player exhausted the stand? Counted against gamesForGroup(), not
+   GAME_ORDER: someone whose age group is offered twelve games has finished
+   when they have played those twelve, and must not be held back by the ones
+   they were never shown. Guards against the empty case, or a misconfigured
+   stand offering nobody anything would send every player straight to the
+   ranking without a single game. */
+function allGamesPlayed(){
+  var shown=gamesForGroup(USER.group);
+  return shown.length>0&&shown.every(function(g){return !!playedGames[g];});
+}
+/* Reached by finishing everything rather than by choosing to stop, so there is
+   nothing to confirm: leaveGames() asks because it is giving up unplayed games
+   and locking the score early, and neither is true here. */
+function finishAllPlayed(){
+  if(FINISHED)return showHallOfFame();
+  FINISHED=true;
+  hideNextChallenge();
+  showHallOfFame();
 }
 function gamesForGroup(group){
   return GAME_ORDER.filter(function(g){
@@ -3780,7 +3844,7 @@ $('qnext').onclick=quizRound;
    free of anything visible in the shot — a correct sighting must never be
    scored wrong. */
 var LOG_PRESENT=['Weedy seadragon','Eastern blue groper','Port Jackson shark','Giant cuttlefish','Old wife','Sea urchin','Tubular sponge'];
-var LOG_DECOYS=['Eastern blue devil','Maori octopus','Bluespotted ray','Moray eel','Wobbegong'];
+var LOG_DECOYS=['Eastern blue devil','Maori octopus','Fiddler ray','Moray eel','Wobbegong'];
 var logFound={},logDone=false;
 function initLog(){
   logFound={};logDone=false;$('logn').textContent=0;$('logtotal').textContent=LOG_PRESENT.length;$('logbar').style.width='0%';$('logmsg').textContent='';$('lognotice').textContent='';
@@ -4020,9 +4084,9 @@ var SIL_ROUNDS=[
   {shape:'pjshark',name:'Port Jackson shark',f:'Spot the blunt head and high spiny fins.'},
   {shape:'cuttle',name:'Giant cuttlefish',f:'A broad mantle plus a fan of arms — unmistakable.'},
   {shape:'turtle',name:'Green turtle',f:'Flippers and a domed shell give it away.'},
-  {shape:'ray',name:'Bluespotted ray',f:'A flat disc with a long whip tail.'}
+  {shape:'ray',name:'Smooth stingray',f:"A broad flat disc and a whip tail — Sydney's biggest ray."}
 ];
-var SIL_NAMES=['Weedy seadragon','Port Jackson shark','Giant cuttlefish','Green turtle','Bluespotted ray','Eastern blue groper','Maori octopus','Eastern blue devil'];
+var SIL_NAMES=['Weedy seadragon','Port Jackson shark','Giant cuttlefish','Green turtle','Smooth stingray','Eastern blue groper','Maori octopus','Eastern blue devil'];
 /* Real silhouette images (generated externally) — fall back to the hand-drawn
    SVG shape via onerror if the file isn't uploaded yet. */
 var SIL_PHOTOS={
@@ -4065,7 +4129,7 @@ function silRound(){
 $('silNext').onclick=silRound;
 
 /* ════════ 5. BUBBLE POP ════════ */
-var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Bluespotted ray','Old wife','Mado','Sea tulip','Red lionfish','Common toadfish'];
+var BUBBLE_REAL=['Weedy seadragon','Port Jackson shark','Blue groper','Giant cuttlefish','Blue devil','Maori octopus','Fiddler ray','Old wife','Mado','Sea tulip','Red lionfish','Common toadfish'];
 /* Every name here must be one a Sydney diver genuinely cannot see, because
    tapping it costs the player a point. Lionfish and toadfish used to sit in
    this list and are both common on Sydney dives — the ID game upstairs even
@@ -4507,7 +4571,7 @@ $('colNext').onclick=colRound;
 /* ════════ 9. ODD ONE OUT ════════ */
 var ODD_ROUNDS=[
   {real:[['Weedy seadragon','🐉'],['Port Jackson shark','🦈'],['Blue groper','🐟']],fake:['Clownfish','🐠'],f:'Clownfish live on tropical coral reefs, not Sydney.'},
-  {real:[['Giant cuttlefish','🦑'],['Maori octopus','🐙'],['Bluespotted ray','🐡']],fake:['Piranha','🐟'],f:'Piranhas are freshwater fish from South America.'},
+  {real:[['Giant cuttlefish','🦑'],['Maori octopus','🐙'],['Fiddler ray','🐡']],fake:['Piranha','🐟'],f:'Piranhas are freshwater fish from South America.'},
   {real:[['Blue devil','🐟'],['Old wife','🐠'],['Mado','🐟']],fake:['Mandarinfish','🐠'],f:'Mandarinfish live in shallow tropical lagoons in the western Pacific, not Sydney.'},
   {real:[['Wobbegong','🦈'],['Sea tulip','🌷'],['Eastern blue groper','🐟']],fake:['Coral trout','🐠'],f:'Coral trout belong on the Great Barrier Reef.'},
   {real:[['Weedy seadragon','🐉'],['Sea urchin','🦔'],['Cuttlefish','🦑']],fake:['Manatee','🦭'],f:'Manatees live in warm tropical rivers and bays.'},
@@ -6720,19 +6784,29 @@ function hofTick(){
   var rank=hofMyRank(), verdict=$('hofVerdict');
   if(left>0){
     var m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
-    el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes '+
-      'and you can check if you have won a prize.<br>'+
+    el.innerHTML='<b>'+('0'+m).slice(-2)+':'+('0'+sec).slice(-2)+'</b> until this session freezes.<br>'+
       '<span class="hof-rule">Only the first <b>'+PODIUM+'</b> of each age group qualify for a prize.</span>';
     maybeShowTicket();
+    var stay=$('hofStay');
+    if(stay){
+      stay.style.display='block';
+      stay.innerHTML=isBoothStation()
+        ? '<span class="hof-stay-big">📸 SCAN THE CODE BELOW BEFORE YOU GO</span>'+
+          'Keep that page open on your phone to see if you have won a prize at <b>'+
+          hhmm(end)+'</b>.'
+        : '<span class="hof-stay-big">⏳ STAY ON THIS PAGE</span>'+
+          'The prizes are decided at <b>'+hhmm(end)+'</b>, and this page will tell you '+
+          'straight away if you have won. Leave it open.';
+    }
     if(verdict){
       verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
       if(rank&&rank<=PODIUM)verdict.innerHTML='You are <b>'+rank+ordinal(rank)+
-        '</b> right now. The top '+PODIUM+' in '+esc(USER.group)+
-        ' win a prize when the hour turns — stay on this page.';
+        '</b> right now — inside the top '+PODIUM+' for '+esc(USER.group)+'.';
     }
     return;
   }
   if(hofTimer){clearInterval(hofTimer);hofTimer=null;}
+  var stayEl=$('hofStay');if(stayEl)stayEl.style.display='none';
   maybeShowTicket();
   /* The phone is in a pocket by now. A buzz is the only way to say "look at
      me" — longer for a winner than for a nudge to come back next hour.
@@ -6744,8 +6818,8 @@ function hofTick(){
     verdict.style.display='block';
     verdict.innerHTML=(rank&&rank<=PODIUM)
       ? '🏆 <b>'+rank+ordinal(rank)+' place — you have won a prize.</b><br>'+
-        'Come to the VIZ stand, <b>stand '+PRIZE_STAND+'</b>, and show this screen to staff.'
-      : 'This hour is done. The board resets on the hour — come back and play the next session.';
+        'Come to <b>stand '+PRIZE_STAND+'</b> and show this screen to staff.'
+      : 'This session is done — the board resets, so come back and play the next one.';
   }
 }
 function buzz(pattern){
@@ -6783,11 +6857,6 @@ function renderTicket(code){
   $('hofCode').textContent=code;
 
   var booth=isBoothStation();
-  var draw=PRIZE.drawFor(Date.now());
-  var when=draw
-    ? 'Your draw is at <b style="color:var(--gold)">'+esc(draw.label)+'</b> — top '+
-      PRIZE.DEFAULTS.winnersPerGroup+' in '+esc(USER.group)+' win a prize.'
-    : 'The last draw has passed — come to <b style="color:var(--gold)">stand 440</b> anyway.';
 
   $('hofTicketLead').textContent=booth
     ? '📸 Scan this with your phone before you go'
@@ -6805,11 +6874,9 @@ function renderTicket(code){
       qr.innerHTML='<span class="muted" style="font-size:11px;word-break:break-all;display:block;'+
         'padding:8px;background:var(--bg2);border-radius:8px">'+esc(url)+'</span>';
     }
-    /* This is the line staff repeat out loud all weekend, so it says
-       the one thing the player has to do and nothing else. */
-    $('hofDrawInfo').innerHTML=when+
-      '<br><b style="color:var(--accent)">Scan it, then check that page at '+
-      (draw?esc(draw.label):'the hour')+'</b> — it tells you if you need to come back and collect.';
+    /* The one thing the verdict above cannot do for them. */
+    $('hofDrawInfo').innerHTML='<b style="color:var(--accent)">Scan it to keep your code</b> — '+
+      'this screen resets for the next player.';
   } else {
     /* already on their own device — a link beats a QR */
     var a=document.createElement('a');
@@ -6819,13 +6886,17 @@ function renderTicket(code){
       'background:var(--accent);color:#04222b;font-weight:800;font-size:16px;text-align:center';
     a.textContent='Open my prize ticket →';
     qr.appendChild(a);
-    $('hofDrawInfo').innerHTML=when+'<br>Keep that page open — it updates live and tells you if you win.';
+    /* Already on their own phone, and already told they have won. The code
+       is on screen and the button opens it; anything more is repetition. */
+    $('hofDrawInfo').innerHTML='';
   }
 }
 
 /* ════════ PLAY AGAIN ════════ */
 (function(){var bm=$('hofBackMenu');if(bm)bm.onclick=function(){showApp();showMenu();};})();
 $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;showMenu();};
+/* showMenu() handles the all-played case, so 'Back to games' from the final
+   game lands on the ranking too rather than bouncing off a dead menu. */
 $('hofPlayAgain').onclick=function(){
   POINTS=0;syncPoints();currentGame=0;window._hofSubmitted=false;qStartTime=0;
   USER.code='';var _tb=$('hofTicket');if(_tb)_tb.style.display='none';
