@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#06222e">
+<meta name="theme-color" content="#00172f">
 <title>Plan your day — GO Diving Show Sydney</title>
 <meta name="description" content="Pick what you're into, and build a personal runsheet for the GO Diving Show Sydney, 5–6 September 2026.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,9 +11,15 @@
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
 <style>
   :root{
-    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
-    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
-    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b;
+    /* GO Diving Show house colours, sampled from godivingshow.com: the
+       deep blue it uses for almost everything, the navy behind it, and
+       the teal it uses for calls to action. The darker grounds are those
+       same hues taken down, so the app reads as the show's rather than as
+       a generic dark theme. */
+    --brand:#0c5292; --brand-deep:#002e64; --brand-teal:#16a085; --brand-red:#bd322c;
+    --bg:#00172f; --bg2:#052a4d; --surface:#073157; --line:rgba(255,255,255,0.16);
+    --text:#eaf3fb; --muted:#9db8d2; --accent:#16a085; --accentd:#06382f;
+    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#bd322c;
     --gen:#57c7ff; --photo:#b98cff; --tech:#36c9c0; --pro:#f3c64f;
     /* One colour per day, used everywhere the day is named. Which day you
        are looking at is the thing people lose track of while scrolling. */
@@ -42,7 +48,7 @@
   .muted{color:var(--muted)}
 
   .btn{width:100%;border:0;border-radius:12px;padding:15px 18px;font-size:17px;font-weight:800;
-    font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#28c3a8,#12907c);
+    font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#1abc9c,#0e7f6a);
     color:#04211d;touch-action:manipulation}
   .btn:active{transform:translateY(1px)}
   .btn[disabled]{opacity:.45;cursor:default}
@@ -627,105 +633,107 @@ var STAGE_ALIAS = {'Ocean/Travel':'signposted as the ANZ Stage, and called the I
    The audience tags are mine, not the show's: its exhibitor records ship
    with an empty category list, so nothing would filter without them.
    ------------------------------------------------------------------ */
-var ST_TRAVEL='Travel', ST_TRAIN='Training', ST_GEAR='Gear', ST_PHOTO='Photo & video',
-    ST_CLUB='Clubs & causes', ST_SHOP='Dive shops', ST_FEAT='Stages & features';
+/* The show's own exhibitor categories, in its own words. */
+var ST_FEAT='Feature';
+var STAND_TYPES = ['Feature','Dive travel','Liveaboards','Local diving','Dive gear',
+                   'Underwater photo','Training','Non-profit','Media','Sponsor'];
+var TYPE_COLOR = {
+  'Feature':'#f3c64f', 'Dive travel':'#16a085', 'Liveaboards':'#4fd28a',
+  'Local diving':'#36c9c0', 'Dive gear':'#ff9f6b', 'Underwater photo':'#b98cff',
+  'Training':'#57c7ff', 'Non-profit':'#ef9bd0', 'Media':'#9fc3d2', 'Sponsor':'#f3c64f'
+};
 
 /* [stand, name, x, y, width, depth, type, tags] */
+/* [stand, name, x, y, width, depth, official categories, audience tags]
+   Categories are the show's own exhibitor taxonomy, read off its
+   directory, and several exhibitors legitimately carry two or three.
+   Audience tags are derived from those categories rather than guessed.
+   Stages, the seminar room and a handful of exhibitors the directory
+   does not list are classified by hand. */
 var STAND_ROWS = [
-  ['F4','Main Stage',                        85894,26512,12000,9000, ST_FEAT, 'GEN PHOTO TECH PRO'],
-  ['F3','Photo Stage',                       44894,38512, 9000,6000, ST_FEAT, 'PHOTO'],
-  ['F2','Tech Stage',                        86894,65512, 9000,6000, ST_FEAT, 'TECH'],
-  ['F5','ANZ Stage',                         47394,56512, 8500,6000, ST_FEAT, 'GEN PRO'],
-  ['F1','Scuba Discovery Pool',              42893,25917,13000,10000,ST_FEAT, 'GEN'],
-  ['232','Tank Cave VR',                     85894,59512, 6000,3000, ST_FEAT, 'TECH GEN'],
-  ['204','VR Dive Zone / Global Underwater Explorers', 38394,56512,6000,3000, ST_FEAT, 'TECH GEN'],
-
-  ['100','PADI Asia Pacific',                39894,65512, 9000,6000, ST_TRAIN,'GEN PRO'],
-  ['500','SDI Oceania',                      58893,26512, 6000,9000, ST_TRAIN,'GEN TECH PRO'],
-  ['110','Dive RAID International',          54894,66512, 3000,3000, ST_TRAIN,'TECH PRO'],
-  ['530','Mares & SSI',                      76893,26512, 6000,9000, ST_TRAIN,'GEN TECH PRO'],
-  ['512','Royal Australian Navy',            67893,26512, 6000,6000, ST_TRAIN,'GEN TECH PRO'],
-  ['441','Scuba Gym',                        94894,44512, 3000,3000, ST_TRAIN,'GEN'],
-  ['112','DAN',                              57894,66512, 3000,6000, ST_TRAIN,'GEN TECH PRO'],
-
-  ['320','Nikon',                            55894,47512, 3000,6000, ST_PHOTO,'PHOTO'],
-  ['225','Insta360',                         76894,59512, 3000,3000, ST_PHOTO,'PHOTO'],
-  ['218','Digital Diver',                    67894,59512, 3000,3000, ST_PHOTO,'PHOTO'],
-  ['402','Divevolk',                         32894,38512, 3000,3000, ST_PHOTO,'PHOTO'],
-  ['228','Scubapix',                         76894,56512, 3000,3000, ST_PHOTO,'PHOTO'],
-  ['300','UW Images',                        33894,47512, 3000,6000, ST_PHOTO,'PHOTO'],
-  ['304','DPG & The Underwater Club',        36894,47512, 3000,3000, ST_PHOTO,'PHOTO'],
-  ['424','Ocean Geographic Society',         64894,38512, 3000,3000, ST_PHOTO,'PHOTO PRO'],
-  ['400','Dive Lantern',                     32894,41512, 3000,3000, ST_PHOTO,'PHOTO TECH'],
-
-  ['126','Garmin',                           71894,68512, 3000,3000, ST_GEAR, 'TECH GEN'],
-  ['216','AL-CAN Cylinder',                  61894,59512, 3000,3000, ST_GEAR, 'TECH'],
-  ['510','Narwhal Technology',               67893,32512, 3000,3000, ST_GEAR, 'TECH'],
-  ['420','Deep Blue Ventures',               61894,38512, 3000,6000, ST_GEAR, 'TECH'],
-  ['222','Ocean Armour',                     70894,56512, 3000,3000, ST_GEAR, 'GEN'],
-  ['434','Akuana Australia',                 88894,38512, 3000,6000, ST_GEAR, 'GEN TECH'],
-  ['212','Sea Breeze Trading (Oceanarium)',  58894,56512, 3000,3000, ST_GEAR, 'GEN'],
-  ['114','Benni Marine Designs',             65894,68512, 3000,3000, ST_GEAR, 'GEN'],
-
-  ['404','Abyss Scuba Diving',               35894,41512, 3000,3000, ST_SHOP, 'GEN'],
-  ['432','Bay City Scuba',                   85894,38512, 3000,6000, ST_SHOP, 'GEN'],
-  ['130','Dive Centre Bondi',                77894,68512, 6000,3000, ST_SHOP, 'GEN'],
-  ['134','Forster Dive Center',              77894,65512, 6000,3000, ST_SHOP, 'GEN'],
-
-  ['122','Save Our Marine Life',             68894,68512, 3000,3000, ST_CLUB, 'GEN PRO'],
-  ['422','ORRCA',                            64894,41512, 3000,3000, ST_CLUB, 'GEN PRO'],
-  ['224','Gordons Bay Scuba Diving Club',    70894,59512, 3000,3000, ST_CLUB, 'GEN'],
-  ['321','Historical Diving Society',        58894,47512, 3000,6000, ST_CLUB, 'TECH GEN'],
-  ['302','Underwater Australasia',           36894,50512, 6000,3000, ST_CLUB, 'GEN PHOTO'],
-  ['200','Rork Media',                       35394,56512, 3000,6000, ST_CLUB, 'PRO'],
-  ['440','VIZ Sydney Diving Visibility',     94894,38512, 3000,6000, ST_CLUB, 'GEN'],
-  ['116','PNG Dive Association',             65894,65512, 3000,3000, ST_CLUB, 'PRO GEN'],
-
-  ['106','Dive Planit',                      51894,66512, 3000,6000, ST_TRAVEL,'PRO GEN'],
-  ['108','New Caledonia Tourism',            54894,69512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['202','Chindonan Dive & Beach Resort',    38394,59512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['316','Wakatobi Dive Resort',             53894,38512, 3000,6000, ST_TRAVEL,'PRO GEN'],
-  ['224b','',0,0,0,0,'',''],
-  ['220','Neptunes Liveaboards',             67894,56512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['214','Beluga Reisen',                    61894,56512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['406','Silver Reef Dive Resort',          35894,38512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['430','Dive Adventures',                  73894,38512, 9000,6000, ST_TRAVEL,'PRO GEN'],
-  ['329','Master Liveaboards',               73894,50512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['308','Pearl Fleet',                      46494,47512, 3000,6000, ST_TRAVEL,'PRO'],
-  ['314','PT Ocean Explorers',               49494,50512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['312','Atmosphere Resort',                49494,47512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['306','Murex',                            39894,47512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['324','Galapagos Galaxy Diver',           64894,47512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['322','Spirit of Freedom',                64894,50512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['328','Bunaken Oasis',                    67894,50512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['335','Diveaway Fiji',                    79894,50512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['210','Mike Ball Dive Expeditions',       58894,59512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['208','Rodney Fox Shark Expeditions',     41394,59512, 3000,3000, ST_TRAVEL,'GEN PRO'],
-  ['326','Neomi Cruise',                     67894,47512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['428','Dive Damai',                       67894,41512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['426','Pearl of Papua',                   67894,38512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['330','Tahiti Tourism',                   73894,47512, 3000,3000, ST_TRAVEL,'PRO GEN'],
-  ['331','Wellenreng Liveaboards',           76894,50512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['332','Sea Safari Cruises',               76894,47512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['226','Lumbalumba Resort',                79894,59512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['229','Waidroka',                         79894,56512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['338','Tourism Fiji',                     85894,47512, 6000,6000, ST_TRAVEL,'PRO GEN'],
-  /* Altalena distributes drysuits and protective kit (Poseidon, Ursuit,
-     Viking, SiTech) — the name reads like a liveaboard but is not one. */
-  ['242','Altalena Drysuits & Protective Equipment', 94894,56512, 3000,6000, ST_GEAR,'TECH GEN'],
-  ['336','Volivoli Beach Resort Fiji',       79894,47512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['124','Dive Queensland',                  68894,65512, 6000,3000, ST_TRAVEL,'PRO GEN'],
-  ['234','Beqa Lagoon Resort',               85894,56512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['520','Scubaspa Fleet',                   70893,32512, 3000,3000, ST_TRAVEL,'PRO'],
-  ['235','Hydro Sports Fiji',                88894,56512, 3000,3000, ST_TRAVEL,'PRO'],
-
-  /* Not a numbered stand: the seminar room is drawn into the venue shell
-     on the far left of the published plan. Placed to match it. */
-  ['WS','Workshop Room',                     24894,53512, 6500,8000, ST_FEAT, 'GEN PHOTO TECH PRO']
+  ['F5','ANZ Stage'                                   , 47394,56512,8500,6000, ['Feature'], 'GEN PRO'],
+  ['312','Atmosphere Resort'                           , 49494,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['234','Beqa Lagoon Resort'                          , 85894,56512,3000,3000, ['Dive travel'], 'PRO'],
+  ['202','Chindonan Dive & Beach Resort'               , 38394,59512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['110','Dive RAID International'                     , 54894,66512,3000,3000, ['Training'], 'TECH PRO'],
+  ['321','Historical Diving Society'                   , 58894,47512,3000,6000, ['Non-profit'], 'TECH GEN'],
+  ['F4','Main Stage'                                  , 85894,26512,12000,9000, ['Feature'], 'GEN PHOTO TECH PRO'],
+  ['424','Ocean Geographic Society'                    , 64894,38512,3000,3000, ['Media','Non-profit'], 'PHOTO PRO'],
+  ['F3','Photo Stage'                                 , 44894,38512,9000,6000, ['Feature'], 'PHOTO'],
+  ['200','Rork Media'                                  , 35394,56512,3000,6000, ['Media'], 'PRO'],
+  ['F1','Scuba Discovery Pool'                        , 42893,25917,13000,10000, ['Feature'], 'GEN'],
+  ['228','Scubapix'                                    , 76894,56512,3000,3000, ['Underwater photo'], 'PHOTO'],
+  ['520','Scubaspa Fleet'                              , 70893,32512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['232','Tank Cave VR'                                , 85894,59512,6000,3000, ['Feature'], 'TECH GEN'],
+  ['F2','Tech Stage'                                  , 86894,65512,9000,6000, ['Feature'], 'TECH'],
+  ['316','Wakatobi Dive Resort'                        , 53894,38512,3000,6000, ['Dive travel'], 'PRO GEN'],
+  ['WS','Workshop Room'                               , 24894,53512,6500,8000, ['Feature'], 'GEN PHOTO TECH PRO'],
+  ['216','AL-CAN Cylinder'                             , 61894,59512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['404','Abyss Scuba Diving'                          , 35894,41512,3000,3000, ['Local diving'], 'GEN'],
+  ['434','Akuana Australia'                            , 88894,38512,3000,6000, ['Dive gear'], 'GEN TECH'],
+  ['242','Altalena Drysuits & Protective Equipment'    , 94894,56512,3000,6000, ['Dive gear'], 'GEN TECH'],
+  ['432','Bay City Scuba'                              , 85894,38512,3000,6000, ['Local diving'], 'GEN'],
+  ['214','Beluga Reisen'                               , 61894,56512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['114','Benni Marine Designs'                        , 65894,68512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['328','Bunaken Oasis'                               , 67894,50512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['112','DAN'                                         , 57894,66512,3000,6000, ['Exhibitor'], 'GEN'],
+  ['304','DPG & The Underwater Club'                   , 36894,47512,3000,3000, ['Media','Sponsor','Underwater photo'], 'GEN PRO PHOTO'],
+  ['420','Deep Blue Ventures'                          , 61894,38512,3000,6000, ['Training'], 'GEN PRO'],
+  ['218','Digital Diver'                               , 67894,59512,3000,3000, ['Dive gear','Underwater photo'], 'GEN TECH PHOTO'],
+  ['430','Dive Adventures'                             , 73894,38512,9000,6000, ['Dive travel'], 'PRO GEN'],
+  ['130','Dive Centre Bondi'                           , 77894,68512,6000,3000, ['Dive gear'], 'GEN TECH'],
+  ['428','Dive Damai'                                  , 67894,41512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['400','Dive Lantern'                                , 32894,41512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['106','Dive Planit'                                 , 51894,66512,3000,6000, ['Dive travel'], 'PRO GEN'],
+  ['124','Dive Queensland'                             , 68894,65512,6000,3000, ['Local diving'], 'GEN'],
+  ['335','Diveaway Fiji'                               , 79894,50512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['402','Divevolk'                                    , 32894,38512,3000,3000, ['Underwater photo'], 'PHOTO'],
+  ['134','Forster Dive Center'                         , 77894,65512,6000,3000, ['Local diving'], 'GEN'],
+  ['324','Galapagos Galaxy Diver'                      , 64894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['126','Garmin'                                      , 71894,68512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['224','Gordons Bay Scuba Diving Club'               , 70894,59512,3000,3000, ['Non-profit'], 'GEN PRO'],
+  ['235','Hydro Sports Fiji'                           , 88894,56512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['225','Insta360'                                    , 76894,59512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['226','Lumbalumba Resort'                           , 79894,59512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['530','Mares & SSI'                                 , 76893,26512,6000,9000, ['Dive gear','Training'], 'GEN TECH PRO'],
+  ['329','Master Liveaboards'                          , 73894,50512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['210','Mike Ball Dive Expeditions'                  , 58894,59512,3000,3000, ['Liveaboards','Local diving'], 'PRO GEN'],
+  ['306','Murex'                                       , 39894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['510','Narwhal Technology'                          , 67893,32512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['326','Neomi Cruise'                                , 67894,47512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['220','Neptunes Liveaboards'                        , 67894,56512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['108','New Caledonia Tourism'                       , 54894,69512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['320','Nikon'                                       , 55894,47512,3000,6000, ['Underwater photo'], 'PHOTO'],
+  ['422','ORRCA'                                       , 64894,41512,3000,3000, ['Non-profit'], 'GEN PRO'],
+  ['222','Ocean Armour'                                , 70894,56512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['100','PADI Asia Pacific'                           , 39894,65512,9000,6000, ['Training'], 'GEN PRO'],
+  ['116','PNG Dive Association'                        , 65894,65512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['314','PT Ocean Explorers'                          , 49494,50512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['308','Pearl Fleet'                                 , 46494,47512,3000,6000, ['Liveaboards','Sponsor'], 'PRO'],
+  ['426','Pearl of Papua'                              , 67894,38512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['208','Rodney Fox Shark Expeditions'                , 41394,59512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['512','Royal Australian Navy'                       , 67893,26512,6000,6000, ['Local diving'], 'GEN'],
+  ['500','SDI Oceania'                                 , 58893,26512,6000,9000, ['Training'], 'GEN PRO'],
+  ['122','Save Our Marine Life'                        , 68894,68512,3000,3000, ['Non-profit'], 'GEN PRO'],
+  ['441','Scuba Gym'                                   , 94894,44512,3000,3000, ['Non-profit'], 'GEN PRO'],
+  ['212','Sea Breeze Trading (Oceanarium)'             , 58894,56512,3000,3000, ['Dive gear'], 'GEN TECH'],
+  ['332','Sea Safari Cruises'                          , 76894,47512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['406','Silver Reef Dive Resort'                     , 35894,38512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['322','Spirit of Freedom'                           , 64894,50512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['330','Tahiti Tourism'                              , 73894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['338','Tourism Fiji'                                , 85894,47512,6000,6000, ['Dive travel'], 'PRO GEN'],
+  ['300','UW Images'                                   , 33894,47512,3000,6000, ['Dive gear','Underwater photo'], 'GEN TECH PHOTO'],
+  ['302','Underwater Australasia'                      , 36894,50512,6000,3000, ['Dive gear','Underwater photo'], 'GEN TECH PHOTO'],
+  ['440','VIZ Sydney Diving Visibility'                , 94894,38512,3000,6000, ['Local diving'], 'GEN'],
+  ['204','VR Dive Zone / Global Underwater Explorers'  , 38394,56512,6000,3000, ['Training'], 'GEN PRO'],
+  ['336','Volivoli Beach Resort Fiji'                  , 79894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['229','Waidroka'                                    , 79894,56512,3000,3000, ['Dive travel'], 'PRO GEN'],
+  ['331','Wellenreng Liveaboards'                      , 76894,50512,3000,3000, ['Liveaboards'], 'PRO'],
 ];
 
-var STANDS = STAND_ROWS.filter(function(r){return r[1];}).map(function(r){
-  return {no:r[0], n:r[1], x:r[2], y:r[3], w:r[4], d:r[5], type:r[6], tags:r[7].split(' ')};
+var STANDS = STAND_ROWS.map(function(r){
+  return {no:r[0], n:r[1], x:r[2], y:r[3], w:r[4], d:r[5],
+          types:r[6], type:r[6][0], tags:r[7].split(' ')};
 });
 function standByNo(no){for(var i=0;i<STANDS.length;i++) if(STANDS[i].no===no) return STANDS[i]; return null;}
 
@@ -765,11 +773,6 @@ var STAGE_STAND = {
   'Ocean/Travel':'F5', 'Workshop Room':'WS', 'Demo Pool':'F1'
 };
 
-var STAND_TYPES = [ST_FEAT, ST_TRAVEL, ST_PHOTO, ST_GEAR, ST_TRAIN, ST_SHOP, ST_CLUB];
-var TYPE_COLOR = {};
-TYPE_COLOR[ST_FEAT]='#f3c64f'; TYPE_COLOR[ST_TRAVEL]='#4fd28a'; TYPE_COLOR[ST_PHOTO]='#b98cff';
-TYPE_COLOR[ST_GEAR]='#ff9f6b'; TYPE_COLOR[ST_TRAIN]='#57c7ff'; TYPE_COLOR[ST_SHOP]='#36c9c0';
-TYPE_COLOR[ST_CLUB]='#ef9bd0';
 
 /* ------------------------------------------------------------------
    How to reach people, before or after the show.
@@ -1210,7 +1213,7 @@ function renderAgenda(){
           '<div class="stno">'+esc(s.no)+'</div>'+
           '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
             '<div class="nm">'+esc(s.n)+'</div>'+
-            '<div class="sub2">'+esc(s.type)+(hasContact(c)?' · contact details inside':'')+'</div>'+
+            '<div class="sub2">'+esc(s.types.join(' · '))+(hasContact(c)?' · contact details inside':'')+'</div>'+
           '</div>'+
           '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="true" aria-label="Unpin">★</button>'+
         '</article>';
@@ -1373,9 +1376,9 @@ function renderPlan(opts){
   var flip = function(s){ return b.minY + b.maxY - s.y - s.d; };
   var body = STANDS.map(function(s){
     var isFocus = focus.indexOf(s.no)>=0, isHit = hit.indexOf(s.no)>=0;
-    var cls = 'plan-rect'+(s.type===ST_FEAT?' feat':'')+(isHit?' hit':'')+(isFocus?' focus':'');
+    var cls = 'plan-rect'+(s.types.indexOf(ST_FEAT)>=0?' feat':'')+(isHit?' hit':'')+(isFocus?' focus':'');
     var y = flip(s);
-    var label = (isFocus||isHit) ? s.n : (s.type===ST_FEAT ? s.n : '');
+    var label = (isFocus||isHit) ? s.n : (s.types.indexOf(ST_FEAT)>=0 ? s.n : '');
     var fs = Math.max(700, Math.min(1400, s.w/Math.max(6,label.length)*1.9));
     return '<g><rect class="'+cls+'" x="'+s.x+'" y="'+y+'" width="'+s.w+'" height="'+s.d+'" rx="150"></rect>'+
       (label?'<text class="plan-lbl'+(isFocus||isHit?' on':'')+'" style="font-size:'+Math.round(fs)+'px" x="'+(s.x+s.w/2)+'" y="'+(y+s.d/2)+'">'+
@@ -1403,9 +1406,9 @@ function standPicked(no){return state.spicks.indexOf(no)>=0;}
 function visibleStands(){
   var q = state.eq.trim().toLowerCase();
   return STANDS.filter(function(s){
-    if(state.etype && s.type!==state.etype) return false;
+    if(state.etype && s.types.indexOf(state.etype)<0) return false;
     if(state.escope==='mine' && !exhMatches(s) && !standPicked(s.no)) return false;
-    if(q && (s.n+' '+s.no+' '+s.type).toLowerCase().indexOf(q)<0) return false;
+    if(q && (s.n+' '+s.no+' '+s.types.join(' ')).toLowerCase().indexOf(q)<0) return false;
     return true;
   }).sort(function(a,b){return a.n.localeCompare(b.n);});
 }
@@ -1435,7 +1438,7 @@ function renderExhibitors(){
       (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="34" height="34">':'')+
       '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
         '<div class="nm">'+esc(s.n)+'</div>'+
-        '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.type)+'</div>'+
+        '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.types.join(' · '))+'</div>'+
       '</div>'+
       '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="'+on+'" '+
         'aria-label="'+(on?'Unpin':'Pin')+' '+esc(s.n)+'">'+(on?'★':'☆')+'</button>'+
@@ -1504,7 +1507,7 @@ function openStandSheet(no){
   var lg = standLogo(no);
   document.getElementById('sheetBody').innerHTML =
     (lg?'<img class="standlogo" src="'+esc(lg)+'" alt="">':'')+
-    '<div class="when">STAND '+esc(s.no)+'<br>'+esc(s.type)+'</div>'+
+    '<div class="when">STAND '+esc(s.no)+'<br>'+esc(s.types.join(' · '))+'</div>'+
     '<h3 id="sheetTitle">'+esc(s.n)+'</h3>'+
     '<div class="meta">'+s.tags.map(function(t){
       return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
@@ -1522,7 +1525,7 @@ function openStandSheet(no){
       ? '<div class="chanhead">Get in touch</div>'+renderChans(c)
       : '<p class="nochan">No contact channel published yet — catch them on stand '+esc(s.no)+'.</p>')+
     (mine.length?'<p class="why">Matches your interest in '+esc(mine.map(function(a){return a.s;}).join(' and '))+'.</p>':'')+
-    (s.type===ST_FEAT?'':'<div class="actions">'+
+    (s.types.indexOf(ST_FEAT)>=0?'':'<div class="actions">'+
       '<button class="btn'+(on?' ghost':'')+'" data-pin="'+esc(no)+'">'+
         (on?'★ Unpin this stand':'☆ Pin to my plan')+'</button></div>');
   lastFocus = document.activeElement;
