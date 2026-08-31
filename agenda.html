@@ -107,6 +107,37 @@
 
   .empty{text-align:center;color:var(--muted);font-size:14.5px;line-height:1.6;padding:26px 10px}
 
+  /* the whole left side of a card opens its detail sheet */
+  .sess .body{cursor:pointer}
+  .more{font-size:11.5px;font-weight:800;color:var(--muted);margin-top:7px}
+  .more.has{color:var(--accent)}
+
+  /* ---- detail sheet ---- */
+  .sheetwrap{position:fixed;inset:0;z-index:50;display:none}
+  .sheetwrap.open{display:block}
+  .backdrop{position:absolute;inset:0;background:rgba(3,17,24,.72)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;max-height:88dvh;overflow:auto;
+    background:var(--surface);border-top:1px solid var(--line);
+    border-radius:18px 18px 0 0;padding:16px 16px calc(20px + env(safe-area-inset-bottom));
+    max-width:720px;margin:0 auto}
+  @media (min-width:640px){
+    .sheet{top:50%;bottom:auto;transform:translateY(-50%);border-radius:18px;
+      border:1px solid var(--line);left:50%;right:auto;margin:0;width:min(560px,92vw);
+      transform:translate(-50%,-50%)}
+  }
+  .sheet .grab{width:40px;height:4px;border-radius:99px;background:var(--line);margin:0 auto 14px}
+  .sheet h3{margin:8px 0 6px;font-size:20px;line-height:1.28}
+  .sheet .when{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);letter-spacing:1px;line-height:1.7}
+  .sheet .blurb{font-size:15px;line-height:1.6;color:var(--text);margin:12px 0 0}
+  .sheet .nodetail{font-size:14px;line-height:1.6;color:var(--muted);margin:12px 0 0}
+  .sheet .why{font-size:13.5px;color:var(--accent);margin:10px 0 0}
+  .sheet .actions{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+  .sheet .actions .btn{width:100%}
+  .iglink{display:block;text-align:center;border:1px solid var(--line);border-radius:12px;
+    padding:13px 16px;color:var(--text);text-decoration:none;font-weight:700;font-size:15px}
+  .closex{position:absolute;top:12px;right:14px;background:transparent;border:0;color:var(--muted);
+    font-size:24px;line-height:1;cursor:pointer;font-family:inherit;padding:4px 6px}
+
   /* ---- bottom nav ---- */
   .nav{position:fixed;left:0;right:0;bottom:0;background:rgba(6,34,46,.94);
     backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;
@@ -201,6 +232,15 @@
   <p class="foot hideprint">GO Diving Show Sydney · 5–6 September 2026</p>
 </div>
 
+<div class="sheetwrap hideprint" id="sheet" role="dialog" aria-modal="true" aria-labelledby="sheetTitle">
+  <div class="backdrop" data-close></div>
+  <div class="sheet">
+    <button class="closex" data-close aria-label="Close">×</button>
+    <div class="grab"></div>
+    <div id="sheetBody"></div>
+  </div>
+</div>
+
 <nav class="nav hideprint" id="nav" style="display:none">
   <button data-view="browse" aria-pressed="true"><span class="ic">🔍</span>Discover</button>
   <button data-view="agenda" aria-pressed="false"><span class="ic">📋</span>My agenda<span class="count" id="navCount" style="display:none">0</span></button>
@@ -237,9 +277,13 @@ var SESSIONS = [
   {id:'a2', day:1, start:'10:00', end:'12:00', stage:'Workshop Room',  title:'Become a PADI Pro: Turning Passion into a Career',  who:'A. Halloran & N. Prendergast', tags:['PRO']},
   {id:'a3', day:1, start:'10:30', end:'11:15', stage:'Tech Stage',     title:"Gas 'N' Guts: The Search for HMS Affray",           who:'David Strike',             tags:['TECH']},
   {id:'a4', day:1, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'From Whales to Nudibranchs: Macro & Large Marine Life', who:'Vanessa Mignon',       tags:['PHOTO']},
-  {id:'a5', day:1, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Behind the Scenes',    who:'SHA Cast',                 tags:['GEN','TECH']},
+  {id:'a5', day:1, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Behind the Scenes',    who:'Ryan Chatfield & Nush Freedman (SHA Cast)', tags:['GEN','TECH'],
+   blurb:'Team members Ryan Chatfield and Nush Freedman take you behind the scenes of the hit TV series, live on the Main Stage. They are on both days.',
+   link:'https://www.instagram.com/p/DcqrWqAAVNH/'},
   {id:'a6', day:1, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:'Beyond Holding Your Breath: The Spirit of Freediving', who:'Dylan Boag',            tags:['GEN','PRO']},
-  {id:'a7', day:1, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Diving Operations & Planning',            who:'Becca Boring',             tags:['TECH']},
+  {id:'a7', day:1, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Diving Operations & Planning',            who:'Becca Boring',             tags:['TECH'],
+   blurb:'Becca Boring — Operations Manager at Backscatter Underwater Video & Photo, and founder of Women at Depth — on the best wrecks of Truk Lagoon and Bikini Atoll: a rust-obsessed shooter’s guide to the Pacific’s iconic wrecks.',
+   link:'https://www.instagram.com/p/Dcop-AwFKjj/'},
   {id:'a8', day:1, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'10 Tips to Elevate Your Underwater Photography',    who:'Jake Wilton',              tags:['PHOTO']},
   {id:'a9', day:1, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Marine Life Stories & Coastal Adventures',          who:'Sheree Maris',             tags:['GEN']},
   {id:'a10',day:1, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone In-Water Display',       who:'QYSEA Team',               tags:['GEN','TECH']},
@@ -251,7 +295,9 @@ var SESSIONS = [
   {id:'a16',day:1, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Asia-Pacific Ocean Visions & Conservation Photo',   who:'Michael Aw',               tags:['PHOTO','PRO']},
   {id:'a17',day:1, start:'13:30', end:'14:15', stage:'Tech Stage',     title:'Technical Cave & Deeper Wreck Exploration',         who:'Mark Tozer',               tags:['TECH']},
   {id:'a18',day:1, start:'13:45', end:'14:30', stage:'Photo Stage',    title:'Wide-Angle Lighting & Gear Setup Dynamics',         who:'Jim Decker',               tags:['PHOTO']},
-  {id:'a19',day:1, start:'14:00', end:'16:00', stage:'Workshop Room',  title:'Save Our Marine Life: Screening of "Ocean" & Q&A',  who:'SOML Team',                tags:['GEN','PRO']},
+  {id:'a19',day:1, start:'14:00', end:'16:00', stage:'Workshop Room',  title:'Save Our Marine Life: Screening of "Ocean" & Q&A',  who:'SOML Team',                tags:['GEN','PRO'],
+   blurb:'An exclusive screening of “Ocean”, narrated by Sir David Attenborough, presented by Save Our Marine Life — followed by a discussion on marine sanctuaries.',
+   link:'https://www.instagram.com/p/Dcsg78ykmSz/'},
   {id:'a20',day:1, start:'14:15', end:'15:00', stage:'Main Stage',     title:'From Turtle Encounters to Storytelling',            who:'Ross Long',                tags:['GEN','PHOTO']},
   {id:'a21',day:1, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Emerging Dive Destinations & Eco-Travel',           who:'Jack Power',               tags:['PRO']},
   {id:'a22',day:1, start:'14:30', end:'15:15', stage:'Tech Stage',     title:'Rebreather Mechanics & Safety Protocols',           who:'Samir Alhafith',           tags:['TECH']},
@@ -260,12 +306,16 @@ var SESSIONS = [
   {id:'a25',day:1, start:'15:30', end:'17:00', stage:'Main Stage',     title:'Underwater Photo & Video Awards Ceremony',          who:'Main Stage Hosts',         tags:['GEN','PHOTO']},
 
   /* ---------------- Sunday ---------------- */
-  {id:'b1', day:2, start:'10:00', end:'10:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Uncovering History',   who:'SHA Cast',                 tags:['GEN','TECH']},
+  {id:'b1', day:2, start:'10:00', end:'10:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Uncovering History',   who:'Ryan Chatfield & Nush Freedman (SHA Cast)', tags:['GEN','TECH'],
+   blurb:'Team members Ryan Chatfield and Nush Freedman take you behind the scenes of the hit TV series, live on the Main Stage. They are on both days.',
+   link:'https://www.instagram.com/p/DcqrWqAAVNH/'},
   {id:'b2', day:2, start:'10:00', end:'11:00', stage:'Workshop Room',  title:'Nikon Workshop: Lessons from the Field & Setup',    who:'Jake Wilton',              tags:['PHOTO']},
   {id:'b3', day:2, start:'10:30', end:'11:15', stage:'Tech Stage',     title:'North Sea Deep Diving & Wreck Expeditions',         who:'John Kendall',             tags:['TECH']},
   {id:'b4', day:2, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'Underwater Photography Myths Debunked',             who:'Nigel Marsh',              tags:['PHOTO']},
   {id:'b5', day:2, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Conservation Storytelling Through the Lens',        who:'Ross Long',                tags:['GEN','PHOTO']},
-  {id:'b6', day:2, start:'11:00', end:'12:00', stage:'Workshop Room',  title:'UW Photo Made Simple (Action Cams / Phones)',       who:'Digital Diver Team',       tags:['GEN','PHOTO']},
+  {id:'b6', day:2, start:'11:00', end:'12:00', stage:'Workshop Room',  title:'UW Photo Made Simple (Action Cams / Phones)',       who:'Digital Diver Team',       tags:['GEN','PHOTO'],
+   blurb:'An entry-level workshop for anyone shooting on a phone, an action camera or an OM TG-7 — the pros and cons of each, so you know exactly what gear fits your budget and needs.',
+   link:'https://www.instagram.com/p/DcrXlQbDxWD/'},
   {id:'b7', day:2, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:"Diving Fuvahmulah: World's Tiger Shark Capital",    who:'Ahmed Alham',              tags:['GEN','PRO']},
   {id:'b8', day:2, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Mine & Subterranean Exploration',         who:'John Dalla-Zuanna',        tags:['TECH']},
   {id:'b9', day:2, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'Underwater Photography on a Budget',                who:'Brett Lobwein',            tags:['GEN','PHOTO']},
@@ -369,7 +419,9 @@ function visibleSessions(){
     if(state.stage && s.stage!==state.stage) return false;
     if(state.scope==='mine' && !matchesInterests(s) && !picked(s.id)) return false;
     if(q){
-      var hay = (s.title+' '+s.who+' '+s.stage+' '+s.tags.join(' ')).toLowerCase();
+      /* the blurb is searchable too: "Attenborough" and "Truk" are the
+         words someone actually remembers, and neither is in a title. */
+      var hay = (s.title+' '+s.who+' '+s.stage+' '+s.tags.join(' ')+' '+(s.blurb||'')).toLowerCase();
       if(hay.indexOf(q)<0) return false;
     }
     return true;
@@ -383,7 +435,7 @@ function sessionCard(s,opts){
   var forYou = state.interests.length && matchesInterests(s);
   return '<article class="sess'+(on?' on':'')+(clash.length?' clash':'')+'" '+
       'style="border-left-color:'+STAGE_COLOR[s.stage]+'">'+
-    '<div class="body">'+
+    '<div class="body" data-open="'+s.id+'" role="button" tabindex="0">'+
       '<div class="time">'+esc(range(s))+'</div>'+
       '<div class="ttl">'+esc(s.title)+'</div>'+
       '<div class="who">'+esc(s.who)+'</div>'+
@@ -394,6 +446,7 @@ function sessionCard(s,opts){
       '</div>'+
       (clash.length?'<div class="warn">⚠ '+(on?'Overlaps':'Clashes with')+' '+
         esc(clash.map(function(c){return c.title;}).join(', '))+'</div>':'')+
+      '<div class="more'+(s.blurb?' has':'')+'">'+(s.blurb?'▸ Details':'▸ Session info')+'</div>'+
     '</div>'+
     '<button class="add" data-add="'+s.id+'" aria-pressed="'+on+'" '+
       'aria-label="'+(on?'Remove from':'Add to')+' my agenda">'+(on?'★':'☆')+'</button>'+
@@ -460,6 +513,53 @@ function renderAgenda(){
   });
   host.innerHTML = html;
 }
+
+/* ---------------- detail sheet ---------------- */
+/* Only a handful of sessions have a write-up so far — the show publishes
+   them a few at a time. The sheet opens for every session regardless, so
+   the interaction is consistent and says plainly when there is nothing
+   more yet, rather than a card that looks tappable on some rows only. */
+var sheetEl = document.getElementById('sheet');
+var lastFocus = null;
+
+function openSheet(id){
+  var s = byId(id); if(!s) return;
+  var on = picked(id);
+  var mine = AUDIENCES.filter(function(a){
+    return state.interests.indexOf(a.k)>=0 && s.tags.indexOf(a.k)>=0;});
+  document.getElementById('sheetBody').innerHTML =
+    '<div class="when">'+esc(DAYS[s.day].short)+' · '+esc(range(s))+'<br>'+esc(s.stage)+'</div>'+
+    '<h3 id="sheetTitle">'+esc(s.title)+'</h3>'+
+    '<div class="who">'+esc(s.who)+'</div>'+
+    '<div class="meta">'+s.tags.map(function(t){
+        return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
+    (s.blurb
+      ? '<p class="blurb">'+esc(s.blurb)+'</p>'
+      : '<p class="nodetail">The show hasn’t published a write-up for this one yet. '+
+        'Time, stage and speaker above are from the official programme.</p>')+
+    (mine.length?'<p class="why">Matches your interest in '+esc(mine.map(function(a){return a.s;}).join(' and '))+'.</p>':'')+
+    '<div class="actions">'+
+      '<button class="btn'+(on?' ghost':'')+'" data-add="'+s.id+'">'+
+        (on?'★ Remove from my agenda':'☆ Add to my agenda')+'</button>'+
+      (s.link?'<a class="iglink" href="'+esc(s.link)+'" target="_blank" rel="noopener noreferrer">'+
+        'See the show’s post ↗</a>':'')+
+    '</div>';
+  lastFocus = document.activeElement;
+  sheetEl.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  var f = sheetEl.querySelector('.closex'); if(f) f.focus();
+}
+function closeSheet(){
+  sheetEl.classList.remove('open');
+  document.body.style.overflow = '';
+  if(lastFocus && lastFocus.focus) lastFocus.focus();
+}
+sheetEl.addEventListener('click',function(e){
+  if(e.target.closest('[data-close]')) closeSheet();
+});
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape' && sheetEl.classList.contains('open')) closeSheet();
+});
 
 /* ---------------- auto-build ---------------- */
 /* Greedy by start time: walk the day, take the highest-scoring session
@@ -597,12 +697,25 @@ document.getElementById('q').addEventListener('input',function(){
   state.q = this.value; renderBrowse();
 });
 
-/* One handler for both lists: the star does the same thing wherever it is. */
+/* One handler for both lists and the sheet: the star does the same thing
+   wherever it is. Add wins over open, so tapping the star on a card does
+   not also throw the detail sheet up over the list. */
 document.body.addEventListener('click',function(e){
-  var b = e.target.closest('[data-add]'); if(!b) return;
-  var id = b.dataset.add, i = state.picks.indexOf(id);
-  if(i>=0) state.picks.splice(i,1); else state.picks.push(id);
-  save(); render();
+  var b = e.target.closest('[data-add]');
+  if(b){
+    var id = b.dataset.add, i = state.picks.indexOf(id);
+    if(i>=0) state.picks.splice(i,1); else state.picks.push(id);
+    save(); render();
+    if(sheetEl.classList.contains('open')) openSheet(id); /* flip the sheet's own button */
+    return;
+  }
+  var o = e.target.closest('[data-open]');
+  if(o) openSheet(o.dataset.open);
+});
+document.body.addEventListener('keydown',function(e){
+  if(e.key!=='Enter' && e.key!==' ') return;
+  var o = e.target.closest('[data-open]'); if(!o) return;
+  e.preventDefault(); openSheet(o.dataset.open);
 });
 
 document.getElementById('nav').addEventListener('click',function(e){
