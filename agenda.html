@@ -1082,7 +1082,23 @@ var CONTACTS = {
   '214':{web:'https://www.belugareisen.de/', email:'info@belugareisen.de', phone:'+49 551 63451340',
          wa:'+4917617895100', ig:'belugareisen', fb:'https://www.facebook.com/belugareisen'}
 };
-function contactFor(key){return CONTACTS[key]||null;}
+/* Sessions run by a company reuse that company's stand entry rather than
+   repeating it — one place to correct if a number changes, and the visitor
+   gets the same channels whether they found the talk or the stand. */
+var WHO_STAND = {
+  'SDI Team':'500',
+  'Digital Diver Team':'218',
+  'SOML Team':'122',
+  'Ashley Ryan (ORRCA)':'422',
+  'Annie Halloran & Nathan Prendergast (PADI)':'100',
+  'Woody Spark (Scubapix)':'228',
+  'VIZ — Sydney Dive Challenge':'440'
+};
+function contactFor(key){
+  if(CONTACTS[key]) return CONTACTS[key];
+  var st = WHO_STAND[key];
+  return (st && CONTACTS[st]) ? CONTACTS[st] : null;
+}
 function hasContact(c){
   return !!(c && (c.web||c.email||c.phone||c.wa||c.ig||c.ig2||c.fb));
 }
