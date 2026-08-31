@@ -1,0 +1,14 @@
+{
+  // Deployed by Cloudflare Workers Builds on every push to main.
+  // Build command:  bash cloudflare/build.sh   (assembles dist/)
+  // Deploy command: npx wrangler deploy
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "godiving",
+  "main": "worker/index.js",
+  "compatibility_date": "2026-08-01",
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS"
+  },
+  "observability": { "enabled": true }
+}

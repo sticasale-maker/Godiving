@@ -1,66 +1,61 @@
-# Connecting the Pages project to GitHub
+# Connecting the app to GitHub (Workers Builds)
 
-Cloudflare cannot convert a direct-upload project to a Git-connected one:
+Cloudflare now creates new Git-connected projects as **Workers**, not Pages.
+The dashboard's Pages path still exists but is de-emphasised, and the Workers
+flow has one real advantage here: its built-in Access toggle can protect the
+Worker's **production and preview URLs together**, which Pages could not — a
+gap that previously left an ungated copy of this app on the open internet.
 
-> "Currently, you cannot add Git integration to existing Pages applications.
-> If you have already deployed your application, you need to create a new
-> Pages application in order to add Git integration to it."
+## Dashboard settings
 
-So `godiving-planner` stays as it is, and a **new** project is created. Leave
-the old one running until the new one is verified — then delete it, or it
-keeps serving an unmaintained copy on its own hostname.
+Workers & Pages > Create > **Import a repository** > `sticasale-maker/Godiving`
 
-## 1. Create the project (dashboard — requires the GitHub App)
+| Setting                            | Value                      |
+| ---------------------------------- | -------------------------- |
+| Project name                       | `godiving`                 |
+| Build command                      | `bash cloudflare/build.sh` |
+| Deploy command                     | `npx wrangler deploy`      |
+| Non-production branch deploy       | `npx wrangler versions upload` |
+| Path                               | `/`                        |
+| **Protect with Cloudflare Access** | **on**                     |
 
-Workers & Pages > **Create application** > **Pages** > **Connect to Git**.
-Authorise the Cloudflare GitHub App for `sticasale-maker/Godiving` if asked.
+There is no "build output directory" field in this flow. The output is set in
+`wrangler.jsonc` (`assets.directory` = `./dist`), which is why the repo needs
+that file — without it `npx wrangler deploy` has nothing to deploy and the
+build fails.
 
-Build settings:
+## Environment variables (Settings > Variables, production)
 
-| Setting                 | Value                    |
-| ----------------------- | ------------------------ |
-| Production branch       | `main`                   |
-| Build command           | `bash cloudflare/build.sh` |
-| Build output directory  | `dist`                   |
-| Root directory          | `/`                      |
+* `GATE_PASSWORD` — secret. The shared code. Kept as a fallback: it is what
+  guards any hostname Access is not covering.
+* `ACCESS_HOST` — the Worker's production hostname, e.g.
+  `godiving.<subdomain>.workers.dev`. Set this only once Access is confirmed
+  working on that hostname.
 
-`functions/` at the repo root is picked up automatically — that is the gate.
+Leaving `ACCESS_HOST` unset makes the middleware demand the shared code on
+every hostname, production included. That is deliberate — an unconfigured
+deployment fails closed rather than open.
 
-## 2. Set the environment variables
-
-Both are required, on the **Production** environment:
-
-* `GATE_PASSWORD` — the shared code (secret). Guards the per-deployment
-  preview URLs, which Access does not cover.
-* `ACCESS_HOST` — the new production hostname, e.g. `godiving-plan.pages.dev`.
-  Until this is set the middleware demands the code on every hostname,
-  including production. That is deliberate: unset means trust nothing.
-
-## 3. Move Cloudflare Access to the new hostname
-
-The Access application points at `godiving-planner.pages.dev`. Edit its
-destination to the new hostname, or the new site will have no Access in
-front of it and only the shared code will be protecting it.
-
-## 4. Verify before sending the link to anyone
+## Verify before sharing the link
 
     # production: must be 302 to cloudflareaccess.com
-    curl -s -o /dev/null -w '%{http_code}\n' https://<NEW_HOST>/
+    curl -s -o /dev/null -w '%{http_code}\n' https://<PROD_HOST>/
 
-    # a per-deployment URL: must be 401
-    curl -s -o /dev/null -w '%{http_code}\n' https://<hash>.<project>.pages.dev/
+    # a preview/version URL: must not serve the app
+    curl -s -o /dev/null -w '%{http_code}\n' https://<PREVIEW_HOST>/
 
-    # forged Access header against that URL: must still be 401
+    # forged Access header against the preview: must still be refused
     curl -s -o /dev/null -w '%{http_code}\n' \
-      -H 'Cf-Access-Jwt-Assertion: forged' https://<hash>.<project>.pages.dev/
+      -H 'Cf-Access-Jwt-Assertion: forged' https://<PREVIEW_HOST>/
 
-If production returns 200 without a login, `ACCESS_HOST` is set but Access is
-not actually protecting that hostname. Fix that before sharing anything.
+A production 200 with no login means Access is not on that hostname. Stop and
+fix it before sending anything.
 
-## 5. Retire the old project
+## Retire the old project
+
+Once the new Worker is verified, delete the direct-upload Pages project or it
+keeps serving an unmaintained copy on its own live hostname:
 
     npx wrangler pages project delete godiving-planner
 
-Once this is done, `git push` is the whole deploy: Cloudflare rebuilds from
-the repo and GitHub Pages updates too, so the two copies cannot drift.
-`cloudflare/deploy.sh` becomes unnecessary.
+Then `git push` is the whole deploy, and `cloudflare/deploy.sh` is redundant.
