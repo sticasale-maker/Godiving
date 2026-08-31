@@ -3,3 +3,4 @@
 # Cloudflare Pages build output and the demo access code
 .cfdeploy/
 .cfcode
+.wrangler/
