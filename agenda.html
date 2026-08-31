@@ -831,6 +831,14 @@ var STANDS = STAND_ROWS.map(function(r){
   return {no:r[0], n:r[1], x:r[2], y:r[3], w:r[4], d:r[5],
           types:r[6], type:r[6][0], tags:sortTags(tags)};
 });
+/* The rooms that exist to host the programme. They stay in STANDS — the
+   floorplan needs them, and a session sheet highlights the one it is on —
+   but they are not exhibitors and clutter a list you browse to decide who
+   to go and talk to. The Discovery Pool and the two VR zones are kept:
+   those are things you queue up and do, not rooms you sit in. */
+var VENUES = ['F2','F3','F4','F5','WS'];
+function isVenue(no){ return VENUES.indexOf(no)>=0; }
+
 function standByNo(no){for(var i=0;i<STANDS.length;i++) if(STANDS[i].no===no) return STANDS[i]; return null;}
 
 /* Stands whose logo we hold, from the show's own exhibitor directory.
@@ -1673,6 +1681,7 @@ function standPicked(no){return state.spicks.indexOf(no)>=0;}
 function visibleStands(){
   var q = state.eq.trim().toLowerCase();
   return STANDS.filter(function(s){
+    if(isVenue(s.no)) return false;
     if(state.etype && s.types.indexOf(state.etype)<0) return false;
     if(state.escope==='mine' && !exhMatches(s) && !standPicked(s.no)) return false;
     if(q && (s.n+' '+s.no+' '+s.types.join(' ')).toLowerCase().indexOf(q)<0) return false;
