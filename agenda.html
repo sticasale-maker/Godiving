@@ -1629,7 +1629,7 @@ function renderNow(){
 /* Organisers need to stand in the hall in August and see what a visitor
    will see in September. Rather than a separate demo build that drifts,
    this moves the clock the real views already read. */
-var sim = {on:false, day:1, base:0, realBase:0, speed:1};
+var sim = {on:false, day:1, base:0, realBase:0, speed:300};
 var simTick = null;
 
 function simStart(day, minutes, speed){
@@ -2113,11 +2113,13 @@ document.getElementById('nowHost').addEventListener('click',function(e){
   var j = e.target.closest('[data-jump]'); if(!j) return;
   var d = +j.dataset.jump;
   sim.day = d;
-  simStart(d, 10*60, 1);
+  /* 300x by default: at real time a countdown to an 11am talk just sits
+     there, and the point of the preview is watching the day move. */
+  simStart(d, 10*60, 300);
 });
 
 document.getElementById('simHost').addEventListener('click',function(e){
-  if(e.target.id==='simOpen'){ sim.day=1; simStart(1, 10*60, 1); return; }
+  if(e.target.id==='simOpen'){ sim.day=1; simStart(1, 10*60, 300); return; }
   if(e.target.id==='simOff'){ simStop(); return; }
 });
 document.getElementById('simHost').addEventListener('change',function(e){
