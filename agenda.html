@@ -20,7 +20,7 @@
     --bg:#00172f; --bg2:#052a4d; --surface:#073157; --line:rgba(255,255,255,0.16);
     --text:#eaf3fb; --muted:#9db8d2; --accent:#16a085; --accentd:#06382f;
     --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#bd322c;
-    --gen:#57c7ff; --photo:#b98cff; --tech:#36c9c0; --pro:#f3c64f;
+    --gen:#57c7ff; --photo:#b98cff; --tech:#36c9c0; --pro:#f3c64f; --kids:#ff9f6b;
     /* One colour per day, used everywhere the day is named. Which day you
        are looking at is the thing people lose track of while scrolling. */
     --d1:#f3c64f; --d2:#57c7ff;
@@ -71,6 +71,7 @@
   .pick[data-k="PHOTO"] .k{color:var(--photo)} .pick[data-k="PHOTO"][aria-pressed="true"]{border-color:var(--photo)}
   .pick[data-k="TECH"] .k{color:var(--tech)}  .pick[data-k="TECH"][aria-pressed="true"]{border-color:var(--tech)}
   .pick[data-k="PRO"] .k{color:var(--pro)}    .pick[data-k="PRO"][aria-pressed="true"]{border-color:var(--pro)}
+  .pick[data-k="KIDS"] .k{color:var(--kids)}  .pick[data-k="KIDS"][aria-pressed="true"]{border-color:var(--kids)}
 
   /* ---- filter bar ---- */
   .bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
@@ -127,7 +128,8 @@
   .sess .more{clear:both}
   .tag{font-size:10.5px;font-weight:800;letter-spacing:.6px;border-radius:999px;padding:3px 8px;
     border:1px solid currentColor;opacity:.85}
-  .tag.GEN{color:var(--gen)} .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)} .tag.PRO{color:var(--pro)}
+  .tag.GEN{color:var(--gen)} .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)}
+  .tag.PRO{color:var(--pro)} .tag.KIDS{color:var(--kids)}
   .stagetag{font-size:11.5px;font-weight:700;color:var(--muted)}
   .foryou{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--accent);
     background:var(--accentd);border-radius:999px;padding:3px 8px}
@@ -161,6 +163,10 @@
   .sess .body{cursor:pointer}
   .more{font-size:11.5px;font-weight:800;color:var(--muted);margin-top:7px}
   .more.has{color:var(--accent)}
+  .bookflag{margin-left:8px;font-size:10px;font-weight:800;letter-spacing:.6px;color:var(--gold);
+    border:1px solid var(--gold);border-radius:999px;padding:2px 7px}
+  .btn.book{display:block;text-align:center;text-decoration:none;
+    background:linear-gradient(180deg,#f3c64f,#d9a41f);color:#2a1f00}
 
   /* ---- detail sheet ---- */
   .sheetwrap{position:fixed;inset:0;z-index:50;display:none}
@@ -353,6 +359,19 @@
     <div id="exhList"></div>
   </section>
 
+  <!-- ============ ask ============ -->
+  <section id="viewInfo" style="display:none">
+    <div class="card">
+      <div class="eyebrow">Ask the show</div>
+      <h2>What do you want to know?</h2>
+      <p class="sub">Type a question the way you'd say it — “can I bring my dog”, “how much are tickets”,
+        “when is Chris Lemons on”, “where do I find Nikon”.</p>
+    </div>
+    <div class="bar"><input type="search" id="ask" placeholder="Ask a question…" autocomplete="off"></div>
+    <div class="chips" id="askChips"></div>
+    <div id="askOut"></div>
+  </section>
+
   <!-- ============ my day ============ -->
   <section id="viewAgenda" style="display:none">
     <div id="simHost"></div>
@@ -389,6 +408,7 @@
   <button data-view="browse" aria-pressed="true"><span class="ic">🔍</span>Sessions</button>
   <button data-view="exhibitors" aria-pressed="false"><span class="ic">🏕</span>Exhibitors<span class="count" id="navSCount" style="display:none">0</span></button>
   <button data-view="agenda" aria-pressed="false"><span class="ic">📋</span>My day<span class="count" id="navCount" style="display:none">0</span></button>
+  <button data-view="info" aria-pressed="false"><span class="ic">💬</span>Ask</button>
 </nav>
 
 <script>
@@ -407,8 +427,22 @@ var AUDIENCES = [
   {k:'TECH',  n:'Tech & advanced',               s:'tech & advanced',
    d:'Rebreathers, wrecks, caves, deep, expedition.'},
   {k:'PRO',   n:'Pro, travel & conservation',    s:'pro, travel & conservation',
-   d:'Careers, destinations, the industry, the ocean.'}
+   d:'Careers, destinations, the industry, the ocean.'},
+  {k:'KIDS',  n:'Kids & families',               s:'kids & families',
+   d:'Hands-on, visual, and short enough to hold a child’s attention.'}
 ];
+
+/* ------------------------------------------------------------------
+   What actually works with children.
+
+   The show tags nothing this way, so this is a judgement call, made on
+   whether a thing is hands-on, visual, or a story rather than a
+   technique lecture — plus what the exhibitors themselves run and the
+   show's own Kid Zone. Sheree Marris's Sunday talk is the one deliberate
+   exclusion: it is a marine-life talk, but it is about sex in the sea.
+   ------------------------------------------------------------------ */
+var KID_SESSIONS = ['a5','a9','a10','a19','a24','a25','b1','b9','b11'];
+var KID_STANDS   = ['F1','204','232','422','512','321','440','208'];
 
 var DAYS = {
   1:{label:'Saturday 5 September', short:'Sat 5 Sep', dow:'SATURDAY', pretty:'5 September', date:'2026-09-05'},
@@ -500,7 +534,7 @@ var DETAIL = {
         link:'https://www.instagram.com/p/DcnkzA7kQx-/'},
   'a7':{blurb:'Billed by the show as “The best wrecks of Truk Lagoon and Bikini Atoll” — a rust-obsessed shooter’s guide to the Pacific’s iconic wrecks. Becca Boring is Operations Manager at Backscatter Underwater Video & Photo and founder of Women at Depth.',
         link:'https://www.instagram.com/p/Dcop-AwFKjj/',
-        timeNote:'That post gives the time as 11:00am. The time shown above is the one on the official programme.'},
+        timeNote:'One of the show’s posts gives 11:00am. The show’s own schedule page confirms the time above.'},
   'a8':{blurb:'Award-winning underwater photographer Jake Wilton on his top 10 tips to raise your underwater photography to the next level.',
         link:'https://www.instagram.com/p/DbTQ5rdkd2W/'},
   /* No promo for this one, but the matrix spells her surname with one r
@@ -552,7 +586,9 @@ var DETAIL = {
         blurb:'Team members Ryan Chatfield and Nush Freedman take you behind the scenes of the hit Disney+ series — the adventures, discoveries and challenges of uncovering Australia’s maritime history. They are on both days.',
         link:'https://www.instagram.com/p/DcqrWqAAVNH/'},
   'b2':{blurb:'Multi-award-winning wildlife photographer Jake Wilton shows how he built a career in underwater photography, and how he configures his camera in the field.',
-        link:'https://www.instagram.com/p/DcZWWyQDZsm/'},
+        link:'https://www.instagram.com/p/DcZWWyQDZsm/',
+        book:'https://www.eventbrite.com.au/e/below-the-surface-with-jake-wilton-tickets-1998340949574',
+        bookLabel:'Reserve a space'},
   'b3':{blurb:'Billed by the show as “Live on Mars”: the remarkably well-preserved warship wreck of the Mars. John Kendall is a photogrammetry expert and technical diving instructor evaluator specialising in underwater 3D modelling.',
         link:'https://www.instagram.com/p/Dca1YsXD-Fm/'},
   'b4':{blurb:'Nigel Marsh is an Australian naturalist, underwater photographer and photojournalist published in magazines, newspapers and books here and overseas — here taking apart the myths of underwater photography.',
@@ -570,7 +606,9 @@ var DETAIL = {
   'b10':{blurb:'Technical diver, underwater photographer and wreck hunter Pete Mesley — 8,000+ hours in the water across 36 countries — on his 30-year journey with a PFO: the DCI incidents, the misdiagnosis, and the lessons every diver should hear.',
          link:'https://www.instagram.com/p/DcS91FIjFWv/'},
   'b12':{blurb:'Award-winning photographer Daniel Sly uncovers a new world with Nikon Underwater, exploring the smallest details of Sydney’s hidden secrets in this macro workshop.',
-         link:'https://www.instagram.com/p/DceakUniZFf/'},
+         link:'https://www.instagram.com/p/DceakUniZFf/',
+         book:'https://www.eventbrite.com.au/e/underwater-macro-photography-with-daniel-sly-tickets-1998394059427',
+         bookLabel:'Reserve a space'},
   'b13':{blurb:'Dive industry leader Jean-Claude Monachon — former SSI CEO and creator of the Mermaid Programme — on how data and technology, drawn from over 18.5 million logged dives and 11,000+ dive sites, are shaping the future of dive travel.',
          link:'https://www.instagram.com/p/DciOyY_CCFH/'},
   'b14':{blurb:'Film-maker, underwater photographer and technical diver Nays Baghai returns to the Tech Stage on two very different disciplines — freediving and rebreathers.',
@@ -584,7 +622,7 @@ var DETAIL = {
          link:'https://www.instagram.com/p/Daq0ScfEWyf/'},
   'b18':{blurb:'Billed by the show as “It’s All About the Little Things”: the reef’s smallest residents, including flamboyant cuttlefish, blue-ringed octopus and nudibranchs. Tiani Dun is a marine biologist and PADI instructor with a Master of Science in Marine Biology.',
          link:'https://www.instagram.com/p/DcUF5uEiSZq/',
-         timeNote:'That post gives the time as 2:15pm. The time shown above is the one on the official programme.'},
+         timeNote:'One of the show’s posts gives 2:15pm. The show’s own schedule page confirms the time above.'},
   'b19':{blurb:'Billed by the show as “Mexico – cave and technical diving Mecca”: a tour of some of the thousands of kilometres of passageway. Skanda Coffield-Feith is a technical and cave diver originally from Melbourne.',
          link:'https://www.instagram.com/p/DbiDVG9jqml/'},
   'b20':{blurb:'Jim Decker, CEO of Backscatter Underwater Video and Photo, gives two Photo Stage talks across the weekend — getting creative with macro, and how to aim your strobes.',
@@ -609,7 +647,9 @@ SESSIONS.forEach(function(s){
      different slot, the sheet says so rather than leaving someone to spot
      the mismatch after they click through to the post. */
   if(d.timeNote) s.timeNote = d.timeNote;
+  if(d.book){ s.book = d.book; s.bookLabel = d.bookLabel; }
 });
+SESSIONS.forEach(function(s){ if(KID_SESSIONS.indexOf(s.id)>=0) s.tags.push('KIDS'); });
 
 var STAGES = ['Main Stage','Photo Stage','Tech Stage','Ocean/Travel','Workshop Room','Demo Pool'];
 var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'#36c9c0',
@@ -621,7 +661,11 @@ var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'
 /* One room, three names. The floorplan calls it the ANZ Stage, the show's
    posts call it the Inspiration Stage, and the matrix calls it
    Ocean/Travel. All three appear in print, so all three are shown. */
-var STAGE_ALIAS = {'Ocean/Travel':'signposted as the ANZ Stage, and called the Inspiration Stage in the show’s posts'};
+var STAGE_ALIAS = {
+  'Ocean/Travel':'the Inspiration Stage on the show’s schedule, the ANZ Stage on the floorplan',
+  'Tech Stage':'the Technical Stage on the show’s schedule',
+  'Photo Stage':'the Photography Stage on the show’s schedule'
+};
 
 /* ------------------------------------------------------------------
    The floor. Stand number, name, position and size come from the show's
@@ -732,8 +776,10 @@ var STAND_ROWS = [
 ];
 
 var STANDS = STAND_ROWS.map(function(r){
+  var tags = r[7].split(' ');
+  if(KID_STANDS.indexOf(r[0])>=0) tags.push('KIDS');
   return {no:r[0], n:r[1], x:r[2], y:r[3], w:r[4], d:r[5],
-          types:r[6], type:r[6][0], tags:r[7].split(' ')};
+          types:r[6], type:r[6][0], tags:tags};
 });
 function standByNo(no){for(var i=0;i<STANDS.length;i++) if(STANDS[i].no===no) return STANDS[i]; return null;}
 
@@ -752,7 +798,9 @@ function standLogo(no){
 /* What the show says about the things on the floor worth queueing for. */
 var STAND_DETAIL = {
   'F1':{blurb:'Take your first breaths underwater under the guidance of experienced SDI professionals — equipment, instruction and encouragement provided, you bring a swimsuit, a towel and a sense of adventure. Already certified? There are freediving demonstrations with PFI professionals and rebreather try-dives with TDI. Spaces are limited, so book early.',
-        link:'https://godivingshow.com/anz/schedule-of-activities/'},
+        link:'https://godivingshow.com/anz/schedule-of-activities/',
+        book:'https://booking.appointy.com/sditrydivepool?&cat=581464',
+        bookLabel:'Book a Discovery Dive'},
   '204':{blurb:'Virtually dive the historic Mars shipwreck, in over 70m of water off Sweden and astonishingly well-preserved after several hundred years underwater. One of the show’s two VR dives, running all weekend.',
          link:'https://www.instagram.com/p/Dcg7BRWjdAv/'},
   '232':{blurb:'A dry-land fly-through of a reconstructed section of Mount Gambier’s iconic Tank Cave, built by cave divers John Dalla-Zuanna and Wayne Johnson. Pop on a headset and explore the winding passages — no gear, no training, no limits. Runs all weekend.',
@@ -964,7 +1012,7 @@ function renderChans(c){
 /* ------------------------------------------------------------------ */
 var LS = 'gds-agenda-v1';
 var state = {interests:[], picks:[], spicks:[], day:1, stage:'', q:'', scope:'mine',
-             eq:'', etype:'', escope:'mine', view:'interests'};
+             eq:'', etype:'', escope:'mine', ask:'', view:'interests'};
 
 function load(){
   try{
@@ -1132,7 +1180,8 @@ function sessionCard(s,opts){
       '</div>'+
       (clash.length?'<div class="warn">⚠ '+(on?'Overlaps':'Clashes with')+' '+
         esc(clash.map(function(c){return c.title;}).join(', '))+'</div>':'')+
-      '<div class="more'+(s.blurb||s.extra?' has':'')+'">'+(s.blurb||s.extra?'▸ Details':'▸ Session info')+'</div>'+
+      '<div class="more'+(s.blurb||s.extra?' has':'')+'">'+(s.blurb||s.extra?'▸ Details':'▸ Session info')+
+        (s.book?'<span class="bookflag">BOOKING NEEDED</span>':'')+'</div>'+
     '</div>'+
     '<button class="add" data-add="'+s.id+'" aria-pressed="'+on+'" '+
       'aria-label="'+(on?'Remove from':'Add to')+' my agenda">'+(on?'★':'☆')+'</button>'+
@@ -1218,6 +1267,176 @@ function renderAgenda(){
           '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="true" aria-label="Unpin">★</button>'+
         '</article>';
       }).join('');
+  }
+  host.innerHTML = html;
+}
+
+/* ------------------------------------------------------------------
+   The knowledge base, from the show's own info page.
+
+   `k` holds the words someone would actually type, which are usually not
+   the words the official answer uses — "dog" for pets, "how much" for
+   tickets, "park" for parking. The matcher scores on those, so the
+   phrasing of the question does not have to match the phrasing of the
+   heading.
+   ------------------------------------------------------------------ */
+var KB = [
+ {q:'What time does the show open?',
+  a:'Saturday 5 September: 9:30am – 5:00pm. Sunday 6 September: 9:30am – 4:00pm.',
+  k:'open opening hours time close closing start finish what time shut early late'},
+ {q:'Where is the show?',
+  a:'Exhibition Hall 5, Sydney Showground, 1 Showground Rd, Sydney Olympic Park NSW 2127.',
+  k:'where venue address location hall place held situated find'},
+ {q:'Which hall is it in?',
+  a:'Exhibition Hall 5 at the Sydney Showground.',
+  k:'hall which building pavilion room number 5'},
+ {q:'How much are tickets?',
+  a:'$12 per person in advance, and more on the door. There is a two-for-one offer on the first 1,000 tickets. Children under 16 go free. You need a separate ticket for each day you attend.',
+  k:'ticket tickets price cost how much money buy purchase entry admission fee cheap advance child children kid kids free under 16 two for one'},
+ {q:'Can I buy tickets at the door?',
+  a:'Yes — $15 per person on the day.',
+  k:'door on the day gate walk up buy there onsite cash gate price gate'},
+ {q:'Is there parking?',
+  a:'Yes. Two-hour free spaces on Grand Parade, Olympic Boulevard and Dawn Fraser Avenue. Sydney Olympic Park has over 10,000 spaces overall; carparks P1, P5 and P6 are closest to the Showground, at $7 per hour up to $35 per day.',
+  k:'park parking car drive carpark garage space free p1 p5 p6 cost vehicle'},
+ {q:'How do I get there by train?',
+  a:'Olympic Park station is on the Showground’s doorstep. The Sprint service runs between Lidcombe and Olympic Park every 10 minutes, and some direct services run from Central. Check transportnsw.info for times.',
+  k:'train rail station metro sprint lidcombe central public transport getting there travel'},
+ {q:'How do I get there by bus?',
+  a:'Sydney Buses run direct services to Sydney Olympic Park from Lidcombe, Strathfield and Parramatta. Check transportnsw.info for times.',
+  k:'bus coach public transport strathfield parramatta lidcombe getting there'},
+ {q:'How do I get there by ferry?',
+  a:'Sydney Ferries run daily between Circular Quay and Parramatta, stopping at Sydney Olympic Park Ferry Wharf. You then need a connecting bus to the Showground.',
+  k:'ferry boat water circular quay parramatta wharf river'},
+ {q:'How far is it from the airport?',
+  a:'Sydney Airport is about 20km away, from roughly 20 minutes by road since the M4–M8 WestConnex tunnel opened.',
+  k:'airport plane fly flight arrive landing 20km transfer taxi uber'},
+ {q:'How long does it take to drive from the city?',
+  a:'About 20 minutes from the Sydney CBD, roughly 16km, via the M4 tunnel and the Rozelle Interchange.',
+  k:'drive driving car cbd city centre town how long distance far westconnex m4 rozelle traffic'},
+ {q:'Can I bring my dog?',
+  a:'No. The Sydney Showground allows support animals only.',
+  k:'dog pet pets animal animals cat puppy assistance support guide dog bring'},
+ {q:'Is there food?',
+  a:'Yes — food and drink are available inside the main hall, and there are more places to eat within walking distance.',
+  k:'food eat drink cafe coffee lunch restaurant hungry catering bar refreshments'},
+ {q:'Do I need ID?',
+  a:'No. No form of ID is needed to get in.',
+  k:'id identification passport licence proof age document'},
+ {q:'What time can I arrive?',
+  a:'You can get into the hall during opening hours. If you arrive early there are restaurants nearby where you can wait.',
+  k:'arrive early queue line wait entry when get in doors'},
+ {q:'Do I need to book the talks?',
+  a:'No. All speaker talks and panels are free and first come, first served. The two Nikon photography workshops and the Discovery Pool are the exceptions — those you should reserve.',
+  k:'book booking reserve reservation seat talks speakers sessions need to register signup sign up full'},
+ {q:'How do I try scuba diving at the show?',
+  a:'The Discovery Pool runs try-dives with SDI instructors, free for attendees, with all gear provided. Bring a swimsuit and a towel, and book early because spaces are limited. Certified divers can try a rebreather, and there are freediving demonstrations too.',
+  k:'try dive discovery pool scuba first breath swim rebreather freediving beginner never dived taster experience swimsuit towel'},
+ {q:'Where do I stay?',
+  a:'The show lists accommodation options on the Hotels page of godivingshow.com.',
+  k:'hotel hotels stay accommodation sleep overnight motel airbnb'},
+ {q:'Is it good for kids?',
+  a:'Children under 16 get in free. There is a Discovery Pool for first breaths underwater, VR dives, and marine rescue demonstrations from ORRCA.',
+  k:'kids child children family families under 16 young son daughter teenager suitable kid'},
+ {q:'My question isn’t here.',
+  a:'Email the organisers at info@godivingshow.com.',
+  k:'other question help contact organiser email support ask someone else'}
+];
+
+var STOP = ' a an the is are do does can i my me we you it to at in on of for and or if there be will with how what when where which any '
+  .split(' ').filter(Boolean);
+
+function tok(s){
+  return String(s||'').toLowerCase().replace(/[^a-z0-9 ]+/g,' ').split(/\s+/)
+    .filter(function(w){return w && STOP.indexOf(w)<0;});
+}
+
+/* A question naming a speaker or an exhibitor is answered from the
+   programme rather than the FAQ, because "when is Chris Lemons on" has a
+   real answer and no FAQ entry will ever hold it. */
+function askData(qs){
+  var words = tok(qs).filter(function(w){return w.length>3;}), hits = [];
+  if(!words.length) return hits;
+  /* Whole words only. Substring matching had "my car" answering with a
+     talk about a Career and "by train" with one about Training systems. */
+  function count(hay){
+    var t = ' '+hay.toLowerCase().replace(/[^a-z0-9]+/g,' ')+' ';
+    return words.filter(function(w){return t.indexOf(' '+w+' ')>=0;}).length;
+  }
+  SESSIONS.forEach(function(s){
+    var n = count(s.who+' '+s.title);
+    if(n) hits.push({score:n*4, kind:'session', s:s});
+  });
+  STANDS.forEach(function(st){
+    var n = count(st.n+' '+st.no);
+    if(n) hits.push({score:n*4, kind:'stand', st:st});
+  });
+  return hits.sort(function(a,b){return b.score-a.score;}).slice(0,3);
+}
+
+function askKB(qs){
+  var words = tok(qs);
+  if(!words.length) return [];
+  return KB.map(function(e){
+    var kws = e.k.split(' ');
+    var score = 0;
+    words.forEach(function(w){
+      if(kws.indexOf(w)>=0) score += 3;
+      else if(kws.some(function(k){return k.indexOf(w)===0 || w.indexOf(k)===0;})) score += 2;
+      else if(e.q.toLowerCase().indexOf(w)>=0) score += 2;
+      else if(e.a.toLowerCase().indexOf(w)>=0) score += 1;
+    });
+    return {e:e, score:score};
+  }).filter(function(r){return r.score>=2;})
+    .sort(function(a,b){return b.score-a.score;});
+}
+
+var ASK_SUGGEST = ['Opening times','How much are tickets','Parking','Can I bring my dog',
+  'Getting there by train','Try scuba diving','Is there food','Do I need to book'];
+
+function renderAsk(){
+  var qs = state.ask||'';
+  document.getElementById('askChips').innerHTML =
+    ASK_SUGGEST.map(function(s){return '<button class="chip" data-ask="'+esc(s)+'">'+esc(s)+'</button>';}).join('');
+  var host = document.getElementById('askOut');
+  if(!qs.trim()){
+    host.innerHTML = '<div class="card"><div class="eyebrow">Everything it knows</div>'+
+      KB.map(function(e){return '<p class="sub" style="margin:0 0 10px"><b>'+esc(e.q)+'</b><br>'+esc(e.a)+'</p>';}).join('')+
+      '</div>';
+    return;
+  }
+  var kb = askKB(qs), data = askData(qs), html = '';
+  data.forEach(function(h){
+    if(h.kind==='session'){
+      var s = h.s, stand = standByNo(STAGE_STAND[s.stage]);
+      html += '<div class="card"><div class="eyebrow">From the programme</div>'+
+        '<h2>'+esc(s.who)+'</h2>'+
+        '<p class="sub"><b>'+esc(s.title)+'</b><br>'+esc(DAYS[s.day].label)+', '+esc(range(s))+
+        '<br>'+esc(s.stage)+(stand?' (stand '+esc(stand.no)+')':'')+'</p>'+
+        '<div class="btnrow" style="margin:10px 0 0"><button class="btn ghost" data-open="'+s.id+'">Open this session</button></div>'+
+        '</div>';
+    } else {
+      var st = h.st, c = contactFor(st.no);
+      html += '<div class="card"><div class="eyebrow">On the floor</div>'+
+        '<h2>'+esc(st.n)+'</h2>'+
+        '<p class="sub">Stand <b>'+esc(st.no)+'</b> · '+esc(st.types.join(' · '))+'</p>'+
+        (hasContact(c)?renderChans(c):'')+
+        '<div class="btnrow" style="margin:10px 0 0"><button class="btn ghost" data-stand="'+esc(st.no)+'">Show on the plan</button></div>'+
+        '</div>';
+    }
+  });
+  if(kb.length){
+    html += '<div class="card"><div class="eyebrow">Answer</div>'+
+      '<h2>'+esc(kb[0].e.q)+'</h2><p class="sub">'+esc(kb[0].e.a)+'</p></div>';
+    kb.slice(1,4).forEach(function(r){
+      html += '<div class="card"><div class="eyebrow">Also</div>'+
+        '<h2 style="font-size:16px">'+esc(r.e.q)+'</h2><p class="sub">'+esc(r.e.a)+'</p></div>';
+    });
+  }
+  if(!html){
+    html = '<p class="empty">Nothing matched that.<br>'+
+      'Try “tickets”, “parking”, “opening times”, a speaker’s name, or an exhibitor.<br><br>'+
+      'Still stuck? Email <a href="mailto:info@godivingshow.com">info@godivingshow.com</a>.</p>';
   }
   host.innerHTML = html;
 }
@@ -1485,6 +1704,8 @@ function openSheet(id){
       : '')+
     (stand?renderPlan({focus:[stand.no], height:190, key:false}):'')+
     '<div class="actions">'+
+      (s.book?'<a class="btn book" href="'+esc(s.book)+'" target="_blank" rel="noopener noreferrer">'+
+        esc(s.bookLabel||'Book a place')+' ↗</a>':'')+
       '<button class="btn'+(on?' ghost':'')+'" data-add="'+s.id+'">'+
         (on?'★ Remove from my agenda':'☆ Add to my agenda')+'</button>'+
       (s.link?'<a class="iglink" href="'+esc(s.link)+'" target="_blank" rel="noopener noreferrer">'+
@@ -1514,6 +1735,10 @@ function openStandSheet(no){
     (STAND_DETAIL[no]?'<p class="blurb">'+esc(STAND_DETAIL[no].blurb)+'</p>':'')+
     (STAND_DETAIL[no]&&STAND_DETAIL[no].note?'<p class="nochan">⚠ '+esc(STAND_DETAIL[no].note)+'</p>':'')+
     renderPlan({focus:[no], height:220, key:false})+
+    (STAND_DETAIL[no]&&STAND_DETAIL[no].book
+      ? '<a class="btn book" href="'+esc(STAND_DETAIL[no].book)+'" target="_blank" rel="noopener noreferrer">'+
+        esc(STAND_DETAIL[no].bookLabel||'Book')+' ↗</a>'
+      : '')+
     (STAND_DETAIL[no]&&STAND_DETAIL[no].link
       ? '<a class="iglink" href="'+esc(STAND_DETAIL[no].link)+'" target="_blank" rel="noopener noreferrer">See the show’s post ↗</a>'
       : '')+
@@ -1631,6 +1856,7 @@ function go(view){
   document.getElementById('viewBrowse').style.display      = view==='browse'?'':'none';
   document.getElementById('viewExhibitors').style.display  = view==='exhibitors'?'':'none';
   document.getElementById('viewAgenda').style.display      = view==='agenda'?'':'none';
+  document.getElementById('viewInfo').style.display        = view==='info'?'':'none';
   document.getElementById('nav').style.display = view==='interests'?'none':'flex';
   Array.prototype.forEach.call(document.querySelectorAll('#nav button'),function(b){
     b.setAttribute('aria-pressed', String(b.dataset.view===view));
@@ -1643,6 +1869,7 @@ function render(){
   if(state.view==='browse')     renderBrowse();
   if(state.view==='exhibitors') renderExhibitors();
   if(state.view==='agenda'){ renderSim(); renderNow(); renderAgenda(); }
+  if(state.view==='info')      renderAsk();
   var c = document.getElementById('navCount');
   c.textContent = state.picks.length;
   c.style.display = state.picks.length?'':'none';
@@ -1727,6 +1954,15 @@ document.getElementById('escopeChips').addEventListener('click',function(e){
 });
 document.getElementById('eq').addEventListener('input',function(){
   state.eq=this.value; renderExhibitors();
+});
+document.getElementById('ask').addEventListener('input',function(){
+  state.ask=this.value; renderAsk();
+});
+document.getElementById('askChips').addEventListener('click',function(e){
+  var b=e.target.closest('[data-ask]'); if(!b) return;
+  state.ask=b.dataset.ask;
+  document.getElementById('ask').value=state.ask;
+  renderAsk();
 });
 
 /* simulation controls, delegated because the bar is re-rendered each tick */
