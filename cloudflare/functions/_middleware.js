@@ -65,9 +65,34 @@ button{width:100%;margin-top:10px;padding:15px;border:0;border-radius:12px;font-
 </div></body></html>`;
 }
 
+/* Cloudflare Access protects the production hostname only. Every wrangler
+ * deploy also mints a per-deployment URL like <hash>.godiving-planner.pages.dev,
+ * and Access does not cover those — one of them served the whole app to the
+ * open internet until it was deleted.
+ *
+ * So: on the production hostname, trust Access (unauthenticated requests
+ * never reach this code — the edge redirects them first). Everywhere else,
+ * fall back to the shared code. The hostname check matters: the Access
+ * header can be forged by anyone on a hostname Access is NOT protecting, so
+ * it may only be trusted on the one hostname where Access is.
+ *
+ * This also fails safe. If the Access application is ever removed, the
+ * production hostname stops presenting the header and falls back to the
+ * code gate rather than opening to everyone.
+ */
+const ACCESS_HOST = 'godiving-planner.pages.dev';
+
 export async function onRequest(context) {
   const { request, env, next } = context;
   const secret = env.GATE_PASSWORD;
+
+  const url = new URL(request.url);
+  if (url.hostname === ACCESS_HOST) {
+    const cookies0 = request.headers.get('Cookie') || '';
+    const viaAccess = request.headers.get('Cf-Access-Jwt-Assertion') ||
+                      /(?:^|;\s*)CF_Authorization=/.test(cookies0);
+    if (viaAccess) return next();
+  }
 
   // Fail closed. A missing secret must lock the site, never open it.
   if (!secret) {
