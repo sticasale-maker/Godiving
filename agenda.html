@@ -131,8 +131,6 @@
   .tag.GEN{color:var(--gen)} .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)}
   .tag.PRO{color:var(--pro)} .tag.KIDS{color:var(--kids)}
   .stagetag{font-size:11.5px;font-weight:700;color:var(--muted)}
-  .foryou{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--accent);
-    background:var(--accentd);border-radius:999px;padding:3px 8px}
   .warn{font-size:12.5px;color:var(--bad);font-weight:700;margin-top:7px}
   /* The star used to be a full-height 46px column. It only ever needed to
      be as big as the star, and the width it gave back is what the
@@ -1170,11 +1168,6 @@ function sessionCard(s,opts){
   opts = opts||{};
   var on = picked(s.id);
   var clash = opts.showClash ? clashesFor(s) : [];
-  /* "For you" only earns its place where it discriminates. In the default
-     scope every visible card already matches your interests, so the badge
-     would sit on all of them and mean nothing; it is worth showing only
-     once you have asked to see everything. */
-  var forYou = state.interests.length && matchesInterests(s) && state.scope==='all';
   return '<article class="sess'+(on?' on':'')+(clash.length?' clash':'')+'" '+
       'style="border-left-color:'+STAGE_COLOR[s.stage]+'">'+
     '<div class="body" data-open="'+s.id+'" role="button" tabindex="0">'+
@@ -1187,7 +1180,6 @@ function sessionCard(s,opts){
       '<div class="meta">'+
         '<span class="stagetag" style="color:'+STAGE_COLOR[s.stage]+'">'+esc(s.stage)+'</span>'+
         sortTags(s.tags).map(function(t){return '<span class="tag '+t+'">'+t+'</span>';}).join('')+
-        (forYou&&!opts.hideForYou?'<span class="foryou">FOR YOU</span>':'')+
       '</div>'+
       (clash.length?'<div class="warn">⚠ '+(on?'Overlaps':'Clashes with')+' '+
         esc(clash.map(function(c){return c.title;}).join(', '))+'</div>':'')+
@@ -1263,7 +1255,7 @@ function renderAgenda(){
   var html='', lastDay=0;
   mine.forEach(function(s){
     if(s.day!==lastDay){lastDay=s.day; html += dayHead(s.day);}
-    html += sessionCard(s,{showClash:true,hideForYou:true,showDay:true});
+    html += sessionCard(s,{showClash:true,showDay:true});
   });
   if(state.spicks.length){
     html += '<div class="slot">Stands you pinned</div>'+
