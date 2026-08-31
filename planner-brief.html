@@ -1,0 +1,432 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>Plan My Day — how the visitor planner works</title>
+<style>
+  :root{
+    --bg:#03121f; --card:#0d2b45; --line:#1d4468; --ink:#eaf4ff;
+    --dim:#9db8d0; --gold:#f2b32e; --green:#25c08a;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{background:var(--bg);color:var(--ink);
+    font:16px/1.55 "Segoe UI",system-ui,-apple-system,Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased}
+  .deck{max-width:1080px;margin:0 auto;padding:0 20px 80px}
+
+  /* Each slide is its own page on screen and on paper. */
+  section.slide{padding:56px 0 48px;border-bottom:1px solid var(--line)}
+  section.slide:last-of-type{border-bottom:0}
+  .no{font:700 12px/1 ui-monospace,Consolas,monospace;letter-spacing:.18em;
+    color:var(--gold);text-transform:uppercase;margin:0 0 10px}
+  h1{font-size:38px;line-height:1.15;margin:0 0 14px;letter-spacing:-.01em}
+  h2{font-size:28px;line-height:1.2;margin:0 0 12px;letter-spacing:-.01em}
+  h3{font-size:17px;margin:0 0 6px}
+  p{margin:0 0 14px;color:var(--dim);max-width:62ch}
+  p.lead{color:var(--ink);font-size:19px;max-width:56ch}
+  b,strong{color:var(--ink)}
+  a{color:var(--green)}
+  ul{margin:0 0 14px;padding-left:20px;color:var(--dim);max-width:62ch}
+  li{margin:0 0 8px}
+  li b{color:var(--ink)}
+
+  /* Screenshot beside its explanation: the picture carries the detail,
+     the prose carries the point. */
+  .split{display:grid;grid-template-columns:340px 1fr;gap:34px;align-items:start}
+  .split.rev{grid-template-columns:1fr 340px}
+  .split.rev .shot{order:2}
+  .shot{margin:0}
+  .shot img{display:block;width:100%;border-radius:16px;border:1px solid var(--line);
+    background:var(--card)}
+  .shot figcaption{margin-top:8px;font-size:12.5px;color:var(--dim);text-align:center}
+
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin:18px 0 0}
+  .box{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px 18px}
+  .box p{margin:0;font-size:14.5px}
+  .k{font:700 11px/1 ui-monospace,Consolas,monospace;letter-spacing:.16em;
+    color:var(--gold);text-transform:uppercase;display:block;margin:0 0 8px}
+
+  .steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin:22px 0 0}
+  .step{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
+  .step .n{font:800 22px/1 ui-monospace,Consolas,monospace;color:var(--green);display:block;margin-bottom:8px}
+  .step h3{font-size:15px;margin-bottom:4px}
+  .step p{font-size:13.5px;margin:0}
+
+  .note{border-left:3px solid var(--gold);padding:2px 0 2px 14px;margin:18px 0 0}
+  .note p{color:var(--ink);margin:0}
+
+  .tag{display:inline-block;font:700 11px/1 ui-monospace,Consolas,monospace;
+    letter-spacing:.1em;padding:5px 9px;border-radius:999px;border:1px solid var(--line);
+    color:var(--dim);margin:0 6px 6px 0}
+  .tag.on{color:var(--green);border-color:var(--green)}
+  .tag.soon{color:var(--gold);border-color:var(--gold)}
+
+  .legal p,.legal li{max-width:70ch}
+  .foot{margin-top:52px;padding-top:20px;border-top:1px solid var(--line);
+    font-size:12.5px;color:var(--dim)}
+
+  @media (max-width:760px){
+    .split,.split.rev{grid-template-columns:1fr}
+    .split.rev .shot{order:0}
+    .shot{max-width:340px}
+    h1{font-size:30px} h2{font-size:23px}
+  }
+  @media print{
+    body{background:#fff;color:#111}
+    .deck{max-width:none;padding:0}
+    section.slide{break-after:page;page-break-after:always;border:0;padding:18px 0}
+    p,ul,.box p,.shot figcaption{color:#333}
+    .box,.step{border:1px solid #bbb;background:#fff}
+    .shot img{border:1px solid #bbb}
+    a{color:#111}
+  }
+</style>
+</head>
+<body>
+<div class="deck" data-build="35681f1e048f">
+
+<!-- ============================================================ 1 -->
+<section class="slide">
+  <p class="no">GO Diving Show Sydney &middot; 5&ndash;6 September 2026</p>
+  <h1>Plan My Day</h1>
+  <p class="lead">A phone-first planner that turns the programme into <b>one visitor&rsquo;s</b>
+    day: pick what you&rsquo;re into, star the talks and stands you want, and walk in with a
+    runsheet instead of a floorplan.</p>
+  <p>Nothing to install, no account, no login. It is a web page &mdash; one link, works on any
+    phone, and everything a visitor picks is saved on their own device.</p>
+
+  <div class="steps">
+    <div class="step"><span class="n">1</span><h3>Pick your interests</h3>
+      <p>Six plain-language choices. This drives everything after it.</p></div>
+    <div class="step"><span class="n">2</span><h3>Star your sessions</h3>
+      <p>A shortlist, not the full grid. Clashes are flagged as you go.</p></div>
+    <div class="step"><span class="n">3</span><h3>Star your stands</h3>
+      <p>Same filter on the floor, and they light up on the plan.</p></div>
+    <div class="step"><span class="n">4</span><h3>Walk the day</h3>
+      <p>My Day counts down to the next talk and says which room.</p></div>
+  </div>
+
+  <div class="note"><p><b>Why now:</b> the value is in visitors planning <i>before</i> they
+    travel &mdash; deciding it&rsquo;s worth the trip, booking the workshops that need booking,
+    and seeing that there is enough for the kids to justify bringing them.</p></div>
+</section>
+
+<!-- ============================================================ 2 -->
+<section class="slide">
+  <p class="no">Slide 2 &middot; The first screen</p>
+  <div class="split">
+    <figure class="shot"><img src="brief-shots/02-interests-picked.jpg" alt="The interest picker with three interests selected">
+      <figcaption>The opening screen. Live app, not a mock-up.</figcaption></figure>
+    <div>
+      <h2>One question before anything else</h2>
+      <p class="lead">&ldquo;What are you here for?&rdquo; Six answers, no diving jargon, no
+        ranking to explain.</p>
+      <p>Every pick is a filter that runs through the whole app at once: it shortlists the
+        <b>sessions</b>, it shortlists the <b>exhibitors</b>, and it tells the visitor
+        <i>why</i> each one was suggested &mdash; &ldquo;matches your interest in photo &amp;
+        video&rdquo;.</p>
+      <ul>
+        <li><b>Getting started</b> &mdash; new divers, courses, safety, local shops</li>
+        <li><b>Kids &amp; families</b> &mdash; deliberately second in the list, so nobody misses it</li>
+        <li><b>Photo &amp; video</b> &middot; <b>Tech, wrecks &amp; gear</b> &middot;
+          <b>Travel &amp; liveaboards</b> &middot; <b>Ocean &amp; conservation</b></li>
+      </ul>
+      <p>A visitor who doesn&rsquo;t want to be filtered taps <b>&ldquo;skip &mdash; just show
+        me everything&rdquo;</b> and gets the whole programme. Interests can be changed at any
+        point without losing anything already starred.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 3 -->
+<section class="slide">
+  <p class="no">Slide 3 &middot; Sessions tab</p>
+  <div class="split rev">
+    <div>
+      <h2>Star it, and it&rsquo;s in My Day</h2>
+      <p class="lead">The shortlist is both days, in time order. One tap on the &#9734; moves a
+        talk into the visitor&rsquo;s agenda &mdash; there is no separate &ldquo;save&rdquo; step.</p>
+      <p>The moment two starred talks collide, <b>both are outlined in red</b> and each one
+        names the other: <i>&ldquo;Overlaps Last Breath: Deep Commercial Diving &amp;
+        Survival.&rdquo;</i> Overlaps between things they haven&rsquo;t picked stay quiet
+        &mdash; it is only a problem when it&rsquo;s their problem.</p>
+      <ul>
+        <li>Filter by day, by stage, or search a speaker&rsquo;s name</li>
+        <li>Toggle between <b>&#9733; my interests</b> and <b>everything on</b></li>
+        <li><b>Auto-build my day</b> fills a clash-free runsheet in one tap for anyone who
+          doesn&rsquo;t want to choose</li>
+      </ul>
+    </div>
+    <figure class="shot"><img src="brief-shots/03-sessions-clash.jpg" alt="Two starred sessions at 1:15pm, both outlined in red and naming the clash">
+      <figcaption>Two starred talks at 1:15pm &mdash; the clash is named, not just coloured.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ 4 -->
+<section class="slide">
+  <p class="no">Slide 4 &middot; Inside a session</p>
+  <div class="split">
+    <figure class="shot"><img src="brief-shots/04-session-detail.jpg" alt="Session detail with description, floorplan, Reserve a space and See the show's post">
+      <figcaption>Jake Wilton&rsquo;s Nikon workshop &mdash; a session that needs booking.</figcaption></figure>
+    <div>
+      <h2>Description, the show&rsquo;s own post, and the booking link</h2>
+      <p class="lead">Tapping a talk opens everything a visitor needs to commit to it.</p>
+      <ul>
+        <li><b>A written description</b> &mdash; who the speaker is and what the talk actually covers</li>
+        <li><b>Where it is</b> &mdash; the room highlighted on the floorplan, so &ldquo;Workshop
+          Room&rdquo; means something before they arrive</li>
+        <li><b>See the show&rsquo;s post</b> &mdash; deep-links to the show&rsquo;s own Instagram
+          post for that speaker, so the show&rsquo;s marketing does the persuading</li>
+        <li><b>Reserve a space</b> &mdash; where a session needs booking (the Nikon and macro
+          workshops, the Discovery Pool try-dives) the Eventbrite / Appointy link is right
+          there, and the row is flagged <b>BOOKING NEEDED</b> in the list</li>
+      </ul>
+      <div class="note"><p>Every Instagram and booking link is the show&rsquo;s own &mdash; the
+        planner sends traffic to you, it doesn&rsquo;t hold it.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 5 -->
+<section class="slide">
+  <p class="no">Slide 5 &middot; Exhibitors tab</p>
+  <div class="split rev">
+    <div>
+      <h2>The same idea, applied to the floor</h2>
+      <p class="lead">&ldquo;Stands worth your time&rdquo; &mdash; the exhibitor list filtered by
+        the same interests, so a photographer isn&rsquo;t scrolling past insurance brokers.</p>
+      <p>Star a stand and it does two things: it joins <b>My Day</b>, and it <b>lights up on the
+        floorplan</b> at the top of the tab. By the time a visitor has picked five stands they
+        are looking at a walking route, not a directory.</p>
+      <ul>
+        <li>Filter by exhibitor type, or search by name or stand number</li>
+        <li><b>&#9733; my interests</b> / <b>everyone</b> &mdash; the whole floor is always one tap away</li>
+        <li>Talk venues are kept out of the exhibitor list, so the stands stay stands</li>
+      </ul>
+    </div>
+    <figure class="shot"><img src="brief-shots/05-exhibitors.jpg" alt="Exhibitor shortlist with the floorplan above it and picks highlighted">
+      <figcaption>Picks highlighted on the plan, above the shortlist.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ 6 -->
+<section class="slide">
+  <p class="no">Slide 6 &middot; Inside a stand</p>
+  <div class="split">
+    <figure class="shot"><img src="brief-shots/06-exhibitor-detail.jpg" alt="Exhibitor detail showing stand number, position on the plan and contact details">
+      <figcaption>Stand 404 &mdash; where it is, and how to reach them.</figcaption></figure>
+    <div>
+      <h2>Contact details, before and after the show</h2>
+      <p class="lead">Each exhibitor carries its stand number, its position on the plan, and a
+        <b>Get in touch</b> block: website, email, phone.</p>
+      <p>That matters at both ends of the weekend. Before the show, a visitor can ask whether a
+        course runs on the Sunday or whether a camera will be on the stand. After it, the person
+        who meant to go back and buy the regulator still has the number in their pocket &mdash;
+        the shortlist they built is a contact list they keep.</p>
+      <p>Exhibitors are classified from the show&rsquo;s own categories, so nothing has to be
+        maintained twice.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 7 -->
+<section class="slide">
+  <p class="no">Slide 7 &middot; My Day tab</p>
+  <div class="split rev">
+    <div>
+      <h2>The runsheet, and what they can do with it</h2>
+      <p class="lead">Everything starred, in order, across both days &mdash; with the clashes
+        counted at the top so they get resolved before the weekend, not in a corridor.</p>
+      <ul>
+        <li><b>Add to calendar</b> &mdash; downloads a calendar file; every talk lands in their
+          phone&rsquo;s own calendar with its room, so the alerts come from the device they
+          already trust</li>
+        <li><b>Print / save PDF</b> &mdash; a clean paper runsheet for anyone who would rather
+          not rely on a phone all day, or wants one on the fridge</li>
+        <li><b>Share my agenda</b> &mdash; a link that carries the picks, so a couple or a group
+          can compare plans and parents can send the kids&rsquo; day to the other parent</li>
+      </ul>
+      <p>Below the buttons, <b>&ldquo;where your day happens&rdquo;</b> maps the whole day onto
+        the floorplan at once.</p>
+    </div>
+    <figure class="shot"><img src="brief-shots/07-myday.jpg" alt="My Day tab with runsheet, calendar, PDF and share buttons, and the floorplan">
+      <figcaption>Five flagged, four overlapping &mdash; said plainly, up front.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ 8 -->
+<section class="slide">
+  <p class="no">Slide 8 &middot; Demo mode</p>
+  <div class="split">
+    <figure class="shot"><img src="brief-shots/08-demo-countdown.jpg" alt="Preview mode banner and a live countdown to the next session with its stage and map">
+      <figcaption>Preview mode: 10am Saturday, 44 minutes to the next talk.</figcaption></figure>
+    <div>
+      <h2>See the show-day experience today</h2>
+      <p class="lead">On the weekend itself, My Day turns into a countdown: <b>next up</b>, how
+        long until it starts, which stage, which stand number, and the room on the plan &mdash;
+        then &ldquo;<i>and then at 12pm&hellip;</i>&rdquo;.</p>
+      <p>Because that only exists on the day, the planner ships with a <b>preview mode</b>. Tap
+        <b>&ldquo;It&rsquo;s 10am Saturday&rdquo;</b> and the app runs as if you were standing in
+        the venue, with a clear <b>PREVIEW MODE &middot; NOT THE REAL TIME</b> banner so nobody
+        is misled. There is a speed control and an exit.</p>
+      <p>It is there for two audiences: your team, demonstrating the app to exhibitors and press
+        without waiting for September &mdash; and visitors, who see what the app will do for them
+        and so bother to build the agenda in the first place.</p>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================ 9 -->
+<section class="slide">
+  <p class="no">Slide 9 &middot; Ask tab</p>
+  <div class="split rev">
+    <div>
+      <h2>Questions asked the way people ask them</h2>
+      <p class="lead">A search box that takes plain English &mdash; &ldquo;can I bring my
+        dog&rdquo;, &ldquo;how much are tickets&rdquo;, &ldquo;when is Chris Lemons on&rdquo;,
+        &ldquo;where do I find Nikon&rdquo;.</p>
+      <p>It answers from a written knowledge base about the show: tickets and the under-16s going
+        free, opening times, parking, getting there by train, the Discovery Pool try-dives,
+        accessibility, dogs. It returns the best answer and then the near-misses, because the
+        second answer is often the one they meant.</p>
+      <p>Suggested questions sit under the box for anyone who doesn&rsquo;t know what to ask. It
+        runs entirely inside the page &mdash; no server, no cost per question, and it cannot
+        invent an answer you didn&rsquo;t write.</p>
+      <div class="note"><p>This is the fastest thing on the list to extend: send us your FAQ and
+        inbox questions and they go straight in.</p></div>
+    </div>
+    <figure class="shot"><img src="brief-shots/09-ask.jpg" alt="The Ask tab answering a plain-English question about kids">
+      <figcaption>&ldquo;is the show ok for young kids&rdquo; &mdash; answered, plus what else
+        they&rsquo;ll want.</figcaption></figure>
+  </div>
+</section>
+
+<!-- ============================================================ 10 -->
+<section class="slide">
+  <p class="no">Slide 10 &middot; Proposed addition</p>
+  <h2>An organiser dashboard</h2>
+  <p class="lead">Everything above happens on the visitor&rsquo;s phone. If we add a small amount
+    of anonymous reporting, the same taps become the best pre-show demand signal you have.</p>
+
+  <div class="grid">
+    <div class="box"><span class="k">Reach</span>
+      <p>How many people opened the planner and how many built an agenda &mdash; a live read on
+        interest, week by week, in the run-up.</p></div>
+    <div class="box"><span class="k">Interests</span>
+      <p>The split across the six interests. Who is actually coming: families, tech divers,
+        photographers, first-timers.</p></div>
+    <div class="box"><span class="k">Sessions</span>
+      <p>Stars per talk. Which rooms will overflow, which speakers under-drew, which clashes
+        forced people to choose.</p></div>
+    <div class="box"><span class="k">Exhibitors</span>
+      <p>Stars per stand, and which interests drove them. Evidence an exhibitor can be sold on
+        for next year.</p></div>
+  </div>
+
+  <h3 style="margin-top:26px">What it&rsquo;s worth</h3>
+  <ul>
+    <li><b>Before the show</b> &mdash; move an over-subscribed talk into a bigger room, add
+      capacity to a workshop that is filling, see which day is heavier</li>
+    <li><b>On the day</b> &mdash; staff the rooms people actually flagged</li>
+    <li><b>After the show</b> &mdash; a demand table per session and per stand that shapes the
+      2027 programme, and gives exhibitors a number when you renew them</li>
+  </ul>
+  <div class="note"><p><b>How it would work:</b> counts only &mdash; no names, no email, no
+    logins, nothing that identifies a visitor. It is an addition, not a change to how the app
+    behaves for visitors. Roughly a day&rsquo;s work plus somewhere to store the counts, and it
+    would need your sign-off before it goes on.</p></div>
+</section>
+
+<!-- ============================================================ 11 -->
+<section class="slide">
+  <p class="no">Slide 11 &middot; Where it stands</p>
+  <h2>Ready to send out</h2>
+  <p class="lead">The planner is built and running against the real 2026 programme &mdash; every
+    screenshot in this deck is the live app, not a design.</p>
+
+  <div>
+    <span class="tag on">Interests filter &middot; live</span>
+    <span class="tag on">Both days of sessions &middot; live</span>
+    <span class="tag on">Clash detection &middot; live</span>
+    <span class="tag on">Instagram + booking links &middot; live</span>
+    <span class="tag on">Exhibitors + floorplan &middot; live</span>
+    <span class="tag on">Calendar &middot; PDF &middot; share &middot; live</span>
+    <span class="tag on">Countdown + preview mode &middot; live</span>
+    <span class="tag on">Ask the show &middot; live</span>
+    <span class="tag soon">Organiser dashboard &middot; proposed</span>
+  </div>
+
+  <h3 style="margin-top:26px">What we&rsquo;d like from you</h3>
+  <ul>
+    <li><b>Say go</b>, so it can be linked from the show site and socials while there is still
+      planning time to be had</li>
+    <li><b>Programme changes</b> as they land &mdash; times, rooms, additions</li>
+    <li><b>Your FAQ</b> for the Ask tab, and any exhibitor contact details you&rsquo;d rather we used</li>
+    <li><b>A decision on the dashboard</b> &mdash; it has to be switched on before the traffic
+      arrives to be worth anything</li>
+  </ul>
+
+  <div class="note"><p>One link, no app store, no sign-up. Every day it is out is a day of
+    visitors deciding to come, booking the workshops that need booking, and bringing the kids.</p></div>
+</section>
+
+<!-- ============================================================ 12 -->
+<section class="slide legal">
+  <p class="no">Slide 12 &middot; Ownership and terms</p>
+  <h2>Supplied for evaluation only</h2>
+  <p class="lead">This deck and the application it describes are shared with the GO Diving Show
+    organising team so that it can be assessed. Sharing it is not a transfer of anything.</p>
+
+  <h3 style="margin-top:22px">Ownership of the software</h3>
+  <p>&copy; 2026 <b>VIZ &mdash; Sydney Diving Visibility Reports</b>. All rights reserved. The
+    application, its source code, its interface design, its interest taxonomy and classification
+    logic, its floorplan rendering, its knowledge base and this presentation (together, the
+    &ldquo;Work&rdquo;) are the property of VIZ and remain so.</p>
+
+  <h3>What is granted</h3>
+  <p>A right to <b>view and evaluate</b> the Work, internally, for the purpose of deciding
+    whether to proceed. Nothing more.</p>
+
+  <h3>What is not granted</h3>
+  <ul>
+    <li>No licence to <b>redistribute, republish or host</b> the Work or any part of it</li>
+    <li>No licence to <b>sublicense, resell or transfer</b> it to a third party</li>
+    <li>No licence to <b>copy, adapt or rebuild</b> it, in whole or as a derivative work,
+      including by having another party reproduce its design, structure or behaviour</li>
+    <li>No licence for <b>commercial use</b>, including use at or in promotion of the show</li>
+  </ul>
+  <p>Any of the above requires a separate written agreement with VIZ.</p>
+
+  <h3>Build reference</h3>
+  <p>Each published build carries an identifying reference in the page source (as an HTML
+    comment and a <code>data-build</code> attribute). It has no function; it exists so that a
+    copy taken from this build can be identified as having originated here. It must not be
+    removed, and the build reference should not be published.</p>
+
+  <h3>Third-party content</h3>
+  <p>Session times, speaker biographies and photographs, exhibitor names, logos, descriptions and
+    floorplan geometry remain the property of the <b>GO Diving Show ANZ</b>, <b>Rork Media</b>,
+    and the individual speakers and exhibitors concerned. They are reproduced here for
+    demonstration purposes. Commercial use of the Work requires their permission in addition to
+    an agreement with VIZ.</p>
+
+  <h3>Visitor data</h3>
+  <p>As it stands the planner collects nothing: every choice a visitor makes is stored on their
+    own device and never leaves it. The organiser dashboard on slide 10 would be the first thing
+    to send any data at all, it would be anonymous counts only, and it would not be switched on
+    without written agreement on what is collected and who holds it.</p>
+
+  <p style="margin-top:18px"><i>This slide records intent. It is not legal advice and is not a
+    substitute for a signed agreement drafted by a qualified lawyer.</i></p>
+
+  <p class="foot">&copy; 2026 VIZ &mdash; Sydney Diving Visibility Reports. All rights reserved.
+    Prepared for the GO Diving Show Sydney organising team. Supplied for evaluation only; not
+    licensed for redistribution, republication or reuse.</p>
+</section>
+
+</div>
+</body>
+</html>
