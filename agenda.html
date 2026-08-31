@@ -109,8 +109,10 @@
   .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;
     scrollbar-width:none}
   .chips::-webkit-scrollbar{display:none}
+  /* 35px tall was under a comfortable thumb target on a phone. */
   .chip{flex:0 0 auto;border:1px solid var(--line);background:var(--bg2);color:var(--muted);
-    border-radius:999px;padding:8px 13px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+    border-radius:999px;padding:10px 14px;min-height:40px;font-family:inherit;font-size:13px;
+    font-weight:700;cursor:pointer;white-space:nowrap}
   .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accentd)}
 
   /* ---- session cards ---- */
@@ -140,9 +142,14 @@
   /* The star used to be a full-height 46px column. It only ever needed to
      be as big as the star, and the width it gave back is what the
      portrait now occupies. */
+  /* The star stays visually small — it is a star, not a slab — but a 34px
+     target is under the ~44px a thumb reliably hits, and this is the most
+     tapped control in the app. The invisible ::after extends the hit area
+     to 46px without changing how the row looks. */
   .add{flex:0 0 auto;width:34px;height:34px;align-self:center;border:1px solid var(--line);
     background:var(--bg2);color:var(--muted);border-radius:10px;font-size:19px;
-    font-family:inherit;cursor:pointer;line-height:1;padding:0}
+    font-family:inherit;cursor:pointer;line-height:1;padding:0;position:relative}
+  .add::after{content:'';position:absolute;inset:-6px}
   .add[aria-pressed="true"]{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
 
   /* Round, because these are people. The circle says "a face" before you
