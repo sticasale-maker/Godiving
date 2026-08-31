@@ -116,7 +116,9 @@
   .sess .time{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);letter-spacing:1px}
   .sess .ttl{font-weight:800;font-size:16px;line-height:1.3;margin:6px 0 4px}
   .sess .who{font-size:13.5px;color:var(--muted);line-height:1.45}
-  .sess .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+  /* clears the floated portrait so the tag row never sits beside it */
+  .sess .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center;clear:both}
+  .sess .more{clear:both}
   .tag{font-size:10.5px;font-weight:800;letter-spacing:.6px;border-radius:999px;padding:3px 8px;
     border:1px solid currentColor;opacity:.85}
   .tag.GEN{color:var(--gen)} .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)} .tag.PRO{color:var(--pro)}
@@ -124,9 +126,28 @@
   .foryou{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--accent);
     background:var(--accentd);border-radius:999px;padding:3px 8px}
   .warn{font-size:12.5px;color:var(--bad);font-weight:700;margin-top:7px}
-  .add{flex:0 0 auto;width:46px;border:1px solid var(--line);background:var(--bg2);color:var(--muted);
-    border-radius:12px;font-size:21px;font-family:inherit;cursor:pointer;line-height:1;padding:0}
+  /* The star used to be a full-height 46px column. It only ever needed to
+     be as big as the star, and the width it gave back is what the
+     portrait now occupies. */
+  .add{flex:0 0 auto;width:34px;height:34px;align-self:center;border:1px solid var(--line);
+    background:var(--bg2);color:var(--muted);border-radius:10px;font-size:19px;
+    font-family:inherit;cursor:pointer;line-height:1;padding:0}
   .add[aria-pressed="true"]{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
+
+  /* Round, because these are people. The circle says "a face" before you
+     have read anything, and it drops the busy underwater corners that
+     carry no information at 44px. Logos keep square-ish corners: a circle
+     would slice the wordmark off. */
+  /* Floated, not a flex column: the time and the first line of the title
+     sit beside it and the rest of the text flows underneath, so the
+     portrait costs no tile height. A fixed column would have squeezed
+     every title into an extra line. */
+  .thumb{float:left;width:44px;height:44px;border-radius:50%;object-fit:cover;
+    background:var(--bg2);border:1px solid var(--line);margin:1px 10px 4px 0}
+  .thumb.logo{border-radius:9px}
+  .sheet .thumbbig{width:66px;height:66px;border-radius:50%;object-fit:cover;float:right;
+    margin:0 0 8px 12px;border:1px solid var(--line)}
+  .sheet .thumbbig.logo{border-radius:12px}
 
   .empty{text-align:center;color:var(--muted);font-size:14.5px;line-height:1.6;padding:26px 10px}
 
@@ -988,6 +1009,38 @@ function visibleSessions(){
   }).sort(function(a,b){return mins(a.start)-mins(b.start) || STAGES.indexOf(a.stage)-STAGES.indexOf(b.stage);});
 }
 
+/* Speaker portraits, from the show's own speaker pages, cropped square and
+   anchored high so the face survives at 44px. Keyed by the `who` string,
+   with the team credits and initialled names spelled out. */
+var THUMBS = {
+  'Pete Mesley':'pete-mesley', 'David Strike':'david-strike', 'Vanessa Mignon':'vanessa-mignon',
+  'Dylan Boag':'dylan-boag', 'Becca Boring':'becca-boring', 'Jake Wilton':'jake-wilton',
+  'Sheree Marris':'sheree-maris', 'Deborah Dickson-Smith':'deborah-dickson-smith',
+  'Yana Stashkevich':'yana-stashkevich', 'Chris Lemons':'chris-lemons', 'Michael Aw':'michael-aw',
+  'Mark Tozer':'mark-tozer', 'Jim Decker':'jim-decker', 'Ross Long':'ross-long',
+  'Jack Power':'jack-power', 'Samir Alhafith':'samir-alhafith', 'Nicolas Remy':'nicolas-remy',
+  'John Kendall':'john-kendall', 'Nigel Marsh':'nigel-marsh', 'Ahmed Alham':'ahmed-alham',
+  'John Dalla-Zuanna':'john-dalla-zuanna', 'Brett Lobwein':'brett-lobwein',
+  'Jean-Claude Monachon':'jean-claude-monachon', 'Nays Baghai':'nays-baghai',
+  'Tiani Dun':'tiani-dun', 'Skanda Coffield-Feith':'skanda-coffield-feith',
+  'Mike Scotland':'mike-scotland',
+  'Ryan Chatfield & Nush Freedman (SHA Cast)':'shipwreck-hunters-australia',
+  'Ashley Ryan (ORRCA)':'orrca',
+  'A. Verde & P. Marshall':'anita-verde-and-peter-marshall',
+  'Main Stage Hosts':'underwater-awards'
+};
+var THUMB_LOGO = {'underwater-awards':1};
+
+function thumbFor(s){
+  var k = THUMBS[s.who]; if(!k) return '';
+  return {src:'images/speakers/'+k+'.jpg', logo:!!THUMB_LOGO[k]};
+}
+function thumbTag(s, cls){
+  var t = thumbFor(s); if(!t) return '';
+  return '<img class="'+cls+(t.logo?' logo':'')+'" src="'+esc(t.src)+'" alt="" '+
+    'loading="lazy" decoding="async" width="44" height="44">';
+}
+
 function dayHead(day){
   var d = DAYS[day];
   return '<div class="dayhead'+(day===2?' d2':'')+'">'+
@@ -999,10 +1052,15 @@ function sessionCard(s,opts){
   opts = opts||{};
   var on = picked(s.id);
   var clash = opts.showClash ? clashesFor(s) : [];
-  var forYou = state.interests.length && matchesInterests(s);
+  /* "For you" only earns its place where it discriminates. In the default
+     scope every visible card already matches your interests, so the badge
+     would sit on all of them and mean nothing; it is worth showing only
+     once you have asked to see everything. */
+  var forYou = state.interests.length && matchesInterests(s) && state.scope==='all';
   return '<article class="sess'+(on?' on':'')+(clash.length?' clash':'')+'" '+
       'style="border-left-color:'+STAGE_COLOR[s.stage]+'">'+
     '<div class="body" data-open="'+s.id+'" role="button" tabindex="0">'+
+      thumbTag(s,'thumb')+
       '<div class="time">'+
         (opts.showDay?'<span class="dayflag'+(s.day===2?' d2':'')+'">'+esc(DAYS[s.day].dow.slice(0,3))+'</span>':'')+
         esc(range(s))+'</div>'+
@@ -1344,6 +1402,7 @@ function openSheet(id){
   document.getElementById('sheetBody').innerHTML =
     '<div class="when">'+esc(DAYS[s.day].short)+' · '+esc(range(s))+'<br>'+esc(s.stage)+'</div>'+
     (STAGE_ALIAS[s.stage]?'<div class="alias">'+esc(STAGE_ALIAS[s.stage])+'</div>':'')+
+    thumbTag(s,'thumbbig')+
     '<h3 id="sheetTitle">'+esc(s.title)+'</h3>'+
     '<div class="who">'+esc(s.who)+'</div>'+
     '<div class="meta">'+s.tags.map(function(t){
