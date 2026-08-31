@@ -250,6 +250,12 @@
   .exh .sub2{font-size:12.5px;color:var(--muted);margin-top:3px}
   .stno{flex:0 0 auto;font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);
     border:1px solid var(--line);border-radius:8px;padding:7px 6px;min-width:44px;text-align:center}
+  /* Logos sit on white and keep their corners — they are wordmarks, and a
+     circular mask would cut the words off. */
+  .exh .logo{flex:0 0 auto;width:34px;height:34px;border-radius:7px;object-fit:contain;
+    background:#fff;padding:2px}
+  .sheet .standlogo{width:64px;height:64px;border-radius:10px;object-fit:contain;background:#fff;
+    padding:4px;float:right;margin:0 0 8px 12px}
 
   /* ---- contact channels ---- */
   .chans{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
@@ -498,7 +504,12 @@ var DETAIL = {
   'a9':{who:'Sheree Marris',
         blurb:'The sex lives of octopus, and the underwater secrets of Sydney. Marine biologist, author and film-maker Sheree Marris returns to the Main Stage, and the show promises her presentations are educational, informative and hilarious.',
         link:'https://www.instagram.com/p/DbDgsZ5lk1c/'},
-  'a11':{blurb:'Freediving fundamentals, why proper equipment servicing matters, and the latest updates for SDI Professionals — one seminar covering all three, for divers of every level.',
+  'a2':{who:'Annie Halloran & Nathan Prendergast (PADI)',
+        blurb:'PADI Regional Manager Annie Halloran and Instructor Development Consultant Nathan Prendergast, with experienced PADI Course Directors, on how becoming a Divemaster or Instructor builds confidence and opens flexible career opportunities here and worldwide. Open to non-divers and divers of all levels — bring your questions.',
+        link:'https://godivingshow.com/anz/schedule-of-activities/'},
+  'a10':{blurb:'Live demonstrations of QYSEA’s underwater drones and ROVs: intuitive control systems, 4K cameras and rugged construction, used for hull inspections, marine research, aquaculture monitoring and underwater filming.',
+         link:'https://godivingshow.com/anz/schedule-of-activities/'},
+  'a11':{blurb:'Freediving fundamentals, why proper equipment servicing matters for safety and performance, and the latest updates for SDI Professionals. For divers of every level, whether you are just entering the sport or have thousands of dives behind you.',
          link:'https://www.instagram.com/p/Dcjh4iuiGrq/'},
   'a12':{blurb:'Travel consultant, writer and ocean lover Deborah Dickson-Smith of DivePlanit on why marine conservation drives tourism growth for Australian dive operators — and the top whale encounters in the South Pacific.',
          link:'https://www.instagram.com/p/Db5OeXcoJMh/'},
@@ -558,6 +569,11 @@ var DETAIL = {
          link:'https://www.instagram.com/p/DciOyY_CCFH/'},
   'b14':{blurb:'Film-maker, underwater photographer and technical diver Nays Baghai returns to the Tech Stage on two very different disciplines — freediving and rebreathers.',
          link:'https://www.instagram.com/p/Dcf2Z3zjSCI/'},
+  'b11':{blurb:'Live demonstrations of QYSEA’s underwater drones and ROVs: intuitive control systems, 4K cameras and rugged construction, used for hull inspections, marine research, aquaculture monitoring and underwater filming.',
+         link:'https://godivingshow.com/anz/schedule-of-activities/'},
+  'b16':{who:'Woody Spark (Scubapix)',
+         blurb:'Underwater cinematography means constantly fighting physics — light loss, colour shift, refraction — all of which make natural, story-telling footage hard to capture. This talk covers the mindset shifts behind better imagery: planning, technique, lighting and storytelling, and how experienced film-makers make it look effortless.',
+         link:'https://godivingshow.com/anz/schedule-of-activities/'},
   'b17':{blurb:'Chris Lemons survived 40 minutes on the seabed some 100m down in the North Sea after a freak accident cut him off from his surface-supplied gas, light and heat — the story behind the film Last Breath, told by the diver himself.',
          link:'https://www.instagram.com/p/Daq0ScfEWyf/'},
   'b18':{blurb:'Billed by the show as “It’s All About the Little Things”: the reef’s smallest residents, including flamboyant cuttlefish, blue-ringed octopus and nudibranchs. Tiani Dun is a marine biologist and PADI instructor with a Master of Science in Marine Biology.',
@@ -596,7 +612,10 @@ var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'
 /* The matrix names the zones one way; the show's own posts advertise the
    Ocean/Travel zone as the "Inspiration Stage". Someone hunting for a sign
    at the venue needs the name that is actually on the sign. */
-var STAGE_ALIAS = {'Ocean/Travel':'signposted as the Inspiration Stage'};
+/* One room, three names. The floorplan calls it the ANZ Stage, the show's
+   posts call it the Inspiration Stage, and the matrix calls it
+   Ocean/Travel. All three appear in print, so all three are shown. */
+var STAGE_ALIAS = {'Ocean/Travel':'signposted as the ANZ Stage, and called the Inspiration Stage in the show’s posts'};
 
 /* ------------------------------------------------------------------
    The floor. Stand number, name, position and size come from the show's
@@ -710,14 +729,33 @@ var STANDS = STAND_ROWS.filter(function(r){return r[1];}).map(function(r){
 });
 function standByNo(no){for(var i=0;i<STANDS.length;i++) if(STANDS[i].no===no) return STANDS[i]; return null;}
 
+/* Stands whose logo we hold, from the show's own exhibitor directory.
+   Matched by hand: fuzzy name matching put Dive Lantern's logo on Dive
+   Planit's stand, and a confidently wrong logo is worse than none. */
+var STAND_LOGOS = ['100','106','108','112','114','116','122','124','126','130','134',
+  '204','208','210','212','214','216','218','220','222','224','225','226','229','235',
+  '242','300','302','304','306','308','314','320','322','324','326','328','329','330',
+  '331','332','335','336','338','400','402','404','406','420','422','426','428','430',
+  '432','434','440','441','500','510','512','530'];
+function standLogo(no){
+  return STAND_LOGOS.indexOf(no)>=0 ? 'images/stands/'+no+'.jpg' : '';
+}
+
 /* What the show says about the things on the floor worth queueing for. */
 var STAND_DETAIL = {
-  'F1':{blurb:'Take your first breath underwater in a pool on the show floor — no certification needed, just curiosity. Free for all attendees, with professional instructors from SDI Oceania and all scuba gear provided. Already certified? You can try a rebreather here too. Bring a swimsuit and a towel, and book early: spaces are limited.',
-        link:'https://www.instagram.com/p/Da3nBMKDde_/'},
-  '204':{blurb:'Virtually dive the historic Mars shipwreck, sitting in over 70m of water off Sweden and remarkably well-preserved after centuries underwater. Under-16s get in free with an adult.',
+  'F1':{blurb:'Take your first breaths underwater under the guidance of experienced SDI professionals — equipment, instruction and encouragement provided, you bring a swimsuit, a towel and a sense of adventure. Already certified? There are freediving demonstrations with PFI professionals and rebreather try-dives with TDI. Spaces are limited, so book early.',
+        link:'https://godivingshow.com/anz/schedule-of-activities/'},
+  '204':{blurb:'Virtually dive the historic Mars shipwreck, in over 70m of water off Sweden and astonishingly well-preserved after several hundred years underwater. One of the show’s two VR dives, running all weekend.',
          link:'https://www.instagram.com/p/Dcg7BRWjdAv/'},
-  '232':{blurb:'A three-to-five-minute dry-land fly-through of a reconstructed section of Mount Gambier’s Tank Cave, built by cave divers John Dalla-Zuanna and Wayne Johnson. No heavy gear and no cave training required. Runs all weekend.',
-         link:'https://www.instagram.com/p/DcndVLbjNbQ/'}
+  '232':{blurb:'A dry-land fly-through of a reconstructed section of Mount Gambier’s iconic Tank Cave, built by cave divers John Dalla-Zuanna and Wayne Johnson. Pop on a headset and explore the winding passages — no gear, no training, no limits. Runs all weekend.',
+         link:'https://www.instagram.com/p/DcndVLbjNbQ/'},
+  '512':{blurb:'An interactive display of cutting-edge maritime defence kit: tactical diving rigs, high-tech rebreathers, and the latest underwater surveillance and clearance diving gear. A rare chance to get hands-on and to talk to the people who use it.',
+         link:'https://godivingshow.com/anz/schedule-of-activities/'},
+  '321':{blurb:'The history of diving, shown through classic equipment including traditional hard-hat gear, alongside the techniques and stories that shaped the early days of the sport. Run by volunteers, and hands-on.',
+         link:'https://godivingshow.com/anz/schedule-of-activities/',
+         note:'The show’s own pages place this display on stand 340. The interactive floorplan says 321, which is where it is drawn here — worth checking the signage on the day.'},
+  '422':{blurb:'ORRCA protect whales, dolphins, seals and dugongs. Alongside their talks they run marine rescue demonstrations, showing the techniques and equipment used to save stranded or injured marine mammals — and how their volunteers operate.',
+         link:'https://godivingshow.com/anz/schedule-of-activities/'}
 };
 
 /* Which rectangle on the floor each programme stage is. The matrix and
@@ -1034,9 +1072,20 @@ var THUMBS = {
   'Ryan Chatfield & Nush Freedman (SHA Cast)':'shipwreck-hunters-australia',
   'Ashley Ryan (ORRCA)':'orrca',
   'A. Verde & P. Marshall':'anita-verde-and-peter-marshall',
-  'Main Stage Hosts':'underwater-awards'
+  'Main Stage Hosts':'underwater-awards',
+  /* Company-run sessions have no headshot to use, so these take the show's
+     own artwork for the activity instead — which is what a visitor will
+     recognise on the day anyway. */
+  'Annie Halloran & Nathan Prendergast (PADI)':'padi-workshop',
+  'QYSEA Team':'qysea',
+  'SDI Team':'discovery-pool',
+  'SOML Team':'ocean-screening',
+  'Digital Diver Team':'photo-seminars',
+  'Woody Spark (Scubapix)':'photo-seminars'
 };
-var THUMB_LOGO = {'underwater-awards':1};
+/* Square-ish rather than circular: these carry wordmarks or poster text
+   that a circle would slice through. */
+var THUMB_LOGO = {'underwater-awards':1, 'ocean-screening':1};
 
 function thumbFor(s){
   var k = THUMBS[s.who]; if(!k) return '';
@@ -1380,8 +1429,10 @@ function renderExhibitors(){
 
   document.getElementById('exhList').innerHTML = list.length ? list.map(function(s){
     var on = standPicked(s.no);
+    var lg = standLogo(s.no);
     return '<article class="exh'+(on?' on':'')+'" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
       '<div class="stno">'+esc(s.no)+'</div>'+
+      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="34" height="34">':'')+
       '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
         '<div class="nm">'+esc(s.n)+'</div>'+
         '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.type)+'</div>'+
@@ -1450,12 +1501,15 @@ function openStandSheet(no){
   /* A stage is not something you pin — it is where a talk happens — so
      the sheet offers the sessions on it instead of a star. */
   var here = SESSIONS.filter(function(x){return STAGE_STAND[x.stage]===no;});
+  var lg = standLogo(no);
   document.getElementById('sheetBody').innerHTML =
+    (lg?'<img class="standlogo" src="'+esc(lg)+'" alt="">':'')+
     '<div class="when">STAND '+esc(s.no)+'<br>'+esc(s.type)+'</div>'+
     '<h3 id="sheetTitle">'+esc(s.n)+'</h3>'+
     '<div class="meta">'+s.tags.map(function(t){
       return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
     (STAND_DETAIL[no]?'<p class="blurb">'+esc(STAND_DETAIL[no].blurb)+'</p>':'')+
+    (STAND_DETAIL[no]&&STAND_DETAIL[no].note?'<p class="nochan">⚠ '+esc(STAND_DETAIL[no].note)+'</p>':'')+
     renderPlan({focus:[no], height:220, key:false})+
     (STAND_DETAIL[no]&&STAND_DETAIL[no].link
       ? '<a class="iglink" href="'+esc(STAND_DETAIL[no].link)+'" target="_blank" rel="noopener noreferrer">See the show’s post ↗</a>'
