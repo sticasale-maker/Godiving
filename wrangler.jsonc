@@ -15,5 +15,15 @@
     // needs this.
     "run_worker_first": true
   },
-  "observability": { "enabled": true }
+  "observability": { "enabled": true },
+  // Declared here, not in the dashboard: `wrangler deploy` replaces plain
+  // vars with whatever the config declares, so a dashboard-set ACCESS_HOST
+  // is wiped by the next push. Secrets (GATE_PASSWORD) are preserved and
+  // stay out of the repo.
+  //
+  // This names the one hostname where Cloudflare Access is in front of the
+  // Worker, and is the only hostname whose Access header the gate trusts.
+  "vars": {
+    "ACCESS_HOST": "godiving.sticasale.workers.dev"
+  }
 }
