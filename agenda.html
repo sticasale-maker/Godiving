@@ -1688,7 +1688,9 @@ function renderSim(){
           ('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2)+'</span>'+
         '<select id="simDay"><option value="1"'+(sim.day===1?' selected':'')+'>Sat 5 Sep</option>'+
           '<option value="2"'+(sim.day===2?' selected':'')+'>Sun 6 Sep</option></select>'+
-        '<select id="simSpeed">'+[1,10,60,300].map(function(v){
+        /* Real time to check the countdown behaves, or fast enough to watch
+           a whole day pass. The steps in between were neither. */
+        '<select id="simSpeed">'+[1,300].map(function(v){
           return '<option value="'+v+'"'+(sim.speed===v?' selected':'')+'>'+v+'×</option>';}).join('')+'</select>'+
         '<button id="simOff">Exit</button>'+
       '</div>'+
