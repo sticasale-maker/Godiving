@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06222e">
+<title>Plan your day — GO Diving Show Sydney</title>
+<meta name="description" content="Pick what you're into, and build a personal runsheet for the GO Diving Show Sydney, 5–6 September 2026.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#06222e; --bg2:#0c3142; --surface:#0f3c50; --line:rgba(255,255,255,0.14);
+    --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
+    --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b;
+    --gen:#57c7ff; --photo:#b98cff; --tech:#36c9c0; --pro:#f3c64f;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-text-size-adjust:100%}
+  body{min-height:100dvh;padding:0 0 calc(84px + env(safe-area-inset-bottom))}
+  .wrap{width:100%;max-width:720px;margin:0 auto;padding:16px 14px 0}
+
+  .logobar{display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:14px}
+  .logobar img{height:34px;width:auto}
+  .logobar img.circle{border-radius:50%}
+  .logobar .sep{width:1px;height:26px;background:var(--line)}
+
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:16px;
+    padding:16px 14px;margin-bottom:12px}
+  .eyebrow{font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:2px;
+    color:var(--muted);text-transform:uppercase;margin-bottom:10px}
+  h1{font-size:24px;margin:0 0 6px;line-height:1.2}
+  h2{font-size:18px;margin:0 0 6px;line-height:1.25}
+  .sub{color:var(--muted);font-size:14px;line-height:1.55}
+  .sub b{color:var(--accent)}
+  .muted{color:var(--muted)}
+
+  .btn{width:100%;border:0;border-radius:12px;padding:15px 18px;font-size:17px;font-weight:800;
+    font-family:inherit;cursor:pointer;background:linear-gradient(180deg,#28c3a8,#12907c);
+    color:#04211d;touch-action:manipulation}
+  .btn:active{transform:translateY(1px)}
+  .btn[disabled]{opacity:.45;cursor:default}
+  .btn.ghost{background:transparent;border:1px solid var(--line);color:var(--text);font-weight:700;font-size:15px;padding:12px 16px}
+  .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}
+  .btnrow .btn{width:auto;flex:1 1 150px}
+
+  /* ---- interest picker ---- */
+  .picks{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:4px 0 14px}
+  @media (max-width:420px){.picks{grid-template-columns:1fr}}
+  .pick{position:relative;text-align:left;background:var(--bg2);border:2px solid var(--line);
+    border-radius:14px;padding:14px 14px 13px;color:var(--text);font-family:inherit;cursor:pointer}
+  .pick .k{font-family:'Press Start 2P',monospace;font-size:11px;letter-spacing:1px;margin-bottom:8px;display:block}
+  .pick .n{font-weight:800;font-size:16px;display:block;margin-bottom:4px}
+  .pick .d{font-size:13px;color:var(--muted);line-height:1.45;display:block}
+  .pick .tick{position:absolute;top:10px;right:12px;font-size:17px;opacity:0;transition:opacity .12s}
+  .pick[aria-pressed="true"]{background:rgba(54,201,192,.10)}
+  .pick[aria-pressed="true"] .tick{opacity:1}
+  .pick[data-k="GEN"] .k{color:var(--gen)}   .pick[data-k="GEN"][aria-pressed="true"]{border-color:var(--gen)}
+  .pick[data-k="PHOTO"] .k{color:var(--photo)} .pick[data-k="PHOTO"][aria-pressed="true"]{border-color:var(--photo)}
+  .pick[data-k="TECH"] .k{color:var(--tech)}  .pick[data-k="TECH"][aria-pressed="true"]{border-color:var(--tech)}
+  .pick[data-k="PRO"] .k{color:var(--pro)}    .pick[data-k="PRO"][aria-pressed="true"]{border-color:var(--pro)}
+
+  /* ---- filter bar ---- */
+  .bar{display:flex;gap:8px;align-items:center;margin-bottom:10px}
+  .seg{display:flex;background:var(--bg2);border:1px solid var(--line);border-radius:12px;padding:3px;flex:1}
+  .seg button{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;
+    font-weight:700;font-size:14px;padding:9px 6px;border-radius:9px;cursor:pointer}
+  .seg button[aria-pressed="true"]{background:var(--accentd);color:var(--accent)}
+  input[type=search]{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
+    color:var(--text);font-family:inherit;font-size:15px;padding:12px 12px}
+  input[type=search]::placeholder{color:var(--muted)}
+  .chips{display:flex;gap:7px;overflow-x:auto;padding:2px 0 8px;-webkit-overflow-scrolling:touch;
+    scrollbar-width:none}
+  .chips::-webkit-scrollbar{display:none}
+  .chip{flex:0 0 auto;border:1px solid var(--line);background:var(--bg2);color:var(--muted);
+    border-radius:999px;padding:8px 13px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;white-space:nowrap}
+  .chip[aria-pressed="true"]{border-color:var(--accent);color:var(--accent);background:var(--accentd)}
+
+  /* ---- session cards ---- */
+  .slot{font-family:'Press Start 2P',monospace;font-size:10px;letter-spacing:1px;color:var(--muted);
+    margin:16px 2px 8px;text-transform:uppercase}
+  .sess{display:flex;gap:11px;background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--line);
+    border-radius:14px;padding:12px 12px;margin-bottom:9px}
+  .sess.on{border-color:var(--accent);background:rgba(54,201,192,.09)}
+  /* Only a session you have actually flagged gets the alarming border. On one
+     you have not picked, the overlap is information, not a problem. */
+  .sess.on.clash{border-color:var(--bad)}
+  .sess:not(.on) .warn{color:var(--muted);font-weight:600}
+  .sess .body{flex:1;min-width:0}
+  .sess .time{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);letter-spacing:1px}
+  .sess .ttl{font-weight:800;font-size:16px;line-height:1.3;margin:6px 0 4px}
+  .sess .who{font-size:13.5px;color:var(--muted);line-height:1.45}
+  .sess .meta{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px;align-items:center}
+  .tag{font-size:10.5px;font-weight:800;letter-spacing:.6px;border-radius:999px;padding:3px 8px;
+    border:1px solid currentColor;opacity:.85}
+  .tag.GEN{color:var(--gen)} .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)} .tag.PRO{color:var(--pro)}
+  .stagetag{font-size:11.5px;font-weight:700;color:var(--muted)}
+  .foryou{font-size:10.5px;font-weight:800;letter-spacing:.6px;color:var(--accent);
+    background:var(--accentd);border-radius:999px;padding:3px 8px}
+  .warn{font-size:12.5px;color:var(--bad);font-weight:700;margin-top:7px}
+  .add{flex:0 0 auto;width:46px;border:1px solid var(--line);background:var(--bg2);color:var(--muted);
+    border-radius:12px;font-size:21px;font-family:inherit;cursor:pointer;line-height:1;padding:0}
+  .add[aria-pressed="true"]{border-color:var(--accent);background:var(--accentd);color:var(--accent)}
+
+  .empty{text-align:center;color:var(--muted);font-size:14.5px;line-height:1.6;padding:26px 10px}
+
+  /* ---- bottom nav ---- */
+  .nav{position:fixed;left:0;right:0;bottom:0;background:rgba(6,34,46,.94);
+    backdrop-filter:blur(8px);border-top:1px solid var(--line);display:flex;
+    padding:8px 8px calc(8px + env(safe-area-inset-bottom))}
+  .nav button{flex:1;background:transparent;border:0;color:var(--muted);font-family:inherit;
+    font-size:12px;font-weight:700;padding:6px 2px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px}
+  .nav button[aria-pressed="true"]{color:var(--accent)}
+  .nav .ic{font-size:19px;line-height:1}
+  .nav .count{position:absolute;transform:translate(14px,-4px);background:var(--gold);color:#04211d;
+    border-radius:999px;font-size:10px;font-weight:800;padding:1px 5px;min-width:16px}
+
+  .foot{text-align:center;font-size:12px;color:var(--muted);margin:16px 0 4px;line-height:1.6}
+  a{color:var(--accent)}
+
+  @media print{
+    .nav,.bar,.chips,.btnrow,.logobar .sep,.hideprint{display:none!important}
+    body{background:#fff;color:#111;padding:0}
+    .card,.sess{background:#fff;border:1px solid #bbb;color:#111}
+    .sess .time,.slot{color:#333} .sess .who,.muted,.stagetag{color:#444}
+    .eyebrow{color:#666}
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="logobar">
+    <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="GO Diving Show">
+    <span class="sep"></span>
+    <img src="images/branding/vizlogo.png" alt="VIZ" class="circle">
+  </div>
+
+  <!-- ============ STEP 1: interests ============ -->
+  <section id="viewInterests" style="display:none">
+    <div class="card">
+      <div class="eyebrow">Plan your day</div>
+      <h1>What are you here for?</h1>
+      <p class="sub">Pick everything that sounds like you. We'll shortlist the talks worth your time
+        across <b>Saturday 5</b> and <b>Sunday 6 September</b> — then you flag the ones you actually
+        want, and we build the runsheet.</p>
+    </div>
+    <div class="picks" id="pickGrid"></div>
+    <button class="btn" id="goBrowse">Show me my sessions</button>
+    <p class="foot"><a href="#" id="skipInterests">Skip — just show me everything</a></p>
+  </section>
+
+  <!-- ============ STEP 2: browse ============ -->
+  <section id="viewBrowse" style="display:none">
+    <div class="card">
+      <div class="eyebrow">Sessions for you</div>
+      <h2 id="browseHead">Recommended sessions</h2>
+      <p class="sub" id="browseSub"></p>
+      <div class="btnrow" style="margin:12px 0 0">
+        <button class="btn ghost" id="editInterests">Change my interests</button>
+        <button class="btn ghost" id="autoPlan">Auto-build my day</button>
+      </div>
+    </div>
+
+    <div class="bar">
+      <div class="seg" id="daySeg">
+        <button data-day="1" aria-pressed="true">Sat 5 Sep</button>
+        <button data-day="2" aria-pressed="false">Sun 6 Sep</button>
+      </div>
+    </div>
+    <div class="bar"><input type="search" id="q" placeholder="Search talks, speakers, stages…" autocomplete="off"></div>
+    <div class="chips" id="stageChips"></div>
+    <div class="chips" id="scopeChips">
+      <button class="chip" data-scope="mine" aria-pressed="true">★ My interests</button>
+      <button class="chip" data-scope="all" aria-pressed="false">Everything on</button>
+    </div>
+
+    <div id="browseList"></div>
+  </section>
+
+  <!-- ============ STEP 3: my agenda ============ -->
+  <section id="viewAgenda" style="display:none">
+    <div class="card">
+      <div class="eyebrow">My runsheet</div>
+      <h2 id="agendaHead">Your personal agenda</h2>
+      <p class="sub" id="agendaSub"></p>
+    </div>
+    <div class="btnrow hideprint" id="agendaTools" style="display:none">
+      <button class="btn ghost" id="dlIcs">Add to calendar</button>
+      <button class="btn ghost" id="printIt">Print / save PDF</button>
+      <button class="btn ghost" id="shareIt">Share my agenda</button>
+    </div>
+    <div id="agendaList"></div>
+    <p class="foot hideprint">Times are as published by the show and can move on the day —
+      check the boards at the venue.</p>
+  </section>
+
+  <p class="foot hideprint">GO Diving Show Sydney · 5–6 September 2026</p>
+</div>
+
+<nav class="nav hideprint" id="nav" style="display:none">
+  <button data-view="browse" aria-pressed="true"><span class="ic">🔍</span>Discover</button>
+  <button data-view="agenda" aria-pressed="false"><span class="ic">📋</span>My agenda<span class="count" id="navCount" style="display:none">0</span></button>
+</nav>
+
+<script>
+/* ------------------------------------------------------------------
+   The programme, transcribed from the official event matrix.
+   tags are the audience columns from that matrix (GEN / PHOTO / TECH /
+   PRO), read off the tick positions rather than guessed: they are what
+   the whole shortlist hangs on, so a session tagged wrongly here sends
+   someone to the wrong room.
+   ------------------------------------------------------------------ */
+var AUDIENCES = [
+  {k:'GEN',   n:'General, beginners & families', s:'beginners & families',
+   d:'Big stories, marine life, first-timer friendly.'},
+  {k:'PHOTO', n:'Photo & video',                 s:'photo & video',
+   d:'Cameras, strobes, macro, wide-angle, editing.'},
+  {k:'TECH',  n:'Tech & advanced',               s:'tech & advanced',
+   d:'Rebreathers, wrecks, caves, deep, expedition.'},
+  {k:'PRO',   n:'Pro, travel & conservation',    s:'pro, travel & conservation',
+   d:'Careers, destinations, the industry, the ocean.'}
+];
+
+var DAYS = {
+  1:{label:'Saturday 5 September', short:'Sat 5 Sep', date:'2026-09-05'},
+  2:{label:'Sunday 6 September',   short:'Sun 6 Sep', date:'2026-09-06'}
+};
+
+/* start/end are 24h local (Sydney). */
+var SESSIONS = [
+  /* ---------------- Saturday ---------------- */
+  {id:'a1', day:1, start:'10:00', end:'10:45', stage:'Main Stage',     title:'30 Years with a PFO: Lessons, Symptoms & Recovery', who:'Pete Mesley',              tags:['GEN','TECH']},
+  {id:'a2', day:1, start:'10:00', end:'12:00', stage:'Workshop Room',  title:'Become a PADI Pro: Turning Passion into a Career',  who:'A. Halloran & N. Prendergast', tags:['PRO']},
+  {id:'a3', day:1, start:'10:30', end:'11:15', stage:'Tech Stage',     title:"Gas 'N' Guts: The Search for HMS Affray",           who:'David Strike',             tags:['TECH']},
+  {id:'a4', day:1, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'From Whales to Nudibranchs: Macro & Large Marine Life', who:'Vanessa Mignon',       tags:['PHOTO']},
+  {id:'a5', day:1, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Behind the Scenes',    who:'SHA Cast',                 tags:['GEN','TECH']},
+  {id:'a6', day:1, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:'Beyond Holding Your Breath: The Spirit of Freediving', who:'Dylan Boag',            tags:['GEN','PRO']},
+  {id:'a7', day:1, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Diving Operations & Planning',            who:'Becca Boring',             tags:['TECH']},
+  {id:'a8', day:1, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'10 Tips to Elevate Your Underwater Photography',    who:'Jake Wilton',              tags:['PHOTO']},
+  {id:'a9', day:1, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Marine Life Stories & Coastal Adventures',          who:'Sheree Maris',             tags:['GEN']},
+  {id:'a10',day:1, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone In-Water Display',       who:'QYSEA Team',               tags:['GEN','TECH']},
+  {id:'a11',day:1, start:'12:00', end:'14:00', stage:'Workshop Room',  title:'SDI Seminar: Learn, Explore, Connect & Tech Updates', who:'SDI Team',               tags:['GEN','PRO']},
+  {id:'a12',day:1, start:'12:15', end:'13:00', stage:'Ocean/Travel',   title:'How Marine Conservation Drives Tourism Growth',     who:'Deborah Dickson-Smith',    tags:['PRO']},
+  {id:'a13',day:1, start:'12:30', end:'13:15', stage:'Tech Stage',     title:'Deep Explorations & Expedition Logistics',          who:'Yana Stashkevich',         tags:['TECH']},
+  {id:'a14',day:1, start:'12:45', end:'13:30', stage:'Photo Stage',    title:'Documenting the Baja California Sardine Run',       who:'A. Verde & P. Marshall',   tags:['PHOTO','PRO']},
+  {id:'a15',day:1, start:'13:15', end:'14:00', stage:'Main Stage',     title:'Last Breath: Deep Commercial Diving & Survival',    who:'Chris Lemons',             tags:['GEN','TECH']},
+  {id:'a16',day:1, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Asia-Pacific Ocean Visions & Conservation Photo',   who:'Michael Aw',               tags:['PHOTO','PRO']},
+  {id:'a17',day:1, start:'13:30', end:'14:15', stage:'Tech Stage',     title:'Technical Cave & Deeper Wreck Exploration',         who:'Mark Tozer',               tags:['TECH']},
+  {id:'a18',day:1, start:'13:45', end:'14:30', stage:'Photo Stage',    title:'Wide-Angle Lighting & Gear Setup Dynamics',         who:'Jim Decker',               tags:['PHOTO']},
+  {id:'a19',day:1, start:'14:00', end:'16:00', stage:'Workshop Room',  title:'Save Our Marine Life: Screening of "Ocean" & Q&A',  who:'SOML Team',                tags:['GEN','PRO']},
+  {id:'a20',day:1, start:'14:15', end:'15:00', stage:'Main Stage',     title:'From Turtle Encounters to Storytelling',            who:'Ross Long',                tags:['GEN','PHOTO']},
+  {id:'a21',day:1, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Emerging Dive Destinations & Eco-Travel',           who:'Jack Power',               tags:['PRO']},
+  {id:'a22',day:1, start:'14:30', end:'15:15', stage:'Tech Stage',     title:'Rebreather Mechanics & Safety Protocols',           who:'Samir Alhafith',           tags:['TECH']},
+  {id:'a23',day:1, start:'14:45', end:'15:30', stage:'Photo Stage',    title:'Blackwater & Macro Techniques in Tempered Waters',  who:'Nicolas Remy',             tags:['PHOTO']},
+  {id:'a24',day:1, start:'15:15', end:'16:00', stage:'Ocean/Travel',   title:'Marine Mammal Rescue & Citizen Action',             who:'ORRCA Team',               tags:['GEN','PRO']},
+  {id:'a25',day:1, start:'15:30', end:'17:00', stage:'Main Stage',     title:'Underwater Photo & Video Awards Ceremony',          who:'Main Stage Hosts',         tags:['GEN','PHOTO']},
+
+  /* ---------------- Sunday ---------------- */
+  {id:'b1', day:2, start:'10:00', end:'10:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Uncovering History',   who:'SHA Cast',                 tags:['GEN','TECH']},
+  {id:'b2', day:2, start:'10:00', end:'11:00', stage:'Workshop Room',  title:'Nikon Workshop: Lessons from the Field & Setup',    who:'Jake Wilton',              tags:['PHOTO']},
+  {id:'b3', day:2, start:'10:30', end:'11:15', stage:'Tech Stage',     title:'North Sea Deep Diving & Wreck Expeditions',         who:'John Kendall',             tags:['TECH']},
+  {id:'b4', day:2, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'Underwater Photography Myths Debunked',             who:'Nigel Marsh',              tags:['PHOTO']},
+  {id:'b5', day:2, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Conservation Storytelling Through the Lens',        who:'Ross Long',                tags:['GEN','PHOTO']},
+  {id:'b6', day:2, start:'11:00', end:'12:00', stage:'Workshop Room',  title:'UW Photo Made Simple (Action Cams / Phones)',       who:'Digital Diver Team',       tags:['GEN','PHOTO']},
+  {id:'b7', day:2, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:"Diving Fuvahmulah: World's Tiger Shark Capital",    who:'Ahmed Alham',              tags:['GEN','PRO']},
+  {id:'b8', day:2, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Mine & Subterranean Exploration',         who:'John Dalla-Zuanna',        tags:['TECH']},
+  {id:'b9', day:2, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'Underwater Photography on a Budget',                who:'Brett Lobwein',            tags:['GEN','PHOTO']},
+  {id:'b10',day:2, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Recognizing and Managing PFO in Diving',            who:'Pete Mesley',              tags:['GEN','TECH']},
+  {id:'b11',day:2, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone Display',                who:'QYSEA Team',               tags:['GEN','TECH']},
+  {id:'b12',day:2, start:'12:00', end:'13:00', stage:'Workshop Room',  title:'Nikon Masterclass: Mastering Sydney Macro Details', who:'Daniel Sly',               tags:['PHOTO']},
+  {id:'b13',day:2, start:'12:15', end:'13:00', stage:'Ocean/Travel',   title:'Global Diving Trends & Training Systems',           who:'Jean-Claude Monachon',     tags:['PRO']},
+  {id:'b14',day:2, start:'12:30', end:'13:15', stage:'Tech Stage',     title:'Underwater Filmmaking Under Extreme Conditions',    who:'Nays Baghai',              tags:['PHOTO','TECH']},
+  {id:'b15',day:2, start:'12:45', end:'13:30', stage:'Photo Stage',    title:'Composition & Lighting Nuances in Underwater Photo',who:'Jake Wilton',              tags:['PHOTO']},
+  {id:'b16',day:2, start:'13:00', end:'14:00', stage:'Workshop Room',  title:'Mindset Shifts to Elevate Underwater Video',        who:'Woody Spark',              tags:['PHOTO']},
+  {id:'b17',day:2, start:'13:15', end:'14:00', stage:'Main Stage',     title:'Miracles Deep: The Physics & Story of Survival',    who:'Chris Lemons',             tags:['GEN','TECH']},
+  {id:'b18',day:2, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Ocean Advocacy & Engaging Gen Z Divers',            who:'Tiani Dun',                tags:['GEN','PRO']},
+  {id:'b19',day:2, start:'13:30', end:'14:15', stage:'Tech Stage',     title:'Deep Rebreather Exploration Protocols',             who:'Skanda Coffield-Feith',    tags:['TECH']},
+  {id:'b20',day:2, start:'13:45', end:'14:30', stage:'Photo Stage',    title:'Mastering Strobe Positioning Underwater',           who:'Jim Decker',               tags:['PHOTO']},
+  {id:'b21',day:2, start:'14:15', end:'15:00', stage:'Main Stage',     title:'Marine Life Behaviour & Ocean Wonders',             who:'Sheree Maris',             tags:['GEN']},
+  {id:'b22',day:2, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Sustainable Dive Tourism Best Practices',           who:'Deborah Dickson-Smith',    tags:['PRO']},
+  {id:'b23',day:2, start:'14:45', end:'15:30', stage:'Photo Stage',    title:'Demystifying Underwater Photo Optics & Rigging',    who:'Mike Scotland',            tags:['PHOTO']}
+];
+
+var STAGES = ['Main Stage','Photo Stage','Tech Stage','Ocean/Travel','Workshop Room','Demo Pool'];
+var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'#36c9c0',
+  'Ocean/Travel':'#4fd28a','Workshop Room':'#ff9f6b','Demo Pool':'#57c7ff'};
+
+/* ------------------------------------------------------------------ */
+var LS = 'gds-agenda-v1';
+var state = {interests:[], picks:[], day:1, stage:'', q:'', scope:'mine', view:'interests'};
+
+function load(){
+  try{
+    var raw = localStorage.getItem(LS);
+    if(raw){var o=JSON.parse(raw);
+      if(Array.isArray(o.interests)) state.interests=o.interests;
+      if(Array.isArray(o.picks))     state.picks=o.picks;
+    }
+  }catch(e){/* private browsing, or a cleared store: start fresh */}
+}
+function save(){
+  try{localStorage.setItem(LS,JSON.stringify({interests:state.interests,picks:state.picks}));}
+  catch(e){/* nothing we can do; the page still works for this visit */}
+}
+
+/* A shared agenda arrives as ?p=id,id,id — it wins over whatever is
+   stored locally, because the person clicked a link to see *that* plan. */
+function readShare(){
+  var p = new URLSearchParams(location.search).get('p');
+  if(!p) return false;
+  var ids = p.split(',').filter(function(id){return byId(id);});
+  if(!ids.length) return false;
+  state.picks = ids;
+  var t = {};
+  ids.forEach(function(id){byId(id).tags.forEach(function(k){t[k]=1;});});
+  if(!state.interests.length) state.interests = Object.keys(t);
+  save();
+  return true;
+}
+
+function byId(id){for(var i=0;i<SESSIONS.length;i++){if(SESSIONS[i].id===id) return SESSIONS[i];} return null;}
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){
+  return({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]);});}
+function mins(hhmm){var p=hhmm.split(':');return (+p[0])*60+(+p[1]);}
+function ampm(hhmm){
+  var p=hhmm.split(':'),h=+p[0],m=p[1],s=h<12?'am':'pm';
+  h = h%12; if(h===0) h=12;
+  return h+(m==='00'?'':':'+m)+s;
+}
+function range(s){return ampm(s.start)+' – '+ampm(s.end);}
+function matchesInterests(s){
+  if(!state.interests.length) return true;
+  return s.tags.some(function(t){return state.interests.indexOf(t)>=0;});
+}
+function picked(id){return state.picks.indexOf(id)>=0;}
+
+/* Two sessions clash if they overlap at all. Touching ends (one finishes
+   at 11:30, the next starts at 11:30) is not a clash — that is just a
+   brisk walk between stages. */
+function overlaps(a,b){
+  return a.day===b.day && mins(a.start) < mins(b.end) && mins(b.start) < mins(a.end);
+}
+function clashesFor(s){
+  return state.picks.map(byId).filter(function(o){return o && o.id!==s.id && overlaps(o,s);});
+}
+
+/* ---------------- interests screen ---------------- */
+function renderPicker(){
+  document.getElementById('pickGrid').innerHTML = AUDIENCES.map(function(a){
+    var on = state.interests.indexOf(a.k)>=0;
+    return '<button class="pick" data-k="'+a.k+'" aria-pressed="'+on+'">'+
+      '<span class="tick">✓</span>'+
+      '<span class="k">'+a.k+'</span>'+
+      '<span class="n">'+esc(a.n)+'</span>'+
+      '<span class="d">'+esc(a.d)+'</span></button>';
+  }).join('');
+  document.getElementById('goBrowse').disabled = !state.interests.length;
+}
+
+/* ---------------- browse ---------------- */
+function visibleSessions(){
+  var q = state.q.trim().toLowerCase();
+  return SESSIONS.filter(function(s){
+    if(s.day!==state.day) return false;
+    if(state.stage && s.stage!==state.stage) return false;
+    if(state.scope==='mine' && !matchesInterests(s) && !picked(s.id)) return false;
+    if(q){
+      var hay = (s.title+' '+s.who+' '+s.stage+' '+s.tags.join(' ')).toLowerCase();
+      if(hay.indexOf(q)<0) return false;
+    }
+    return true;
+  }).sort(function(a,b){return mins(a.start)-mins(b.start) || STAGES.indexOf(a.stage)-STAGES.indexOf(b.stage);});
+}
+
+function sessionCard(s,opts){
+  opts = opts||{};
+  var on = picked(s.id);
+  var clash = opts.showClash ? clashesFor(s) : [];
+  var forYou = state.interests.length && matchesInterests(s);
+  return '<article class="sess'+(on?' on':'')+(clash.length?' clash':'')+'" '+
+      'style="border-left-color:'+STAGE_COLOR[s.stage]+'">'+
+    '<div class="body">'+
+      '<div class="time">'+esc(range(s))+'</div>'+
+      '<div class="ttl">'+esc(s.title)+'</div>'+
+      '<div class="who">'+esc(s.who)+'</div>'+
+      '<div class="meta">'+
+        '<span class="stagetag" style="color:'+STAGE_COLOR[s.stage]+'">'+esc(s.stage)+'</span>'+
+        s.tags.map(function(t){return '<span class="tag '+t+'">'+t+'</span>';}).join('')+
+        (forYou&&!opts.hideForYou?'<span class="foryou">FOR YOU</span>':'')+
+      '</div>'+
+      (clash.length?'<div class="warn">⚠ '+(on?'Overlaps':'Clashes with')+' '+
+        esc(clash.map(function(c){return c.title;}).join(', '))+'</div>':'')+
+    '</div>'+
+    '<button class="add" data-add="'+s.id+'" aria-pressed="'+on+'" '+
+      'aria-label="'+(on?'Remove from':'Add to')+' my agenda">'+(on?'★':'☆')+'</button>'+
+  '</article>';
+}
+
+function renderBrowse(){
+  var list = visibleSessions();
+  var names = AUDIENCES.filter(function(a){return state.interests.indexOf(a.k)>=0;})
+    .map(function(a){return a.s;});
+  document.getElementById('browseHead').textContent =
+    state.interests.length ? 'Shortlisted for you' : 'The whole programme';
+  document.getElementById('browseSub').innerHTML = state.interests.length
+    ? 'Based on <b>'+esc(names.join(', '))+'</b>. Tap ☆ on anything you want and it lands in your agenda.'
+    : 'No interests picked, so nothing is filtered. Tap ☆ on anything you want.';
+
+  document.getElementById('stageChips').innerHTML =
+    '<button class="chip" data-stage="" aria-pressed="'+(state.stage===''?'true':'false')+'">All stages</button>'+
+    STAGES.map(function(st){
+      return '<button class="chip" data-stage="'+esc(st)+'" aria-pressed="'+(state.stage===st?'true':'false')+'">'+esc(st)+'</button>';
+    }).join('');
+
+  var host = document.getElementById('browseList');
+  if(!list.length){
+    host.innerHTML = '<p class="empty">Nothing matches that on '+DAYS[state.day].short+'.<br>'+
+      'Try “Everything on”, or clear the search.</p>';
+    return;
+  }
+  var html='', lastSlot='';
+  list.forEach(function(s){
+    if(s.start!==lastSlot){lastSlot=s.start; html += '<div class="slot">'+esc(ampm(s.start))+'</div>';}
+    html += sessionCard(s,{showClash:true});
+  });
+  host.innerHTML = html;
+}
+
+/* ---------------- my agenda ---------------- */
+function renderAgenda(){
+  var mine = state.picks.map(byId).filter(Boolean).sort(function(a,b){
+    return a.day-b.day || mins(a.start)-mins(b.start);
+  });
+  var head = document.getElementById('agendaHead');
+  var sub  = document.getElementById('agendaSub');
+  var host = document.getElementById('agendaList');
+  document.getElementById('agendaTools').style.display = mine.length?'flex':'none';
+
+  if(!mine.length){
+    head.textContent = 'Your agenda is empty';
+    sub.textContent  = 'Head back to Discover and tap ☆ on the sessions you want.';
+    host.innerHTML   = '<p class="empty">Nothing flagged yet.</p>';
+    return;
+  }
+  var clashCount = 0;
+  mine.forEach(function(s){ if(clashesFor(s).length) clashCount++; });
+  head.textContent = mine.length+' session'+(mine.length===1?'':'s')+' flagged';
+  sub.innerHTML = clashCount
+    ? '<b style="color:var(--bad)">'+clashCount+' of them overlap</b> — the clashes are marked below so you can drop one.'
+    : 'No clashes. Times are back-to-back where they touch, so allow a minute between rooms.';
+
+  var html='', lastDay=0;
+  mine.forEach(function(s){
+    if(s.day!==lastDay){lastDay=s.day; html += '<div class="slot">'+esc(DAYS[s.day].label)+'</div>';}
+    html += sessionCard(s,{showClash:true,hideForYou:true});
+  });
+  host.innerHTML = html;
+}
+
+/* ---------------- auto-build ---------------- */
+/* Greedy by start time: walk the day, take the highest-scoring session
+   that does not collide with what has already been taken. Score favours
+   sessions that hit more of the declared interests, then the earlier
+   finish, so the day stays dense rather than blocked out by one long
+   workshop. Existing picks are kept and treated as fixed. */
+function autoBuild(){
+  var day = state.day;
+  var kept = state.picks.map(byId).filter(function(s){return s && s.day===day;});
+  var pool = SESSIONS.filter(function(s){
+    return s.day===day && matchesInterests(s) && !picked(s.id);
+  }).sort(function(a,b){
+    return mins(a.start)-mins(b.start) || (mins(a.end)-mins(b.end));
+  });
+  var taken = kept.slice();
+  pool.forEach(function(s){
+    var hits = s.tags.filter(function(t){return state.interests.indexOf(t)>=0;}).length;
+    if(state.interests.length && !hits) return;
+    var clash = taken.some(function(o){return overlaps(o,s);});
+    if(!clash){taken.push(s); state.picks.push(s.id);}
+  });
+  save();
+  render();
+  go('agenda');
+}
+
+/* ---------------- calendar file ---------------- */
+/* Sydney is UTC+10 on 5–6 September (AEST; daylight saving does not start
+   until October), so the wall-clock times convert with a flat -10h into
+   the UTC stamps that every calendar client reads without a VTIMEZONE. */
+function icsStamp(dateISO,hhmm){
+  var d = new Date(dateISO+'T'+hhmm+':00Z');
+  d.setUTCHours(d.getUTCHours()-10);
+  return d.toISOString().replace(/[-:]/g,'').replace(/\.\d{3}/,'');
+}
+function buildIcs(){
+  var mine = state.picks.map(byId).filter(Boolean).sort(function(a,b){
+    return a.day-b.day || mins(a.start)-mins(b.start);});
+  var L = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VIZ//GO Diving Show Sydney//EN','CALSCALE:GREGORIAN'];
+  mine.forEach(function(s){
+    L.push('BEGIN:VEVENT',
+      'UID:'+s.id+'@godiving.viz.net.au',
+      'DTSTAMP:'+icsStamp(DAYS[s.day].date,'09:00'),
+      'DTSTART:'+icsStamp(DAYS[s.day].date,s.start),
+      'DTEND:'+icsStamp(DAYS[s.day].date,s.end),
+      'SUMMARY:'+ical(s.title),
+      'LOCATION:'+ical(s.stage+', GO Diving Show Sydney'),
+      'DESCRIPTION:'+ical(s.who+' — '+s.tags.join(', ')),
+      'END:VEVENT');
+  });
+  L.push('END:VCALENDAR');
+  return L.map(fold).join('\r\n');
+}
+function ical(t){return String(t).replace(/([,;\\])/g,'\\$1').replace(/\n/g,'\\n');}
+/* iCalendar caps a line at 75 octets and continues it with a leading
+   space. Lenient clients cope without this, Outlook does not, and a
+   couple of these titles run long. */
+function fold(line){
+  if(line.length<=73) return line;
+  var out=line.slice(0,73), rest=line.slice(73);
+  while(rest.length>72){out+='\r\n '+rest.slice(0,72); rest=rest.slice(72);}
+  return out+'\r\n '+rest;
+}
+
+function download(name,text,type){
+  var blob = new Blob([text],{type:type});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url; a.download = name;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url);},1000);
+}
+
+function shareUrl(){
+  return location.origin+location.pathname+'?p='+state.picks.join(',');
+}
+
+/* ---------------- view plumbing ---------------- */
+function go(view){
+  state.view = view;
+  document.getElementById('viewInterests').style.display = view==='interests'?'':'none';
+  document.getElementById('viewBrowse').style.display    = view==='browse'?'':'none';
+  document.getElementById('viewAgenda').style.display    = view==='agenda'?'':'none';
+  document.getElementById('nav').style.display = view==='interests'?'none':'flex';
+  Array.prototype.forEach.call(document.querySelectorAll('#nav button'),function(b){
+    b.setAttribute('aria-pressed', String(b.dataset.view===view));
+  });
+  window.scrollTo(0,0);
+  render();
+}
+function render(){
+  if(state.view==='interests') renderPicker();
+  if(state.view==='browse')    renderBrowse();
+  if(state.view==='agenda')    renderAgenda();
+  var c = document.getElementById('navCount');
+  c.textContent = state.picks.length;
+  c.style.display = state.picks.length?'':'none';
+}
+
+/* ---------------- events ---------------- */
+document.getElementById('pickGrid').addEventListener('click',function(e){
+  var b = e.target.closest('.pick'); if(!b) return;
+  var k = b.dataset.k, i = state.interests.indexOf(k);
+  if(i>=0) state.interests.splice(i,1); else state.interests.push(k);
+  save(); renderPicker();
+});
+document.getElementById('goBrowse').addEventListener('click',function(){go('browse');});
+document.getElementById('skipInterests').addEventListener('click',function(e){
+  e.preventDefault(); state.interests=[]; state.scope='all'; save(); go('browse');
+});
+document.getElementById('editInterests').addEventListener('click',function(){go('interests');});
+document.getElementById('autoPlan').addEventListener('click',autoBuild);
+
+document.getElementById('daySeg').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return;
+  state.day = +b.dataset.day;
+  Array.prototype.forEach.call(this.querySelectorAll('button'),function(x){
+    x.setAttribute('aria-pressed', String(+x.dataset.day===state.day));});
+  renderBrowse();
+});
+document.getElementById('stageChips').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  state.stage = b.dataset.stage; renderBrowse();
+});
+document.getElementById('scopeChips').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  state.scope = b.dataset.scope;
+  Array.prototype.forEach.call(this.querySelectorAll('.chip'),function(x){
+    x.setAttribute('aria-pressed', String(x.dataset.scope===state.scope));});
+  renderBrowse();
+});
+document.getElementById('q').addEventListener('input',function(){
+  state.q = this.value; renderBrowse();
+});
+
+/* One handler for both lists: the star does the same thing wherever it is. */
+document.body.addEventListener('click',function(e){
+  var b = e.target.closest('[data-add]'); if(!b) return;
+  var id = b.dataset.add, i = state.picks.indexOf(id);
+  if(i>=0) state.picks.splice(i,1); else state.picks.push(id);
+  save(); render();
+});
+
+document.getElementById('nav').addEventListener('click',function(e){
+  var b=e.target.closest('button'); if(!b) return; go(b.dataset.view);
+});
+
+document.getElementById('printIt').addEventListener('click',function(){window.print();});
+document.getElementById('dlIcs').addEventListener('click',function(){
+  download('go-diving-show-sydney.ics', buildIcs(), 'text/calendar;charset=utf-8');
+});
+document.getElementById('shareIt').addEventListener('click',function(){
+  var url = shareUrl(), btn = this;
+  if(navigator.share){
+    navigator.share({title:'My GO Diving Show agenda',url:url}).catch(function(){});
+    return;
+  }
+  var done = function(ok){
+    btn.textContent = ok ? 'Link copied ✓' : url;
+    setTimeout(function(){btn.textContent='Share my agenda';}, ok?1800:6000);
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(url).then(function(){done(true);},function(){done(false);});
+  } else done(false);
+});
+
+/* ---------------- boot ---------------- */
+load();
+var shared = readShare();
+go(shared || state.interests.length ? (shared?'agenda':'browse') : 'interests');
+</script>
+</body>
+</html>
