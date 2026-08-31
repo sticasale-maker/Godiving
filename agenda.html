@@ -153,8 +153,8 @@
      sit beside it and the rest of the text flows underneath, so the
      portrait costs no tile height. A fixed column would have squeezed
      every title into an extra line. */
-  .thumb{float:left;width:44px;height:44px;border-radius:50%;object-fit:cover;
-    background:var(--bg2);border:1px solid var(--line);margin:1px 10px 4px 0}
+  .thumb{float:left;width:57px;height:57px;border-radius:50%;object-fit:cover;
+    background:var(--bg2);border:1px solid var(--line);margin:1px 11px 4px 0}
   .thumb.logo{border-radius:9px}
   .sheet .thumbbig{width:66px;height:66px;border-radius:50%;object-fit:cover;float:right;
     margin:0 0 8px 12px;border:1px solid var(--line)}
@@ -271,8 +271,8 @@
      circular mask would cut the words off. */
   /* Bigger now the stand number has gone from the row — it is in the sheet,
      and a legible logo identifies an exhibitor faster than its number. */
-  .exh .logo{flex:0 0 auto;width:48px;height:48px;border-radius:9px;object-fit:contain;
-    background:#fff;padding:2px}
+  .exh .logo{flex:0 0 auto;width:62px;height:62px;border-radius:11px;object-fit:contain;
+    background:#fff;padding:3px}
   .sheet .standlogo{width:64px;height:64px;border-radius:10px;object-fit:contain;background:#fff;
     padding:4px;float:right;margin:0 0 8px 12px}
 
@@ -1207,7 +1207,7 @@ function thumbFor(s){
 function thumbTag(s, cls){
   var t = thumbFor(s); if(!t) return '';
   return '<img class="'+cls+(t.logo?' logo':'')+'" src="'+esc(t.src)+'" alt="" '+
-    'loading="lazy" decoding="async" width="44" height="44">';
+    'loading="lazy" decoding="async" width="57" height="57">';
 }
 
 function dayHead(day){
@@ -1545,9 +1545,20 @@ function renderNow(){
   var host = document.getElementById('nowHost');
   var u = upcoming();
   if(!u){
-    host.innerHTML = '<div class="card"><div class="eyebrow">Not show time</div>'+
-      '<p class="sub">The countdown and the “where next” map wake up on show days. '+
-      'To see how they will look, turn on <b>preview the day</b> below.</p></div>';
+    /* Before the show the countdown has nothing to count to, which makes
+       the best part of the app invisible to anyone judging it in August.
+       One tap puts them at 10am on either morning with their own picks. */
+    var mine = state.picks.length;
+    host.innerHTML = '<div class="card"><div class="eyebrow">On the day</div>'+
+      '<h2>Your countdown starts here</h2>'+
+      '<p class="sub">'+(mine
+        ? 'On show days this becomes a countdown to your next session, with the room and a map of where it is. '
+        : 'Star a few sessions and this becomes a countdown to your next one, with the room and a map of where it is. ')+
+      'Jump forward to see it working:</p>'+
+      '<div class="btnrow" style="margin-top:12px">'+
+        '<button class="btn" data-jump="1">It’s 10am Saturday</button>'+
+        '<button class="btn ghost" data-jump="2">It’s 10am Sunday</button>'+
+      '</div></div>';
     return;
   }
   var t = now(), on = u.live[0], nx = u.next[0];
@@ -1710,7 +1721,7 @@ function renderExhibitors(){
     var on = standPicked(s.no);
     var lg = standLogo(s.no);
     return '<article class="exh'+(on?' on':'')+'" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
-      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="48" height="48">':'')+
+      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="62" height="62">':'')+
       '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
         '<div class="nm">'+esc(s.n)+'</div>'+
         '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.types.join(' · '))+'</div>'+
@@ -2028,6 +2039,15 @@ document.getElementById('askChips').addEventListener('click',function(e){
 });
 
 /* simulation controls, delegated because the bar is re-rendered each tick */
+/* "It's 10am Saturday" — the same simulated clock the organiser bar drives,
+   reached in one tap from the place a visitor is already looking. */
+document.getElementById('nowHost').addEventListener('click',function(e){
+  var j = e.target.closest('[data-jump]'); if(!j) return;
+  var d = +j.dataset.jump;
+  sim.day = d;
+  simStart(d, 10*60, 1);
+});
+
 document.getElementById('simHost').addEventListener('click',function(e){
   if(e.target.id==='simOpen'){ sim.day=1; simStart(1, 10*60, 1); return; }
   if(e.target.id==='simOff'){ simStop(); return; }
