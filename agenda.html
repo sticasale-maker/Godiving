@@ -240,7 +240,20 @@
     border:1px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:12px}
   .simbar .t{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);letter-spacing:1.5px;margin-bottom:7px}
   .simbar .r{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
-  .simbar input[type=range]{flex:1 1 140px;accent-color:var(--gold);min-width:120px}
+  /* Full width on its own row with a tall track: at 140px wide and default
+     height this was a hairline to aim a thumb at. */
+  .simbar input[type=range]{width:100%;height:44px;accent-color:var(--gold);
+    background:transparent;cursor:pointer}
+  .simbar input[type=range]::-webkit-slider-runnable-track{height:10px;border-radius:99px;
+    background:rgba(255,255,255,.18)}
+  .simbar input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:30px;height:30px;border-radius:50%;background:var(--gold);border:0;margin-top:-10px;
+    box-shadow:0 1px 4px rgba(0,0,0,.5)}
+  .simbar input[type=range]::-moz-range-track{height:10px;border-radius:99px;
+    background:rgba(255,255,255,.18)}
+  .simbar input[type=range]::-moz-range-thumb{width:30px;height:30px;border-radius:50%;
+    background:var(--gold);border:0}
+  .simbar select,.simbar button{min-height:44px}
   .simbar select,.simbar button{background:var(--bg2);border:1px solid var(--line);color:var(--text);
     border-radius:9px;padding:7px 10px;font-family:inherit;font-size:13px;cursor:pointer}
   .simclock{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--gold);letter-spacing:1px}
@@ -518,6 +531,7 @@ var SESSIONS = [
   {id:'a22',day:1, start:'14:30', end:'15:15', stage:'Tech Stage',     title:'Rebreather Mechanics & Safety Protocols',           who:'Samir Alhafith',           tags:['PHOTO','TECH']},
   {id:'a23',day:1, start:'14:45', end:'15:30', stage:'Photo Stage',    title:'Blackwater & Macro Techniques in Tempered Waters',  who:'Nicolas Remy',             tags:['PHOTO']},
   {id:'a24',day:1, start:'15:15', end:'16:00', stage:'Ocean/Travel',   title:'Marine Mammal Rescue & Citizen Action',             who:'ORRCA Team',               tags:['KIDS','OCEAN']},
+  {id:'a26',day:1, start:'09:30', end:'17:00', stage:'Stand 440',      title:'Sydney Dive Challenge (drop in any time)',          who:'VIZ — Sydney Dive Challenge', tags:['START'], allday:true},
   {id:'a25',day:1, start:'15:30', end:'17:00', stage:'Main Stage',     title:'Underwater Photo & Video Awards Ceremony',          who:'Main Stage Hosts',         tags:['KIDS','PHOTO']},
 
   /* ---------------- Sunday ---------------- */
@@ -545,6 +559,7 @@ var SESSIONS = [
   {id:'b20',day:2, start:'13:45', end:'14:30', stage:'Photo Stage',    title:'Mastering Strobe Positioning Underwater',           who:'Jim Decker',               tags:['PHOTO']},
   {id:'b21',day:2, start:'14:15', end:'15:00', stage:'Main Stage',     title:'Marine Life Behaviour & Ocean Wonders',             who:'Sheree Maris',             tags:['TRAVEL']},
   {id:'b22',day:2, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Sustainable Dive Tourism Best Practices',           who:'Deborah Dickson-Smith',    tags:['TRAVEL','OCEAN']},
+  {id:'b24',day:2, start:'09:30', end:'16:00', stage:'Stand 440',      title:'Sydney Dive Challenge (drop in any time)',          who:'VIZ — Sydney Dive Challenge', tags:['START'], allday:true},
   {id:'b23',day:2, start:'14:45', end:'15:30', stage:'Photo Stage',    title:'Demystifying Underwater Photo Optics & Rigging',    who:'Mike Scotland',            tags:['PHOTO']}
 ];
 
@@ -620,6 +635,8 @@ var DETAIL = {
   'a24':{who:'Ashley Ryan (ORRCA)',
          blurb:'Ashley Ryan is President and Head of Training at ORRCA, one of Australia’s leading marine mammal rescue and research organisations.',
          link:'https://www.instagram.com/p/DcibMbMF1e3/'},
+  'a26':{blurb:'Twenty-two quick games about what actually lives on Sydney’s reefs — and what it takes to dive them. Pinpoint local wrecks on the map, name the site from a photograph, pick a nudibranch’s real colours, kick a bearing on the nav trainer, plan a safe ascent. Built to teach, and built for all ages: no diving experience needed. Tournaments run continuously and close on the hour, so come between talks, play a round, and every player gets a prize.',
+         link:'https://www.viz.net.au/'},
   'a25':{blurb:'The thrilling conclusion of the Underwater Awards Australasia 2026. Winners across nine categories are unveiled, sharing $70,000 in prizes, with one champion landing a cover story in Scuba Diver magazine.',
          link:'https://www.instagram.com/p/DcX5tadCH83/'},
 
@@ -674,6 +691,8 @@ var DETAIL = {
          link:'https://www.instagram.com/p/Dcamk_4jvdg/'},
   'b22':{blurb:'Travel consultant, writer and ocean lover Deborah Dickson-Smith of DivePlanit — on her second talk of the weekend, after Saturday’s on conservation and tourism growth.',
          link:'https://www.instagram.com/p/Db5OeXcoJMh/'},
+  'b24':{blurb:'Twenty-two quick games about what actually lives on Sydney’s reefs — and what it takes to dive them. Pinpoint local wrecks on the map, name the site from a photograph, pick a nudibranch’s real colours, kick a bearing on the nav trainer, plan a safe ascent. Built to teach, and built for all ages: no diving experience needed. Tournaments run continuously and close on the hour, so come between talks, play a round, and every player gets a prize.',
+         link:'https://www.viz.net.au/'},
   'b23':{blurb:'Billed by the show as “My journey as an underwater photojournalist”: Mike Scotland, editor of Dive Log Australasia, reflects on 50 years behind the lens.',
          link:'https://www.instagram.com/p/DcQbTdZkW4X/'}
 };
@@ -692,9 +711,10 @@ SESSIONS.forEach(function(s){
   if(d.book){ s.book = d.book; s.bookLabel = d.bookLabel; }
 });
 
-var STAGES = ['Main Stage','Photo Stage','Tech Stage','Ocean/Travel','Workshop Room','Demo Pool'];
+var STAGES = ['Main Stage','Photo Stage','Tech Stage','Ocean/Travel','Workshop Room','Demo Pool','Stand 440'];
 var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'#36c9c0',
-  'Ocean/Travel':'#4fd28a','Workshop Room':'#ff9f6b','Demo Pool':'#57c7ff'};
+  'Ocean/Travel':'#4fd28a','Workshop Room':'#ff9f6b','Demo Pool':'#57c7ff',
+  'Stand 440':'#ef9bd0'};
 
 /* The matrix names the zones one way; the show's own posts advertise the
    Ocean/Travel zone as the "Inspiration Stage". Someone hunting for a sign
@@ -880,7 +900,8 @@ var STAND_DETAIL = {
    the floorplan use different names for the same rooms. */
 var STAGE_STAND = {
   'Main Stage':'F4', 'Photo Stage':'F3', 'Tech Stage':'F2',
-  'Ocean/Travel':'F5', 'Workshop Room':'WS', 'Demo Pool':'F1'
+  'Ocean/Travel':'F5', 'Workshop Room':'WS', 'Demo Pool':'F1',
+  'Stand 440':'440'
 };
 
 
@@ -1126,6 +1147,11 @@ function picked(id){return state.picks.indexOf(id)>=0;}
    at 11:30, the next starts at 11:30) is not a clash — that is just a
    brisk walk between stages. */
 function overlaps(a,b){
+  /* A drop-in that runs all day overlaps everything by the clock, which is
+     true and useless: it would put a clash warning on every card and stop
+     auto-build adding anything after it. You are not choosing between it
+     and a talk — you walk over between talks. */
+  if(a.allday || b.allday) return false;
   return a.day===b.day && mins(a.start) < mins(b.end) && mins(b.start) < mins(a.end);
 }
 function clashesFor(s){
@@ -1186,6 +1212,7 @@ var THUMBS = {
   'Ashley Ryan (ORRCA)':'orrca',
   'A. Verde & P. Marshall':'anita-verde-and-peter-marshall',
   'Main Stage Hosts':'underwater-awards',
+  'VIZ — Sydney Dive Challenge':'sydney-dive-challenge',
   /* Company-run sessions have no headshot to use, so these take the show's
      own artwork for the activity instead — which is what a visitor will
      recognise on the day anyway. */
@@ -1526,7 +1553,8 @@ function upcoming(){
   var t = now(), d = liveDay();
   if(!d) return null;
   var mine = state.picks.map(byId).filter(Boolean).filter(function(s){return s.day===d;});
-  var pool = mine.length ? mine : SESSIONS.filter(function(s){return s.day===d;});
+  var pool = (mine.length ? mine : SESSIONS.filter(function(s){return s.day===d;}))
+               .filter(function(s){return !s.allday;});
   var live = pool.filter(function(s){return sessionStartMs(s)<=t && sessionEndMs(s)>t;})
                  .sort(function(a,b){return sessionEndMs(a)-sessionEndMs(b);});
   var next = pool.filter(function(s){return sessionStartMs(s)>t;})
@@ -1608,15 +1636,36 @@ function simStop(){
   render();
 }
 function tick(){
-  if(state.view==='agenda'){ renderNow(); renderSim(); }
+  if(state.view!=='agenda') return;
+  renderNow();
+  simClockTick();
+}
+
+/* The bar used to be re-rendered every second, which replaced the <select>
+   and the slider once a second — so a dropdown closed the instant it was
+   opened, and a drag was cancelled mid-gesture. Only the readout changes
+   on a tick now, and the slider is left alone while it has focus. */
+function simClockTick(){
+  if(!sim.on) return;
+  var c = document.getElementById('simClock');
+  if(!c) return;
+  var t = new Date(now());
+  c.textContent = DAYS[sim.day].short+' '+
+    ('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2);
+  var sl = document.getElementById('simTime');
+  if(sl && document.activeElement!==sl) sl.value = t.getHours()*60 + t.getMinutes();
 }
 /* The real day needs a ticking clock too, not just the simulation. */
 function ensureTick(){
   if(!simTick && liveDay()) simTick = setInterval(tick, 1000);
 }
 
+var simSig = null;
 function renderSim(){
   var host = document.getElementById('simHost');
+  var sig = sim.on ? ('on|'+sim.day+'|'+sim.speed) : 'off';
+  if(sig===simSig) { simClockTick(); return; }
+  simSig = sig;
   if(!sim.on){
     host.innerHTML = '<div class="btnrow hideprint"><button class="btn ghost" id="simOpen">'+
       '⏱ Preview the day (organisers)</button></div>';
