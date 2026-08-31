@@ -1,86 +1,52 @@
-# Cloudflare Pages deployment (gated preview)
+# Deployment
 
-The gated preview at `https://godiving-planner.pages.dev` is built from this
-repo but deployed separately, because GitHub Pages cannot gate access and
-cannot serve from a private repo on a free plan.
+The app is a Cloudflare Worker, built from this repo on every push to `main`
+by Workers Builds. `git push` is the whole deploy — there is no second copy
+to keep in step.
 
-## Layout
+| Setting        | Value                      |
+| -------------- | -------------------------- |
+| Worker         | `godiving`                 |
+| Build command  | `bash cloudflare/build.sh` |
+| Deploy command | `npx wrangler deploy`      |
+| Production URL | `https://godiving.sticasale.workers.dev` |
 
-Wrangler compiles Functions from a `functions/` directory that sits *beside*
-the assets directory, not inside it. Putting `functions/` inside the assets
-folder uploads the middleware as a static file and the gate silently does
-nothing — the site serves to everyone and looks fine.
+`cloudflare/build.sh` assembles `dist/` — only the planner and its images.
+The repo root also holds the arcade, the simulator and two video splashes,
+and serving the root would publish all of them.
 
-    .cfdeploy/
-      functions/_middleware.js   <- this file, copied from cloudflare/
-      public/index.html          <- agenda.html
-      public/images/...
+## How access works
 
-## Deploy
+Two layers, and both earn their place:
 
-    rm -rf .cfdeploy
-    mkdir -p .cfdeploy/functions .cfdeploy/public/images/branding
-    cp cloudflare/functions/_middleware.js .cfdeploy/functions/
-    cp agenda.html .cfdeploy/public/index.html
-    cp -r images/speakers images/stands .cfdeploy/public/images/
-    cp images/branding/Go-Diving-Show-Logo-2024.png .cfdeploy/public/images/branding/
-    cd .cfdeploy && npx wrangler pages deploy public \
-      --project-name=godiving-planner --branch=main --commit-dirty=true
+**Cloudflare Access** protects the Worker — production *and* preview URLs —
+with per-person email one-time PINs. Cloudflare strips client-supplied
+`Cf-Access-Jwt-Assertion` headers at the edge, so the header cannot be
+spoofed from outside on a protected hostname.
 
-## The access code
+**`worker/index.js`** is a shared-code gate behind it. On the hostname named
+by `ACCESS_HOST` it defers to Access, so authorised people see one login
+rather than two. Anywhere else it demands `GATE_PASSWORD`. With neither
+variable set it refuses every request — an unconfigured deployment fails
+closed.
 
-Held as the `GATE_PASSWORD` secret on the Pages project, never in this repo.
-To rotate it:
+### Variables (Settings > Variables and Secrets)
 
-    npx wrangler pages secret put GATE_PASSWORD --project-name=godiving-planner
+* `GATE_PASSWORD` — **secret**. The shared fallback code.
+* `ACCESS_HOST` — plain. `godiving.sticasale.workers.dev`. Set this only
+  once Access is confirmed live on that hostname; setting it earlier trusts
+  a protection that is not there.
 
-Rotating invalidates every existing session cookie immediately, which is how
-you revoke access when an evaluation ends.
+## Verify after every deploy
 
-## Verifying the gate after any deploy
+Two separate misconfigurations have left this app fully public: a `functions/`
+directory in the wrong place on Pages, and a missing `assets.run_worker_first`
+here. In both cases the code was correct, the deploy reported success, and the
+gate simply was not in the request path. Only an unauthenticated fetch caught
+it, so run one:
 
-Always check that an unauthenticated request is refused, including assets:
+    curl -s -o /dev/null -w '%{http_code}\n' https://godiving.sticasale.workers.dev/
 
-    curl -s -o /dev/null -w '%{http_code}\n' https://godiving-planner.pages.dev/
-    curl -s -o /dev/null -w '%{http_code}\n' https://godiving-planner.pages.dev/images/speakers/pete-mesley.jpg
-
-Both must return 401. A 200 means the Functions bundle did not compile and
-the site is public.
-
-## Two layers, and why both exist
-
-Cloudflare Access protects the **production hostname only**
-(`godiving-planner.pages.dev`). Every deploy also mints a per-deployment URL
-like `<hash>.godiving-planner.pages.dev`, and **Access does not cover those**.
-One such URL served the entire app to the open internet until it was found
-and deleted, so this is not theoretical.
-
-The middleware therefore:
-
-* trusts Access on the production hostname (unauthenticated requests never
-  reach the Worker there — the edge redirects them first), so organisers see
-  one login, not two;
-* requires the shared code on every other hostname, which is what keeps the
-  per-deployment URLs closed.
-
-The hostname check is load-bearing. `Cf-Access-Jwt-Assertion` can be sent by
-anyone on a hostname Access is *not* protecting, so it may only be trusted on
-the one hostname where Access is. It also fails safe: remove the Access
-application and production falls back to the code gate rather than opening.
-
-## After every deploy, check all three
-
-    # production: must be 302 to cloudflareaccess.com
-    curl -s -o /dev/null -w '%{http_code}\n' https://godiving-planner.pages.dev/
-
-    # the new per-deployment URL: must be 401
-    curl -s -o /dev/null -w '%{http_code}\n' https://<hash>.godiving-planner.pages.dev/
-
-    # a forged Access header on that URL: must still be 401
-    curl -s -o /dev/null -w '%{http_code}\n' \
-      -H 'Cf-Access-Jwt-Assertion: forged' https://<hash>.godiving-planner.pages.dev/
-
-Then delete superseded deployments — each one keeps its URL alive forever:
-
-    npx wrangler pages deployment list --project-name=godiving-planner
-    npx wrangler pages deployment delete <id> --project-name=godiving-planner --force
+**302** (to `cloudflareaccess.com`) is correct. **503** means the variables
+are missing — closed, but misconfigured. **200 is a leak**: the gate is not
+running. Check `run_worker_first` is still `true` in `wrangler.jsonc`.
