@@ -267,11 +267,11 @@
   .exh .sub2{font-size:12.5px;color:var(--muted);margin-top:3px}
   .exh .etags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
   .exh .etags .tag{font-size:9.5px;padding:2px 6px}
-  .stno{flex:0 0 auto;font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);
-    border:1px solid var(--line);border-radius:8px;padding:7px 6px;min-width:44px;text-align:center}
   /* Logos sit on white and keep their corners — they are wordmarks, and a
      circular mask would cut the words off. */
-  .exh .logo{flex:0 0 auto;width:34px;height:34px;border-radius:7px;object-fit:contain;
+  /* Bigger now the stand number has gone from the row — it is in the sheet,
+     and a legible logo identifies an exhibitor faster than its number. */
+  .exh .logo{flex:0 0 auto;width:48px;height:48px;border-radius:9px;object-fit:contain;
     background:#fff;padding:2px}
   .sheet .standlogo{width:64px;height:64px;border-radius:10px;object-fit:contain;background:#fff;
     padding:4px;float:right;margin:0 0 8px 12px}
@@ -811,7 +811,7 @@ var STAND_ROWS = [
   ['302','Underwater Australasia'                      , 36894,50512,6000,3000, ['Dive gear','Underwater photo']],
   /* The directory files VIZ under local diving; it is a volunteer-run
      non-profit, so it carries both. */
-  ['440','VIZ Sydney Diving Visibility'                , 94894,38512,3000,6000, ['Non-profit','Local diving']],
+  ['440','VIZ — Sydney Dive Challenge'                 , 94894,38512,3000,6000, ['Non-profit','Local diving']],
   ['204','VR Dive Zone / Global Underwater Explorers'  , 38394,56512,6000,3000, ['Training']],
   ['336','Volivoli Beach Resort Fiji'                  , 79894,47512,3000,3000, ['Dive travel']],
   ['229','Waidroka'                                    , 79894,56512,3000,3000, ['Dive travel']],
@@ -1307,8 +1307,7 @@ function renderAgenda(){
       state.spicks.map(standByNo).filter(Boolean).map(function(s){
         var c = contactFor(s.no);
         return '<article class="exh on" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
-          '<div class="stno">'+esc(s.no)+'</div>'+
-          '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
+          '<div class="body" data-stand=""'+esc(s.no)+'" role="button" tabindex="0">'+
             '<div class="nm">'+esc(s.n)+'</div>'+
             '<div class="sub2">'+esc(s.types.join(' · '))+(hasContact(c)?' · contact details inside':'')+'</div>'+
           '</div>'+
@@ -1702,8 +1701,7 @@ function renderExhibitors(){
     var on = standPicked(s.no);
     var lg = standLogo(s.no);
     return '<article class="exh'+(on?' on':'')+'" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
-      '<div class="stno">'+esc(s.no)+'</div>'+
-      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="34" height="34">':'')+
+      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="48" height="48">':'')+
       '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
         '<div class="nm">'+esc(s.n)+'</div>'+
         '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.types.join(' · '))+'</div>'+
