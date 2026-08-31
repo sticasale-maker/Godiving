@@ -20,7 +20,8 @@
     --bg:#00172f; --bg2:#052a4d; --surface:#073157; --line:rgba(255,255,255,0.16);
     --text:#eaf3fb; --muted:#9db8d2; --accent:#16a085; --accentd:#06382f;
     --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#bd322c;
-    --gen:#57c7ff; --photo:#b98cff; --tech:#36c9c0; --pro:#f3c64f; --kids:#ff9f6b;
+    --start:#57c7ff; --kids:#ff9f6b; --photo:#b98cff; --tech:#36c9c0;
+    --travel:#f3c64f; --ocean:#4fd28a;
     /* One colour per day, used everywhere the day is named. Which day you
        are looking at is the thing people lose track of while scrolling. */
     --d1:#f3c64f; --d2:#57c7ff;
@@ -67,10 +68,11 @@
   .pick .tick{position:absolute;top:10px;right:12px;font-size:17px;opacity:0;transition:opacity .12s}
   .pick[aria-pressed="true"]{background:rgba(54,201,192,.10)}
   .pick[aria-pressed="true"] .tick{opacity:1}
-  .pick[data-k="GEN"] .k{color:var(--gen)}   .pick[data-k="GEN"][aria-pressed="true"]{border-color:var(--gen)}
+  .pick[data-k="START"] .k{color:var(--start)} .pick[data-k="START"][aria-pressed="true"]{border-color:var(--start)}
   .pick[data-k="PHOTO"] .k{color:var(--photo)} .pick[data-k="PHOTO"][aria-pressed="true"]{border-color:var(--photo)}
   .pick[data-k="TECH"] .k{color:var(--tech)}  .pick[data-k="TECH"][aria-pressed="true"]{border-color:var(--tech)}
-  .pick[data-k="PRO"] .k{color:var(--pro)}    .pick[data-k="PRO"][aria-pressed="true"]{border-color:var(--pro)}
+  .pick[data-k="TRAVEL"] .k{color:var(--travel)} .pick[data-k="TRAVEL"][aria-pressed="true"]{border-color:var(--travel)}
+  .pick[data-k="OCEAN"] .k{color:var(--ocean)} .pick[data-k="OCEAN"][aria-pressed="true"]{border-color:var(--ocean)}
   .pick[data-k="KIDS"] .k{color:var(--kids)}  .pick[data-k="KIDS"][aria-pressed="true"]{border-color:var(--kids)}
 
   /* ---- filter bar ---- */
@@ -128,8 +130,9 @@
   .sess .more{clear:both}
   .tag{font-size:10.5px;font-weight:800;letter-spacing:.6px;border-radius:999px;padding:3px 8px;
     border:1px solid currentColor;opacity:.85}
-  .tag.GEN{color:var(--gen)} .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)}
-  .tag.PRO{color:var(--pro)} .tag.KIDS{color:var(--kids)}
+  .tag.START{color:var(--start)} .tag.KIDS{color:var(--kids)}
+  .tag.PHOTO{color:var(--photo)} .tag.TECH{color:var(--tech)}
+  .tag.TRAVEL{color:var(--travel)} .tag.OCEAN{color:var(--ocean)}
   .stagetag{font-size:11.5px;font-weight:700;color:var(--muted)}
   .warn{font-size:12.5px;color:var(--bad);font-weight:700;margin-top:7px}
   /* The star used to be a full-height 46px column. It only ever needed to
@@ -296,8 +299,6 @@
 <div class="wrap">
   <div class="logobar">
     <img src="images/branding/Go-Diving-Show-Logo-2024.png" alt="GO Diving Show">
-    <span class="sep"></span>
-    <img src="images/branding/vizlogo.png" alt="VIZ" class="circle">
   </div>
 
   <!-- ============ STEP 1: interests ============ -->
@@ -419,18 +420,44 @@
    the whole shortlist hangs on, so a session tagged wrongly here sends
    someone to the wrong room.
    ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   One classification for the whole show.
+
+   Built from the show's own two taxonomies — it publishes 13 subject
+   classes for sessions and 10 business classes for exhibitors, which do
+   not overlap — collapsed into a single set a visitor can pick from once
+   and have it apply to both tabs.
+
+   "Inspiration" is deliberately absent: all 8 sessions carrying it also
+   carry another class, so it never narrows anything. "Sponsor" is a
+   commercial relationship, not a subject. Kids & families is the one
+   class neither taxonomy has.
+   ------------------------------------------------------------------ */
 var AUDIENCES = [
-  {k:'GEN',   n:'General, beginners & families', s:'beginners & families',
-   d:'Big stories, marine life, first-timer friendly.'},
-  {k:'KIDS',  n:'Kids & families',               s:'kids & families',
-   d:'Hands-on, visual, and short enough to hold a child’s attention.'},
-  {k:'PHOTO', n:'Photo & video',                 s:'photo & video',
+  {k:'START', n:'Getting started',       s:'getting started',
+   d:'New to diving, courses, safety, and local dive shops.'},
+  {k:'KIDS',  n:'Kids & families',       s:'kids & families',
+   d:'Hands-on, visual, and short enough to hold a child\u2019s attention.'},
+  {k:'PHOTO', n:'Photo & video',         s:'photo & video',
    d:'Cameras, strobes, macro, wide-angle, editing.'},
-  {k:'TECH',  n:'Tech & advanced',               s:'tech & advanced',
-   d:'Rebreathers, wrecks, caves, deep, expedition.'},
-  {k:'PRO',   n:'Pro, travel & conservation',    s:'pro, travel & conservation',
-   d:'Careers, destinations, the industry, the ocean.'}
+  {k:'TECH',  n:'Tech, wrecks & gear',   s:'tech, wrecks & gear',
+   d:'Rebreathers, deep, caves, wrecks \u2014 and the kit for it.'},
+  {k:'TRAVEL',n:'Travel & liveaboards',  s:'travel & liveaboards',
+   d:'Destinations, resorts, boats and planning a trip.'},
+  {k:'OCEAN', n:'Ocean & conservation',  s:'ocean & conservation',
+   d:'Marine life, the science, and protecting it.'}
 ];
+
+/* The show's exhibitor categories mapped into the same set. */
+var CAT2CLASS = {
+  'Local diving':'START', 'Training':'START',
+  'Underwater photo':'PHOTO', 'Media':'PHOTO',
+  'Dive gear':'TECH',
+  'Dive travel':'TRAVEL', 'Liveaboards':'TRAVEL',
+  'Non-profit':'OCEAN',
+  'Insurance & safety':'START'
+};
+
 var AUD_ORDER = AUDIENCES.map(function(a){return a.k;});
 /* Tags render in the order the interests are offered, so KIDS sits second
    on a card as well as second in the picker. Left unsorted it was always
@@ -448,7 +475,6 @@ function sortTags(t){
    show's own Kid Zone. Sheree Marris's Sunday talk is the one deliberate
    exclusion: it is a marine-life talk, but it is about sex in the sea.
    ------------------------------------------------------------------ */
-var KID_SESSIONS = ['a5','a9','a10','a19','a24','a25','b1','b9','b11'];
 var KID_STANDS   = ['F1','204','232','422','512','321','440','208'];
 
 var DAYS = {
@@ -459,57 +485,57 @@ var DAYS = {
 /* start/end are 24h local (Sydney). */
 var SESSIONS = [
   /* ---------------- Saturday ---------------- */
-  {id:'a1', day:1, start:'10:00', end:'10:45', stage:'Main Stage',     title:'30 Years with a PFO: Lessons, Symptoms & Recovery', who:'Pete Mesley',              tags:['GEN','TECH']},
-  {id:'a2', day:1, start:'10:00', end:'12:00', stage:'Workshop Room',  title:'Become a PADI Pro: Turning Passion into a Career',  who:'A. Halloran & N. Prendergast', tags:['PRO']},
+  {id:'a1', day:1, start:'10:00', end:'10:45', stage:'Main Stage',     title:'30 Years with a PFO: Lessons, Symptoms & Recovery', who:'Pete Mesley',              tags:['TECH']},
+  {id:'a2', day:1, start:'10:00', end:'12:00', stage:'Workshop Room',  title:'Become a PADI Pro: Turning Passion into a Career',  who:'A. Halloran & N. Prendergast', tags:['START']},
   {id:'a3', day:1, start:'10:30', end:'11:15', stage:'Tech Stage',     title:"Gas 'N' Guts: The Search for HMS Affray",           who:'David Strike',             tags:['TECH']},
   {id:'a4', day:1, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'From Whales to Nudibranchs: Macro & Large Marine Life', who:'Vanessa Mignon',       tags:['PHOTO']},
-  {id:'a5', day:1, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Behind the Scenes',    who:'SHA Cast',                 tags:['GEN','TECH']},
-  {id:'a6', day:1, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:'Beyond Holding Your Breath: The Spirit of Freediving', who:'Dylan Boag',            tags:['GEN','PRO']},
+  {id:'a5', day:1, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Behind the Scenes',    who:'SHA Cast',                 tags:['KIDS','PHOTO']},
+  {id:'a6', day:1, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:'Beyond Holding Your Breath: The Spirit of Freediving', who:'Dylan Boag',            tags:['OCEAN']},
   {id:'a7', day:1, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Diving Operations & Planning',            who:'Becca Boring',             tags:['TECH']},
   {id:'a8', day:1, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'10 Tips to Elevate Your Underwater Photography',    who:'Jake Wilton',              tags:['PHOTO']},
-  {id:'a9', day:1, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Marine Life Stories & Coastal Adventures',          who:'Sheree Maris',             tags:['GEN']},
-  {id:'a10',day:1, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone In-Water Display',       who:'QYSEA Team',               tags:['GEN','TECH']},
-  {id:'a11',day:1, start:'12:00', end:'14:00', stage:'Workshop Room',  title:'SDI Seminar: Learn, Explore, Connect & Tech Updates', who:'SDI Team',               tags:['GEN','PRO']},
-  {id:'a12',day:1, start:'12:15', end:'13:00', stage:'Ocean/Travel',   title:'How Marine Conservation Drives Tourism Growth',     who:'Deborah Dickson-Smith',    tags:['PRO']},
-  {id:'a13',day:1, start:'12:30', end:'13:15', stage:'Tech Stage',     title:'Deep Explorations & Expedition Logistics',          who:'Yana Stashkevich',         tags:['TECH']},
-  {id:'a14',day:1, start:'12:45', end:'13:30', stage:'Photo Stage',    title:'Documenting the Baja California Sardine Run',       who:'A. Verde & P. Marshall',   tags:['PHOTO','PRO']},
-  {id:'a15',day:1, start:'13:15', end:'14:00', stage:'Main Stage',     title:'Last Breath: Deep Commercial Diving & Survival',    who:'Chris Lemons',             tags:['GEN','TECH']},
-  {id:'a16',day:1, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Asia-Pacific Ocean Visions & Conservation Photo',   who:'Michael Aw',               tags:['PHOTO','PRO']},
+  {id:'a9', day:1, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Marine Life Stories & Coastal Adventures',          who:'Sheree Maris',             tags:['KIDS','OCEAN']},
+  {id:'a10',day:1, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone In-Water Display',       who:'QYSEA Team',               tags:['KIDS','PHOTO','TECH']},
+  {id:'a11',day:1, start:'12:00', end:'14:00', stage:'Workshop Room',  title:'SDI Seminar: Learn, Explore, Connect & Tech Updates', who:'SDI Team',               tags:['START']},
+  {id:'a12',day:1, start:'12:15', end:'13:00', stage:'Ocean/Travel',   title:'How Marine Conservation Drives Tourism Growth',     who:'Deborah Dickson-Smith',    tags:['TECH','OCEAN']},
+  {id:'a13',day:1, start:'12:30', end:'13:15', stage:'Tech Stage',     title:'Deep Explorations & Expedition Logistics',          who:'Yana Stashkevich',         tags:['START','TECH']},
+  {id:'a14',day:1, start:'12:45', end:'13:30', stage:'Photo Stage',    title:'Documenting the Baja California Sardine Run',       who:'A. Verde & P. Marshall',   tags:['PHOTO','TRAVEL','OCEAN']},
+  {id:'a15',day:1, start:'13:15', end:'14:00', stage:'Main Stage',     title:'Last Breath: Deep Commercial Diving & Survival',    who:'Chris Lemons',             tags:['START','TECH']},
+  {id:'a16',day:1, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Asia-Pacific Ocean Visions & Conservation Photo',   who:'Michael Aw',               tags:['PHOTO']},
   {id:'a17',day:1, start:'13:30', end:'14:15', stage:'Tech Stage',     title:'Technical Cave & Deeper Wreck Exploration',         who:'Mark Tozer',               tags:['TECH']},
   {id:'a18',day:1, start:'13:45', end:'14:30', stage:'Photo Stage',    title:'Wide-Angle Lighting & Gear Setup Dynamics',         who:'Jim Decker',               tags:['PHOTO']},
-  {id:'a19',day:1, start:'14:00', end:'16:00', stage:'Workshop Room',  title:'Save Our Marine Life: Screening of "Ocean" & Q&A',  who:'SOML Team',                tags:['GEN','PRO']},
-  {id:'a20',day:1, start:'14:15', end:'15:00', stage:'Main Stage',     title:'From Turtle Encounters to Storytelling',            who:'Ross Long',                tags:['GEN','PHOTO']},
-  {id:'a21',day:1, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Emerging Dive Destinations & Eco-Travel',           who:'Jack Power',               tags:['PRO']},
-  {id:'a22',day:1, start:'14:30', end:'15:15', stage:'Tech Stage',     title:'Rebreather Mechanics & Safety Protocols',           who:'Samir Alhafith',           tags:['TECH']},
+  {id:'a19',day:1, start:'14:00', end:'16:00', stage:'Workshop Room',  title:'Save Our Marine Life: Screening of "Ocean" & Q&A',  who:'SOML Team',                tags:['KIDS','OCEAN']},
+  {id:'a20',day:1, start:'14:15', end:'15:00', stage:'Main Stage',     title:'From Turtle Encounters to Storytelling',            who:'Ross Long',                tags:['PHOTO','TRAVEL']},
+  {id:'a21',day:1, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Emerging Dive Destinations & Eco-Travel',           who:'Jack Power',               tags:['OCEAN']},
+  {id:'a22',day:1, start:'14:30', end:'15:15', stage:'Tech Stage',     title:'Rebreather Mechanics & Safety Protocols',           who:'Samir Alhafith',           tags:['PHOTO','TECH']},
   {id:'a23',day:1, start:'14:45', end:'15:30', stage:'Photo Stage',    title:'Blackwater & Macro Techniques in Tempered Waters',  who:'Nicolas Remy',             tags:['PHOTO']},
-  {id:'a24',day:1, start:'15:15', end:'16:00', stage:'Ocean/Travel',   title:'Marine Mammal Rescue & Citizen Action',             who:'ORRCA Team',               tags:['GEN','PRO']},
-  {id:'a25',day:1, start:'15:30', end:'17:00', stage:'Main Stage',     title:'Underwater Photo & Video Awards Ceremony',          who:'Main Stage Hosts',         tags:['GEN','PHOTO']},
+  {id:'a24',day:1, start:'15:15', end:'16:00', stage:'Ocean/Travel',   title:'Marine Mammal Rescue & Citizen Action',             who:'ORRCA Team',               tags:['KIDS','OCEAN']},
+  {id:'a25',day:1, start:'15:30', end:'17:00', stage:'Main Stage',     title:'Underwater Photo & Video Awards Ceremony',          who:'Main Stage Hosts',         tags:['KIDS','PHOTO']},
 
   /* ---------------- Sunday ---------------- */
-  {id:'b1', day:2, start:'10:00', end:'10:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Uncovering History',   who:'SHA Cast',                 tags:['GEN','TECH']},
+  {id:'b1', day:2, start:'10:00', end:'10:45', stage:'Main Stage',     title:'Shipwreck Hunters Australia: Uncovering History',   who:'SHA Cast',                 tags:['KIDS','PHOTO']},
   {id:'b2', day:2, start:'10:00', end:'11:00', stage:'Workshop Room',  title:'Nikon Workshop: Lessons from the Field & Setup',    who:'Jake Wilton',              tags:['PHOTO']},
   {id:'b3', day:2, start:'10:30', end:'11:15', stage:'Tech Stage',     title:'North Sea Deep Diving & Wreck Expeditions',         who:'John Kendall',             tags:['TECH']},
-  {id:'b4', day:2, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'Underwater Photography Myths Debunked',             who:'Nigel Marsh',              tags:['PHOTO']},
-  {id:'b5', day:2, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Conservation Storytelling Through the Lens',        who:'Ross Long',                tags:['GEN','PHOTO']},
-  {id:'b6', day:2, start:'11:00', end:'12:00', stage:'Workshop Room',  title:'UW Photo Made Simple (Action Cams / Phones)',       who:'Digital Diver Team',       tags:['GEN','PHOTO']},
-  {id:'b7', day:2, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:"Diving Fuvahmulah: World's Tiger Shark Capital",    who:'Ahmed Alham',              tags:['GEN','PRO']},
+  {id:'b4', day:2, start:'10:45', end:'11:30', stage:'Photo Stage',    title:'Underwater Photography Myths Debunked',             who:'Nigel Marsh',              tags:['START','PHOTO']},
+  {id:'b5', day:2, start:'11:00', end:'11:45', stage:'Main Stage',     title:'Conservation Storytelling Through the Lens',        who:'Ross Long',                tags:['PHOTO','TRAVEL']},
+  {id:'b6', day:2, start:'11:00', end:'12:00', stage:'Workshop Room',  title:'UW Photo Made Simple (Action Cams / Phones)',       who:'Digital Diver Team',       tags:['START','PHOTO']},
+  {id:'b7', day:2, start:'11:15', end:'12:00', stage:'Ocean/Travel',   title:"Diving Fuvahmulah: World's Tiger Shark Capital",    who:'Ahmed Alham',              tags:['TRAVEL','OCEAN']},
   {id:'b8', day:2, start:'11:30', end:'12:15', stage:'Tech Stage',     title:'Technical Mine & Subterranean Exploration',         who:'John Dalla-Zuanna',        tags:['TECH'],
    extra:{text:'A VR dive into Mount Gambier’s Tank Cave, reconstructed by cave divers John Dalla-Zuanna and Wayne Johnson. No gear, no training — pop on a headset and fly through it. Stand 232, all weekend.',
           link:'https://www.instagram.com/p/DcndVLbjNbQ/'}},
-  {id:'b9', day:2, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'Underwater Photography on a Budget',                who:'Brett Lobwein',            tags:['GEN','PHOTO']},
-  {id:'b10',day:2, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Recognizing and Managing PFO in Diving',            who:'Pete Mesley',              tags:['GEN','TECH']},
-  {id:'b11',day:2, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone Display',                who:'QYSEA Team',               tags:['GEN','TECH']},
+  {id:'b9', day:2, start:'11:45', end:'12:30', stage:'Photo Stage',    title:'Underwater Photography on a Budget',                who:'Brett Lobwein',            tags:['KIDS','PHOTO']},
+  {id:'b10',day:2, start:'12:00', end:'12:45', stage:'Main Stage',     title:'Recognizing and Managing PFO in Diving',            who:'Pete Mesley',              tags:['TECH']},
+  {id:'b11',day:2, start:'12:00', end:'13:00', stage:'Demo Pool',      title:'QYSEA ROV Underwater Drone Display',                who:'QYSEA Team',               tags:['KIDS','PHOTO','TECH']},
   {id:'b12',day:2, start:'12:00', end:'13:00', stage:'Workshop Room',  title:'Nikon Masterclass: Mastering Sydney Macro Details', who:'Daniel Sly',               tags:['PHOTO']},
-  {id:'b13',day:2, start:'12:15', end:'13:00', stage:'Ocean/Travel',   title:'Global Diving Trends & Training Systems',           who:'Jean-Claude Monachon',     tags:['PRO']},
-  {id:'b14',day:2, start:'12:30', end:'13:15', stage:'Tech Stage',     title:'Underwater Filmmaking Under Extreme Conditions',    who:'Nays Baghai',              tags:['PHOTO','TECH']},
+  {id:'b13',day:2, start:'12:15', end:'13:00', stage:'Ocean/Travel',   title:'Global Diving Trends & Training Systems',           who:'Jean-Claude Monachon',     tags:['TECH','TRAVEL']},
+  {id:'b14',day:2, start:'12:30', end:'13:15', stage:'Tech Stage',     title:'Underwater Filmmaking Under Extreme Conditions',    who:'Nays Baghai',              tags:['START','TECH']},
   {id:'b15',day:2, start:'12:45', end:'13:30', stage:'Photo Stage',    title:'Composition & Lighting Nuances in Underwater Photo',who:'Jake Wilton',              tags:['PHOTO']},
   {id:'b16',day:2, start:'13:00', end:'14:00', stage:'Workshop Room',  title:'Mindset Shifts to Elevate Underwater Video',        who:'Woody Spark',              tags:['PHOTO']},
-  {id:'b17',day:2, start:'13:15', end:'14:00', stage:'Main Stage',     title:'Miracles Deep: The Physics & Story of Survival',    who:'Chris Lemons',             tags:['GEN','TECH']},
-  {id:'b18',day:2, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Ocean Advocacy & Engaging Gen Z Divers',            who:'Tiani Dun',                tags:['GEN','PRO']},
-  {id:'b19',day:2, start:'13:30', end:'14:15', stage:'Tech Stage',     title:'Deep Rebreather Exploration Protocols',             who:'Skanda Coffield-Feith',    tags:['TECH']},
+  {id:'b17',day:2, start:'13:15', end:'14:00', stage:'Main Stage',     title:'Miracles Deep: The Physics & Story of Survival',    who:'Chris Lemons',             tags:['START','TECH']},
+  {id:'b18',day:2, start:'13:15', end:'14:00', stage:'Ocean/Travel',   title:'Ocean Advocacy & Engaging Gen Z Divers',            who:'Tiani Dun',                tags:['OCEAN']},
+  {id:'b19',day:2, start:'13:30', end:'14:15', stage:'Tech Stage',     title:'Deep Rebreather Exploration Protocols',             who:'Skanda Coffield-Feith',    tags:['TECH','TRAVEL']},
   {id:'b20',day:2, start:'13:45', end:'14:30', stage:'Photo Stage',    title:'Mastering Strobe Positioning Underwater',           who:'Jim Decker',               tags:['PHOTO']},
-  {id:'b21',day:2, start:'14:15', end:'15:00', stage:'Main Stage',     title:'Marine Life Behaviour & Ocean Wonders',             who:'Sheree Maris',             tags:['GEN']},
-  {id:'b22',day:2, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Sustainable Dive Tourism Best Practices',           who:'Deborah Dickson-Smith',    tags:['PRO']},
+  {id:'b21',day:2, start:'14:15', end:'15:00', stage:'Main Stage',     title:'Marine Life Behaviour & Ocean Wonders',             who:'Sheree Maris',             tags:['TRAVEL']},
+  {id:'b22',day:2, start:'14:15', end:'15:00', stage:'Ocean/Travel',   title:'Sustainable Dive Tourism Best Practices',           who:'Deborah Dickson-Smith',    tags:['TRAVEL','OCEAN']},
   {id:'b23',day:2, start:'14:45', end:'15:30', stage:'Photo Stage',    title:'Demystifying Underwater Photo Optics & Rigging',    who:'Mike Scotland',            tags:['PHOTO']}
 ];
 
@@ -656,7 +682,6 @@ SESSIONS.forEach(function(s){
   if(d.timeNote) s.timeNote = d.timeNote;
   if(d.book){ s.book = d.book; s.bookLabel = d.bookLabel; }
 });
-SESSIONS.forEach(function(s){ if(KID_SESSIONS.indexOf(s.id)>=0) s.tags.push('KIDS'); });
 
 var STAGES = ['Main Stage','Photo Stage','Tech Stage','Ocean/Travel','Workshop Room','Demo Pool'];
 var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'#36c9c0',
@@ -687,11 +712,11 @@ var STAGE_ALIAS = {
 /* The show's own exhibitor categories, in its own words. */
 var ST_FEAT='Feature';
 var STAND_TYPES = ['Feature','Dive travel','Liveaboards','Local diving','Dive gear',
-                   'Underwater photo','Training','Non-profit','Media','Sponsor'];
+                   'Underwater photo','Training','Non-profit','Media','Insurance & safety','Sponsor'];
 var TYPE_COLOR = {
   'Feature':'#f3c64f', 'Dive travel':'#16a085', 'Liveaboards':'#4fd28a',
   'Local diving':'#36c9c0', 'Dive gear':'#ff9f6b', 'Underwater photo':'#b98cff',
-  'Training':'#57c7ff', 'Non-profit':'#ef9bd0', 'Media':'#9fc3d2', 'Sponsor':'#f3c64f'
+  'Training':'#57c7ff', 'Non-profit':'#ef9bd0', 'Media':'#9fc3d2', 'Insurance & safety':'#ef6b6b', 'Sponsor':'#f3c64f'
 };
 
 /* [stand, name, x, y, width, depth, type, tags] */
@@ -702,93 +727,100 @@ var TYPE_COLOR = {
    Stages, the seminar room and a handful of exhibitors the directory
    does not list are classified by hand. */
 var STAND_ROWS = [
-  ['F5','ANZ Stage'                                   , 47394,56512,8500,6000, ['Feature'], 'GEN PRO'],
-  ['312','Atmosphere Resort'                           , 49494,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['234','Beqa Lagoon Resort'                          , 85894,56512,3000,3000, ['Dive travel'], 'PRO'],
-  ['202','Chindonan Dive & Beach Resort'               , 38394,59512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['110','Dive RAID International'                     , 54894,66512,3000,3000, ['Training'], 'TECH PRO'],
-  ['321','Historical Diving Society'                   , 58894,47512,3000,6000, ['Non-profit'], 'TECH GEN'],
-  ['F4','Main Stage'                                  , 85894,26512,12000,9000, ['Feature'], 'GEN PHOTO TECH PRO'],
+  ['F5','ANZ Stage'                                   , 47394,56512,8500,6000, ['Feature']],
+  ['312','Atmosphere Resort'                           , 49494,47512,3000,3000, ['Dive travel']],
+  ['234','Beqa Lagoon Resort'                          , 85894,56512,3000,3000, ['Dive travel']],
+  ['202','Chindonan Dive & Beach Resort'               , 38394,59512,3000,3000, ['Dive travel']],
+  ['110','Dive RAID International'                     , 54894,66512,3000,3000, ['Training']],
+  ['321','Historical Diving Society'                   , 58894,47512,3000,6000, ['Non-profit']],
+  ['F4','Main Stage'                                  , 85894,26512,12000,9000, ['Feature']],
   ['424','Ocean Geographic Society'                    , 64894,38512,3000,3000, ['Media','Non-profit'], 'PHOTO PRO'],
-  ['F3','Photo Stage'                                 , 44894,38512,9000,6000, ['Feature'], 'PHOTO'],
-  ['200','Rork Media'                                  , 35394,56512,3000,6000, ['Media'], 'PRO'],
-  ['F1','Scuba Discovery Pool'                        , 42893,25917,13000,10000, ['Feature'], 'GEN'],
-  ['228','Scubapix'                                    , 76894,56512,3000,3000, ['Underwater photo'], 'PHOTO'],
-  ['520','Scubaspa Fleet'                              , 70893,32512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['232','Tank Cave VR'                                , 85894,59512,6000,3000, ['Feature'], 'TECH GEN'],
-  ['F2','Tech Stage'                                  , 86894,65512,9000,6000, ['Feature'], 'TECH'],
-  ['316','Wakatobi Dive Resort'                        , 53894,38512,3000,6000, ['Dive travel'], 'PRO GEN'],
-  ['WS','Workshop Room'                               , 24894,53512,6500,8000, ['Feature'], 'GEN PHOTO TECH PRO'],
-  ['216','AL-CAN Cylinder'                             , 61894,59512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['404','Abyss Scuba Diving'                          , 35894,41512,3000,3000, ['Local diving'], 'GEN'],
-  ['434','Akuana Australia'                            , 88894,38512,3000,6000, ['Dive gear'], 'GEN TECH'],
-  ['242','Altalena Drysuits & Protective Equipment'    , 94894,56512,3000,6000, ['Dive gear'], 'GEN TECH'],
-  ['432','Bay City Scuba'                              , 85894,38512,3000,6000, ['Local diving'], 'GEN'],
-  ['214','Beluga Reisen'                               , 61894,56512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['114','Benni Marine Designs'                        , 65894,68512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['328','Bunaken Oasis'                               , 67894,50512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['112','DAN'                                         , 57894,66512,3000,6000, ['Exhibitor'], 'GEN'],
-  ['304','DPG & The Underwater Club'                   , 36894,47512,3000,3000, ['Media','Sponsor','Underwater photo'], 'GEN PRO PHOTO'],
-  ['420','Deep Blue Ventures'                          , 61894,38512,3000,6000, ['Training'], 'GEN PRO'],
-  ['218','Digital Diver'                               , 67894,59512,3000,3000, ['Dive gear','Underwater photo'], 'GEN TECH PHOTO'],
-  ['430','Dive Adventures'                             , 73894,38512,9000,6000, ['Dive travel'], 'PRO GEN'],
-  ['130','Dive Centre Bondi'                           , 77894,68512,6000,3000, ['Dive gear'], 'GEN TECH'],
-  ['428','Dive Damai'                                  , 67894,41512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['400','Dive Lantern'                                , 32894,41512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['106','Dive Planit'                                 , 51894,66512,3000,6000, ['Dive travel'], 'PRO GEN'],
-  ['124','Dive Queensland'                             , 68894,65512,6000,3000, ['Local diving'], 'GEN'],
-  ['335','Diveaway Fiji'                               , 79894,50512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['402','Divevolk'                                    , 32894,38512,3000,3000, ['Underwater photo'], 'PHOTO'],
-  ['134','Forster Dive Center'                         , 77894,65512,6000,3000, ['Local diving'], 'GEN'],
-  ['324','Galapagos Galaxy Diver'                      , 64894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['126','Garmin'                                      , 71894,68512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['224','Gordons Bay Scuba Diving Club'               , 70894,59512,3000,3000, ['Non-profit'], 'GEN PRO'],
-  ['235','Hydro Sports Fiji'                           , 88894,56512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['225','Insta360'                                    , 76894,59512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['226','Lumbalumba Resort'                           , 79894,59512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['530','Mares & SSI'                                 , 76893,26512,6000,9000, ['Dive gear','Training'], 'GEN TECH PRO'],
-  ['329','Master Liveaboards'                          , 73894,50512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['210','Mike Ball Dive Expeditions'                  , 58894,59512,3000,3000, ['Liveaboards','Local diving'], 'PRO GEN'],
-  ['306','Murex'                                       , 39894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['510','Narwhal Technology'                          , 67893,32512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['326','Neomi Cruise'                                , 67894,47512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['220','Neptunes Liveaboards'                        , 67894,56512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['108','New Caledonia Tourism'                       , 54894,69512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['320','Nikon'                                       , 55894,47512,3000,6000, ['Underwater photo'], 'PHOTO'],
-  ['422','ORRCA'                                       , 64894,41512,3000,3000, ['Non-profit'], 'GEN PRO'],
-  ['222','Ocean Armour'                                , 70894,56512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['100','PADI Asia Pacific'                           , 39894,65512,9000,6000, ['Training'], 'GEN PRO'],
-  ['116','PNG Dive Association'                        , 65894,65512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['314','PT Ocean Explorers'                          , 49494,50512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['308','Pearl Fleet'                                 , 46494,47512,3000,6000, ['Liveaboards','Sponsor'], 'PRO'],
-  ['426','Pearl of Papua'                              , 67894,38512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['208','Rodney Fox Shark Expeditions'                , 41394,59512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['512','Royal Australian Navy'                       , 67893,26512,6000,6000, ['Non-profit'], 'GEN PRO'],
-  ['500','SDI Oceania'                                 , 58893,26512,6000,9000, ['Training'], 'GEN PRO'],
-  ['122','Save Our Marine Life'                        , 68894,68512,3000,3000, ['Non-profit'], 'GEN PRO'],
-  ['441','Scuba Gym'                                   , 94894,44512,3000,3000, ['Non-profit'], 'GEN PRO'],
-  ['212','Sea Breeze Trading (Oceanarium)'             , 58894,56512,3000,3000, ['Dive gear'], 'GEN TECH'],
-  ['332','Sea Safari Cruises'                          , 76894,47512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['406','Silver Reef Dive Resort'                     , 35894,38512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['322','Spirit of Freedom'                           , 64894,50512,3000,3000, ['Liveaboards'], 'PRO'],
-  ['330','Tahiti Tourism'                              , 73894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['338','Tourism Fiji'                                , 85894,47512,6000,6000, ['Dive travel'], 'PRO GEN'],
-  ['300','UW Images'                                   , 33894,47512,3000,6000, ['Dive gear','Underwater photo'], 'GEN TECH PHOTO'],
-  ['302','Underwater Australasia'                      , 36894,50512,6000,3000, ['Dive gear','Underwater photo'], 'GEN TECH PHOTO'],
+  ['F3','Photo Stage'                                 , 44894,38512,9000,6000, ['Feature']],
+  ['200','Rork Media'                                  , 35394,56512,3000,6000, ['Media']],
+  ['F1','Scuba Discovery Pool'                        , 42893,25917,13000,10000, ['Feature']],
+  ['228','Scubapix'                                    , 76894,56512,3000,3000, ['Underwater photo']],
+  ['520','Scubaspa Fleet'                              , 70893,32512,3000,3000, ['Liveaboards']],
+  ['232','Tank Cave VR'                                , 85894,59512,6000,3000, ['Feature']],
+  ['F2','Tech Stage'                                  , 86894,65512,9000,6000, ['Feature']],
+  ['316','Wakatobi Dive Resort'                        , 53894,38512,3000,6000, ['Dive travel']],
+  ['WS','Workshop Room'                               , 24894,53512,6500,8000, ['Feature']],
+  ['216','AL-CAN Cylinder'                             , 61894,59512,3000,3000, ['Dive gear']],
+  ['404','Abyss Scuba Diving'                          , 35894,41512,3000,3000, ['Local diving']],
+  ['434','Akuana Australia'                            , 88894,38512,3000,6000, ['Dive gear']],
+  ['242','Altalena Drysuits & Protective Equipment'    , 94894,56512,3000,6000, ['Dive gear']],
+  ['432','Bay City Scuba'                              , 85894,38512,3000,6000, ['Local diving']],
+  ['214','Beluga Reisen'                               , 61894,56512,3000,3000, ['Dive travel']],
+  ['114','Benni Marine Designs'                        , 65894,68512,3000,3000, ['Dive gear']],
+  ['328','Bunaken Oasis'                               , 67894,50512,3000,3000, ['Dive travel']],
+  ['112','DAN'                                         , 57894,66512,3000,6000, ['Insurance & safety']],
+  ['304','DPG & The Underwater Club'                   , 36894,47512,3000,3000, ['Media','Sponsor','Underwater photo']],
+  ['420','Deep Blue Ventures'                          , 61894,38512,3000,6000, ['Training']],
+  ['218','Digital Diver'                               , 67894,59512,3000,3000, ['Dive gear','Underwater photo']],
+  ['430','Dive Adventures'                             , 73894,38512,9000,6000, ['Dive travel']],
+  ['130','Dive Centre Bondi'                           , 77894,68512,6000,3000, ['Dive gear']],
+  ['428','Dive Damai'                                  , 67894,41512,3000,3000, ['Liveaboards']],
+  ['400','Dive Lantern'                                , 32894,41512,3000,3000, ['Dive gear']],
+  ['106','Dive Planit'                                 , 51894,66512,3000,6000, ['Dive travel']],
+  ['124','Dive Queensland'                             , 68894,65512,6000,3000, ['Local diving']],
+  ['335','Diveaway Fiji'                               , 79894,50512,3000,3000, ['Dive travel']],
+  ['402','Divevolk'                                    , 32894,38512,3000,3000, ['Underwater photo']],
+  ['134','Forster Dive Center'                         , 77894,65512,6000,3000, ['Local diving']],
+  ['324','Galapagos Galaxy Diver'                      , 64894,47512,3000,3000, ['Dive travel']],
+  ['126','Garmin'                                      , 71894,68512,3000,3000, ['Dive gear']],
+  ['224','Gordons Bay Scuba Diving Club'               , 70894,59512,3000,3000, ['Non-profit']],
+  ['235','Hydro Sports Fiji'                           , 88894,56512,3000,3000, ['Dive travel']],
+  ['225','Insta360'                                    , 76894,59512,3000,3000, ['Dive gear']],
+  ['226','Lumbalumba Resort'                           , 79894,59512,3000,3000, ['Dive travel']],
+  ['530','Mares & SSI'                                 , 76893,26512,6000,9000, ['Dive gear','Training']],
+  ['329','Master Liveaboards'                          , 73894,50512,3000,3000, ['Liveaboards']],
+  ['210','Mike Ball Dive Expeditions'                  , 58894,59512,3000,3000, ['Liveaboards','Local diving']],
+  ['306','Murex'                                       , 39894,47512,3000,3000, ['Dive travel']],
+  ['510','Narwhal Technology'                          , 67893,32512,3000,3000, ['Dive gear']],
+  ['326','Neomi Cruise'                                , 67894,47512,3000,3000, ['Liveaboards']],
+  ['220','Neptunes Liveaboards'                        , 67894,56512,3000,3000, ['Liveaboards']],
+  ['108','New Caledonia Tourism'                       , 54894,69512,3000,3000, ['Dive travel']],
+  ['320','Nikon'                                       , 55894,47512,3000,6000, ['Underwater photo']],
+  ['422','ORRCA'                                       , 64894,41512,3000,3000, ['Non-profit']],
+  ['222','Ocean Armour'                                , 70894,56512,3000,3000, ['Dive gear']],
+  ['100','PADI Asia Pacific'                           , 39894,65512,9000,6000, ['Training']],
+  ['116','PNG Dive Association'                        , 65894,65512,3000,3000, ['Liveaboards']],
+  ['314','PT Ocean Explorers'                          , 49494,50512,3000,3000, ['Dive travel']],
+  ['308','Pearl Fleet'                                 , 46494,47512,3000,6000, ['Liveaboards','Sponsor']],
+  ['426','Pearl of Papua'                              , 67894,38512,3000,3000, ['Liveaboards']],
+  ['208','Rodney Fox Shark Expeditions'                , 41394,59512,3000,3000, ['Dive travel']],
+  ['512','Royal Australian Navy'                       , 67893,26512,6000,6000, ['Non-profit']],
+  ['500','SDI Oceania'                                 , 58893,26512,6000,9000, ['Training']],
+  ['122','Save Our Marine Life'                        , 68894,68512,3000,3000, ['Non-profit']],
+  ['441','Scuba Gym'                                   , 94894,44512,3000,3000, ['Non-profit']],
+  ['212','Sea Breeze Trading (Oceanarium)'             , 58894,56512,3000,3000, ['Dive gear']],
+  ['332','Sea Safari Cruises'                          , 76894,47512,3000,3000, ['Liveaboards']],
+  ['406','Silver Reef Dive Resort'                     , 35894,38512,3000,3000, ['Dive travel']],
+  ['322','Spirit of Freedom'                           , 64894,50512,3000,3000, ['Liveaboards']],
+  ['330','Tahiti Tourism'                              , 73894,47512,3000,3000, ['Dive travel']],
+  ['338','Tourism Fiji'                                , 85894,47512,6000,6000, ['Dive travel']],
+  ['300','UW Images'                                   , 33894,47512,3000,6000, ['Dive gear','Underwater photo']],
+  ['302','Underwater Australasia'                      , 36894,50512,6000,3000, ['Dive gear','Underwater photo']],
   /* The directory files VIZ under local diving; it is a volunteer-run
      non-profit, so it carries both. */
-  ['440','VIZ Sydney Diving Visibility'                , 94894,38512,3000,6000, ['Non-profit','Local diving'], 'GEN PRO'],
-  ['204','VR Dive Zone / Global Underwater Explorers'  , 38394,56512,6000,3000, ['Training'], 'GEN PRO'],
-  ['336','Volivoli Beach Resort Fiji'                  , 79894,47512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['229','Waidroka'                                    , 79894,56512,3000,3000, ['Dive travel'], 'PRO GEN'],
-  ['331','Wellenreng Liveaboards'                      , 76894,50512,3000,3000, ['Liveaboards'], 'PRO'],
+  ['440','VIZ Sydney Diving Visibility'                , 94894,38512,3000,6000, ['Non-profit','Local diving']],
+  ['204','VR Dive Zone / Global Underwater Explorers'  , 38394,56512,6000,3000, ['Training']],
+  ['336','Volivoli Beach Resort Fiji'                  , 79894,47512,3000,3000, ['Dive travel']],
+  ['229','Waidroka'                                    , 79894,56512,3000,3000, ['Dive travel']],
+  ['331','Wellenreng Liveaboards'                      , 76894,50512,3000,3000, ['Liveaboards']],
 ];
 
 var STANDS = STAND_ROWS.map(function(r){
-  var tags = r[7].split(' ');
+  /* Derived from the show's own categories rather than stored, so the
+     two can never drift apart. Stages and features get none, and are
+     exempt from interest filtering instead of pretending to a subject. */
+  var tags = [];
+  r[6].forEach(function(c){
+    var v = CAT2CLASS[c];
+    if(v && tags.indexOf(v)<0) tags.push(v);
+  });
   if(KID_STANDS.indexOf(r[0])>=0) tags.push('KIDS');
   return {no:r[0], n:r[1], x:r[2], y:r[3], w:r[4], d:r[5],
-          types:r[6], type:r[6][0], tags:tags};
+          types:r[6], type:r[6][0], tags:sortTags(tags)};
 });
 function standByNo(no){for(var i=0;i<STANDS.length;i++) if(STANDS[i].no===no) return STANDS[i]; return null;}
 
@@ -1621,6 +1653,7 @@ function renderPlan(opts){
 /* ---------------- exhibitors ---------------- */
 function exhMatches(s){
   if(!state.interests.length) return true;
+  if(!s.tags.length) return true;   /* a stage is not a subject */
   return s.tags.some(function(t){return state.interests.indexOf(t)>=0;});
 }
 function standPicked(no){return state.spicks.indexOf(no)>=0;}
