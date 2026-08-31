@@ -424,15 +424,22 @@
 var AUDIENCES = [
   {k:'GEN',   n:'General, beginners & families', s:'beginners & families',
    d:'Big stories, marine life, first-timer friendly.'},
+  {k:'KIDS',  n:'Kids & families',               s:'kids & families',
+   d:'Hands-on, visual, and short enough to hold a child’s attention.'},
   {k:'PHOTO', n:'Photo & video',                 s:'photo & video',
    d:'Cameras, strobes, macro, wide-angle, editing.'},
   {k:'TECH',  n:'Tech & advanced',               s:'tech & advanced',
    d:'Rebreathers, wrecks, caves, deep, expedition.'},
   {k:'PRO',   n:'Pro, travel & conservation',    s:'pro, travel & conservation',
-   d:'Careers, destinations, the industry, the ocean.'},
-  {k:'KIDS',  n:'Kids & families',               s:'kids & families',
-   d:'Hands-on, visual, and short enough to hold a child’s attention.'}
+   d:'Careers, destinations, the industry, the ocean.'}
 ];
+var AUD_ORDER = AUDIENCES.map(function(a){return a.k;});
+/* Tags render in the order the interests are offered, so KIDS sits second
+   on a card as well as second in the picker. Left unsorted it was always
+   last, because it is appended after the matrix columns. */
+function sortTags(t){
+  return t.slice().sort(function(a,b){return AUD_ORDER.indexOf(a)-AUD_ORDER.indexOf(b);});
+}
 
 /* ------------------------------------------------------------------
    What actually works with children.
@@ -1179,7 +1186,7 @@ function sessionCard(s,opts){
       '<div class="who">'+esc(s.who)+'</div>'+
       '<div class="meta">'+
         '<span class="stagetag" style="color:'+STAGE_COLOR[s.stage]+'">'+esc(s.stage)+'</span>'+
-        s.tags.map(function(t){return '<span class="tag '+t+'">'+t+'</span>';}).join('')+
+        sortTags(s.tags).map(function(t){return '<span class="tag '+t+'">'+t+'</span>';}).join('')+
         (forYou&&!opts.hideForYou?'<span class="foryou">FOR YOU</span>':'')+
       '</div>'+
       (clash.length?'<div class="warn">⚠ '+(on?'Overlaps':'Clashes with')+' '+
@@ -1666,7 +1673,7 @@ function renderExhibitors(){
            filtered list is a list of results with no visible reason for
            being there — you can see the stand is in "my interests" but not
            which interest put it there. */
-        '<div class="etags">'+s.tags.map(function(t){
+        '<div class="etags">'+sortTags(s.tags).map(function(t){
           return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
       '</div>'+
       '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="'+on+'" '+
@@ -1695,7 +1702,7 @@ function openSheet(id){
     thumbTag(s,'thumbbig')+
     '<h3 id="sheetTitle">'+esc(s.title)+'</h3>'+
     '<div class="who">'+esc(s.who)+'</div>'+
-    '<div class="meta">'+s.tags.map(function(t){
+    '<div class="meta">'+sortTags(s.tags).map(function(t){
         return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
     (s.blurb
       ? '<p class="blurb">'+esc(s.blurb)+'</p>'
@@ -1740,7 +1747,7 @@ function openStandSheet(no){
     (lg?'<img class="standlogo" src="'+esc(lg)+'" alt="">':'')+
     '<div class="when">STAND '+esc(s.no)+'<br>'+esc(s.types.join(' · '))+'</div>'+
     '<h3 id="sheetTitle">'+esc(s.n)+'</h3>'+
-    '<div class="meta">'+s.tags.map(function(t){
+    '<div class="meta">'+sortTags(s.tags).map(function(t){
       return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
     (STAND_DETAIL[no]?'<p class="blurb">'+esc(STAND_DETAIL[no].blurb)+'</p>':'')+
     (STAND_DETAIL[no]&&STAND_DETAIL[no].note?'<p class="nochan">⚠ '+esc(STAND_DETAIL[no].note)+'</p>':'')+
