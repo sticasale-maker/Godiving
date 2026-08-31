@@ -1,0 +1,6 @@
+# Crawlers read robots.txt only from the domain root, which belongs to the
+# user-site repo, so this file is a statement of intent rather than an
+# enforced control. The noindex meta tag on the page is what actually keeps
+# it out of search results.
+User-agent: *
+Disallow: /
