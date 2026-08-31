@@ -296,7 +296,7 @@
   /* Bigger now the stand number has gone from the row — it is in the sheet,
      and a legible logo identifies an exhibitor faster than its number. */
   .exh .logo{flex:0 0 auto;width:62px;height:62px;border-radius:11px;object-fit:contain;
-    background:#fff;padding:3px}
+    background:#fff;padding:3px;cursor:pointer}
   .sheet .standlogo{width:64px;height:64px;border-radius:10px;object-fit:contain;background:#fff;
     padding:4px;float:right;margin:0 0 8px 12px}
 
@@ -1347,9 +1347,13 @@ function renderAgenda(){
   if(state.spicks.length){
     html += '<div class="slot">Stands you pinned</div>'+
       state.spicks.map(standByNo).filter(Boolean).map(function(s){
-        var c = contactFor(s.no);
+        var c = contactFor(s.no), lg = standLogo(s.no);
+        /* data-stand was left malformed here when the stand number came out
+           of these rows, which silently broke tapping a pinned stand open. */
         return '<article class="exh on" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
-          '<div class="body" data-stand=""'+esc(s.no)+'" role="button" tabindex="0">'+
+          (lg?'<img class="logo" src="'+esc(lg)+'" alt="" data-stand="'+esc(s.no)+'" '+
+            'loading="lazy" decoding="async" width="62" height="62">':'')+
+          '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
             '<div class="nm">'+esc(s.n)+'</div>'+
             '<div class="sub2">'+esc(s.types.join(' · '))+(hasContact(c)?' · contact details inside':'')+'</div>'+
           '</div>'+
@@ -1779,7 +1783,8 @@ function renderExhibitors(){
     var on = standPicked(s.no);
     var lg = standLogo(s.no);
     return '<article class="exh'+(on?' on':'')+'" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
-      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" loading="lazy" decoding="async" width="62" height="62">':'')+
+      (lg?'<img class="logo" src="'+esc(lg)+'" alt="" data-stand="'+esc(s.no)+'" '+
+        'loading="lazy" decoding="async" width="62" height="62">':'')+
       '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
         '<div class="nm">'+esc(s.n)+'</div>'+
         '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.types.join(' · '))+'</div>'+
