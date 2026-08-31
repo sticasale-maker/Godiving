@@ -152,6 +152,8 @@
   .sheet h3{margin:8px 0 6px;font-size:20px;line-height:1.28}
   .sheet .when{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);letter-spacing:1px;line-height:1.7}
   .sheet .alias{font-size:12.5px;color:var(--muted);margin-top:5px}
+  .sheet .chanhead{font-family:'Press Start 2P',monospace;font-size:9px;letter-spacing:1.5px;
+    color:var(--muted);margin:16px 0 2px;text-transform:uppercase}
   .sheet .blurb{font-size:15px;line-height:1.6;color:var(--text);margin:12px 0 0}
   .sheet .nodetail{font-size:14px;line-height:1.6;color:var(--muted);margin:12px 0 0}
   .sheet .why{font-size:13.5px;color:var(--accent);margin:10px 0 0}
@@ -179,6 +181,61 @@
 
   .foot{text-align:center;font-size:12px;color:var(--muted);margin:16px 0 4px;line-height:1.6}
   a{color:var(--accent)}
+
+  /* ---- now / next ---- */
+  .now{border:2px solid var(--accent);background:linear-gradient(180deg,rgba(54,201,192,.16),rgba(54,201,192,.05))}
+  .now.live{border-color:var(--good);background:linear-gradient(180deg,rgba(79,210,138,.18),rgba(79,210,138,.05))}
+  .now .cd{font-family:'Press Start 2P',monospace;font-size:clamp(22px,7.5vw,32px);color:var(--accent);
+    letter-spacing:2px;text-align:center;margin:6px 0 2px}
+  .now.live .cd{color:var(--good)}
+  .now .cdl{text-align:center;font-size:12px;color:var(--muted);letter-spacing:1px;margin-bottom:12px}
+  .now .ttl{font-weight:800;font-size:18px;line-height:1.3;margin:0 0 4px}
+  .now .whr{font-size:14px;color:var(--muted);margin-bottom:10px}
+  .now .whr b{color:var(--text)}
+  .then{font-size:13.5px;color:var(--muted);line-height:1.6;border-top:1px solid var(--line);
+    margin-top:12px;padding-top:10px}
+  .then b{color:var(--text)}
+
+  /* ---- simulation ---- */
+  .simbar{background:repeating-linear-gradient(45deg,rgba(243,198,79,.13),rgba(243,198,79,.13) 10px,
+    rgba(243,198,79,.05) 10px,rgba(243,198,79,.05) 20px);
+    border:1px solid var(--gold);border-radius:12px;padding:10px 12px;margin-bottom:12px}
+  .simbar .t{font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);letter-spacing:1.5px;margin-bottom:7px}
+  .simbar .r{display:flex;gap:7px;align-items:center;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+  .simbar input[type=range]{flex:1 1 140px;accent-color:var(--gold);min-width:120px}
+  .simbar select,.simbar button{background:var(--bg2);border:1px solid var(--line);color:var(--text);
+    border-radius:9px;padding:7px 10px;font-family:inherit;font-size:13px;cursor:pointer}
+  .simclock{font-family:'Press Start 2P',monospace;font-size:12px;color:var(--gold);letter-spacing:1px}
+
+  /* ---- floorplan ---- */
+  .planwrap{background:var(--bg2);border:1px solid var(--line);border-radius:14px;padding:8px;margin-bottom:12px}
+  .planwrap svg{width:100%;height:auto;display:block;touch-action:manipulation}
+  .plan-rect{fill:rgba(255,255,255,.07);stroke:rgba(255,255,255,.22);stroke-width:120}
+  .plan-rect.feat{fill:rgba(243,198,79,.16);stroke:rgba(243,198,79,.45)}
+  .plan-rect.hit{fill:rgba(54,201,192,.42);stroke:var(--accent);stroke-width:260}
+  .plan-rect.focus{fill:rgba(243,198,79,.62);stroke:var(--gold);stroke-width:320}
+  .plan-lbl{fill:var(--muted);font-size:900px;font-family:-apple-system,Segoe UI,sans-serif;
+    text-anchor:middle;dominant-baseline:middle;pointer-events:none}
+  .plan-lbl.on{fill:#eaf6fb;font-weight:700}
+  .plan-key{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--muted);padding:8px 4px 2px}
+  .plan-key i{display:inline-block;width:11px;height:11px;border-radius:3px;margin-right:5px;vertical-align:-1px}
+
+  /* ---- exhibitor rows ---- */
+  .exh{display:flex;gap:11px;align-items:center;background:var(--surface);border:1px solid var(--line);
+    border-left:4px solid var(--line);border-radius:13px;padding:11px 12px;margin-bottom:8px}
+  .exh.on{border-color:var(--accent);background:rgba(54,201,192,.09)}
+  .exh .body{flex:1;min-width:0;cursor:pointer}
+  .exh .nm{font-weight:800;font-size:15.5px;line-height:1.3}
+  .exh .sub2{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .stno{flex:0 0 auto;font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);
+    border:1px solid var(--line);border-radius:8px;padding:7px 6px;min-width:44px;text-align:center}
+
+  /* ---- contact channels ---- */
+  .chans{display:flex;flex-wrap:wrap;gap:7px;margin-top:12px}
+  .chan{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--bg2);
+    border-radius:10px;padding:9px 12px;font-size:13.5px;font-weight:700;color:var(--text);text-decoration:none}
+  .chan:active{transform:translateY(1px)}
+  .nochan{font-size:13px;color:var(--muted);margin-top:11px;line-height:1.55}
 
   @media print{
     .nav,.bar,.daybar,.chips,.btnrow,.logobar .sep,.hideprint{display:none!important}
@@ -246,8 +303,27 @@
     <div id="browseList"></div>
   </section>
 
-  <!-- ============ STEP 3: my agenda ============ -->
+  <!-- ============ exhibitors ============ -->
+  <section id="viewExhibitors" style="display:none">
+    <div class="card">
+      <div class="eyebrow">On the floor</div>
+      <h2 id="exhHead">Exhibitors for you</h2>
+      <p class="sub" id="exhSub"></p>
+    </div>
+    <div class="bar"><input type="search" id="eq" placeholder="Search exhibitors, stands…" autocomplete="off"></div>
+    <div class="chips" id="typeChips"></div>
+    <div class="chips" id="escopeChips">
+      <button class="chip" data-escope="mine" aria-pressed="true">★ My interests</button>
+      <button class="chip" data-escope="all" aria-pressed="false">Everyone</button>
+    </div>
+    <div id="exhPlan"></div>
+    <div id="exhList"></div>
+  </section>
+
+  <!-- ============ my day ============ -->
   <section id="viewAgenda" style="display:none">
+    <div id="simHost"></div>
+    <div id="nowHost"></div>
     <div class="card">
       <div class="eyebrow">My runsheet</div>
       <h2 id="agendaHead">Your personal agenda</h2>
@@ -258,6 +334,7 @@
       <button class="btn ghost" id="printIt">Print / save PDF</button>
       <button class="btn ghost" id="shareIt">Share my agenda</button>
     </div>
+    <div id="myPlan"></div>
     <div id="agendaList"></div>
     <p class="foot hideprint">Times are as published by the show and can move on the day —
       check the boards at the venue.</p>
@@ -276,8 +353,9 @@
 </div>
 
 <nav class="nav hideprint" id="nav" style="display:none">
-  <button data-view="browse" aria-pressed="true"><span class="ic">🔍</span>Discover</button>
-  <button data-view="agenda" aria-pressed="false"><span class="ic">📋</span>My agenda<span class="count" id="navCount" style="display:none">0</span></button>
+  <button data-view="browse" aria-pressed="true"><span class="ic">🔍</span>Sessions</button>
+  <button data-view="exhibitors" aria-pressed="false"><span class="ic">🏕</span>Exhibitors<span class="count" id="navSCount" style="display:none">0</span></button>
+  <button data-view="agenda" aria-pressed="false"><span class="ic">📋</span>My day<span class="count" id="navCount" style="display:none">0</span></button>
 </nav>
 
 <script>
@@ -384,9 +462,314 @@ var STAGE_COLOR = {'Main Stage':'#f3c64f','Photo Stage':'#b98cff','Tech Stage':'
    at the venue needs the name that is actually on the sign. */
 var STAGE_ALIAS = {'Ocean/Travel':'signposted as the Inspiration Stage'};
 
+/* ------------------------------------------------------------------
+   The floor. Stand number, name, position and size come from the show's
+   own interactive plan (floorplan.live event 4570, view 3) — the same
+   source the website embeds — so the rectangles here are the real ones,
+   not a sketch. Coordinates are millimetres with y increasing upwards,
+   which is why the renderer flips it.
+
+   The audience tags are mine, not the show's: its exhibitor records ship
+   with an empty category list, so nothing would filter without them.
+   ------------------------------------------------------------------ */
+var ST_TRAVEL='Travel', ST_TRAIN='Training', ST_GEAR='Gear', ST_PHOTO='Photo & video',
+    ST_CLUB='Clubs & causes', ST_SHOP='Dive shops', ST_FEAT='Stages & features';
+
+/* [stand, name, x, y, width, depth, type, tags] */
+var STAND_ROWS = [
+  ['F4','Main Stage',                        85894,26512,12000,9000, ST_FEAT, 'GEN PHOTO TECH PRO'],
+  ['F3','Photo Stage',                       44894,38512, 9000,6000, ST_FEAT, 'PHOTO'],
+  ['F2','Tech Stage',                        86894,65512, 9000,6000, ST_FEAT, 'TECH'],
+  ['F5','ANZ Stage',                         47394,56512, 8500,6000, ST_FEAT, 'GEN PRO'],
+  ['F1','Scuba Discovery Pool',              42893,25917,13000,10000,ST_FEAT, 'GEN'],
+  ['232','Tank Cave VR',                     85894,59512, 6000,3000, ST_FEAT, 'TECH GEN'],
+  ['204','VR Dive Zone / Global Underwater Explorers', 38394,56512,6000,3000, ST_FEAT, 'TECH GEN'],
+
+  ['100','PADI Asia Pacific',                39894,65512, 9000,6000, ST_TRAIN,'GEN PRO'],
+  ['500','SDI Oceania',                      58893,26512, 6000,9000, ST_TRAIN,'GEN TECH PRO'],
+  ['110','Dive RAID International',          54894,66512, 3000,3000, ST_TRAIN,'TECH PRO'],
+  ['530','Mares & SSI',                      76893,26512, 6000,9000, ST_TRAIN,'GEN TECH PRO'],
+  ['512','Royal Australian Navy',            67893,26512, 6000,6000, ST_TRAIN,'GEN TECH PRO'],
+  ['441','Scuba Gym',                        94894,44512, 3000,3000, ST_TRAIN,'GEN'],
+  ['112','DAN',                              57894,66512, 3000,6000, ST_TRAIN,'GEN TECH PRO'],
+
+  ['320','Nikon',                            55894,47512, 3000,6000, ST_PHOTO,'PHOTO'],
+  ['225','Insta360',                         76894,59512, 3000,3000, ST_PHOTO,'PHOTO'],
+  ['218','Digital Diver',                    67894,59512, 3000,3000, ST_PHOTO,'PHOTO'],
+  ['402','Divevolk',                         32894,38512, 3000,3000, ST_PHOTO,'PHOTO'],
+  ['228','Scubapix',                         76894,56512, 3000,3000, ST_PHOTO,'PHOTO'],
+  ['300','UW Images',                        33894,47512, 3000,6000, ST_PHOTO,'PHOTO'],
+  ['304','DPG & The Underwater Club',        36894,47512, 3000,3000, ST_PHOTO,'PHOTO'],
+  ['424','Ocean Geographic Society',         64894,38512, 3000,3000, ST_PHOTO,'PHOTO PRO'],
+  ['400','Dive Lantern',                     32894,41512, 3000,3000, ST_PHOTO,'PHOTO TECH'],
+
+  ['126','Garmin',                           71894,68512, 3000,3000, ST_GEAR, 'TECH GEN'],
+  ['216','AL-CAN Cylinder',                  61894,59512, 3000,3000, ST_GEAR, 'TECH'],
+  ['510','Narwhal Technology',               67893,32512, 3000,3000, ST_GEAR, 'TECH'],
+  ['420','Deep Blue Ventures',               61894,38512, 3000,6000, ST_GEAR, 'TECH'],
+  ['222','Ocean Armour',                     70894,56512, 3000,3000, ST_GEAR, 'GEN'],
+  ['434','Akuana Australia',                 88894,38512, 3000,6000, ST_GEAR, 'GEN TECH'],
+  ['212','Sea Breeze Trading (Oceanarium)',  58894,56512, 3000,3000, ST_GEAR, 'GEN'],
+  ['114','Benni Marine Designs',             65894,68512, 3000,3000, ST_GEAR, 'GEN'],
+
+  ['404','Abyss Scuba Diving',               35894,41512, 3000,3000, ST_SHOP, 'GEN'],
+  ['432','Bay City Scuba',                   85894,38512, 3000,6000, ST_SHOP, 'GEN'],
+  ['130','Dive Centre Bondi',                77894,68512, 6000,3000, ST_SHOP, 'GEN'],
+  ['134','Forster Dive Center',              77894,65512, 6000,3000, ST_SHOP, 'GEN'],
+
+  ['122','Save Our Marine Life',             68894,68512, 3000,3000, ST_CLUB, 'GEN PRO'],
+  ['422','ORRCA',                            64894,41512, 3000,3000, ST_CLUB, 'GEN PRO'],
+  ['224','Gordons Bay Scuba Diving Club',    70894,59512, 3000,3000, ST_CLUB, 'GEN'],
+  ['321','Historical Diving Society',        58894,47512, 3000,6000, ST_CLUB, 'TECH GEN'],
+  ['302','Underwater Australasia',           36894,50512, 6000,3000, ST_CLUB, 'GEN PHOTO'],
+  ['200','Rork Media',                       35394,56512, 3000,6000, ST_CLUB, 'PRO'],
+  ['440','VIZ Sydney Diving Visibility',     94894,38512, 3000,6000, ST_CLUB, 'GEN'],
+  ['116','PNG Dive Association',             65894,65512, 3000,3000, ST_CLUB, 'PRO GEN'],
+
+  ['106','Dive Planit',                      51894,66512, 3000,6000, ST_TRAVEL,'PRO GEN'],
+  ['108','New Caledonia Tourism',            54894,69512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['202','Chindonan Dive & Beach Resort',    38394,59512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['316','Wakatobi Dive Resort',             53894,38512, 3000,6000, ST_TRAVEL,'PRO GEN'],
+  ['224b','',0,0,0,0,'',''],
+  ['220','Neptunes Liveaboards',             67894,56512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['214','Beluga Reisen',                    61894,56512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['406','Silver Reef Dive Resort',          35894,38512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['430','Dive Adventures',                  73894,38512, 9000,6000, ST_TRAVEL,'PRO GEN'],
+  ['329','Master Liveaboards',               73894,50512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['308','Pearl Fleet',                      46494,47512, 3000,6000, ST_TRAVEL,'PRO'],
+  ['314','PT Ocean Explorers',               49494,50512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['312','Atmosphere Resort',                49494,47512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['306','Murex',                            39894,47512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['324','Galapagos Galaxy Diver',           64894,47512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['322','Spirit of Freedom',                64894,50512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['328','Bunaken Oasis',                    67894,50512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['335','Diveaway Fiji',                    79894,50512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['210','Mike Ball Dive Expeditions',       58894,59512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['208','Rodney Fox Shark Expeditions',     41394,59512, 3000,3000, ST_TRAVEL,'GEN PRO'],
+  ['326','Neomi Cruise',                     67894,47512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['428','Dive Damai',                       67894,41512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['426','Pearl of Papua',                   67894,38512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['330','Tahiti Tourism',                   73894,47512, 3000,3000, ST_TRAVEL,'PRO GEN'],
+  ['331','Wellenreng Liveaboards',           76894,50512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['332','Sea Safari Cruises',               76894,47512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['226','Lumbalumba Resort',                79894,59512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['229','Waidroka',                         79894,56512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['338','Tourism Fiji',                     85894,47512, 6000,6000, ST_TRAVEL,'PRO GEN'],
+  /* Altalena distributes drysuits and protective kit (Poseidon, Ursuit,
+     Viking, SiTech) — the name reads like a liveaboard but is not one. */
+  ['242','Altalena Drysuits & Protective Equipment', 94894,56512, 3000,6000, ST_GEAR,'TECH GEN'],
+  ['336','Volivoli Beach Resort Fiji',       79894,47512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['124','Dive Queensland',                  68894,65512, 6000,3000, ST_TRAVEL,'PRO GEN'],
+  ['234','Beqa Lagoon Resort',               85894,56512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['520','Scubaspa Fleet',                   70893,32512, 3000,3000, ST_TRAVEL,'PRO'],
+  ['235','Hydro Sports Fiji',                88894,56512, 3000,3000, ST_TRAVEL,'PRO'],
+
+  /* Not a numbered stand: the seminar room is drawn into the venue shell
+     on the far left of the published plan. Placed to match it. */
+  ['WS','Workshop Room',                     24894,53512, 6500,8000, ST_FEAT, 'GEN PHOTO TECH PRO']
+];
+
+var STANDS = STAND_ROWS.filter(function(r){return r[1];}).map(function(r){
+  return {no:r[0], n:r[1], x:r[2], y:r[3], w:r[4], d:r[5], type:r[6], tags:r[7].split(' ')};
+});
+function standByNo(no){for(var i=0;i<STANDS.length;i++) if(STANDS[i].no===no) return STANDS[i]; return null;}
+
+/* Which rectangle on the floor each programme stage is. The matrix and
+   the floorplan use different names for the same rooms. */
+var STAGE_STAND = {
+  'Main Stage':'F4', 'Photo Stage':'F3', 'Tech Stage':'F2',
+  'Ocean/Travel':'F5', 'Workshop Room':'WS', 'Demo Pool':'F1'
+};
+
+var STAND_TYPES = [ST_FEAT, ST_TRAVEL, ST_PHOTO, ST_GEAR, ST_TRAIN, ST_SHOP, ST_CLUB];
+var TYPE_COLOR = {};
+TYPE_COLOR[ST_FEAT]='#f3c64f'; TYPE_COLOR[ST_TRAVEL]='#4fd28a'; TYPE_COLOR[ST_PHOTO]='#b98cff';
+TYPE_COLOR[ST_GEAR]='#ff9f6b'; TYPE_COLOR[ST_TRAIN]='#57c7ff'; TYPE_COLOR[ST_SHOP]='#36c9c0';
+TYPE_COLOR[ST_CLUB]='#ef9bd0';
+
+/* ------------------------------------------------------------------
+   How to reach people, before or after the show.
+
+   Only channels a business or a speaker publishes for public contact go
+   in here, and only ones that were actually seen on their own site or
+   verified profile — no address was ever guessed from a domain. Anything
+   unverified is simply absent, because a wrong phone number is worse
+   than no phone number when someone is trying to book a trip.
+
+   Keyed by stand number for exhibitors, by speaker name for presenters.
+   ------------------------------------------------------------------ */
+var CONTACTS = {
+  /* --- presenters: their public professional presence --- */
+  'Ryan Chatfield & Nush Freedman (SHA Cast)':{ig:'_ryanchatfield', ig2:'nushfreedman'},
+  'Michael Aw':{ig:'awtimate'},
+  'Dylan Boag':{ig:'woebegonedive', web:'https://woebegonedive.com.au'},
+  'John Dalla-Zuanna':{ig:'jdzdiving'},
+
+  /* --- exhibitors, by stand --- */
+  '440':{web:'https://www.viz.net.au/', email:'vizgroupsydney@gmail.com', ig:'sydneygazette',
+         note:'Sydney dive visibility reports. Also the “VIZ – Sydney Diving Visibility Reports” Facebook group.'},
+
+  '100':{web:'https://www.padi.com/padi-dive-centers/regional-support/asia-pacific',
+         phone:'+61 2 9454 2888', note:'Australia toll-free 1800 023 705.'},
+  '500':{web:'https://www.sdi.com.au/au/contact-us/', email:'Info@sdi.com.au', phone:'+61 3 8727 7111',
+         note:'Australia toll-free 1800 337 003.'},
+  '530':{web:'https://maresgroup.com/en/contacts/', email:'mares.sa@maresgroup.com',
+         phone:'+41 91 986 3070', ig:'ssi_international',
+         note:'Mares and SSI share this stand. No Asia-Pacific office is published, so this is the Swiss parent.'},
+  '512':{web:'https://www.adfcareers.gov.au/', phone:'13 19 01', ig:'adfcareers',
+         fb:'https://www.facebook.com/adfcareers', note:'From outside Australia: +61 3 9267 6101.'},
+  '441':{web:'https://www.thescubagym.com.au/', phone:'+61 420 380 055', ig:'thescubagymaus',
+         fb:'https://www.facebook.com/thescubagymaus'},
+  '320':{web:'https://www.nikon.com.au/'},
+  '225':{web:'https://www.insta360.com/'},
+  '402':{web:'https://www.divevolkdiving.com/', email:'contact@divevolk.com', phone:'+86 760 86893956',
+         ig:'divevolk', fb:'https://www.facebook.com/divevolk'},
+  '228':{web:'https://www.scubapix.com/', email:'info@scubapix.com', phone:'+61 7 4031 7655'},
+  '424':{web:'https://www.ogsociety.org/', phone:'+61 2 9686 3688',
+         fb:'https://www.facebook.com/OceanGeographic/'},
+  '126':{web:'https://www.garmin.com/en-AU/'},
+  '420':{web:'https://deepblueventures.com.au/', phone:'+61 413 429 533'},
+  '434':{web:'https://akuana.com.au/', email:'dive@akuana.com.au', phone:'+61 410 022 009'},
+  '212':{web:'https://www.oceanarium.com.hk/', email:'info@oceanarium.com.hk', ig:'oceanarium_hk',
+         fb:'https://www.facebook.com/Oceanarium.dive', note:'A Hong Kong company selling into Australia through resellers.'},
+  '114':{web:'https://bennimd.com/', ig:'bennimarinedesigns', fb:'https://www.facebook.com/Bennimarinedesigns'},
+  '404':{web:'https://www.abyss.com.au/', email:'dive@abyss.com.au', phone:'+61 2 9583 9662',
+         ig:'abyssscubadiving', fb:'https://www.facebook.com/Abyss.Scuba/'},
+  '432':{web:'https://www.baycityscuba.com/', email:'info@baycityscuba.com', phone:'+61 3 5248 1488',
+         ig:'baycityscuba', fb:'https://www.facebook.com/baycityscuba'},
+  '130':{web:'https://www.divebondi.com.au/', email:'info@divebondi.com.au', phone:'+61 2 9369 3855',
+         ig:'divebondi', fb:'https://www.facebook.com/divebondi'},
+  '134':{web:'https://www.forsterdivecentre.com.au/', email:'dive@forsterdivecentre.com.au',
+         phone:'+61 451 803 862', ig:'forster_dive_centre', fb:'https://www.facebook.com/forsterdivecentre'},
+  /* ORRCA publish exactly one number and it is the 24/7 rescue hotline, so
+     it is labelled as such rather than offered as a general enquiry line. */
+  '422':{web:'https://www.orrca.org.au/', email:'orrca@orrca.org.au', phone:'+61 2 9415 3333',
+         ig:'orrcaaustralia', fb:'https://www.facebook.com/orrcaaustralia',
+         note:'That number is their 24/7 whale and dolphin rescue hotline — please keep it free for rescues.'},
+  '204':{web:'https://www.gue.com/', phone:'+1 386 454 0820', ig:'guehq',
+         fb:'https://www.facebook.com/GUEhq'},
+  '210':{web:'https://www.mikeball.com/', email:'resv@mikeball.com', phone:'+61 7 4053 0500',
+         ig:'mikeballdive', fb:'https://www.facebook.com/MikeBallDiveExpeditions'},
+  '208':{web:'https://rodneyfox.com.au/', email:'expeditions@rodneyfox.com.au', phone:'+61 8 8363 1788',
+         ig:'rodneyfoxsharkexpeditions', fb:'https://www.facebook.com/rodneyfoxsharkexpeditions'},
+  '232':{note:'The VR experience has no channel of its own — it is run by the Global Underwater Explorers team on stand 204.'},
+
+  '106':{web:'https://www.diveplanit.com/', email:'enquire@diveplanit.com', phone:'+61 7 4039 0200',
+         ig:'diveplanit', fb:'https://www.facebook.com/DivePlanIt'},
+  '108':{web:'https://www.newcaledonia.travel/', ig:'newcaledoniatourism',
+         fb:'https://www.facebook.com/newcaledoniatourism/'},
+  /* Dive RAID's public contact page is unfinished theme boilerplate with a
+     placeholder address and a fake phone number. Only the address printed
+     on their team page is real, so that is all that appears here. */
+  '110':{web:'https://diveraid.com/', email:'info@diveraid.com', ig:'diveraidinternational2.0',
+         fb:'https://www.facebook.com/diveraid'},
+  '116':{web:'https://pngdive.net/', email:'info@pngdive.net',
+         fb:'https://www.facebook.com/979405368889849'},
+  '200':{web:'https://www.rorkmedia.com/', email:'info@godivingshow.com'},
+  '202':{web:'https://www.chindonandiveresort.com/', phone:'+63 917 709 7941',
+         fb:'https://www.facebook.com/chindonandiveresort/', note:'Email enquiries via their site form.'},
+  '316':{web:'https://www.wakatobi.com/', email:'office@wakatobi.com', phone:'+62 361 759669',
+         ig:'wakatobi_resort', fb:'https://www.facebook.com/wakatobidiveresort'},
+  '216':{web:'https://www.alcancylinders.com/', email:'cylinder@alcanexports.com',
+         phone:'+91 22 2814 2478', wa:'+919324099357', ig:'alcanaluminiumcylinder',
+         fb:'https://www.facebook.com/profile.php?id=61550192946466'},
+  '218':{web:'https://digitaldiver.com.au', email:'info@digitaldiver.com.au', phone:'+61 7 4031 9266',
+         ig:'digital_diver', fb:'https://www.facebook.com/DigitalDiver'},
+  '224':{web:'https://www.gordonsbayscubadiving.com', email:'secretary@gordonsbayscubadiving.com',
+         phone:'+61 466 568 152', fb:'https://www.facebook.com/GordonsBaySCUBADivingClub/'},
+  '222':{web:'https://www.oceanarmour.com.au', email:'hello@oceanarmour.com.au',
+         ig:'ocean.armour', fb:'https://www.facebook.com/OceanArmourAU'},
+  '220':{web:'https://www.neptuneliveaboards.com', phone:'+62 811 3830 5168', wa:'+6281138305168',
+         ig:'neptuneliveaboards', fb:'https://www.facebook.com/neptuneliveaboards/'},
+  '400':{web:'https://www.divelantern.com', email:'team@divelantern.com', phone:'+61 420 300 736',
+         ig:'divelantern'},
+  '406':{web:'https://silverreefdiveresort.com', email:'dive@silverreefdiveresort.net',
+         phone:'+63 917 770 7265', wa:'+639271335970', ig:'silverreefdiveresort',
+         fb:'https://www.facebook.com/Silverreefdauin/'},
+  '430':{web:'https://diveadventures.com.au', phone:'+61 2 9299 4633', ig:'diveadventures.au',
+         fb:'https://www.facebook.com/diveadventures.au/',
+         note:'Melbourne +61 3 9646 5945 · NZ +64 3 288 1699. Email via their site form.'},
+  '329':{web:'https://www.masterliveaboards.com', email:'dive@masterliveaboards.com',
+         phone:'+44 208 099 2230', wa:'+66626687136', ig:'master_liveaboards',
+         fb:'https://www.facebook.com/master.liveaboards'},
+  '312':{web:'https://www.atmosphereresorts.com', email:'reservations@atmosphereresorts.com',
+         phone:'+63 917 700 2048', wa:'+639177002048', ig:'atmosphereresorts',
+         fb:'https://www.facebook.com/atmosphere.resorts'},
+  '300':{web:'https://uwimages.com.au/', email:'info@uwimages.com.au', phone:'+61 450 558 136',
+         ig:'uwimages', fb:'https://www.facebook.com/uwimages.com.au/'},
+  '302':{web:'https://underwater.com.au/', email:'info@underwater.com.au', phone:'+61 2 6680 9410',
+         ig:'underwateraustralasia', fb:'https://www.facebook.com/underwateraustralasia'},
+  '304':{web:'https://www.divephotoguide.com/', email:'contact@divephotoguide.com',
+         ig:'divephotoguide', fb:'https://www.facebook.com/underwaterphotography'},
+  '306':{web:'https://www.murexresorts.com/', email:'reservations@murexresorts.com',
+         phone:'+62 811 4390 0091', ig:'murexresorts', fb:'https://www.facebook.com/murexresorts'},
+  '321':{web:'https://www.historicaldivingsociety.com.au/', email:'info@historicaldivingsociety.com.au',
+         fb:'https://www.facebook.com/groups/120950924589540'},
+
+  '308':{web:'https://pearlfleet.org/', email:'info@pearlfleet.org', phone:'+65 8011 8123',
+         wa:'+6580118123', ig:'pearlfleet', fb:'https://www.facebook.com/pearlfleetlob/'},
+  '314':{web:'https://www.papuaexplorers.com/', email:'raja@papuaexplorers.com',
+         phone:'+62 822 4814 5555', fb:'https://www.facebook.com/PapuaExplorers'},
+  '324':{web:'https://galaxydiver2onboard.com/', note:'Enquiries via the form on their site — no direct email or phone published.'},
+  '322':{web:'https://www.spiritoffreedom.com.au/', email:'info@spiritoffreedom.com.au',
+         phone:'+61 7 4047 9150', ig:'spiritoffreedomcairns', fb:'https://www.facebook.com/SpiritOfFreedomAustralia'},
+  '328':{web:'https://www.bunakenoasis.com/', phone:'+62 811 4310 399', wa:'+447785576331',
+         ig:'bunakenoasisdiveresort', fb:'https://www.facebook.com/BunakenOasis',
+         note:'UK office: +44 1926 421100'},
+  '335':{web:'https://www.diveawayfiji.com/', email:'diveawayfiji1@gmail.com', phone:'+679 931 6883',
+         wa:'+6799316883', fb:'https://www.facebook.com/diveawayfiji/'},
+  '326':{web:'https://www.neomicruise.com/', phone:'+62 361 449 3418',
+         ig:'neomicruiseindonesia', fb:'https://www.facebook.com/neomi.cruise'},
+  '428':{web:'https://www.dive-damai.com/', email:'info@dive-damai.com', phone:'+62 361 283123',
+         wa:'+628123811225', ig:'divedamai', fb:'https://www.facebook.com/ddamai'},
+  '330':{web:'https://tahititourisme.org/', phone:'+689 40 50 40 30'},
+  '331':{web:'https://www.wellenreng-liveaboard.com', note:'Their site was unreachable when this was compiled.'},
+  '332':{web:'https://seasafaricruises.com/', fb:'https://www.facebook.com/seasafaricruises/'},
+  '226':{web:'https://lumbalumbaresort.com/', email:'info@lumbalumbaresort.com',
+         ig:'lumbalumba.resort.manado', fb:'https://www.facebook.com/lumbalumba.resort.manado/'},
+  '229':{web:'https://www.waidroka.com/', email:'reservations@waidroka.com', phone:'+679 992 4944',
+         wa:'+6799924944', ig:'waidrokabayresort', fb:'https://www.facebook.com/WaidrokaBayResort/'},
+  '338':{web:'https://corporate.fiji.travel/'},
+  '242':{web:'https://altalena.com.au/', phone:'+61 2 4322 0300',
+         fb:'https://www.facebook.com/altalenaservicecentre',
+         note:'Enquiries via the contact form on their site.'},
+  '336':{web:'https://volivoli.com/'},
+  '124':{web:'https://www.dive-queensland.com/', phone:'+61 439 945 123', ig:'divequeensland',
+         fb:'https://www.facebook.com/groups/434786828477529'},
+  '234':{web:'https://beqalagoonresort.com/', phone:'+679 707 2270', ig:'beqalagoon',
+         fb:'https://www.facebook.com/beqalagoon', note:'US bookings: +1 800 542 3454'},
+  '520':{web:'https://scubaspa.com/', email:'hello@scubaspa.com', phone:'+971 58 549 6555',
+         wa:'+971585496555', ig:'scubaspamaldives', fb:'https://www.facebook.com/ScubaspaMaldives'},
+  '235':{web:'https://www.hydrosportsfiji.com/', email:'bookings@hydrosportsfiji.com',
+         phone:'+679 777 4081', wa:'+6797774081', ig:'hydrosportsfiji',
+         fb:'https://www.facebook.com/hydrosportsfiji/'},
+  '214':{web:'https://www.belugareisen.de/', email:'info@belugareisen.de', phone:'+49 551 63451340',
+         wa:'+4917617895100', ig:'belugareisen', fb:'https://www.facebook.com/belugareisen'}
+};
+function contactFor(key){return CONTACTS[key]||null;}
+function hasContact(c){
+  return !!(c && (c.web||c.email||c.phone||c.wa||c.ig||c.ig2||c.fb));
+}
+/* Channels render as real links so a phone opens the dialler and an email
+   opens the mail app — on a show floor nobody is copying a number out. */
+function renderChans(c){
+  if(!hasContact(c)) return '';
+  var L=[];
+  if(c.web)   L.push('<a class="chan" href="'+esc(c.web)+'" target="_blank" rel="noopener noreferrer">🌐 Website</a>');
+  if(c.email) L.push('<a class="chan" href="mailto:'+esc(c.email)+'">✉️ '+esc(c.email)+'</a>');
+  if(c.phone) L.push('<a class="chan" href="tel:'+esc(c.phone.replace(/[^+\d]/g,''))+'">📞 '+esc(c.phone)+'</a>');
+  if(c.wa)    L.push('<a class="chan" href="https://wa.me/'+esc(c.wa.replace(/[^\d]/g,''))+'" target="_blank" rel="noopener noreferrer">💬 WhatsApp</a>');
+  if(c.ig)    L.push('<a class="chan" href="https://www.instagram.com/'+esc(c.ig)+'/" target="_blank" rel="noopener noreferrer">📷 @'+esc(c.ig)+'</a>');
+  if(c.ig2)   L.push('<a class="chan" href="https://www.instagram.com/'+esc(c.ig2)+'/" target="_blank" rel="noopener noreferrer">📷 @'+esc(c.ig2)+'</a>');
+  if(c.fb)    L.push('<a class="chan" href="'+esc(c.fb)+'" target="_blank" rel="noopener noreferrer">👥 Facebook</a>');
+  return '<div class="chans">'+L.join('')+'</div>'+
+    (c.note?'<p class="nochan">'+esc(c.note)+'</p>':'');
+}
+
 /* ------------------------------------------------------------------ */
 var LS = 'gds-agenda-v1';
-var state = {interests:[], picks:[], day:1, stage:'', q:'', scope:'mine', view:'interests'};
+var state = {interests:[], picks:[], spicks:[], day:1, stage:'', q:'', scope:'mine',
+             eq:'', etype:'', escope:'mine', view:'interests'};
 
 function load(){
   try{
@@ -394,11 +777,12 @@ function load(){
     if(raw){var o=JSON.parse(raw);
       if(Array.isArray(o.interests)) state.interests=o.interests;
       if(Array.isArray(o.picks))     state.picks=o.picks;
+      if(Array.isArray(o.spicks))    state.spicks=o.spicks;
     }
   }catch(e){/* private browsing, or a cleared store: start fresh */}
 }
 function save(){
-  try{localStorage.setItem(LS,JSON.stringify({interests:state.interests,picks:state.picks}));}
+  try{localStorage.setItem(LS,JSON.stringify({interests:state.interests,picks:state.picks,spicks:state.spicks}));}
   catch(e){/* nothing we can do; the page still works for this visit */}
 }
 
@@ -561,12 +945,256 @@ function renderAgenda(){
     ? '<b style="color:var(--bad)">'+clashCount+' of them overlap</b> — the clashes are marked below so you can drop one.'
     : 'No clashes. Times are back-to-back where they touch, so allow a minute between rooms.';
 
+  /* One plan for the whole day: the stands you pinned, plus every stage a
+     session of yours is on, so the walking route is visible in one look. */
+  var stageNos = mine.map(function(s){return STAGE_STAND[s.stage];}).filter(Boolean);
+  var allNos = state.spicks.concat(stageNos).filter(function(v,i,a){return a.indexOf(v)===i;});
+  document.getElementById('myPlan').innerHTML = allNos.length
+    ? '<div class="slot">Where your day happens</div>'+renderPlan({hit:allNos})
+    : '';
+
   var html='', lastDay=0;
   mine.forEach(function(s){
     if(s.day!==lastDay){lastDay=s.day; html += dayHead(s.day);}
     html += sessionCard(s,{showClash:true,hideForYou:true,showDay:true});
   });
+  if(state.spicks.length){
+    html += '<div class="slot">Stands you pinned</div>'+
+      state.spicks.map(standByNo).filter(Boolean).map(function(s){
+        var c = contactFor(s.no);
+        return '<article class="exh on" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
+          '<div class="stno">'+esc(s.no)+'</div>'+
+          '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
+            '<div class="nm">'+esc(s.n)+'</div>'+
+            '<div class="sub2">'+esc(s.type)+(hasContact(c)?' · contact details inside':'')+'</div>'+
+          '</div>'+
+          '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="true" aria-label="Unpin">★</button>'+
+        '</article>';
+      }).join('');
+  }
   host.innerHTML = html;
+}
+
+/* ---------------- the clock ----------------
+   Everything time-aware reads now(), never Date.now(), so that simulation
+   mode is the same code path as the real day rather than a parallel one
+   that can rot untested between now and September. */
+function now(){
+  if(!sim.on) return Date.now();
+  return sim.base + (Date.now() - sim.realBase) * sim.speed;
+}
+function sessionStartMs(s){return new Date(DAYS[s.day].date+'T'+s.start+':00+10:00').getTime();}
+function sessionEndMs(s){return new Date(DAYS[s.day].date+'T'+s.end+':00+10:00').getTime();}
+
+/* Which day the clock is inside, or null when the show is not running. */
+function liveDay(){
+  var t = now();
+  for(var d=1;d<=2;d++){
+    var day = SESSIONS.filter(function(s){return s.day===d;});
+    var first = Math.min.apply(null, day.map(sessionStartMs));
+    var last  = Math.max.apply(null, day.map(sessionEndMs));
+    if(t >= first-3600000 && t <= last+1800000) return d;
+  }
+  return null;
+}
+
+/* The next thing to walk to: my own picks first, because a runsheet that
+   ignores what you chose is just the programme again. Falls back to the
+   whole programme when nothing is starred. */
+function upcoming(){
+  var t = now(), d = liveDay();
+  if(!d) return null;
+  var mine = state.picks.map(byId).filter(Boolean).filter(function(s){return s.day===d;});
+  var pool = mine.length ? mine : SESSIONS.filter(function(s){return s.day===d;});
+  var live = pool.filter(function(s){return sessionStartMs(s)<=t && sessionEndMs(s)>t;})
+                 .sort(function(a,b){return sessionEndMs(a)-sessionEndMs(b);});
+  var next = pool.filter(function(s){return sessionStartMs(s)>t;})
+                 .sort(function(a,b){return sessionStartMs(a)-sessionStartMs(b);});
+  return {day:d, live:live, next:next, usingPicks:!!mine.length};
+}
+
+function hms(ms){
+  if(ms<0) ms=0;
+  var s=Math.floor(ms/1000), h=Math.floor(s/3600), m=Math.floor(s%3600/60);
+  s=s%60;
+  return (h?h+':':'')+(h?('0'+m).slice(-2):m)+':'+('0'+s).slice(-2);
+}
+
+function renderNow(){
+  var host = document.getElementById('nowHost');
+  var u = upcoming();
+  if(!u){
+    host.innerHTML = '<div class="card"><div class="eyebrow">Not show time</div>'+
+      '<p class="sub">The countdown and the “where next” map wake up on show days. '+
+      'To see how they will look, turn on <b>preview the day</b> below.</p></div>';
+    return;
+  }
+  var t = now(), on = u.live[0], nx = u.next[0];
+  var head = on
+    ? {cls:'live', cd:hms(sessionEndMs(on)-t), lbl:'LEFT IN THIS SESSION', s:on, verb:'On now'}
+    : (nx ? {cls:'', cd:hms(sessionStartMs(nx)-t), lbl:'UNTIL YOUR NEXT SESSION', s:nx, verb:'Next up'} : null);
+  if(!head){
+    host.innerHTML = '<div class="card"><div class="eyebrow">That’s a wrap</div>'+
+      '<p class="sub">Nothing left on your runsheet today. The floor is still open — '+
+      'go and talk to someone.</p></div>';
+    return;
+  }
+  var s = head.s, stand = standByNo(STAGE_STAND[s.stage]);
+  var after = (on && nx) ? nx : u.next[on?0:1];
+  host.innerHTML =
+    '<div class="card now '+head.cls+'">'+
+      '<div class="eyebrow">'+esc(head.verb)+(u.usingPicks?'':' · from the full programme')+'</div>'+
+      '<div class="cd">'+head.cd+'</div><div class="cdl">'+head.lbl+'</div>'+
+      '<div class="ttl">'+esc(s.title)+'</div>'+
+      '<div class="whr"><b>'+esc(s.stage)+'</b>'+(stand?' · stand '+esc(stand.no):'')+
+        ' · '+esc(range(s))+'<br>'+esc(s.who)+'</div>'+
+      renderPlan({focus:stand?[stand.no]:[], height:210})+
+      (after?'<div class="then">Then at <b>'+esc(ampm(after.start))+'</b>: '+
+        esc(after.title)+' <span class="muted">('+esc(after.stage)+')</span></div>':'')+
+    '</div>';
+}
+
+/* ---------------- simulation ---------------- */
+/* Organisers need to stand in the hall in August and see what a visitor
+   will see in September. Rather than a separate demo build that drifts,
+   this moves the clock the real views already read. */
+var sim = {on:false, day:1, base:0, realBase:0, speed:1};
+var simTick = null;
+
+function simStart(day, minutes, speed){
+  sim.on = true;
+  sim.day = day;
+  sim.base = new Date(DAYS[day].date+'T00:00:00+10:00').getTime() + minutes*60000;
+  sim.realBase = Date.now();
+  sim.speed = speed;
+  if(!simTick) simTick = setInterval(tick, 1000);
+  render();
+}
+function simStop(){
+  sim.on = false;
+  if(simTick){clearInterval(simTick); simTick=null;}
+  render();
+}
+function tick(){
+  if(state.view==='agenda'){ renderNow(); renderSim(); }
+}
+/* The real day needs a ticking clock too, not just the simulation. */
+function ensureTick(){
+  if(!simTick && liveDay()) simTick = setInterval(tick, 1000);
+}
+
+function renderSim(){
+  var host = document.getElementById('simHost');
+  if(!sim.on){
+    host.innerHTML = '<div class="btnrow hideprint"><button class="btn ghost" id="simOpen">'+
+      '⏱ Preview the day (organisers)</button></div>';
+    return;
+  }
+  var t = new Date(now());
+  var mins = t.getHours()*60 + t.getMinutes();
+  host.innerHTML =
+    '<div class="simbar hideprint">'+
+      '<div class="t">PREVIEW MODE · NOT THE REAL TIME</div>'+
+      '<div class="r">'+
+        '<span class="simclock" id="simClock">'+esc(DAYS[sim.day].short)+' '+
+          ('0'+t.getHours()).slice(-2)+':'+('0'+t.getMinutes()).slice(-2)+':'+('0'+t.getSeconds()).slice(-2)+'</span>'+
+        '<select id="simDay"><option value="1"'+(sim.day===1?' selected':'')+'>Sat 5 Sep</option>'+
+          '<option value="2"'+(sim.day===2?' selected':'')+'>Sun 6 Sep</option></select>'+
+        '<select id="simSpeed">'+[1,10,60,300].map(function(v){
+          return '<option value="'+v+'"'+(sim.speed===v?' selected':'')+'>'+v+'×</option>';}).join('')+'</select>'+
+        '<button id="simOff">Exit</button>'+
+      '</div>'+
+      '<div class="r" style="margin-top:8px">'+
+        '<input type="range" id="simTime" min="540" max="1050" step="5" value="'+mins+'">'+
+      '</div>'+
+    '</div>';
+}
+
+/* ---------------- floorplan ---------------- */
+/* Drawn from the show's own stand rectangles. Plan y grows upwards and SVG
+   y grows down, so every rectangle is flipped through the hall's height. */
+function planBounds(){
+  var minX=1e9,maxX=-1e9,minY=1e9,maxY=-1e9;
+  STANDS.forEach(function(s){
+    minX=Math.min(minX,s.x); maxX=Math.max(maxX,s.x+s.w);
+    minY=Math.min(minY,s.y); maxY=Math.max(maxY,s.y+s.d);
+  });
+  var pad=2500;
+  return {x:minX-pad, y:minY-pad, w:(maxX-minX)+pad*2, h:(maxY-minY)+pad*2, maxY:maxY, minY:minY};
+}
+function renderPlan(opts){
+  opts = opts||{};
+  var hit = opts.hit||[], focus = opts.focus||[];
+  var b = planBounds();
+  var flip = function(s){ return b.minY + b.maxY - s.y - s.d; };
+  var body = STANDS.map(function(s){
+    var isFocus = focus.indexOf(s.no)>=0, isHit = hit.indexOf(s.no)>=0;
+    var cls = 'plan-rect'+(s.type===ST_FEAT?' feat':'')+(isHit?' hit':'')+(isFocus?' focus':'');
+    var y = flip(s);
+    var label = (isFocus||isHit) ? s.n : (s.type===ST_FEAT ? s.n : '');
+    var fs = Math.max(700, Math.min(1400, s.w/Math.max(6,label.length)*1.9));
+    return '<g><rect class="'+cls+'" x="'+s.x+'" y="'+y+'" width="'+s.w+'" height="'+s.d+'" rx="150"></rect>'+
+      (label?'<text class="plan-lbl'+(isFocus||isHit?' on':'')+'" style="font-size:'+Math.round(fs)+'px" x="'+(s.x+s.w/2)+'" y="'+(y+s.d/2)+'">'+
+        esc(label.length>26?label.slice(0,24)+'…':label)+'</text>':'')+
+      '</g>';
+  }).join('');
+  return '<div class="planwrap">'+
+    '<svg viewBox="'+b.x+' '+b.y+' '+b.w+' '+b.h+'" role="img" '+
+      'aria-label="Floorplan with '+(focus.length+hit.length)+' highlighted stands"'+
+      (opts.height?' style="max-height:'+opts.height+'px"':'')+'>'+body+'</svg>'+
+    (opts.key===false?'':'<div class="plan-key">'+
+      '<span><i style="background:rgba(243,198,79,.6)"></i>Stages &amp; features</span>'+
+      (hit.length?'<span><i style="background:rgba(54,201,192,.6)"></i>Your picks</span>':'')+
+      '</div>')+
+  '</div>';
+}
+
+/* ---------------- exhibitors ---------------- */
+function exhMatches(s){
+  if(!state.interests.length) return true;
+  return s.tags.some(function(t){return state.interests.indexOf(t)>=0;});
+}
+function standPicked(no){return state.spicks.indexOf(no)>=0;}
+
+function visibleStands(){
+  var q = state.eq.trim().toLowerCase();
+  return STANDS.filter(function(s){
+    if(state.etype && s.type!==state.etype) return false;
+    if(state.escope==='mine' && !exhMatches(s) && !standPicked(s.no)) return false;
+    if(q && (s.n+' '+s.no+' '+s.type).toLowerCase().indexOf(q)<0) return false;
+    return true;
+  }).sort(function(a,b){return a.n.localeCompare(b.n);});
+}
+
+function renderExhibitors(){
+  var list = visibleStands();
+  document.getElementById('exhHead').textContent =
+    state.interests.length ? 'Stands worth your time' : 'Everyone on the floor';
+  document.getElementById('exhSub').innerHTML = state.interests.length
+    ? 'Filtered the same way as your sessions. Tap ☆ to pin a stand, and it lights up on the plan.'
+    : 'All '+STANDS.length+' stands and features. Tap ☆ to pin one to your plan.';
+
+  document.getElementById('typeChips').innerHTML =
+    '<button class="chip" data-type="" aria-pressed="'+(state.etype===''?'true':'false')+'">All types</button>'+
+    STAND_TYPES.map(function(t){
+      return '<button class="chip" data-type="'+esc(t)+'" aria-pressed="'+(state.etype===t?'true':'false')+'">'+esc(t)+'</button>';
+    }).join('');
+
+  document.getElementById('exhPlan').innerHTML =
+    renderPlan({hit:list.filter(function(s){return standPicked(s.no);}).map(function(s){return s.no;})});
+
+  document.getElementById('exhList').innerHTML = list.length ? list.map(function(s){
+    var on = standPicked(s.no);
+    return '<article class="exh'+(on?' on':'')+'" style="border-left-color:'+TYPE_COLOR[s.type]+'">'+
+      '<div class="stno">'+esc(s.no)+'</div>'+
+      '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
+        '<div class="nm">'+esc(s.n)+'</div>'+
+        '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.type)+'</div>'+
+      '</div>'+
+      '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="'+on+'" '+
+        'aria-label="'+(on?'Unpin':'Pin')+' '+esc(s.n)+'">'+(on?'★':'☆')+'</button>'+
+    '</article>';
+  }).join('') : '<p class="empty">No stands match that.</p>';
 }
 
 /* ---------------- detail sheet ---------------- */
@@ -600,6 +1228,10 @@ function openSheet(id){
       (s.extra.link?' <a href="'+esc(s.extra.link)+'" target="_blank" rel="noopener noreferrer">See the post ↗</a>':'')+
       '</div>':'')+
     (mine.length?'<p class="why">Matches your interest in '+esc(mine.map(function(a){return a.s;}).join(' and '))+'.</p>':'')+
+    (hasContact(contactFor(s.who))
+      ? '<div class="chanhead">Reach '+esc(s.who.split('(')[0].trim())+'</div>'+renderChans(contactFor(s.who))
+      : '')+
+    (stand?renderPlan({focus:[stand.no], height:190, key:false}):'')+
     '<div class="actions">'+
       '<button class="btn'+(on?' ghost':'')+'" data-add="'+s.id+'">'+
         (on?'★ Remove from my agenda':'☆ Add to my agenda')+'</button>'+
@@ -611,6 +1243,38 @@ function openSheet(id){
   document.body.style.overflow = 'hidden';
   var f = sheetEl.querySelector('.closex'); if(f) f.focus();
 }
+function openStandSheet(no){
+  var s = standByNo(no); if(!s) return;
+  var on = standPicked(no);
+  var c = contactFor(no);
+  var mine = AUDIENCES.filter(function(a){
+    return state.interests.indexOf(a.k)>=0 && s.tags.indexOf(a.k)>=0;});
+  /* A stage is not something you pin — it is where a talk happens — so
+     the sheet offers the sessions on it instead of a star. */
+  var here = SESSIONS.filter(function(x){return STAGE_STAND[x.stage]===no;});
+  document.getElementById('sheetBody').innerHTML =
+    '<div class="when">STAND '+esc(s.no)+'<br>'+esc(s.type)+'</div>'+
+    '<h3 id="sheetTitle">'+esc(s.n)+'</h3>'+
+    '<div class="meta">'+s.tags.map(function(t){
+      return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
+    renderPlan({focus:[no], height:220, key:false})+
+    (here.length
+      ? '<p class="nochan">'+here.length+' session'+(here.length===1?'':'s')+
+        ' take place here across the weekend.</p>'
+      : '')+
+    (hasContact(c)
+      ? '<div class="chanhead">Get in touch</div>'+renderChans(c)
+      : '<p class="nochan">No contact channel published yet — catch them on stand '+esc(s.no)+'.</p>')+
+    (mine.length?'<p class="why">Matches your interest in '+esc(mine.map(function(a){return a.s;}).join(' and '))+'.</p>':'')+
+    (s.type===ST_FEAT?'':'<div class="actions">'+
+      '<button class="btn'+(on?' ghost':'')+'" data-pin="'+esc(no)+'">'+
+        (on?'★ Unpin this stand':'☆ Pin to my plan')+'</button></div>');
+  lastFocus = document.activeElement;
+  sheetEl.classList.add('open');
+  document.body.style.overflow='hidden';
+  var f=sheetEl.querySelector('.closex'); if(f) f.focus();
+}
+
 function closeSheet(){
   sheetEl.classList.remove('open');
   document.body.style.overflow = '';
@@ -704,9 +1368,10 @@ function shareUrl(){
 /* ---------------- view plumbing ---------------- */
 function go(view){
   state.view = view;
-  document.getElementById('viewInterests').style.display = view==='interests'?'':'none';
-  document.getElementById('viewBrowse').style.display    = view==='browse'?'':'none';
-  document.getElementById('viewAgenda').style.display    = view==='agenda'?'':'none';
+  document.getElementById('viewInterests').style.display   = view==='interests'?'':'none';
+  document.getElementById('viewBrowse').style.display      = view==='browse'?'':'none';
+  document.getElementById('viewExhibitors').style.display  = view==='exhibitors'?'':'none';
+  document.getElementById('viewAgenda').style.display      = view==='agenda'?'':'none';
   document.getElementById('nav').style.display = view==='interests'?'none':'flex';
   Array.prototype.forEach.call(document.querySelectorAll('#nav button'),function(b){
     b.setAttribute('aria-pressed', String(b.dataset.view===view));
@@ -715,12 +1380,16 @@ function go(view){
   render();
 }
 function render(){
-  if(state.view==='interests') renderPicker();
-  if(state.view==='browse')    renderBrowse();
-  if(state.view==='agenda')    renderAgenda();
+  if(state.view==='interests')  renderPicker();
+  if(state.view==='browse')     renderBrowse();
+  if(state.view==='exhibitors') renderExhibitors();
+  if(state.view==='agenda'){ renderSim(); renderNow(); renderAgenda(); }
   var c = document.getElementById('navCount');
   c.textContent = state.picks.length;
   c.style.display = state.picks.length?'':'none';
+  var sc = document.getElementById('navSCount');
+  sc.textContent = state.spicks.length;
+  sc.style.display = state.spicks.length?'':'none';
 }
 
 /* ---------------- events ---------------- */
@@ -771,9 +1440,49 @@ document.body.addEventListener('click',function(e){
     if(sheetEl.classList.contains('open')) openSheet(id); /* flip the sheet's own button */
     return;
   }
+  var p = e.target.closest('[data-pin]');
+  if(p){
+    var no = p.dataset.pin, k = state.spicks.indexOf(no);
+    if(k>=0) state.spicks.splice(k,1); else state.spicks.push(no);
+    save(); render();
+    if(sheetEl.classList.contains('open')) openStandSheet(no);
+    return;
+  }
+  var st = e.target.closest('[data-stand]');
+  if(st){ openStandSheet(st.dataset.stand); return; }
   var o = e.target.closest('[data-open]');
   if(o) openSheet(o.dataset.open);
 });
+
+/* exhibitor filters */
+document.getElementById('typeChips').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  state.etype=b.dataset.type; renderExhibitors();
+});
+document.getElementById('escopeChips').addEventListener('click',function(e){
+  var b=e.target.closest('.chip'); if(!b) return;
+  state.escope=b.dataset.escope;
+  Array.prototype.forEach.call(this.querySelectorAll('.chip'),function(x){
+    x.setAttribute('aria-pressed', String(x.dataset.escope===state.escope));});
+  renderExhibitors();
+});
+document.getElementById('eq').addEventListener('input',function(){
+  state.eq=this.value; renderExhibitors();
+});
+
+/* simulation controls, delegated because the bar is re-rendered each tick */
+document.getElementById('simHost').addEventListener('click',function(e){
+  if(e.target.id==='simOpen'){ sim.day=1; simStart(1, 10*60, 1); return; }
+  if(e.target.id==='simOff'){ simStop(); return; }
+});
+document.getElementById('simHost').addEventListener('change',function(e){
+  if(e.target.id==='simDay'){ sim.day=+e.target.value; simStart(sim.day, simMinutes(), sim.speed); }
+  if(e.target.id==='simSpeed'){ simStart(sim.day, simMinutes(), +e.target.value); }
+});
+document.getElementById('simHost').addEventListener('input',function(e){
+  if(e.target.id==='simTime'){ simStart(sim.day, +e.target.value, sim.speed); }
+});
+function simMinutes(){var t=new Date(now());return t.getHours()*60+t.getMinutes();}
 document.body.addEventListener('keydown',function(e){
   if(e.key!=='Enter' && e.key!==' ') return;
   var o = e.target.closest('[data-open]'); if(!o) return;
@@ -806,6 +1515,7 @@ document.getElementById('shareIt').addEventListener('click',function(){
 /* ---------------- boot ---------------- */
 load();
 var shared = readShare();
+ensureTick();
 go(shared || state.interests.length ? (shared?'agenda':'browse') : 'interests');
 </script>
 </body>
