@@ -15,6 +15,9 @@
     --text:#eaf6fb; --muted:#9fc3d2; --accent:#36c9c0; --accentd:#0d3b3a;
     --gold:#f3c64f; --good:#4fd28a; --goodd:#0e3d28; --bad:#ef6b6b;
     --gen:#57c7ff; --photo:#b98cff; --tech:#36c9c0; --pro:#f3c64f;
+    /* One colour per day, used everywhere the day is named. Which day you
+       are looking at is the thing people lose track of while scrolling. */
+    --d1:#f3c64f; --d2:#57c7ff;
   }
   *{box-sizing:border-box}
   html,body{margin:0;padding:0;background:var(--bg);color:var(--text);
@@ -69,6 +72,26 @@
   .seg button{flex:1;border:0;background:transparent;color:var(--muted);font-family:inherit;
     font-weight:700;font-size:14px;padding:9px 6px;border-radius:9px;cursor:pointer}
   .seg button[aria-pressed="true"]{background:var(--accentd);color:var(--accent)}
+  .seg button[data-day="1"][aria-pressed="true"]{background:rgba(243,198,79,.17);color:var(--d1)}
+  .seg button[data-day="2"][aria-pressed="true"]{background:rgba(87,199,255,.17);color:var(--d2)}
+  /* The day switcher follows you down the list — losing it off the top of
+     the screen is exactly how you forget which day you are reading. */
+  .daybar{position:sticky;top:0;z-index:20;background:var(--bg);
+    padding:10px 0 8px;margin-bottom:2px}
+  .daybar .seg{padding:4px}
+  .daybar .seg button{font-size:15px;padding:11px 6px;letter-spacing:.3px}
+
+  /* day banner, deliberately unlike the time headings */
+  .dayhead{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;
+    margin:22px 0 10px;padding:12px 14px;border-radius:13px;
+    background:var(--bg2);border:1px solid var(--line);border-left:6px solid var(--d1)}
+  .dayhead:first-child{margin-top:6px}
+  .dayhead .dn{font-family:'Press Start 2P',monospace;font-size:13px;letter-spacing:2px;color:var(--d1)}
+  .dayhead .dd{font-size:13.5px;color:var(--muted);font-weight:700}
+  .dayhead.d2{border-left-color:var(--d2)}
+  .dayhead.d2 .dn{color:var(--d2)}
+  .sess .time .dayflag{color:var(--d1);margin-right:7px}
+  .sess .time .dayflag.d2{color:var(--d2)}
   input[type=search]{width:100%;background:var(--bg2);border:1px solid var(--line);border-radius:12px;
     color:var(--text);font-family:inherit;font-size:15px;padding:12px 12px}
   input[type=search]::placeholder{color:var(--muted)}
@@ -153,10 +176,16 @@
   a{color:var(--accent)}
 
   @media print{
-    .nav,.bar,.chips,.btnrow,.logobar .sep,.hideprint{display:none!important}
+    .nav,.bar,.daybar,.chips,.btnrow,.logobar .sep,.hideprint{display:none!important}
     body{background:#fff;color:#111;padding:0}
     .card,.sess{background:#fff;border:1px solid #bbb;color:#111}
     .sess .time,.slot{color:#333} .sess .who,.muted,.stagetag{color:#444}
+    /* on paper the day is the only thing separating two near-identical
+       columns of times, so it stays heavy and keeps its block together */
+    .dayhead{background:#fff;border:2px solid #111;border-left-width:8px;
+      break-after:avoid;page-break-after:avoid;margin-top:18px}
+    .dayhead .dn{color:#111} .dayhead .dd{color:#333}
+    .sess .time .dayflag{color:#111}
     .eyebrow{color:#666}
   }
 </style>
@@ -196,10 +225,10 @@
       </div>
     </div>
 
-    <div class="bar">
+    <div class="daybar">
       <div class="seg" id="daySeg">
-        <button data-day="1" aria-pressed="true">Sat 5 Sep</button>
-        <button data-day="2" aria-pressed="false">Sun 6 Sep</button>
+        <button data-day="1" aria-pressed="true">SAT 5 Sep</button>
+        <button data-day="2" aria-pressed="false">SUN 6 Sep</button>
       </div>
     </div>
     <div class="bar"><input type="search" id="q" placeholder="Search talks, speakers, stages…" autocomplete="off"></div>
@@ -266,8 +295,8 @@ var AUDIENCES = [
 ];
 
 var DAYS = {
-  1:{label:'Saturday 5 September', short:'Sat 5 Sep', date:'2026-09-05'},
-  2:{label:'Sunday 6 September',   short:'Sun 6 Sep', date:'2026-09-06'}
+  1:{label:'Saturday 5 September', short:'Sat 5 Sep', dow:'SATURDAY', pretty:'5 September', date:'2026-09-05'},
+  2:{label:'Sunday 6 September',   short:'Sun 6 Sep', dow:'SUNDAY',   pretty:'6 September', date:'2026-09-06'}
 };
 
 /* start/end are 24h local (Sydney). */
@@ -428,6 +457,13 @@ function visibleSessions(){
   }).sort(function(a,b){return mins(a.start)-mins(b.start) || STAGES.indexOf(a.stage)-STAGES.indexOf(b.stage);});
 }
 
+function dayHead(day){
+  var d = DAYS[day];
+  return '<div class="dayhead'+(day===2?' d2':'')+'">'+
+    '<span class="dn">'+esc(d.dow)+'</span>'+
+    '<span class="dd">'+esc(d.pretty)+'</span></div>';
+}
+
 function sessionCard(s,opts){
   opts = opts||{};
   var on = picked(s.id);
@@ -436,7 +472,9 @@ function sessionCard(s,opts){
   return '<article class="sess'+(on?' on':'')+(clash.length?' clash':'')+'" '+
       'style="border-left-color:'+STAGE_COLOR[s.stage]+'">'+
     '<div class="body" data-open="'+s.id+'" role="button" tabindex="0">'+
-      '<div class="time">'+esc(range(s))+'</div>'+
+      '<div class="time">'+
+        (opts.showDay?'<span class="dayflag'+(s.day===2?' d2':'')+'">'+esc(DAYS[s.day].dow.slice(0,3))+'</span>':'')+
+        esc(range(s))+'</div>'+
       '<div class="ttl">'+esc(s.title)+'</div>'+
       '<div class="who">'+esc(s.who)+'</div>'+
       '<div class="meta">'+
@@ -475,7 +513,7 @@ function renderBrowse(){
       'Try “Everything on”, or clear the search.</p>';
     return;
   }
-  var html='', lastSlot='';
+  var html = dayHead(state.day), lastSlot='';
   list.forEach(function(s){
     if(s.start!==lastSlot){lastSlot=s.start; html += '<div class="slot">'+esc(ampm(s.start))+'</div>';}
     html += sessionCard(s,{showClash:true});
@@ -508,8 +546,8 @@ function renderAgenda(){
 
   var html='', lastDay=0;
   mine.forEach(function(s){
-    if(s.day!==lastDay){lastDay=s.day; html += '<div class="slot">'+esc(DAYS[s.day].label)+'</div>';}
-    html += sessionCard(s,{showClash:true,hideForYou:true});
+    if(s.day!==lastDay){lastDay=s.day; html += dayHead(s.day);}
+    html += sessionCard(s,{showClash:true,hideForYou:true,showDay:true});
   });
   host.innerHTML = html;
 }
