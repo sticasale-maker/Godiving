@@ -260,6 +260,8 @@
   .exh .body{flex:1;min-width:0;cursor:pointer}
   .exh .nm{font-weight:800;font-size:15.5px;line-height:1.3}
   .exh .sub2{font-size:12.5px;color:var(--muted);margin-top:3px}
+  .exh .etags{display:flex;flex-wrap:wrap;gap:5px;margin-top:6px}
+  .exh .etags .tag{font-size:9.5px;padding:2px 6px}
   .stno{flex:0 0 auto;font-family:'Press Start 2P',monospace;font-size:10px;color:var(--gold);
     border:1px solid var(--line);border-radius:8px;padding:7px 6px;min-width:44px;text-align:center}
   /* Logos sit on white and keep their corners — they are wordmarks, and a
@@ -1660,6 +1662,12 @@ function renderExhibitors(){
       '<div class="body" data-stand="'+esc(s.no)+'" role="button" tabindex="0">'+
         '<div class="nm">'+esc(s.n)+'</div>'+
         '<div class="sub2" style="color:'+TYPE_COLOR[s.type]+'">'+esc(s.types.join(' · '))+'</div>'+
+        /* The same audience tags the session cards carry. Without them a
+           filtered list is a list of results with no visible reason for
+           being there — you can see the stand is in "my interests" but not
+           which interest put it there. */
+        '<div class="etags">'+s.tags.map(function(t){
+          return '<span class="tag '+t+'">'+t+'</span>';}).join('')+'</div>'+
       '</div>'+
       '<button class="add" data-pin="'+esc(s.no)+'" aria-pressed="'+on+'" '+
         'aria-label="'+(on?'Unpin':'Pin')+' '+esc(s.n)+'">'+(on?'★':'☆')+'</button>'+
