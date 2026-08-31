@@ -8,7 +8,12 @@
   "compatibility_date": "2026-08-01",
   "assets": {
     "directory": "./dist",
-    "binding": "ASSETS"
+    "binding": "ASSETS",
+    // Required. Workers serve a matching static asset WITHOUT running the
+    // Worker unless this is set — so the gate never executed and the whole
+    // app was served to anyone. Any auth check in front of static assets
+    // needs this.
+    "run_worker_first": true
   },
   "observability": { "enabled": true }
 }
