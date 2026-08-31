@@ -1784,8 +1784,10 @@ function renderSim(){
   if(sig===simSig) { simClockTick(); return; }
   simSig = sig;
   if(!sim.on){
-    host.innerHTML = '<div class="btnrow hideprint"><button class="btn ghost" id="simOpen">'+
-      '⏱ Preview the day</button></div>';
+    /* Nothing here when preview is off: the Preview card in the countdown
+       block below offers the same jump, with the two mornings named. A
+       second button above it was the same action twice. */
+    host.innerHTML = '';
     return;
   }
   var t = new Date(now());
@@ -2225,7 +2227,6 @@ document.getElementById('nowHost').addEventListener('click',function(e){
 });
 
 document.getElementById('simHost').addEventListener('click',function(e){
-  if(e.target.id==='simOpen'){ sim.day=1; simStart(1, 9*60+30, 300); return; }
   if(e.target.id==='simOff'){ simStop(); return; }
 });
 document.getElementById('simHost').addEventListener('change',function(e){
