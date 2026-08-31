@@ -351,7 +351,6 @@
       </div>
     </div>
     <div class="bar"><input type="search" id="q" placeholder="Search talks, speakers, stages…" autocomplete="off"></div>
-    <div class="chips" id="stageChips"></div>
     <div class="chips" id="scopeChips">
       <button class="chip" data-scope="mine" aria-pressed="true">★ My interests</button>
       <button class="chip" data-scope="all" aria-pressed="false">Everything on</button>
@@ -1094,7 +1093,7 @@ function renderChans(c){
 
 /* ------------------------------------------------------------------ */
 var LS = 'gds-agenda-v1';
-var state = {interests:[], picks:[], spicks:[], day:1, stage:'', q:'', scope:'mine',
+var state = {interests:[], picks:[], spicks:[], day:1, q:'', scope:'mine',
              eq:'', etype:'', escope:'mine', ask:'', view:'interests'};
 
 function load(){
@@ -1176,7 +1175,6 @@ function visibleSessions(){
   var q = state.q.trim().toLowerCase();
   return SESSIONS.filter(function(s){
     if(s.day!==state.day) return false;
-    if(state.stage && s.stage!==state.stage) return false;
     if(state.scope==='mine' && !matchesInterests(s) && !picked(s.id)) return false;
     if(q){
       /* the blurb is searchable too: "Attenborough" and "Truk" are the
@@ -1281,11 +1279,6 @@ function renderBrowse(){
     ? 'Based on <b>'+esc(names.join(', '))+'</b>. Tap ☆ on anything you want and it lands in your agenda.'
     : 'No interests picked, so nothing is filtered. Tap ☆ on anything you want.';
 
-  document.getElementById('stageChips').innerHTML =
-    '<button class="chip" data-stage="" aria-pressed="'+(state.stage===''?'true':'false')+'">All stages</button>'+
-    STAGES.map(function(st){
-      return '<button class="chip" data-stage="'+esc(st)+'" aria-pressed="'+(state.stage===st?'true':'false')+'">'+esc(st)+'</button>';
-    }).join('');
 
   var host = document.getElementById('browseList');
   if(!list.length){
@@ -1293,7 +1286,10 @@ function renderBrowse(){
       'Try “Everything on”, or clear the search.</p>';
     return;
   }
-  var html = dayHead(state.day), lastSlot='';
+  /* No day banner here: the sticky Sat/Sun switcher sits directly above and
+     already says which day you are looking at. It stays on My day, where two
+     days appear in one list and the split is doing real work. */
+  var html = '', lastSlot='';
   list.forEach(function(s){
     if(s.start!==lastSlot){lastSlot=s.start; html += '<div class="slot">'+esc(ampm(s.start))+'</div>';}
     html += sessionCard(s,{showClash:true});
@@ -2020,10 +2016,6 @@ document.getElementById('daySeg').addEventListener('click',function(e){
   Array.prototype.forEach.call(this.querySelectorAll('button'),function(x){
     x.setAttribute('aria-pressed', String(+x.dataset.day===state.day));});
   renderBrowse();
-});
-document.getElementById('stageChips').addEventListener('click',function(e){
-  var b=e.target.closest('.chip'); if(!b) return;
-  state.stage = b.dataset.stage; renderBrowse();
 });
 document.getElementById('scopeChips').addEventListener('click',function(e){
   var b=e.target.closest('.chip'); if(!b) return;
