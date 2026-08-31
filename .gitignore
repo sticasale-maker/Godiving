@@ -4,3 +4,4 @@
 .cfdeploy/
 .cfcode
 .wrangler/
+dist/
