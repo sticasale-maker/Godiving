@@ -1896,7 +1896,16 @@ function closeSheet(){
   if(lastFocus && lastFocus.focus) lastFocus.focus();
 }
 sheetEl.addEventListener('click',function(e){
-  if(e.target.closest('[data-close]')) closeSheet();
+  if(e.target.closest('[data-close]')){ closeSheet(); return; }
+  /* Tapping the sheet anywhere closes it. Reaching for a small × in the
+     corner is a stretch one-handed on a phone, and the sheet is something
+     you glance at and dismiss dozens of times while planning.
+     Anything you could actually act on is exempt — buttons, links, the
+     star, the booking link, a phone number — so a mistimed close never
+     eats a tap that was meant for a control. The × stays for anyone who
+     looks for it. */
+  if(e.target.closest('a,button,input,select,textarea,label,[data-add],[data-pin]')) return;
+  closeSheet();
 });
 document.addEventListener('keydown',function(e){
   if(e.key==='Escape' && sheetEl.classList.contains('open')) closeSheet();
