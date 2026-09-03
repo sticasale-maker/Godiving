@@ -416,6 +416,7 @@
       <h2 id="agendaHead">Your personal agenda</h2>
       <p class="sub" id="agendaSub"></p>
     </div>
+    <div id="iabNotice"></div>
     <div class="btnrow hideprint" id="agendaTools" style="display:none">
       <button class="btn ghost" id="dlIcs">Add to calendar</button>
       <button class="btn ghost" id="printIt">Print / save PDF</button>
@@ -1393,6 +1394,21 @@ function renderBrowse(){
 }
 
 /* ---------------- my agenda ---------------- */
+/* Warn before the tap, not after it. Someone who arrived from a Messenger
+   link will also find "Share my agenda" degraded, so the notice sits above
+   the buttons rather than being attached to one of them. */
+function inAppNotice(){
+  if(!inAppBrowser() || sessionStorage.getItem('gds-iab-dismissed')) return '';
+  return '<div class="card hideprint" style="border-color:var(--gold)">'+
+    '<div class="eyebrow" style="color:var(--gold)">Heads up</div>'+
+    '<p class="sub">You are in an app’s built-in browser. Saving to your '+
+    'calendar will not work here — open this page in Safari or Chrome and it will. '+
+    '<a href="#" id="iabHow">How to do that</a></p>'+
+    '<div class="btnrow" style="margin-top:10px">'+
+      '<button class="btn ghost" id="iabDismiss">Got it</button>'+
+    '</div></div>';
+}
+
 function renderAgenda(){
   var mine = state.picks.map(byId).filter(Boolean).sort(function(a,b){
     return a.day-b.day || mins(a.start)-mins(b.start);
@@ -1419,6 +1435,9 @@ function renderAgenda(){
      session of yours is on, so the walking route is visible in one look. */
   var stageNos = mine.map(function(s){return STAGE_STAND[s.stage];}).filter(Boolean);
   var allNos = state.spicks.concat(stageNos).filter(function(v,i,a){return a.indexOf(v)===i;});
+  var notice = document.getElementById('iabNotice');
+  if(notice) notice.innerHTML = inAppNotice();
+
   document.getElementById('myPlan').innerHTML = allNos.length
     ? '<div class="slot">Where your day happens</div>'+renderPlan({hit:allNos})
     : '';
@@ -2095,6 +2114,51 @@ function fold(line){
   return out+'\r\n '+rest;
 }
 
+/* Facebook, Messenger and Instagram open links in their own in-app browser,
+   which ignores the download attribute on a link and simply navigates to the
+   blob — so "Add to calendar" renders the raw .ics as a wall of text instead
+   of handing it to the calendar. Nothing client-side can force a download
+   there, so the honest fix is to say so and get the visitor into a real
+   browser, where it works. */
+function inAppBrowser(){
+  var ua = navigator.userAgent || '';
+  return /FBAN|FBAV|FB_IAB|FBIOS|Instagram|Messenger|Line\/|MicroMessenger|Snapchat|TikTok|Twitter/i.test(ua);
+}
+
+function openInBrowserNote(what){
+  var url = location.href.split('#')[0];
+  document.getElementById('sheetBody').innerHTML =
+    '<div class="when">IN-APP BROWSER</div>'+
+    '<h3 id="sheetTitle">Open this in your browser first</h3>'+
+    '<p class="blurb">You opened this from a link inside another app, and its built-in '+
+    'browser will not '+esc(what)+'. It shows the file as text instead.</p>'+
+    '<p class="nochan"><b>On iPhone:</b> tap the <b>⋯</b> or compass icon at the '+
+    'bottom or top of this window, then <b>Open in Safari</b>.<br>'+
+    '<b>On Android:</b> tap the <b>⋮</b> menu, then <b>Open in Chrome</b> or '+
+    '<b>Open in browser</b>.</p>'+
+    '<p class="nochan">Everything you have starred is saved in the link, so nothing '+
+    'is lost when it reopens.</p>'+
+    '<div class="actions">'+
+      '<button class="btn" id="copyForBrowser">Copy the link</button>'+
+    '</div>'+
+    '<p class="nochan" id="copyOut" style="word-break:break-all"></p>';
+  lastFocus = document.activeElement;
+  sheetEl.classList.add('open');
+  document.body.style.overflow='hidden';
+  var b = document.getElementById('copyForBrowser');
+  b.addEventListener('click', function(){
+    var link = shareUrl();
+    var ok = function(){ b.textContent='Link copied ✓'; };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(link).then(ok, function(){
+        document.getElementById('copyOut').textContent = link;
+      });
+    } else {
+      document.getElementById('copyOut').textContent = link;
+    }
+  });
+}
+
 function download(name,text,type){
   var blob = new Blob([text],{type:type});
   var url = URL.createObjectURL(blob);
@@ -2255,7 +2319,17 @@ document.getElementById('nav').addEventListener('click',function(e){
 });
 
 document.getElementById('printIt').addEventListener('click',function(){window.print();});
+document.body.addEventListener('click',function(e){
+  if(e.target.id==='iabDismiss'){
+    try{ sessionStorage.setItem('gds-iab-dismissed','1'); }catch(err){}
+    var n=document.getElementById('iabNotice'); if(n) n.innerHTML='';
+    return;
+  }
+  if(e.target.id==='iabHow'){ e.preventDefault(); openInBrowserNote('save a calendar file'); }
+});
+
 document.getElementById('dlIcs').addEventListener('click',function(){
+  if(inAppBrowser()){ openInBrowserNote('save a calendar file'); return; }
   download('go-diving-show-sydney.ics', buildIcs(), 'text/calendar;charset=utf-8');
 });
 document.getElementById('shareIt').addEventListener('click',function(){
