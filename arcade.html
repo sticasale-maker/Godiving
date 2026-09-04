@@ -256,7 +256,11 @@
   .tcard{border:1px solid var(--line);border-radius:12px;padding:8px;background:var(--surface)}
   .tcard .tt{text-align:center;font-weight:600;margin:2px 0 4px;font-size:14px}
   .tcard .cap{text-align:center;font-size:11.5px;color:var(--muted);margin:0 0 4px}
-  .statbtn{display:flex;justify-content:space-between;width:100%;margin:4px 0;
+  /* min-height because picking a stat IS Stat Battle — the phone rules
+     shrank these to 26px, well under a fingertip, on the one control the
+     game has. The panel already scrolls, so the extra height costs nothing. */
+  .statbtn{display:flex;justify-content:space-between;align-items:center;width:100%;
+    margin:4px 0;min-height:40px;
     background:var(--bg2);color:var(--text);border:1px solid var(--line);
     border-radius:8px;padding:7px 9px;font-size:12.5px;cursor:pointer}
   .statbtn:hover:not(:disabled){border-color:var(--accent)}
@@ -463,10 +467,18 @@
   /* ════════════════
      ARCADE WELCOME
      ════════════════ */
+  /* justify-content:center on an overflowing flex column is a trap: the card
+     is centred by pushing it off BOTH ends, and the overflow past the start
+     edge cannot be scrolled to by any means. On a 320x568 phone the card is
+     taller than the window and Start sat 58px below the fold; held in
+     landscape at 667x375 it sat 172px below, with zero scroll available. A
+     new player simply could not begin. auto margins centre it just as well
+     while it fits, and give way to scrolling when it does not. */
   .welcome{
-    flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
-    padding:16px;
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    padding:16px;overflow-y:auto;-webkit-overflow-scrolling:touch;
   }
+  .welcome > *{margin-top:auto;margin-bottom:auto}
   .welcome-inner{width:100%;max-width:480px}
   .logobar{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap;margin-bottom:12px}
   .logobar .logo{height:52px;width:auto;border-radius:10px;display:block;object-fit:contain}
