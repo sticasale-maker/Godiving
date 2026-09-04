@@ -270,29 +270,40 @@ function renderPrize(meIdx){
     }
     return;
   }
+  /* The tournament is over, and every ending here sends them back to the
+     stand: the top three for their prize, everyone else for the award they
+     get simply for finishing.
+
+     The one exception is the operator's "Off — box empty" switch. That
+     exists precisely because the consolation box runs out, and a screen that
+     promises an award which is not there sends someone to the counter to be
+     told no. So when it is off, still send them back — for the next session,
+     not for a prize we cannot hand over. */
   card.style.display='block';
+  card.className='card prize';
+  document.querySelector('#prizeCard .stand').style.display='';
+  var ord=function(n){var s=['th','st','nd','rd'],v=n%100;return n+(s[(v-20)%10]||s[v]||s[0]);};
   if(rank<=PODIUM){
-    document.getElementById('prizeTitle').textContent='🏆 '+rank+(['st','nd','rd'][rank-1])+' place — you have won a prize';
+    document.getElementById('prizeTitle').textContent=
+      '🏆 '+ord(rank)+' place — you won a prize!';
     document.getElementById('prizeBody').innerHTML=
-      'You finished <b>'+rank+'</b> of '+rows.length+' in '+esc(GROUP)+' for the '+
-      hhmm(START)+'–'+hhmm(END)+' session. Come back to the VIZ stand to collect it.';
+      'You finished <b>'+ord(rank)+'</b> of '+rows.length+' in '+esc(GROUP)+' for the '+
+      hhmm(START)+'–'+hhmm(END)+' session. <b>Come back to the VIZ stand</b>, in front '+
+      'of the main stage, and show them this screen to collect your prize.';
+  } else if(CONSOLATION){
+    document.getElementById('prizeTitle').textContent='🎁 You still have an award to collect';
+    document.getElementById('prizeBody').innerHTML=
+      'You finished <b>'+ord(rank)+'</b> of '+rows.length+' in '+esc(GROUP)+' — not the '+
+      'top <b>'+PODIUM+'</b> this time, but <b>there is still an award waiting for you</b>. '+
+      'Come back to the VIZ stand, in front of the main stage, and show them this screen.';
   } else {
-    if(CONSOLATION){
-      document.getElementById('prizeTitle').textContent='🎁 You still won a prize';
-      document.getElementById('prizeBody').innerHTML=
-        'Unfortunately you did not make it to the top <b>'+PODIUM+'</b> this round, '+
-        'but you still won a prize. Go to the VIZ stand (in front of the main stage) '+
-        'and collect it!';
-      card.className='card prize';
-      document.querySelector('#prizeCard .stand').style.display='';
-    } else {
-      document.getElementById('prizeTitle').textContent='Finished '+rank+' of '+rows.length;
-      document.getElementById('prizeBody').innerHTML=
-        'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' win a prize this session. '+
-        'Come and play again in the next session — the board resets every hour.';
-      card.className='card';
-      document.querySelector('#prizeCard .stand').style.display='none';
-    }
+    document.getElementById('prizeTitle').textContent='Finished '+ord(rank)+' of '+rows.length;
+    document.getElementById('prizeBody').innerHTML=
+      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' collect a prize this session. '+
+      'Come back to the VIZ stand anyway — the board resets every hour and the next '+
+      'session starts shortly.';
+    card.className='card';
+    document.querySelector('#prizeCard .stand').style.display='none';
   }
 }
 
