@@ -1834,25 +1834,48 @@ var SKIP_SPLASH_ON_LOAD=false;
     canvas=document.getElementById('splashCanvas'),fallback=document.getElementById('splashFallback'),
     tapPlay=document.getElementById('splashTap'),loading=document.getElementById('splashLoading'),
     cont=document.getElementById('splashContinue'),skipBtn=document.getElementById('splashSkip');
-  var dismissed=false,playing=false,frozen=false,autoplayBlocked=false,SPEED=2;
+  var playing=false,frozen=false,autoplayBlocked=false,SPEED=2;
 
   window.SPLASH_CTRL={replay:replaySplash,file:splashFile};
 
   function applySpeed(){try{video.playbackRate=SPEED;}catch(e){}}
 
-  function afterSplash(){
-    if(dismissed)return; dismissed=true;
-    loading.style.display='none'; tapPlay.style.display='none'; cont.style.display='none';
-    try{video.pause();}catch(e){}
-    splash.classList.add('splash-hide');
-    setTimeout(function(){if(splash.parentNode)splash.parentNode.removeChild(splash);},520);
-    if(window._skipWelcome){
-      window._skipWelcome=false;
-      showApp(); showMenu();
-    } else {
-      document.getElementById('welcome').style.display='flex';
+  /* Both splashes — the one on load and the one replayed between players —
+     tear down identically and then have to make the same decision about who
+     the next player is. That decision lived in two hand-copied places, and
+     they drifted: the replay copy went straight to the menu no matter what,
+     so a booth station that had just cleared the name and age walked right
+     past the welcome screen and ran the next person in the queue as the
+     previous one. One factory, one decision, two instances.
+
+     The returned function carries its own `done` flag, because the callers
+     need to see whether the splash has already gone — a late 'error' or a
+     timeout must not fight a dismissal that has already happened. */
+  function makeDismiss(root, vid, overlays){
+    function dismiss(){
+      if(dismiss.done)return; dismiss.done=true;
+      overlays.forEach(function(el){if(el)el.style.display='none';});
+      try{vid.pause();}catch(e){}
+      root.classList.add('splash-hide');
+      setTimeout(function(){if(root.parentNode)root.parentNode.removeChild(root);},520);
+      /* _skipWelcome is set by startNextPlayer(): true on someone's own phone,
+         where the next run is still them, and false on a booth station, where
+         it has just cleared the name, age and group so the next person is
+         asked who they are. Getting this wrong enters them in the wrong age
+         group's draw and prints the wrong name on the prize ticket. */
+      if(window._skipWelcome){
+        window._skipWelcome=false;
+        showApp(); showMenu();
+      } else {
+        document.getElementById('app').style.display='none';
+        document.getElementById('welcome').style.display='flex';
+      }
     }
+    dismiss.done=false;
+    return dismiss;
   }
+
+  var afterSplash=makeDismiss(splash, video, [loading, tapPlay, cont]);
 
   function freezeLastFrame(){
     if(frozen)return; frozen=true;
@@ -1878,15 +1901,15 @@ var SKIP_SPLASH_ON_LOAD=false;
   });
   skipBtn.addEventListener('click',function(e){e.stopPropagation();afterSplash();});
 
-  function onLoadStart(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';}
+  function onLoadStart(){if(!playing&&!afterSplash.done&&!autoplayBlocked)loading.style.display='flex';}
   function onPlaying(){playing=true;loading.style.display='none';tapPlay.style.display='none';fallback.style.display='none';applySpeed();}
 
   video.addEventListener('ended',freezeLastFrame);
   video.addEventListener('loadstart',onLoadStart);
   video.addEventListener('playing',onPlaying);
   video.addEventListener('timeupdate',function(){if(video.currentTime>0)onPlaying();});
-  video.addEventListener('waiting',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
-  video.addEventListener('stalled',function(){if(!playing&&!dismissed&&!autoplayBlocked)loading.style.display='flex';});
+  video.addEventListener('waiting',function(){if(!playing&&!afterSplash.done&&!autoplayBlocked)loading.style.display='flex';});
+  video.addEventListener('stalled',function(){if(!playing&&!afterSplash.done&&!autoplayBlocked)loading.style.display='flex';});
 
   var retried=false;
   var SPLASH_VER='2';
@@ -1899,13 +1922,13 @@ var SKIP_SPLASH_ON_LOAD=false;
   }
   function setSource(){video.src=splashFile()+(retried?('&r='+Date.now()):'');try{video.load();}catch(e){}}
   video.addEventListener('error',function(){
-    if(playing||dismissed)return;
+    if(playing||afterSplash.done)return;
     if(!retried){retried=true;setTimeout(setSource,400);}
     else{fallback.style.display='flex';setTimeout(afterSplash,2000);}
   });
 
   function attemptPlay(){
-    if(playing||dismissed)return; applySpeed();
+    if(playing||afterSplash.done)return; applySpeed();
     var p=video.play&&video.play();
     if(p&&p.then)p.then(function(){applySpeed();}).catch(function(err){
       if(!playing&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){
@@ -1917,8 +1940,8 @@ var SKIP_SPLASH_ON_LOAD=false;
   video.addEventListener('canplaythrough',attemptPlay);
   video.addEventListener('loadeddata',attemptPlay);
 
-  if(SKIP_SPLASH_ON_LOAD){setTimeout(function(){if(!dismissed)afterSplash();},100);}
-  else{setTimeout(function(){if(!dismissed)afterSplash();},35000);}
+  if(SKIP_SPLASH_ON_LOAD){setTimeout(afterSplash,100);}
+  else{setTimeout(afterSplash,35000);}
 
   /* ── Replay for Play Again ── */
   function replaySplash(){
@@ -1935,28 +1958,8 @@ var SKIP_SPLASH_ON_LOAD=false;
     var nv=s.querySelector('video'),nc=s.querySelector('canvas'),
       nf=s.querySelector('#spFb'),nt=s.querySelector('#spTap'),
       nl=s.querySelector('#spLd'),nco=s.querySelector('#spCo'),nsk=s.querySelector('#spSk');
-    var nd=false,np=false,nfr=false,nab=false;
-    function nDone(){
-      if(nd)return; nd=true;
-      nl.style.display='none'; nt.style.display='none'; nco.style.display='none';
-      try{nv.pause();}catch(e){}
-      s.classList.add('splash-hide');
-      /* Honour _skipWelcome exactly as the first-run splash does. This copy
-         used to go straight to showMenu() no matter what, which quietly
-         defeated startNextPlayer(): on a booth machine it clears the name,
-         age and group and sets the flag to ask again, then the replayed
-         splash walked right past the welcome screen into the game list. The
-         next person in the queue played as the last one — wrong age group,
-         so the wrong draw, and the wrong name on the prize ticket. */
-      if(window._skipWelcome){
-        window._skipWelcome=false;
-        showApp(); showMenu();
-      } else {
-        document.getElementById('app').style.display='none';
-        document.getElementById('welcome').style.display='flex';
-      }
-      setTimeout(function(){if(s.parentNode)s.parentNode.removeChild(s);},520);
-    }
+    var np=false,nfr=false,nab=false;
+    var nDone=makeDismiss(s, nv, [nl, nt, nco]);
     function nFrz(){
       if(nfr)return; nfr=true;
       try{nc.width=nv.videoWidth||s.offsetWidth;nc.height=nv.videoHeight||s.offsetHeight;nc.getContext('2d').drawImage(nv,0,0,nc.width,nc.height);nc.style.display='block';}catch(e){}
@@ -1968,12 +1971,12 @@ var SKIP_SPLASH_ON_LOAD=false;
     nv.addEventListener('playing',function(){np=true;nl.style.display='none';nt.style.display='none';nf.style.display='none';try{nv.playbackRate=2;}catch(e){}});
     nv.addEventListener('timeupdate',function(){if(nv.currentTime>0&&!np){np=true;nl.style.display='none';}});
     var nr=false;
-    nv.addEventListener('error',function(){if(np||nd)return;if(!nr){nr=true;setTimeout(function(){nv.src=splashFile()+'&r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nDone,2000);}});
-    function nTry(){if(np||nd)return;try{nv.playbackRate=2;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(function(err){if(!np&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nab=true;nl.style.display='none';nt.style.display='flex';}});}
+    nv.addEventListener('error',function(){if(np||nDone.done)return;if(!nr){nr=true;setTimeout(function(){nv.src=splashFile()+'&r='+Date.now();try{nv.load();}catch(e){}},400);}else{nf.style.display='flex';setTimeout(nDone,2000);}});
+    function nTry(){if(np||nDone.done)return;try{nv.playbackRate=2;}catch(e){}var p=nv.play&&nv.play();if(p&&p.then)p.then(function(){try{nv.playbackRate=2;}catch(e){}}).catch(function(err){if(!np&&(err.name==='NotAllowedError'||err.name==='NotSupportedError')){nab=true;nl.style.display='none';nt.style.display='flex';}});}
     nv.addEventListener('canplay',nTry);nv.addEventListener('canplaythrough',nTry);nv.addEventListener('loadeddata',nTry);
     nl.style.display='flex';
     nv.src=splashFile();try{nv.load();}catch(e){}
-    setTimeout(function(){if(!nd)nDone();},35000);
+    setTimeout(nDone,35000);
   }
 
   setSource();
