@@ -657,8 +657,10 @@
   /* Field flash. Sits above the water and below nothing that can be tapped. */
   .bubble-field::after{content:'';position:absolute;inset:0;pointer-events:none;
     opacity:0;border-radius:12px}
-  .bubble-field.flash-good::after{animation:fieldGood .34s ease}
-  .bubble-field.flash-bad::after{animation:fieldBad .34s ease}
+  /* .68s rather than .34s: at a third of a second the flash was over before
+     a player who was watching a bubble rather than the field had looked up. */
+  .bubble-field.flash-good::after{animation:fieldGood .68s ease}
+  .bubble-field.flash-bad::after{animation:fieldBad .68s ease}
   @keyframes fieldGood{
     0%{opacity:0;box-shadow:inset 0 0 0 0 rgba(67,224,166,0)}
     22%{opacity:1;background:radial-gradient(circle,rgba(67,224,166,.30),rgba(67,224,166,.10) 70%);
@@ -5542,6 +5544,14 @@ var NU={
      the diver's own scale factor is anchored to: past that the cave gets
      taller without getting steeper. */
   ROAM_H:330,
+  /* The cave used to undulate at one fixed rhythm the whole way, so the
+     second half asked nothing the first had not already taught. CHIRP winds
+     the frequency up with distance: by the exit the waves arrive at
+     1+CHIRP times the rate they did at the mouth, so the ascents and
+     descents come thicker exactly where the swim should be hardest.
+     Phase is integrated rather than scaled — multiplying x by a changing
+     factor would jump the centreline sideways mid-swim. */
+  CHIRP:1.0,
   /* This is the only real difficulty knob for the cave's steepness, and it
      is not obvious why: the wander cap divides by perPx, and the amplitudes
      are multiplied by it, so peak slope works out to (sink/speed)/REACH_MIN —
@@ -5572,11 +5582,23 @@ function nuSpeed(){return NU.SPEEDS[USER.group]||NU.SPEEDS['Teen Explorer'];}
 function nuRoamH(h){
   var sink=Math.sqrt(Math.abs(NU.LUNG_MIN*1.03)*NU.G/NU.DRAG)*NU.PXM;   /* px/s   */
   var perPx=NU.ROAM1*6.283/NU.L1+NU.ROAM2*6.283/NU.L2;                  /* slope per px of amplitude */
+  /* Budget against the steepest point, which is now the exit rather than
+     everywhere equally — otherwise the chirp would quietly make the last
+     third unsurvivable while the checker still read the average. */
+  perPx*=(1+NU.CHIRP);
   return Math.min(h, NU.ROAM_H, (sink/nuSpeed())/NU.REACH_MIN/perPx);
 }
 
 /* tunnel centreline and half-height at a given world x */
-function nuMid(x){return nu.h/2+nu.a1*Math.sin(x/NU.L1*6.283)+nu.a2*Math.sin(x/NU.L2*6.283+1.7);}
+/* Phase for a wave of base wavelength L at world x, with the frequency
+   ramping linearly from 1x at the mouth to (1+CHIRP)x at the exit.
+   Integrating k(x)=1+C*x/X gives x + C*x^2/(2X): a smooth chirp with no
+   discontinuity, which scaling x directly would not give. */
+function nuPhase(x,L){
+  var X=(nu&&nu.endX)||1, p=Math.min(1,Math.max(0,x/X));
+  return (x*(1+NU.CHIRP*p/2))/L*6.283;
+}
+function nuMid(x){return nu.h/2+nu.a1*Math.sin(nuPhase(x,NU.L1))+nu.a2*Math.sin(nuPhase(x,NU.L2)+1.7);}
 function nuHalf(x){return nu.half*(1-NU.PINCH*0.5+NU.PINCH*0.5*Math.sin(x/190+0.6));}
 
 function initNeutral(){

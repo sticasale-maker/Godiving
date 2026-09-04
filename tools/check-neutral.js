@@ -27,6 +27,7 @@ var NU = {
   ROAM1: num(/ROAM1:([0-9.]+)/),         L1: num(/L1:([0-9]+)/),
   ROAM2: num(/ROAM2:([0-9.]+)/),         L2: num(/L2:([0-9]+)/),
   ROAM_H: num(/ROAM_H:([0-9]+)/),        REACH_MIN: num(/REACH_MIN:([0-9.]+)/),
+  CHIRP: num(/CHIRP:([0-9.]+)/),
   PINCH: num(/PINCH:([0-9.]+)/),         SECS: num(/SECS:([0-9]+)/)
 };
 var speeds = {}, open = {}, m;
@@ -40,7 +41,10 @@ var reOp = /'([A-Za-z ]+)':([0-9.]+)/g;
 while ((m = reOp.exec(opBlock[1]))) open[m[1]] = +m[2];
 
 var sink = Math.sqrt(Math.abs(NU.LUNG_MIN * 1.03) * NU.G / NU.DRAG) * NU.PXM;
-var perPx = NU.ROAM1 * 6.283 / NU.L1 + NU.ROAM2 * 6.283 / NU.L2;
+/* The cave chirps: waves arrive (1+CHIRP)x as often at the exit as at the
+   mouth, so the steepest slope is at the end. Budget against that, not the
+   average, or the last third can be unsurvivable while this still reads OK. */
+var perPx = (NU.ROAM1 * 6.283 / NU.L1 + NU.ROAM2 * 6.283 / NU.L2) * (1 + NU.CHIRP);
 var fail = 0;
 if (NU.G < 9 || NU.G > 10) { console.log('FAIL - gravity parsed as ' + NU.G); process.exit(1); }
 var names = Object.keys(speeds);
@@ -61,7 +65,8 @@ Object.keys(speeds).forEach(function (g) {
   [330, 560, 900].forEach(function (h) {
     var roamH = Math.min(h, NU.ROAM_H, (sink / sp) / NU.REACH_MIN / perPx);
     var a1 = roamH * NU.ROAM1, a2 = roamH * NU.ROAM2;
-    var slope = a1 * 6.283 / NU.L1 + a2 * 6.283 / NU.L2;   /* px climb per px scroll */
+    /* worst case: the exit, where the frequency has wound all the way up */
+    var slope = (a1 * 6.283 / NU.L1 + a2 * 6.283 / NU.L2) * (1 + NU.CHIRP);
     var reach = (sink / sp) / slope;
     var margin = 0.5 - (roamH / h) * (NU.ROAM1 + NU.ROAM2)
                      - open[g] / 2 * (1 + NU.PINCH / 2);
