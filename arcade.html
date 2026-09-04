@@ -2703,14 +2703,6 @@ function renderPrizeConsole(){
     h+='<button class="'+(cfg.winnersPerGroup===n?'acc':'')+'" onclick="admSetWinners('+n+')">'+n+'</button>';
   });
   h+='</div>';
-  /* The compasses are the one prize with a hard, countable limit. When the box
-     is empty this has to stop being promised on four different screens at
-     once, and a volunteer cannot be editing copy mid-show. */
-  h+='<div class="row" style="gap:8px;flex-wrap:wrap;margin-bottom:10px;align-items:center">'+
-     '<span class="muted">Consolation prize for every player:</span>'+
-     '<button class="'+(CONSOLATION?'acc':'')+'" onclick="admSetConsolation(true)">On</button>'+
-     '<button class="'+(!CONSOLATION?'warn':'')+'" onclick="admSetConsolation(false)">Off — box empty</button>'+
-     '</div>';
   h+='<p class="muted" style="font-size:12px;margin:0 0 12px">This is the whole supply control: '+
      'dial it down if the box is running low and every device recomputes from the next draw. '+
      'Players are told the number, so it is never a silent change.</p>';
@@ -2750,14 +2742,6 @@ function admSetDraw(i){ADM.drawIdx=parseInt(i,10);renderAdmin();}
 function admSetWinners(n){
   Cloud.saveSettings({winners_per_group:n},function(){
     ADM.settings=Object.assign(ADM.settings||{},{winners_per_group:n});renderAdmin();
-  });
-}
-function admSetConsolation(on){
-  Cloud.saveSettings({consolation_on:!!on},function(err){
-    if(err){alert('Could not save. Run the one-line migration in supabase/schema.sql — it adds the consolation_on column — then try again.');return;}
-    CONSOLATION=!!on;
-    ADM.settings=Object.assign(ADM.settings||{},{consolation_on:!!on});
-    renderAdmin();
   });
 }
 /* Fullscreen winner board for a screen facing the aisle. The hourly
@@ -3394,13 +3378,10 @@ GAME_ENABLED=loadGameEnabled();
 updateWelcomeCount();
 
 /* ---- consolation prize ----
-   Everyone who plays takes a prize home. There are a fixed number of them and
-   no way to know in advance how many people will play, so this is a switch
-   rather than a fact baked into the copy: when the box is empty, staff turn it
-   off and every screen stops promising one. Defaults ON, and reads true when
-   the column is absent, so the promise works before the schema is updated. */
-var CONSOLATION=true;
-function adoptConsolation(st){ CONSOLATION = !(st && st.consolation_on === false); }
+   Everyone who plays takes a prize home. This was once an operator switch, so
+   the copy could stop promising one when the box ran empty. It is a fact now:
+   a screen that tells a player there is nothing to collect sends them away
+   from the stand, which is the opposite of what the exhibit is for. */
 
 /* The shared row wins over whatever this browser happens to remember. */
 function adoptSharedGameConfig(cb){
@@ -3408,7 +3389,6 @@ function adoptSharedGameConfig(cb){
 
     adoptPodium(st);
     updateWelcomeCount();
-    adoptConsolation(st);
     if(st&&st.game_order){applyGameOrder(st.game_order);saveGameOrder();}
     if(st&&st.games_enabled){
       GAME_ENABLED=pruneRetired(st.games_enabled);
@@ -7180,7 +7160,7 @@ function hofTick(){
     var m=Math.floor(left/60000),sec=Math.floor(left/1000)%60;
     el.innerHTML='<b>'+pad2(m)+':'+pad2(sec)+'</b> until this session freezes.<br>'+
       '<span class="hof-rule">Top <b>'+PODIUM+'</b> of each age group win the session prize'+
-      (CONSOLATION?' &#183; <b style="color:var(--good)">everyone who plays wins a prize</b>':'')+'.</span>';
+      ' &#183; <b style="color:var(--good)">everyone who plays wins a prize</b>.</span>';
     
     var stay=$('hofStay');
     if(stay){
@@ -7192,7 +7172,7 @@ function hofTick(){
         : '<span class="hof-stay-big">⏳ STAY ON THIS PAGE</span>'+
           'The session prize is decided at <b>'+hhmm(end)+'</b> and this page will say so '+
           'straight away. Leave it open.'+
-          (CONSOLATION?' Either way there is a prize waiting for you at the stand.':'');
+          ' Either way there is a prize waiting for you at the stand.';
     }
     if(verdict){
       verdict.style.display=(rank&&rank<=PODIUM)?'block':'none';
@@ -7215,11 +7195,9 @@ function hofTick(){
     verdict.innerHTML=(rank&&rank<=PODIUM)
       ? '🏆 <b>'+rank+ordinal(rank)+' place — you have won a prize.</b><br>'+
         'Come to <b>'+PRIZE_STAND+'</b> ('+STAND_WHERE+') and show this screen to staff.'
-      : (CONSOLATION
-          ? 'Unfortunately you did not make it to the top '+PODIUM+' this round, '+
-            '<b>but you still won a prize.</b> Go to <b>'+PRIZE_STAND+'</b> ('+STAND_WHERE+
-            ') and collect it!'
-          : 'This session is done — the board resets, so come back and play the next one.');
+      : 'You did not make it to the top '+PODIUM+' this round, <b>but there is still '+
+        'an award waiting for you.</b> Go to <b>'+PRIZE_STAND+'</b> ('+STAND_WHERE+
+        ') and collect it!';
   }
 }
 function buzz(pattern){

@@ -162,7 +162,12 @@ alter table public.settings add column if not exists rehearsal       jsonb;
 -- ── Consolation compass ──────────────────────────────────────────
 -- Every player takes a little compass home, not just the podium. There are a
 -- fixed number of them and no way to know in advance how many people will
--- play, so this is a switch: when the box is empty staff turn it off and all
--- four screens stop promising one in the same moment.
--- Absent or true means on, so the promise works before this line is run.
+-- play, so this WAS a switch: staff turned it off and all four screens
+-- stopped promising one.
+--
+-- No longer read by anything. Every screen now tells every finisher to come
+-- and collect, because a screen that says there is nothing to collect sends
+-- someone away from the stand. The column is left in place rather than
+-- dropped: it costs nothing, and dropping a column on a live show database
+-- to tidy up is not a trade worth making.
 alter table public.settings add column if not exists consolation_on boolean default true;

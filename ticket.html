@@ -174,9 +174,6 @@ function fetchAll() {
       };
     });
     var s = r[1].data || {};
-    /* Refetched on every settings change, so switching the consolation prize
-       off reaches a phone already sitting on this page. */
-    CONSOLATION = !(s.consolation_on === false);
     cfg = {
       winnersPerGroup: s.winners_per_group != null ? s.winners_per_group : 3,
       maxPerPlayerPerDay: s.max_per_player_per_day != null ? s.max_per_player_per_day : 1
@@ -336,21 +333,17 @@ function renderLost(res, head, draw, next) {
 
   content.innerHTML =
     card('', head) +
-    card(CONSOLATION ? 'won' : 'lost',
-      (CONSOLATION
-        ? '<div class="compass">🎁</div>' +
-          '<div class="big">You still won a prize</div>'
-        : '<div class="big">Not this time</div>') +
+    card('won',
+      '<div class="compass">🎁</div>' +
+      '<div class="big">You still have an award to collect</div>' +
       '<div class="muted">You finished <b>' + ord(res.rank) + ' of ' + res.fieldSize +
         '</b> in the ' + esc(draw.label) + ' draw' +
         (res.cutoff != null ? ', where <b>' + res.cutoff + '</b> took the last prize' : '') +
         '.</div>' +
-      (CONSOLATION
-        ? '<div class="muted" style="margin-top:10px">Unfortunately you did not make it to ' +
-          'the top ' + cfg.winnersPerGroup + ' this round, but you still won a prize.</div>' +
-          '<div class="stand">THE VIZ STAND</div>' +
-          '<div class="muted">In front of the main stage — go and collect it!</div>'
-        : '') +
+      '<div class="muted" style="margin-top:10px">You did not make it to the top ' +
+        cfg.winnersPerGroup + ' this round, but there is still an award waiting for you.</div>' +
+      '<div class="stand">THE VIZ STAND</div>' +
+      '<div class="muted">In front of the main stage — go and collect it!</div>' +
       (next
         ? '<div class="muted" style="margin-top:12px">Next draw is at <b>' + esc(next.label) +
           '</b> — play again and you are straight back in.</div>'

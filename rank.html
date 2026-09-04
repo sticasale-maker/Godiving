@@ -111,10 +111,11 @@ var SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYm
    and this page must not keep telling a player they have won a prize that is
    no longer allocated. 3 is only the value used until that read lands. */
 var PODIUM = 3;
-/* Everyone who plays takes a little compass home. Read from the shared row so
-   staff can switch it off the moment the box is empty; absent means on, so the
-   promise survives a database that has not been migrated yet. */
-var CONSOLATION = true;
+/* Everyone who plays takes a little compass home. This used to be a switch,
+   read from the shared settings row so staff could turn it off when the box
+   ran empty. It is a fact now: a screen that tells a player there is nothing
+   to collect sends them away from the stand, and getting them back to the
+   stand is the entire point of the exhibit. */
 /* The prize is deliberately never named. What is actually handed over depends
    on what is left in the box by that hour, and a screen that promises a
    specific thing to someone who ends up with something else is worse than one
@@ -190,7 +191,6 @@ function load(){
     .then(function(r){
       var d=r.data||{};
       var n=d.winners_per_group;
-      CONSOLATION = !(d.consolation_on === false);
       if(n!=null&&n>0)PODIUM=Number(n);
       render();
     },function(){});
@@ -270,15 +270,9 @@ function renderPrize(meIdx){
     }
     return;
   }
-  /* The tournament is over, and every ending here sends them back to the
-     stand: the top three for their prize, everyone else for the award they
-     get simply for finishing.
-
-     The one exception is the operator's "Off — box empty" switch. That
-     exists precisely because the consolation box runs out, and a screen that
-     promises an award which is not there sends someone to the counter to be
-     told no. So when it is off, still send them back — for the next session,
-     not for a prize we cannot hand over. */
+  /* The tournament is over and every ending sends them back to the stand:
+     the top three for the session prize, everyone else for the award they get
+     simply for finishing. There is no branch where nobody collects. */
   card.style.display='block';
   card.className='card prize';
   document.querySelector('#prizeCard .stand').style.display='';
@@ -290,20 +284,12 @@ function renderPrize(meIdx){
       'You finished <b>'+ord(rank)+'</b> of '+rows.length+' in '+esc(GROUP)+' for the '+
       hhmm(START)+'–'+hhmm(END)+' session. <b>Come back to the VIZ stand</b>, in front '+
       'of the main stage, and show them this screen to collect your prize.';
-  } else if(CONSOLATION){
+  } else {
     document.getElementById('prizeTitle').textContent='🎁 You still have an award to collect';
     document.getElementById('prizeBody').innerHTML=
       'You finished <b>'+ord(rank)+'</b> of '+rows.length+' in '+esc(GROUP)+' — not the '+
       'top <b>'+PODIUM+'</b> this time, but <b>there is still an award waiting for you</b>. '+
       'Come back to the VIZ stand, in front of the main stage, and show them this screen.';
-  } else {
-    document.getElementById('prizeTitle').textContent='Finished '+ord(rank)+' of '+rows.length;
-    document.getElementById('prizeBody').innerHTML=
-      'Only the top <b>'+PODIUM+'</b> in '+esc(GROUP)+' collect a prize this session. '+
-      'Come back to the VIZ stand anyway — the board resets every hour and the next '+
-      'session starts shortly.';
-    card.className='card';
-    document.querySelector('#prizeCard .stand').style.display='none';
   }
 }
 
