@@ -639,10 +639,36 @@
     color:#04282a;border:2px solid rgba(255,255,255,.5);
     background:radial-gradient(circle at 35% 30%,rgba(255,255,255,.92),rgba(160,225,235,.78));
     box-shadow:0 0 14px rgba(255,255,255,.25);will-change:transform}
-  .bubble.pop-good{animation:popGood .3s ease forwards}
-  .bubble.pop-bad{animation:popBad .3s ease forwards}
+  /* The pop animations differed in shape only — a swell versus a flinch —
+     which is far too subtle to read in the half-second before the next
+     bubble. Right and wrong now carry a colour as well, on the bubble and
+     across the whole field, so the answer registers without being looked
+     for. Shape is kept: colour alone would leave a colour-blind player with
+     the same problem. */
+  .bubble.pop-good{animation:popGood .3s ease forwards;
+    background:radial-gradient(circle at 35% 30%,#d8fff0,#43e0a6 80%);
+    border-color:#8ffcd4;box-shadow:0 0 22px rgba(67,224,166,.85)}
+  .bubble.pop-bad{animation:popBad .3s ease forwards;
+    background:radial-gradient(circle at 35% 30%,#ffe1e1,#e8635f 80%);
+    border-color:#ffb4b1;box-shadow:0 0 22px rgba(232,99,95,.85)}
   @keyframes popGood{to{transform:scale(1.5);opacity:0}}
   @keyframes popBad{0%{transform:scale(1)}30%{transform:scale(.85)}to{transform:scale(1.2);opacity:0}}
+
+  /* Field flash. Sits above the water and below nothing that can be tapped. */
+  .bubble-field::after{content:'';position:absolute;inset:0;pointer-events:none;
+    opacity:0;border-radius:12px}
+  .bubble-field.flash-good::after{animation:fieldGood .34s ease}
+  .bubble-field.flash-bad::after{animation:fieldBad .34s ease}
+  @keyframes fieldGood{
+    0%{opacity:0;box-shadow:inset 0 0 0 0 rgba(67,224,166,0)}
+    22%{opacity:1;background:radial-gradient(circle,rgba(67,224,166,.30),rgba(67,224,166,.10) 70%);
+        box-shadow:inset 0 0 0 4px rgba(67,224,166,.85)}
+    to{opacity:0}}
+  @keyframes fieldBad{
+    0%{opacity:0}
+    22%{opacity:1;background:radial-gradient(circle,rgba(232,99,95,.34),rgba(232,99,95,.12) 70%);
+        box-shadow:inset 0 0 0 4px rgba(232,99,95,.9)}
+    to{opacity:0}}
   .bubble-hud{display:flex;justify-content:space-between;font-size:13px;color:var(--muted);margin-bottom:6px;flex-shrink:0}
   .bubble-hud b{color:var(--text)}
 
@@ -3304,7 +3330,8 @@ function adoptConsolation(st){ CONSOLATION = !(st && st.consolation_on === false
 
 /* The shared row wins over whatever this browser happens to remember. */
 function adoptSharedGameConfig(cb){
-  Cloud.getSettings(function(st){
+  Cloud.getSettings(function(st){
+
     adoptPodium(st);
     updateWelcomeCount();
     adoptConsolation(st);
@@ -4229,13 +4256,24 @@ function spawnBubble(){
   b.addEventListener('click',function(ev){
     ev.stopPropagation();
     if(!bubbleState.active||b._popped)return;b._popped=true;
-    if(b._real){bubbleState.hit++;$('bubbleHit').textContent=bubbleState.hit;b.classList.add('pop-good');award(Math.max(MIN_REWARD,6));}
-    else{bubbleState.miss++;$('bubbleMiss').textContent=bubbleState.miss;b.classList.add('pop-bad');penalize();}
+    if(b._real){bubbleState.hit++;$('bubbleHit').textContent=bubbleState.hit;b.classList.add('pop-good');bubbleFlash(true);award(Math.max(MIN_REWARD,6));}
+    else{bubbleState.miss++;$('bubbleMiss').textContent=bubbleState.miss;b.classList.add('pop-bad');bubbleFlash(false);penalize();}
     setTimeout(function(){if(b.parentNode)b.parentNode.removeChild(b);},300);
     var idx=bubbleState.bubbles.indexOf(b);if(idx>-1)bubbleState.bubbles.splice(idx,1);
   });
   f.appendChild(b);bubbleState.bubbles.push(b);
 }
+/* Retrigger on every pop. Removing the class and reading offsetWidth forces
+   the reflow that makes the browser start the animation again — without it a
+   second correct tap inside a third of a second flashes nothing, which is
+   exactly when a player is going fastest. */
+function bubbleFlash(good){
+  var f=document.querySelector('.bubble-field'); if(!f)return;
+  f.classList.remove('flash-good','flash-bad');
+  void f.offsetWidth;
+  f.classList.add(good?'flash-good':'flash-bad');
+}
+
 function animateBubbles(now){
   if(!bubbleState.active)return;
   /* Clamped so a tab restored from the background does not teleport every
@@ -5493,7 +5531,10 @@ var NU={
      occupies; ROAM1/ROAM2 are the centreline wander. The constraint
      that keeps rock on screen is
         0.5 - (ROAM1+ROAM2) - OPEN/2*(1+PINCH/2) > 0                */
-  ROAM1:0.060, L1:600, ROAM2:0.020, L2:280,
+  /* L2 shortened so the second wave reverses more often: the course now
+     changes direction noticeably more per swim, rather than being one long
+     roll with a ripple on it. */
+  ROAM1:0.060, L1:600, ROAM2:0.020, L2:230,
   /* ROAM is a fraction of canvas height, but the diver's vertical speed is
      fixed in px/s — so on a 1440p screen the centreline got steeper while the
      diver did not get faster, and reach quietly tightened towards 1. The
@@ -5501,7 +5542,16 @@ var NU={
      the diver's own scale factor is anchored to: past that the cave gets
      taller without getting steeper. */
   ROAM_H:330,
-  REACH_MIN:2.0,   /* the diver must out-descend the steepest slope by this much */
+  /* This is the only real difficulty knob for the cave's steepness, and it
+     is not obvious why: the wander cap divides by perPx, and the amplitudes
+     are multiplied by it, so peak slope works out to (sink/speed)/REACH_MIN —
+     the ROAM values cancel out entirely. Raising ROAM to make a rougher cave
+     does nothing; it just makes a taller, equally shallow one.
+     2.0 meant the diver could out-descend the worst slope twice over, which
+     is why it played flat. At 1.5 the tunnel climbs and dives half again as
+     steeply and the amplitude grows by the same third, while still leaving
+     the diver 50% more sink authority than the rock ever demands. */
+  REACH_MIN:1.5,   /* the diver must out-descend the steepest slope by this much */
   /* Tightened after the diver was made to scale with the canvas:
      with a correctly-sized diver these openings left far too much
      room. The reach budget still passes comfortably at all three. */
@@ -5732,9 +5782,9 @@ var NAV={
   TIERS:{
     /* Two legs for everyone. Difficulty is carried by the kick, the gate and
        the current, not by making an adult swim the same drill three times. */
-    'Young Explorer':{legs:2,kick:26,gate:23,current:1.6,secs:10},
-    'Teen Explorer' :{legs:2,kick:20,gate:16,current:4.2,secs:10},
-    'Adult Explorer':{legs:2,kick:16,gate:12,current:7.6,secs:13}
+    'Young Explorer':{legs:2,kick:26,gate:23,current:2.3,secs:10},
+    'Teen Explorer' :{legs:2,kick:20,gate:16,current:6.0,secs:10},
+    'Adult Explorer':{legs:2,kick:16,gate:12,current:10.8,secs:13}
   },
   /* Each leg beyond the first narrows the gate and strengthens the current.
      Two legs of identical drill is a repeat, not a progression: leg one
@@ -5755,7 +5805,16 @@ var NAV={
      It swings through zero over SHIFT_RAMP rather than flipping, so the
      arrows visibly slow, stop and rebuild the other way — a player gets a
      second of warning from the water itself, not just from the text. */
-  SHIFT_AT:[0.42,0.58], /* fraction of the leg the swing begins within */
+  /* Four reversals across the session rather than one per leg. A single
+     turn is solved once: you find the new lean and hold it to the end. Four
+     means the correction is never settled, which is the point of the drill.
+     They are spread one per equal window and jittered inside it, so the
+     player cannot count seconds to the next one — only watch the water.
+     SHIFT_GAP keeps two of them from landing on top of each other across a
+     window boundary, which would read as one long confusing swing. */
+  SHIFTS:4,             /* reversals per session, split across the legs */
+  SHIFT_AT:[0.18,0.82], /* usable fraction of a leg for reversals       */
+  SHIFT_GAP:1.8,        /* minimum seconds between two reversals        */
   SHIFT_RAMP:1.1,       /* seconds to swing from full one way to full the other */
   TAU:0.45,        /* seconds for a kick's push to bleed away    */
   SETTLE:0.6,      /* seconds inside the gate that ends aligning */
@@ -5804,9 +5863,18 @@ function navNextLeg(){
   nav.gate=nav.tier.gate*Math.pow(NAV.LEG_GATE,step);
   nav.current=nav.tier.current*Math.pow(NAV.LEG_CURRENT,step);
   nav.secs=nav.tier.secs;
-  /* Randomised inside a window so it cannot be learnt as a stopwatch cue. */
-  nav.shiftAt=nav.secs*(NAV.SHIFT_AT[0]+Math.random()*(NAV.SHIFT_AT[1]-NAV.SHIFT_AT[0]));
-  nav.shifted=false;
+  /* One reversal per equal window, jittered inside it, then spaced out so
+     none crowds its neighbour. Randomised so it cannot be learnt as a
+     stopwatch cue. */
+  var per=Math.max(1,Math.round(NAV.SHIFTS/nav.legs));
+  var lo=nav.secs*NAV.SHIFT_AT[0], hi=nav.secs*NAV.SHIFT_AT[1], span=(hi-lo)/per;
+  nav.shifts=[];
+  for(var i=0;i<per;i++){
+    var at=lo+span*i+Math.random()*span;
+    if(i>0&&at-nav.shifts[i-1]<NAV.SHIFT_GAP) at=nav.shifts[i-1]+NAV.SHIFT_GAP;
+    nav.shifts.push(Math.min(at,nav.secs-0.4));
+  }
+  nav.shiftIdx=0;
   nav.target=Math.floor(Math.random()*24)*15;                /* whole 15° steps */
   var off=(50+Math.random()*60)*(Math.random()<0.5?-1:1);    /* start well off  */
   nav.heading=(nav.target+off+360)%360;
@@ -5833,9 +5901,15 @@ function navSetTask(){
    what pushes the diver is always what is drawn. */
 function navCurNow(){
   if(!nav||!nav.current||nav.phase!=='swim')return 0;
-  var t=nav.elapsed-nav.shiftAt, f=1;
-  if(t>0)f=t>=NAV.SHIFT_RAMP?-1:Math.cos(Math.PI*t/NAV.SHIFT_RAMP);
-  return nav.curDir*nav.current*f;
+  var dir=nav.curDir;
+  for(var i=0;i<nav.shifts.length;i++){
+    var t=nav.elapsed-nav.shifts[i];
+    if(t<=0)break;                       /* not reached yet: hold this way   */
+    if(t<NAV.SHIFT_RAMP)                 /* mid-swing: ease through zero     */
+      return dir*nav.current*Math.cos(Math.PI*t/NAV.SHIFT_RAMP);
+    dir=-dir;                            /* past it: committed the other way */
+  }
+  return dir*nav.current;
 }
 function navFmt(d){return ('00'+Math.round((d%360+360)%360)).slice(-3)+'°';}
 function navDiff(a,b){return ((a-b+540)%360)-180;}
@@ -5876,9 +5950,11 @@ function navStep(now){
     if(nav.settled>=NAV.SETTLE)navStartSwim();
   } else if(nav.phase==='swim'){
     nav.elapsed+=dt;
-    if(!nav.shifted&&nav.current&&nav.elapsed>=nav.shiftAt){
-      nav.shifted=true;
-      var to=(nav.curDir>0?'left':'right');   /* it is reversing INTO this */
+    if(nav.current&&nav.shiftIdx<nav.shifts.length&&nav.elapsed>=nav.shifts[nav.shiftIdx]){
+      /* Direction after an even number of reversals is the leg's original. */
+      var was=(nav.shiftIdx%2===0)?nav.curDir:-nav.curDir;
+      nav.shiftIdx++;
+      var to=(was>0?'left':'right');          /* it is reversing INTO this */
       $('navTask').innerHTML='<b style="color:var(--gold)">⟲ The current has turned — '+
         'it is pushing you '+to.toUpperCase()+' now.</b> Swap the fin you were leaning on.';
       var st=$('navStage')||document.querySelector('.nav-stage');
@@ -5912,7 +5988,7 @@ function navStartSwim(){
    and an adult's leg-two push looks like something to fight. */
 function navFlowField(c,W,H,cur,t,opt){
   opt=opt||{};
-  var mag=Math.abs(cur)/11.4;                       /* 11.4 = adult leg 2     */
+  var mag=Math.abs(cur)/16.2;                       /* 16.2 = adult leg 2     */
   if(mag<0.02)return;
   var dir=cur>0?1:-1;
   var rows=opt.rows||9, base=opt.alpha||0.5;
