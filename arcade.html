@@ -308,28 +308,34 @@
   /* Shared "Next challenge" button. Pinned to the right edge rather than left
      in the page flow: the end-of-game notice can sit below the fold, and the
      player should never have to scroll to find the way out. */
-  .next-challenge{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:60;
-    width:150px;background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;border:0;
-    border-radius:14px;padding:18px 14px;font-size:18px;font-weight:800;line-height:1.25;
-    letter-spacing:.3px;cursor:pointer;touch-action:manipulation;
+  /* Both buttons live in one flex column, and the column is what gets pinned.
+     They used to be pinned individually, with "Play again" pushed down by a
+     hard-coded 56px — which only worked while the button above it stayed one
+     line tall. On a phone the strip narrows to 112px, "a long label"
+     wraps onto three lines, and the taller button grew straight down through
+     the offset and over the top of the second one. A gap cannot be guessed
+     from a number; let the layout measure it. */
+  .side-actions{position:fixed;right:16px;top:50%;transform:translateY(-50%);z-index:60;
+    display:flex;flex-direction:column;align-items:stretch;gap:10px;width:150px;
+    max-height:92dvh}
+  .next-challenge{width:100%;background:linear-gradient(180deg,#28c3a8,#12907c);color:#04211d;
+    border:0;border-radius:14px;padding:18px 14px;font-size:18px;font-weight:800;
+    line-height:1.25;letter-spacing:.3px;cursor:pointer;touch-action:manipulation;
     box-shadow:0 8px 24px rgba(0,0,0,.45)}
-  .next-challenge:active{transform:translateY(-50%) translateY(1px)}
-  /* Sits under the primary button and is deliberately quieter: moving on is
-     the expected path, playing again is the option. Named replay-again, not
-     play-again — that class already belongs to the Hall of Fame's "Start
-     over" button, and a position:fixed rule leaking onto it threw it into
-     the right-hand margin. */
-  .replay-again{position:fixed;right:16px;top:50%;transform:translateY(-50%) translateY(64px);
-    z-index:60;width:150px;background:transparent;color:var(--accent);
+  .next-challenge:active{transform:translateY(1px)}
+  /* Deliberately quieter than the button above it: moving on is the expected
+     path, playing again is the option. Named replay-again, not play-again —
+     that class already belongs to the Hall of Fame's "Start over" button, and
+     a position:fixed rule leaking onto it threw it into the right-hand margin. */
+  .replay-again{width:100%;background:transparent;color:var(--accent);
     border:2px solid var(--accent);border-radius:14px;padding:12px 10px;font-size:15px;
     font-weight:800;line-height:1.2;cursor:pointer;touch-action:manipulation}
-  .replay-again:active{transform:translateY(-50%) translateY(65px)}
+  .replay-again:active{transform:translateY(1px)}
   .replay-again small{display:block;font-weight:600;font-size:11px;opacity:.75;margin-top:2px}
   @media(max-width:520px){
-    .next-challenge{width:112px;right:8px;padding:14px 10px;font-size:15px}
-    .replay-again{width:112px;right:8px;padding:10px 8px;font-size:13px;
-      transform:translateY(-50%) translateY(56px)}
-    .replay-again:active{transform:translateY(-50%) translateY(57px)}
+    .side-actions{width:112px;right:8px;gap:8px}
+    .next-challenge{padding:14px 10px;font-size:15px}
+    .replay-again{padding:10px 8px;font-size:13px}
   }
 
   /* ── HOF: no header clutter ── */
@@ -3218,13 +3224,18 @@ var ART={seadragon:function(){return ART_html('seadragon');},pjshark:function(){
    between plays instead of asking the same question twice in one. */
 var PHOTO_SCENES=[
   {name:'Chowder Bay',imgs:['images/sites/chowder.jpg'],svg:siteSVG('WHERE AM I?','#1f6f86','#0c4257','pier')},
-  {name:'Cabbage Tree Bay',imgs:['images/sites/ctb.jpg','images/sites/ctb-puffer.jpg'],svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')},
+  {name:'Cabbage Tree Bay',imgs:['images/sites/ctb.jpg','images/sites/ctb-puffer.jpg',
+    'images/sites/ctb2.jpg','images/sites/ctb3.jpg','images/sites/ctb4.jpg'],
+   svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')},
   {name:'SS Centennial wreck',imgs:['images/sites/centennial.jpg'],svg:wreckSVG('WHERE AM I?')},
   {name:'TSS Currajong wreck',imgs:['images/sites/currajong.jpg'],svg:wreckSVG('WHERE AM I?')},
   {name:'Bare Island',imgs:['images/sites/bareisland.jpg'],svg:siteSVG('WHERE AM I?','#236f7e','#0c3a44','kelp')},
-  {name:'Oak Park',imgs:['images/sites/oakpark.jpg'],svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')}
+  {name:'Oak Park',imgs:['images/sites/oakpark.jpg','images/sites/oakpark2.jpg'],
+   svg:siteSVG('WHERE AM I?','#1d7d72','#0c4a44','kelp')},
+  {name:'Kurnell',imgs:['images/sites/kurnell.jpg'],svg:siteSVG('WHERE AM I?','#1f6f86','#0c4257','kelp')},
+  {name:'Ship Rock',imgs:['images/sites/shiprock.jpg'],svg:siteSVG('WHERE AM I?','#236f7e','#0c3a44','kelp')}
 ];
-var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
+var ALL_SITES=['Cabbage Tree Bay','Chowder Bay','Gordons Bay','Bare Island','Kurnell','Oak Park','Ship Rock','Freshwater','North Bondi','Little Bay','SS Centennial wreck','TSS Currajong wreck','Camp Cove'];
 function siteSVG(label,top,bottom,feature){
   var feat='';
   if(feature==='pier'){feat='<g stroke="#06212c" stroke-width="6" stroke-linecap="round"><line x1="120" y1="60" x2="120" y2="300"/><line x1="220" y1="60" x2="220" y2="300"/><line x1="320" y1="60" x2="320" y2="300"/><line x1="420" y1="60" x2="420" y2="300"/><line x1="540" y1="60" x2="540" y2="300"/></g><rect x="70" y="52" width="520" height="14" rx="4" fill="#06212c"/>';}
@@ -3442,6 +3453,19 @@ function advanceGame(){
   if(gb){gb.classList.add('done');gb.textContent='← Back to games';}
   showNextChallenge();
 }
+/* The column both fixed buttons sit in. It lives on <body>: panels carry a
+   slide-in transform, which would make one of them the containing block and
+   break position:fixed. */
+var sideActionsEl=null;
+function sideActions(){
+  if(!sideActionsEl){
+    sideActionsEl=document.createElement('div');
+    sideActionsEl.className='side-actions';
+    document.body.appendChild(sideActionsEl);
+  }
+  return sideActionsEl;
+}
+
 /* One shared button, moved under whichever auto-notice is currently showing. */
 var nextChallengeBtn=null;
 function showNextChallenge(){
@@ -3455,9 +3479,7 @@ function showNextChallenge(){
     nextChallengeBtn.className='next-challenge';
     nextChallengeBtn.textContent='Next challenge →';
     nextChallengeBtn.onclick=function(){hideNextChallenge();showMenu();};
-    /* Lives on <body>: panels carry a slide-in transform, which would make
-       them the containing block and break position:fixed. */
-    document.body.appendChild(nextChallengeBtn);
+    sideActions().appendChild(nextChallengeBtn);
   }
   /* Relabelled every time, because the last game is only knowable once it has
      been played — the same button ends the visit when there is nothing left. */
@@ -3479,7 +3501,7 @@ function showPlayAgain(){
   if(!playAgainBtn){
     playAgainBtn=document.createElement('button');
     playAgainBtn.className='replay-again';
-    document.body.appendChild(playAgainBtn);
+    sideActions().appendChild(playAgainBtn);
   }
   playAgainBtn.innerHTML='↻ Play again<small>just for fun — no points</small>';
   playAgainBtn.onclick=function(){
@@ -3951,16 +3973,55 @@ function renderLog(){
 
 /* ════════ GUESS ════════ */
 var gScore=0,gTotal=0,gQueue=[],gAnswered=false;
-var GUESS_ROUNDS=6;
-function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=shuffle(PHOTO_SCENES.slice()).slice(0,GUESS_ROUNDS);$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
+var GUESS_ROUNDS=12;
+/* A round is one PHOTOGRAPH, but no site is asked twice until every site has
+   been asked once. There are 8 sites and 13 pictures, so a 12-round game
+   visits all 8 places and then returns to four of them with a shot the
+   player has not seen yet — a repeat that is at least a different question
+   to look at. Shrink the photo library and this still holds: the queue is
+   simply as long as the pictures allow. */
+function buildGuessQueue(n){
+  /* Group every photograph by its site, then deal n of them so that the same
+     site never comes up twice in a row and no site is asked a second time
+     until all of them have been asked once.
+
+     The naive version — all sites once, then the leftovers shuffled on the
+     end — finished a 12-round game with Cabbage Tree Bay three times back
+     to back, because it owns 5 of the 13 pictures. By the third the answer is
+     not a question any more. So instead: at each slot take the site with the
+     most pictures still unused, skipping whichever one was just asked. That
+     spaces the busiest site as evenly as the library allows, and it degrades
+     honestly — add photos of anywhere and the spacing improves on its own. */
+  var pools=shuffle(PHOTO_SCENES.slice()).map(function(s){
+    return {site:s, imgs:shuffle(s.imgs.slice()), used:0};
+  });
+  var q=[], last=null, unseen=pools.length;
+  while(q.length<n){
+    var best=null;
+    pools.forEach(function(p){
+      if(p.used>=p.imgs.length) return;
+      if(p.site===last && pools.length>1) return;      /* never twice running */
+      if(unseen>0 && p.used>0) return;                 /* everywhere once first */
+      /* Most pictures left wins, so the site that would otherwise pile up at
+         the end gets spread through the middle instead. */
+      if(!best || (p.imgs.length-p.used) > (best.imgs.length-best.used)) best=p;
+    });
+    if(!best) break;   /* out of pictures: a shorter game beats a repeated one */
+    if(best.used===0) unseen--;
+    q.push({site:best.site, img:best.imgs[best.used++]});
+    last=best.site;
+  }
+  return q;
+}
+function initGuess(){gScore=0;gTotal=0;gAnswered=false;gQueue=buildGuessQueue(GUESS_ROUNDS);$('gscore').textContent=0;$('gtotal').textContent=0;$('gnotice').textContent='';guessRound();}
 function guessRound(){
   gAnswered=false;$('gnext').style.display='none';$('gnotice').textContent='';
-  var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick),correctName=pick.name;
-  var img=pick.imgs[Math.floor(Math.random()*pick.imgs.length)];
+  var pick=gQueue.shift(),pickIdx=PHOTO_SCENES.indexOf(pick.site),correctName=pick.site.name;
+  var img=pick.img;
   var wrong=shuffle(ALL_SITES.filter(function(n){return n!==correctName;})).slice(0,3);
   var opts=shuffle([correctName].concat(wrong));
   $('gart').innerHTML='<div style="position:relative;border-radius:12px;overflow:hidden;border:1px solid var(--line);margin-bottom:2px"><img src="'+img+'" alt="Guess the site" style="width:100%;display:block;max-height:340px;object-fit:cover;border-radius:12px" loading="lazy" onerror="this.outerHTML=PHOTO_SCENES['+pickIdx+'].svg">'+
-    (pick.credit&&pick.credit[img]?'<span class="photocredit">'+esc(pick.credit[img])+'</span>':'')+'</div>';
+    (pick.site.credit&&pick.site.credit[img]?'<span class="photocredit">'+esc(pick.credit[img])+'</span>':'')+'</div>';
   $('gopts').innerHTML=opts.map(function(n){return '<button class="opt" data-n="'+n+'">'+n+'</button>';}).join('');
   $('gopts').querySelectorAll('.opt').forEach(function(btn){btn.onclick=function(){
     if(gAnswered)return;gAnswered=true;gTotal++;
@@ -5618,7 +5679,7 @@ var NU={
      That was a mistake — squeezing more waves in at a fixed slope makes each
      one shallower, so the cave got busier and flatter at the same time,
      which is the opposite of the ask. Amplitude is the thing to ramp. */
-  GROW:0.9,
+  GROW:1.25,
   /* This is the only real difficulty knob for the cave's steepness, and it
      is not obvious why: the wander cap divides by perPx, and the amplitudes
      are multiplied by it, so peak slope works out to (sink/speed)/REACH_MIN —
@@ -5627,12 +5688,16 @@ var NU={
      2.0 meant the diver could out-descend the worst slope twice over, which
      is why it played flat. At 1.5 the tunnel climbs and dives half again as
      steeply and the amplitude grows by the same third, while still leaving
-     the diver 50% more sink authority than the rock ever demands. */
-  REACH_MIN:1.3,   /* the diver must out-descend the steepest slope by this much */
-  /* Tightened after the diver was made to scale with the canvas:
-     with a correctly-sized diver these openings left far too much
-     room. The reach budget still passes comfortably at all three. */
-  OPEN:{'Young Explorer':0.54,'Teen Explorer':0.42,'Adult Explorer':0.33},
+     the diver 50% more sink authority than the rock ever demands.
+     Now 1.12: the tunnel is wider, so a steeper cave is a fairer trade than
+     it would have been at the old openings. The diver still out-descends the
+     worst slope by 12%, which is the whole margin — there is no room below
+     this without the exit becoming unswimmable rather than merely hard. */
+  REACH_MIN:1.12,  /* the diver must out-descend the steepest slope by this much */
+  /* Widened ~15% across all three tiers, paid for by a steeper cave: more
+     room to be in the wrong place, less time to get out of it. The reach
+     budget still passes at all three, at every canvas height. */
+  OPEN:{'Young Explorer':0.62,'Teen Explorer':0.48,'Adult Explorer':0.38},
   PINCH:0.28,                  /* how much the tunnel narrows      */
   TICK:2,                      /* award every N seconds survived   */
   TICK_PTS:3,
