@@ -314,8 +314,22 @@
     letter-spacing:.3px;cursor:pointer;touch-action:manipulation;
     box-shadow:0 8px 24px rgba(0,0,0,.45)}
   .next-challenge:active{transform:translateY(-50%) translateY(1px)}
+  /* Sits under the primary button and is deliberately quieter: moving on is
+     the expected path, playing again is the option. Named replay-again, not
+     play-again — that class already belongs to the Hall of Fame's "Start
+     over" button, and a position:fixed rule leaking onto it threw it into
+     the right-hand margin. */
+  .replay-again{position:fixed;right:16px;top:50%;transform:translateY(-50%) translateY(64px);
+    z-index:60;width:150px;background:transparent;color:var(--accent);
+    border:2px solid var(--accent);border-radius:14px;padding:12px 10px;font-size:15px;
+    font-weight:800;line-height:1.2;cursor:pointer;touch-action:manipulation}
+  .replay-again:active{transform:translateY(-50%) translateY(65px)}
+  .replay-again small{display:block;font-weight:600;font-size:11px;opacity:.75;margin-top:2px}
   @media(max-width:520px){
     .next-challenge{width:112px;right:8px;padding:14px 10px;font-size:15px}
+    .replay-again{width:112px;right:8px;padding:10px 8px;font-size:13px;
+      transform:translateY(-50%) translateY(56px)}
+    .replay-again:active{transform:translateY(-50%) translateY(57px)}
   }
 
   /* ── HOF: no header clutter ── */
@@ -1998,8 +2012,17 @@ function timedReward(){
   return Math.round(SCORE.BASE*f);
 }
 function flashPts(d){var fl=document.getElementById('ptsFloat');if(!fl)return;fl.textContent=(d>0?'+':'')+d;fl.className='fl '+(d>0?'up':'down');fl.style.opacity='1';setTimeout(function(){fl.style.opacity='0';},900);}
-function award(amount){var a=(amount==null?REWARD:amount);POINTS+=a;syncPoints();flashPts(a);cloudUpdate();}
+/* A replay is for the fun of it, not for points. Without this a player could
+   sit on Myth Busters and out-rank everyone who moved through the set once,
+   and the hourly board would stop meaning anything. The game plays exactly
+   as normal; only the banking is switched off. */
+var replaying=false, replayTarget=null;
+function award(amount){
+  if(replaying)return;
+  var a=(amount==null?REWARD:amount);POINTS+=a;syncPoints();flashPts(a);cloudUpdate();
+}
 function penalize(){
+  if(replaying)return;
   var t=answerSecs();
   var k=t/SCORE.PAR; if(k>1)k=1; if(k<0)k=0;
   var pen=Math.round(SCORE.PEN_FAST-(SCORE.PEN_FAST-SCORE.PEN_SLOW)*k);
@@ -3315,6 +3338,16 @@ function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(M
 var $=function(id){return document.getElementById(id);};
 
 /* ════════ GAME FLOW ════════ */
+/* Games worth another go. Two kinds qualify: the skill games, where the
+   course is the same but your flying is not, and the quiz games that draw
+   fewer questions than they hold — Myth Busters shows 4 of 24, Depth Gauge
+   3 of 5. Left out are the ones whose bank is exactly the round, like Where
+   Am I? at 6 of 6: shuffling those changes the order and nothing else, so
+   "play again" would promise a new game and deal the same hand. */
+var REPLAYABLE=['breath','ascent','nav','neutral','bubble','migrate',
+                'truefalse','speed','depth','silhouette','wreckid','season',
+                'lineup','trumps'];
+
 var GAME_ORDER=['quiz','zoom','ascent','nav','neutral','breath','silhouette','log','bubble','memory','depth','guess','truefalse','colour','trumps','lineup','speed','season','wreckid','wreckfind','sharkid','migrate'];
 loadGameOrder();
 GAME_AGE_GROUPS=loadGameAgeGroups();
@@ -3434,9 +3467,35 @@ function showNextChallenge(){
     ? function(){finishAllPlayed();}
     : function(){hideNextChallenge();showMenu();};
   nextChallengeBtn.style.display='block';
+  showPlayAgain();
+}
+
+/* Offered only where a second run is actually a different run, and only
+   once the game has been banked — so replaying can never be a way to avoid
+   finishing it. */
+var playAgainBtn=null;
+function showPlayAgain(){
+  if(!activeGame||REPLAYABLE.indexOf(activeGame)<0)return;
+  if(!playAgainBtn){
+    playAgainBtn=document.createElement('button');
+    playAgainBtn.className='replay-again';
+    document.body.appendChild(playAgainBtn);
+  }
+  playAgainBtn.innerHTML='↻ Play again<small>just for fun — no points</small>';
+  playAgainBtn.onclick=function(){
+    var game=activeGame;
+    hideNextChallenge();
+    replayTarget=game;       /* the round is already banked; this one is free */
+    startGame(game);
+  };
+  playAgainBtn.style.display='block';
+}
+function hidePlayAgain(){
+  if(playAgainBtn)playAgainBtn.style.display='none';
 }
 function hideNextChallenge(){
   if(nextChallengeBtn)nextChallengeBtn.style.display='none';
+  hidePlayAgain();
 }
 /* Games write their end-of-round line straight into .auto-notice, some of them
    well before the delayed advanceGame() fires. Watch the notices so the button
@@ -3485,6 +3544,12 @@ function startGame(name){
   var lv=$('gameLeave');
   if(lv)lv.classList.toggle('show',!!activeGame);
   Cloud.updateSession({game:name,points:POINTS});
+  /* Practice mode lasts exactly one launch of exactly the game the button
+     named. Setting a flag directly and clearing it on exit would leave it
+     stuck on if a player replayed and then wandered off through the menu,
+     silently zeroing the next game they actually played for points. */
+  replaying=(replayTarget===name); replayTarget=null;
+  hidePlayAgain();
   if(name==='quiz')initQuiz();
   else if(name==='breath')initBreath();
   else if(name==='silhouette')initSilhouette();
@@ -5523,7 +5588,7 @@ var NU={
   /* 30% shorter at the same pace. The swim ends on the clock, and the EXIT
      line and the course length are both derived from this, so they follow
      without being touched. */
-  SECS:27,                     /* length of the swim               */
+  SECS:38,                     /* length of the swim               */
   /* centreline is two summed sine waves; peak slope is
      A1*2pi/L1 + A2*2pi/L2, kept well under the diver's own
      px-per-px capability (top vertical speed / scroll speed) */
@@ -5536,7 +5601,10 @@ var NU={
   /* L2 shortened so the second wave reverses more often: the course now
      changes direction noticeably more per swim, rather than being one long
      roll with a ripple on it. */
-  ROAM1:0.060, L1:600, ROAM2:0.020, L2:230,
+  /* Lengthened deliberately. Peak slope is fixed by the reach budget, so a
+     longer wavelength at the same slope is a TALLER climb — short waves buy
+     chop, long ones buy the sustained up-and-down this game wants. */
+  ROAM1:0.060, L1:900, ROAM2:0.020, L2:450,
   /* ROAM is a fraction of canvas height, but the diver's vertical speed is
      fixed in px/s — so on a 1440p screen the centreline got steeper while the
      diver did not get faster, and reach quietly tightened towards 1. The
@@ -5544,14 +5612,13 @@ var NU={
      the diver's own scale factor is anchored to: past that the cave gets
      taller without getting steeper. */
   ROAM_H:330,
-  /* The cave used to undulate at one fixed rhythm the whole way, so the
-     second half asked nothing the first had not already taught. CHIRP winds
-     the frequency up with distance: by the exit the waves arrive at
-     1+CHIRP times the rate they did at the mouth, so the ascents and
-     descents come thicker exactly where the swim should be hardest.
-     Phase is integrated rather than scaled — multiplying x by a changing
-     factor would jump the centreline sideways mid-swim. */
-  CHIRP:1.0,
+  /* GROW ramps the SIZE of the wander with distance: by the exit the cave
+     climbs and dives (1+GROW) times as far as it did at the mouth.
+     This replaces an earlier attempt that ramped the frequency instead.
+     That was a mistake — squeezing more waves in at a fixed slope makes each
+     one shallower, so the cave got busier and flatter at the same time,
+     which is the opposite of the ask. Amplitude is the thing to ramp. */
+  GROW:0.9,
   /* This is the only real difficulty knob for the cave's steepness, and it
      is not obvious why: the wander cap divides by perPx, and the amplitudes
      are multiplied by it, so peak slope works out to (sink/speed)/REACH_MIN —
@@ -5561,7 +5628,7 @@ var NU={
      is why it played flat. At 1.5 the tunnel climbs and dives half again as
      steeply and the amplitude grows by the same third, while still leaving
      the diver 50% more sink authority than the rock ever demands. */
-  REACH_MIN:1.5,   /* the diver must out-descend the steepest slope by this much */
+  REACH_MIN:1.3,   /* the diver must out-descend the steepest slope by this much */
   /* Tightened after the diver was made to scale with the canvas:
      with a correctly-sized diver these openings left far too much
      room. The reach budget still passes comfortably at all three. */
@@ -5582,23 +5649,25 @@ function nuSpeed(){return NU.SPEEDS[USER.group]||NU.SPEEDS['Teen Explorer'];}
 function nuRoamH(h){
   var sink=Math.sqrt(Math.abs(NU.LUNG_MIN*1.03)*NU.G/NU.DRAG)*NU.PXM;   /* px/s   */
   var perPx=NU.ROAM1*6.283/NU.L1+NU.ROAM2*6.283/NU.L2;                  /* slope per px of amplitude */
-  /* Budget against the steepest point, which is now the exit rather than
-     everywhere equally — otherwise the chirp would quietly make the last
+  /* Budget against the steepest point, which is the exit rather than
+     everywhere equally — otherwise the ramp would quietly make the last
      third unsurvivable while the checker still read the average. */
-  perPx*=(1+NU.CHIRP);
+  perPx*=(1+NU.GROW);
   return Math.min(h, NU.ROAM_H, (sink/nuSpeed())/NU.REACH_MIN/perPx);
 }
 
 /* tunnel centreline and half-height at a given world x */
-/* Phase for a wave of base wavelength L at world x, with the frequency
-   ramping linearly from 1x at the mouth to (1+CHIRP)x at the exit.
-   Integrating k(x)=1+C*x/X gives x + C*x^2/(2X): a smooth chirp with no
-   discontinuity, which scaling x directly would not give. */
-function nuPhase(x,L){
+/* How far the cave wanders at world x: 1x at the mouth, (1+GROW)x by the
+   exit. Wavelength is untouched, so the waves stay long and the swings
+   simply get taller as the swim goes on. */
+function nuGrow(x){
   var X=(nu&&nu.endX)||1, p=Math.min(1,Math.max(0,x/X));
-  return (x*(1+NU.CHIRP*p/2))/L*6.283;
+  return 1+NU.GROW*p;
 }
-function nuMid(x){return nu.h/2+nu.a1*Math.sin(nuPhase(x,NU.L1))+nu.a2*Math.sin(nuPhase(x,NU.L2)+1.7);}
+function nuMid(x){
+  var g=nuGrow(x);
+  return nu.h/2+g*nu.a1*Math.sin(x/NU.L1*6.283)+g*nu.a2*Math.sin(x/NU.L2*6.283+1.7);
+}
 function nuHalf(x){return nu.half*(1-NU.PINCH*0.5+NU.PINCH*0.5*Math.sin(x/190+0.6));}
 
 function initNeutral(){
@@ -5834,7 +5903,12 @@ var NAV={
      player cannot count seconds to the next one — only watch the water.
      SHIFT_GAP keeps two of them from landing on top of each other across a
      window boundary, which would read as one long confusing swing. */
-  SHIFTS:4,             /* reversals per session, split across the legs */
+  SHIFTS:5,             /* reversals per session, split across the legs */
+  /* Every stretch between reversals gets its own strength, drawn in this
+     band and multiplied by the leg's base current. A reversal that always
+     came back at the same force was half a surprise: you knew the size of
+     the correction before you made it, only not the side. */
+  STRENGTH:[0.55,1.40],
   SHIFT_AT:[0.18,0.82], /* usable fraction of a leg for reversals       */
   SHIFT_GAP:1.8,        /* minimum seconds between two reversals        */
   SHIFT_RAMP:1.1,       /* seconds to swing from full one way to full the other */
@@ -5888,7 +5962,10 @@ function navNextLeg(){
   /* One reversal per equal window, jittered inside it, then spaced out so
      none crowds its neighbour. Randomised so it cannot be learnt as a
      stopwatch cue. */
-  var per=Math.max(1,Math.round(NAV.SHIFTS/nav.legs));
+  /* 5 across 2 legs is 3 then 2 — spread by remainder rather than rounded,
+     so the session gets exactly SHIFTS and not four or six. */
+  var base=Math.floor(NAV.SHIFTS/nav.legs), extra=NAV.SHIFTS%nav.legs;
+  var per=Math.max(1,base+(nav.leg<=extra?1:0));
   var lo=nav.secs*NAV.SHIFT_AT[0], hi=nav.secs*NAV.SHIFT_AT[1], span=(hi-lo)/per;
   nav.shifts=[];
   for(var i=0;i<per;i++){
@@ -5897,6 +5974,10 @@ function navNextLeg(){
     nav.shifts.push(Math.min(at,nav.secs-0.4));
   }
   nav.shiftIdx=0;
+  /* One strength per stretch: the opening one plus one after each reversal. */
+  nav.mags=[];
+  for(var m=0;m<=per;m++)
+    nav.mags.push(NAV.STRENGTH[0]+Math.random()*(NAV.STRENGTH[1]-NAV.STRENGTH[0]));
   nav.target=Math.floor(Math.random()*24)*15;                /* whole 15° steps */
   var off=(50+Math.random()*60)*(Math.random()<0.5?-1:1);    /* start well off  */
   nav.heading=(nav.target+off+360)%360;
@@ -5923,15 +6004,22 @@ function navSetTask(){
    what pushes the diver is always what is drawn. */
 function navCurNow(){
   if(!nav||!nav.current||nav.phase!=='swim')return 0;
-  var dir=nav.curDir;
+  var dir=nav.curDir, seg=0;
   for(var i=0;i<nav.shifts.length;i++){
     var t=nav.elapsed-nav.shifts[i];
     if(t<=0)break;                       /* not reached yet: hold this way   */
-    if(t<NAV.SHIFT_RAMP)                 /* mid-swing: ease through zero     */
-      return dir*nav.current*Math.cos(Math.PI*t/NAV.SHIFT_RAMP);
-    dir=-dir;                            /* past it: committed the other way */
+    if(t<NAV.SHIFT_RAMP){
+      /* Ease from the old signed current to the new one. Interpolating the
+         signed values rather than flipping a sign carries the strength
+         change through the same swing, so the water never steps. */
+      var from=dir*nav.current*nav.mags[i];
+      var to=-dir*nav.current*nav.mags[i+1];
+      var f=(1+Math.cos(Math.PI*t/NAV.SHIFT_RAMP))/2;   /* 1 -> 0 */
+      return from*f+to*(1-f);
+    }
+    dir=-dir; seg=i+1;                   /* past it: committed the other way */
   }
-  return dir*nav.current;
+  return dir*nav.current*nav.mags[seg];
 }
 function navFmt(d){return ('00'+Math.round((d%360+360)%360)).slice(-3)+'°';}
 function navDiff(a,b){return ((a-b+540)%360)-180;}
@@ -5977,8 +6065,10 @@ function navStep(now){
       var was=(nav.shiftIdx%2===0)?nav.curDir:-nav.curDir;
       nav.shiftIdx++;
       var to=(was>0?'left':'right');          /* it is reversing INTO this */
+      var i0=nav.shiftIdx-1, chg=nav.mags[i0+1]/nav.mags[i0];
+      var how=chg>1.25?' and <b>stronger</b>':(chg<0.8?' and <b>easier</b>':'');
       $('navTask').innerHTML='<b style="color:var(--gold)">⟲ The current has turned — '+
-        'it is pushing you '+to.toUpperCase()+' now.</b> Swap the fin you were leaning on.';
+        'it is pushing you '+to.toUpperCase()+' now'+how+'.</b> Swap the fin you were leaning on.';
       var st=$('navStage')||document.querySelector('.nav-stage');
       if(st){st.classList.remove('nav-shift');void st.offsetWidth;st.classList.add('nav-shift');}
     }

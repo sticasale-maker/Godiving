@@ -25,6 +25,13 @@ var LEG_GATE    = num(/LEG_GATE:([0-9.]+)/);
 var LEG_CURRENT = num(/LEG_CURRENT:([0-9.]+)/);
 
 var tiers = {};
+/* Each stretch between reversals draws its own strength multiplier, so the
+   worst case a player can meet is the top of that band — not the tier's
+   nominal current. Check against that or a hard draw goes unvalidated. */
+var STRENGTH_MAX = (function(){
+  var m = src.match(/STRENGTH:\[([0-9.]+),([0-9.]+)\]/);
+  return m ? parseFloat(m[2]) : 1;
+})();
 var re = /'([A-Za-z ]+)'\s*:\s*\{legs:([0-9]+),kick:([0-9.]+),gate:([0-9.]+),current:([0-9.]+),\s*secs:([0-9.]+)\}/g;
 var m;
 while ((m = re.exec(src))) {
@@ -48,7 +55,7 @@ names.forEach(function (name) {
   var total = 0;
   for (var leg = 1; leg <= t.legs; leg++) {
     var gate = t.gate * Math.pow(LEG_GATE, leg - 1);
-    var cur  = t.current * Math.pow(LEG_CURRENT, leg - 1);
+    var cur  = t.current * Math.pow(LEG_CURRENT, leg - 1) * STRENGTH_MAX;
     var f    = cur / swing;           /* kicks per second needed to hold */
     total += t.secs;
     var holdable = gate > swing;
