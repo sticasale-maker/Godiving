@@ -240,7 +240,23 @@ function render(){
 }
 function renderPrize(meIdx){
   var card=document.getElementById('prizeCard');
-  if(meIdx<0){card.style.display='none';return;}
+  /* meIdx<0 means we cannot match this visitor to a row — they played on the
+     booth PC and scanned the QR, so the phone carries no player code. Before,
+     that was a silent display:none, and the page ended on a bare leaderboard
+     and the words "Session closed" with no hint they had won anything.
+     Everyone who finishes gets something, so once the hour turns, say so. */
+  if(meIdx<0){
+    if(!closed()){card.style.display='none';return;}
+    card.style.display='block';
+    card.className='card prize';
+    document.querySelector('#prizeCard .stand').style.display='';
+    document.getElementById('prizeTitle').textContent='🎁 Come and collect your prize';
+    document.getElementById('prizeBody').innerHTML=
+      'The '+hhmm(START)+'–'+hhmm(END)+' session is over. <b>Everyone who played wins '+
+      'something</b> — head back to the VIZ stand, in front of the main stage, and '+
+      'show them this screen.';
+    return;
+  }
   var rank=meIdx+1;
   if(!closed()){
     if(rank<=PODIUM){
