@@ -2782,14 +2782,67 @@ function admBigScreen(){
 function groupSelect(id,onchg){var gs=['All','Young Explorer','Teen Explorer','Adult Explorer'];return '<select id="'+id+'" onchange="'+onchg+'">'+gs.map(function(g){return '<option'+(g===ADM.group?' selected':'')+' value="'+g+'">'+(g==='All'?'All groups':g)+'</option>';}).join('')+'</select>';}
 function adminSetGroup(g){ADM.group=g;renderAdmin();}
 function adminScreensaver(device,on){Cloud.sendCommand(device,{screensaver:!!on});setTimeout(renderAdmin,150);}
-function adminDelete(id){if(confirm('Delete this entry?')){Cloud.deleteScore(id);setTimeout(renderAdmin,150);}}
+/* How much live show data a sweep would take with it. Counting the rows from
+   the session running RIGHT NOW is the part that matters: a rehearsal wipe is
+   cheap on a quiet board and unrecoverable in the middle of a busy hour, and
+   the number is the only thing that tells the two apart. */
+function admLiveCount(){
+  var all=ADM.scores||[], now=Date.now(), n=0;
+  all.forEach(function(e){ if(e.ts&&sameSession(e.ts,now))n++; });
+  return {total:all.length, live:n, label:sessionLabel(now)};
+}
+
+/* A second gate for the two actions that hit every row on every device. A
+   confirm() is one stray Enter away — the key a barcode scanner, a wireless
+   presenter or an impatient volunteer sends most — and these are the only
+   admin actions that cannot be walked back from the panel itself. Typing the
+   word cannot happen by accident. */
+function admTypeToConfirm(title, detail){
+  var c=admLiveCount();
+  var live=c.live
+    ? '\n\n\u26a0 ' + c.live + ' of them ' + (c.live===1?'is':'are') +
+      ' from the session running right now (' + c.label + ').'
+    : '';
+  var typed=prompt(title + '\n\n' + detail +
+    '\n\nThis affects ' + c.total + ' row' + (c.total===1?'':'s') +
+    ' on the board, for every device.' + live +
+    '\n\nType  ERASE  to confirm, or Cancel to stop.');
+  if(typed===null)return false;
+  if(typed.trim().toUpperCase()!=='ERASE'){
+    alert('Not confirmed — nothing was changed.');
+    return false;
+  }
+  return true;
+}
+
+/* Named, not "this entry": the rows are one line apart and a mistap on a busy
+   board is silent otherwise. Looked up by id rather than passed through the
+   onclick, so a player's own name can never be spliced into the markup. */
+function adminDelete(id){
+  var e=(ADM.scores||[]).filter(function(r){return r.id===id;})[0];
+  var who=e?('"'+e.name+'" — '+e.score+' points, '+ago(e.ts)):'this entry';
+  var mine=e&&e.ts&&sameSession(e.ts,Date.now())
+    ? '\n\nThis score is from the session running right now.' : '';
+  if(!confirm('Remove '+who+' from the board?'+mine+
+              '\n\nThe row is hidden rather than destroyed, so support can put it '+
+              'back, but it disappears from the ranking and the draw immediately.'))return;
+  Cloud.deleteScore(id);
+  setTimeout(renderAdmin,150);
+}
 function adminClearDryRuns(){
   var n=(ADM.scores||[]).filter(function(e){return e.station===Cloud.DRYRUN_STATION;}).length;
   if(!n)return;
   if(!confirm('Remove '+n+' dry-run row'+(n===1?'':'s')+' from the board? Real players are not affected.'))return;
   Cloud.clearDryRuns(function(){setTimeout(adminRefresh,400);});
 }
-function adminResetAll(){if(confirm('Wipe ALL rankings for every group? This cannot be undone.')){Cloud.resetAll();setTimeout(renderAdmin,150);}}
+function adminResetAll(){
+  if(!admTypeToConfirm('WIPE ALL RANKINGS',
+    'Every score in every age group disappears from the board and from the '+
+    'draw. Rows are hidden rather than destroyed, so support can recover them, '+
+    'but nothing in this panel can put them back.'))return;
+  Cloud.resetAll();
+  setTimeout(renderAdmin,150);
+}
 /* Test reset. Rehearsing with real people means running the same hour over and
    over, and the two halves of the state live in different places: the scores
    are shared in the cloud, everything about THIS player sits in localStorage.
@@ -2801,9 +2854,13 @@ function adminResetDevice(){
   alert('This device is a fresh player. Close the admin panel and press DIVE IN.');
 }
 function adminTestReset(){
-  if(!confirm('TEST RESET\n\n• hides every score on the board, for every device\n'+
-              '• clears this device: points, games played, finished flag, ticket\n\n'+
-              'Use this between practice runs. Real show data would be hidden too.'))return;
+  /* Same blast radius as Wipe all — it calls Cloud.resetAll() — so it gets the
+     same gate. The friendly "test" in the name is exactly why: it reads as
+     safe, and on a live board it is not. */
+  if(!admTypeToConfirm('TEST RESET',
+    '• hides every score on the board, for every device\n'+
+    '• clears this device: points, games played, finished flag, ticket\n\n'+
+    'Meant for between practice runs. Real show data is hidden too.'))return;
   Cloud.resetAll(function(){
     try{
       ['gds_scores','gds_prize_claims'].forEach(function(k){localStorage.removeItem(k);});
