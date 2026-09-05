@@ -7014,6 +7014,19 @@ function encourageMsg(rank,total){
   return '🌊 Nice effort, '+n+'! Every dive makes you sharper — play again to climb the ranks!';
 }
 function showHallOfFame(){
+  /* "Next challenge" and "Play again" are position:fixed, so they do not
+     belong to the panel that raised them and a panel change does not take
+     them down. Reaching the ranking through "Finish & see ranking" left both
+     pinned over the countdown: two live-looking buttons on the one screen the
+     player is meant to sit and wait on. Tapping them could not go anywhere
+     — startGame() and showMenu() both bounce back once FINISHED — but they
+     did leave activeGame and replayTarget pointing at the last game played,
+     which is how a stale notice observer could put the buttons back again.
+
+     activeGame is cleared for the same reason: the run is over, so there is
+     no active game, and anything that reads one here is reading a ghost. */
+  hideNextChallenge();
+  activeGame=null;
   $('gamesstrip').style.display='none';
   $('gamesstrip').querySelectorAll('.gstep').forEach(function(el){
     el.classList.remove('active');el.classList.add('done');});
@@ -7260,6 +7273,23 @@ $('gameBack').onclick=function(){if(activeGame)playedGames[activeGame]=true;show
    over" could not start anything over. resetThisDevice() already knew how to
    clear all of it. */
 function startNextPlayer(){
+  /* Both buttons that land here sit directly under a running countdown, and
+     players told us they were ending up back at the start instead of watching
+     the draw. There is nothing to warn about once the session has frozen —
+     the result is already decided — but while it is still counting down,
+     leaving throws away the wait and, on a booth, the player's identity with
+     it. So ask, and only while there is something to lose. */
+  var end=sessionEnd(FINISH_TS||Date.now());
+  if(FINISHED && Date.now()<end){
+    var who=isBoothStation()
+      ? 'Start over for a NEW player?\n\nThe ranking for this session is still being decided at '+
+        hhmm(end)+'. This screen is where the result appears. Starting over clears the current '+
+        'name and score and cannot be undone.'
+      : 'Start over with a new score?\n\nThe ranking for this session is still being decided at '+
+        hhmm(end)+'. This screen is where the result appears, and starting over gives up your '+
+        'place in it.';
+    if(!confirm(who))return;
+  }
   resetThisDevice();
   currentGame=0;
   
